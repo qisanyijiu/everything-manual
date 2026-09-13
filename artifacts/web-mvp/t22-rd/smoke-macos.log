@@ -1,0 +1,99 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/xtask smoke --binary /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual`
+=== T22 正式包冷目录冒烟（validation-release §7 的 7 步）===
+binary   : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+backup   : /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t20-rd/sample-backup
+临时目录 : /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000
+[步骤 1] 冷目录已建立：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000（只含二进制；无源码 / dist / Node）
+[步骤 2] restore 样例备份 → /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data（退出码 0）
+         {"timestamp":"2026-09-13T04:22:24.371825Z","level":"INFO","fields":{"message":"恢复完成","event":"restore_cli_completed","from":"/Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t20-rd/sample-backup","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+         恢复完成：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data
+           来源备份：/Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t20-rd/sample-backup（schema v7；快照 sha256 c75ad3366c6f7233e2c2f327c3688ba49d2cb41ef92de10e77a40e99a29d7237）
+           校验通过：manifest、快照与全部 blob 的 sha256、外键与引用；恢复 blob 11 个
+[步骤 2] 独立空目录 init + check 通过：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/init-data（新部署路径）
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.446948Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.447536Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":11,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.447575Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.447593Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.447619Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"8553:01a09900-89bf-70f1-b961-aa867de38d4d","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.447672Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.447680Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.447685Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:53466","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+[步骤 2] 生产服务已启动：PID 8553 http://127.0.0.1:53466（环境清空，工作目录不在仓库内）
+  [检查] pgrep 不可用，跳过子进程复核
+  [检查] GET / -> 200 text/html（内嵌 index.html，539 字节）
+  [检查] GET /assets/index-D2JcMJ4C.js -> 200 text/javascript; charset=utf-8（409200 字节）
+  [检查] GET /assets/index-CE8-SplE.css -> 200 text/css; charset=utf-8（18901 字节）
+  [检查] PDF 运行资源·CMaps -> 200 /vendor/pdfjs/cmaps/78-EUC-H.bcmap（2404 字节）
+  [检查] PDF 运行资源·standard_fonts -> 200 /vendor/pdfjs/standard_fonts/FoxitFixed.pfb（17597 字节）
+  [检查] PDF 运行资源·wasm -> 200 /vendor/pdfjs/wasm/openjpeg.wasm（252032 字节）
+  [检查] PDF 运行资源·iccs -> 200 /vendor/pdfjs/iccs/CGATS001Compat-v2-micro.icc（8464 字节）
+  [检查] PDF worker -> 200 /assets/pdf.worker.min-Dswkl-cV.mjs
+  [检查] GET 嵌套路由（/items/…/releases/…）刷新 -> 200 text/html（SPA 回退）
+  [检查] 未登录 GET /api/v1/items -> 401（认证真实生效）
+  [检查] 登录成功（cookie HttpOnly + SameSite=Strict；CSRF token 已获取）
+  [检查] providersConfigured=false（不放行 fixture / 未连接本机 Provider）
+  [检查] release 01a09677-685a-7542-8e2f-0b866c8a1fbc 的 manifestSha256=c2ec7def5b84 命中备份 blob 清单；模型 a9f884c27da2 / PDF e18cf61a61c9 与 manifest 声明一致
+  [检查] GLB GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] GLB GET Range bytes=0-99 -> 206 bytes 0-99/2912（前缀一致）
+  [检查] GLB HEAD -> 200 content-length=2912 无 body
+  [检查] PDF GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] PDF GET Range bytes=0-99 -> 206 bytes 0-99/1216（前缀一致）
+  [检查] PDF HEAD -> 200 content-length=1216 无 body
+  [检查] POST /items/{id}/estimates -> 409 PROVIDER_NOT_CONFIGURED（明确拒绝，不用 mock 冒充）
+  [检查] /health/ready = ready（Provider 未配置不影响本地读取）
+  [清理] 已结束自启动的服务进程 PID 8553
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.523897Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.524445Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":11,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.524460Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.524469Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.524482Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"8565:01a09900-8a0c-7434-967f-7cb09e2ad77a","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.524537Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.524545Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.524550Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:53468","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+  [检查] GLB(断网) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] GLB(断网) GET Range bytes=0-99 -> 206 bytes 0-99/2912（前缀一致）
+  [检查] GLB(断网) HEAD -> 200 content-length=2912 无 body
+  [检查] PDF(断网) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] PDF(断网) GET Range bytes=0-99 -> 206 bytes 0-99/1216（前缀一致）
+  [检查] PDF(断网) HEAD -> 200 content-length=1216 无 body
+[步骤 5] 断外网（sandbox-exec：deny network-outbound，仅放行 localhost）读取通过：已发布 release、GLB、PDF 可读且 sha256 一致，ready=ready
+  [清理] 已结束自启动的服务进程 PID 8565
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555240Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555782Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":11,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555798Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555807Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555822Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"8566:01a09900-8a2b-7229-98dd-3420ff3311ca","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555863Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555870Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.555876Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:53470","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+  [检查] GLB(重启后) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] GLB(重启后) GET Range bytes=0-99 -> 206 bytes 0-99/2912（前缀一致）
+  [检查] GLB(重启后) HEAD -> 200 content-length=2912 无 body
+[步骤 6] 停服重启后数据仍在：manifest/模型/PDF sha256 与首轮一致
+  [清理] 已结束自启动的服务进程 PID 8566
+[步骤 7] backup → /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/backup2（停服后一致快照）
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.715722Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data2","schemaVersion":7},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.716330Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":11,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.716349Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.716360Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.716375Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"8569:01a09900-8acc-77cb-aacf-0356c1b98417","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.716425Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.716434Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T04:22:24.716440Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:53472","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000/data2","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+  [检查] GLB(二次恢复) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] GLB(二次恢复) GET Range bytes=0-99 -> 206 bytes 0-99/2912（前缀一致）
+  [检查] GLB(二次恢复) HEAD -> 200 content-length=2912 无 body
+  [检查] PDF(二次恢复) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] PDF(二次恢复) GET Range bytes=0-99 -> 206 bytes 0-99/1216（前缀一致）
+  [检查] PDF(二次恢复) HEAD -> 200 content-length=1216 无 body
+[步骤 7] 二次恢复后同一 release 可读，manifest/模型/PDF sha256 与首轮一致
+  [清理] 已结束自启动的服务进程 PID 8569
+
+步骤汇总：1 冷目录 / 2 restore+init / 3 静态与路由 / 4 认证与资产 / 5 断网读取 / 6 重启持久 / 7 备份恢复链 —— 全部通过。
+临时目录已清理：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-8549-1789273343737174000
+
+正式包冒烟通过（7 步全过；步骤编号与 validation-release §7 一致）。

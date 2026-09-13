@@ -1,0 +1,51 @@
+
+Running 6 tests using 1 worker
+
+(node:20890) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/qa-t09-independent.spec.ts:193:1 › 续传：关闭标签页后用新标签页继续，只补缺失页且不替换已完成页资产 (3.6s)
+  ✓  2 [chromium] › tests/e2e/qa-t09-independent.spec.ts:286:1 › 离线：阻断非本机请求仍完成准备；worker/CMaps/字体/WASM/ICC 均本机可用 (2.0s)
+  ✘  3 [chromium] › tests/e2e/qa-t09-independent.spec.ts:381:1 › BUG-002 复验：通知可见时顶栏指针/键盘可用且通知条位于顶栏之下（1280/390） (1.6s)
+(node:21070) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  4 [chromium] › tests/e2e/qa-t09-independent.spec.ts:472:1 › 逐页进度（第 n / N 页）、单 canvas、beforeunload 与取消停止上传 (3.4s)
+  ✓  5 [chromium] › tests/e2e/qa-t09-independent.spec.ts:536:1 › 加密与 101 页 PDF：明确拒绝、零 preparation 请求、SQLite 各表零新增 (3.9s)
+  ✓  6 [chromium] › tests/e2e/qa-t09-independent.spec.ts:592:1 › 页图上报 viewport 与实际 JPEG 像素一致（旋转页 /Rotate 90）且四角为白色 (1.9s)
+
+
+  1) [chromium] › tests/e2e/qa-t09-independent.spec.ts:381:1 › BUG-002 复验：通知可见时顶栏指针/键盘可用且通知条位于顶栏之下（1280/390） 
+
+    Error: 宽度 390px：通知条必须位于顶栏之下（顶栏底 138）
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: >= [32m137[39m
+    Received:    [31m104[39m
+
+      425 |       geometry.noticeTop ?? -1,
+      426 |       `宽度 ${width}px：通知条必须位于顶栏之下（顶栏底 ${geometry.topBarBottom}）`,
+    > 427 |     ).toBeGreaterThanOrEqual((geometry.topBarBottom ?? 0) - 1);
+          |       ^
+      428 |     expect(geometry.noticesPointerEvents).toBe("none");
+      429 |
+      430 |     const box = await libraryLink.boundingBox();
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t09-independent.spec.ts:427:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t09-independent-BUG-002-bcb03-指针-键盘可用且通知条位于顶栏之下（1280-390）-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t09-independent-BUG-002-bcb03-指针-键盘可用且通知条位于顶栏之下（1280-390）-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t09-independent-BUG-002-bcb03-指针-键盘可用且通知条位于顶栏之下（1280-390）-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t09-independent-BUG-002-bcb03-指针-键盘可用且通知条位于顶栏之下（1280-390）-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/qa-t09-independent.spec.ts:381:1 › BUG-002 复验：通知可见时顶栏指针/键盘可用且通知条位于顶栏之下（1280/390） 
+  5 passed (19.8s)
+EXIT=

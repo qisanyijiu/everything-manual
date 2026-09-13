@@ -1,0 +1,16 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+error: failed to run custom build command for `everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)`
+
+Caused by:
+  process didn't exit successfully: `/Users/qsyj/Code/rust/everything-manual/target/release/build/everything-manual-759a2b6a219e9c7c/build-script-build` (exit status: 101)
+  --- stdout
+  cargo:rerun-if-changed=build.rs
+
+  --- stderr
+
+  thread 'main' (11406255) panicked at crates/server/build.rs:19:9:
+  embedded-ui 需要前端构建产物，但 /Users/qsyj/Code/rust/everything-manual/crates/server/../../apps/web/dist 不存在。请先运行 `cargo xtask dist`（或 `npm --prefix apps/web ci && npm --prefix apps/web run build`）。该 feature 不允许在缺少前端产物时产出空壳二进制。
+  note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

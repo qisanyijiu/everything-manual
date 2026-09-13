@@ -1,0 +1,26 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/qa_t21_independent.rs (target/debug/deps/qa_t21_independent-8c6cc9fcee05cc60)
+
+running 1 test
+test qa21_three_batch_interruption_never_reruns_completed_batch ... 
+thread 'qa21_three_batch_interruption_never_reruns_completed_batch' (14677029) panicked at crates/server/src/jobs/failpoints.rs:105:39:
+命中测试断点 manual_after_request_before_response（job-failpoints feature）
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'qa21_three_batch_interruption_never_reruns_completed_batch' (14677029) panicked at crates/server/tests/qa_t21_independent.rs:977:5:
+assertion `left == right` failed: 恢复不得重跑第 1 批、不得重发第 2 批、不得发起第 3 批
+  left: 3
+ right: 2
+FAILED
+
+failures:
+
+failures:
+    qa21_three_batch_interruption_never_reruns_completed_batch
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.03s
+
+error: test failed, to rerun pass `-p everything-manual --test qa_t21_independent`

@@ -1,0 +1,168 @@
+{
+  "binary": "/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual",
+  "checks": [
+    {
+      "name": "init 退出码 0",
+      "ok": true,
+      "detail": "exit=0"
+    },
+    {
+      "name": "serve 就绪",
+      "ok": true,
+      "detail": "GET http://127.0.0.1:18661/api/v1/health/ready"
+    },
+    {
+      "name": "登录 200",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "创建物品 201",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "name": "上传 PDF 201",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "name": "创建 document 201",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "name": "创建 preparation 201",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "name": "上传第 1 页 200",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "上传第 2 页 200",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "准备详情有 ETag",
+      "ok": true,
+      "detail": "ETag=\"r3\""
+    },
+    {
+      "name": "封存准备 200",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "estimate 201",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "name": "确认报价 200",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "建单 202",
+      "ok": true,
+      "detail": "status=202"
+    },
+    {
+      "name": "model_download 终态 = needs_input（发布构建不放行本机 fixture）",
+      "ok": true,
+      "detail": "实际 needs_input"
+    },
+    {
+      "name": "缺项码 = download_insecure_scheme",
+      "ok": true,
+      "detail": "[{\"code\":\"download_insecure_scheme\",\"message\":\"模型下载必须使用 HTTPS（实际 http://127.0.0.1）：拒绝下载\"}]"
+    },
+    {
+      "name": "model 资产数 = 0",
+      "ok": true,
+      "detail": "实际 0"
+    },
+    {
+      "name": "model_revisions = 0",
+      "ok": true,
+      "detail": "实际 0"
+    },
+    {
+      "name": "付费提交 attempt 恰 1 条",
+      "ok": true,
+      "detail": "实际 1"
+    },
+    {
+      "name": "fixture 收到 0 次模型下载请求",
+      "ok": true,
+      "detail": "实际 0 次"
+    },
+    {
+      "name": "fixture 记到付费提交 1 次",
+      "ok": true,
+      "detail": "实际 1 次"
+    },
+    {
+      "name": "付费提交请求带 Authorization（对照）",
+      "ok": true,
+      "detail": "[{'method': 'POST', 'path': '/v3/generation/multiview-to-model', 'note': 'paid-submit', 'authorization': True, 'count': 1, 'bodyBytes': 232}]"
+    },
+    {
+      "name": "serve 日志出现 download_local_fixture_ignored",
+      "ok": true,
+      "detail": "事件已记录（该键在发布构建中不生效）"
+    },
+    {
+      "name": "serve 日志不含签名 canary",
+      "ok": true,
+      "detail": "签名查询串未进日志"
+    },
+    {
+      "name": "服务进程无非 loopback 连接",
+      "ok": true,
+      "detail": "[]"
+    }
+  ],
+  "needs_input": "[{\"code\":\"download_insecure_scheme\",\"message\":\"模型下载必须使用 HTTPS（实际 http://127.0.0.1）：拒绝下载\"}]",
+  "last_error": "模型下载必须使用 HTTPS（实际 http://127.0.0.1）：拒绝下载",
+  "model_assets": 0,
+  "model_revisions": 0,
+  "provider_attempts": 1,
+  "fixture_entries": [
+    {
+      "method": "POST",
+      "path": "/v3/files",
+      "note": "upload",
+      "authorization": true,
+      "token": "qa-gate-token-1"
+    },
+    {
+      "method": "POST",
+      "path": "/v3/files",
+      "note": "upload",
+      "authorization": true,
+      "token": "qa-gate-token-2"
+    },
+    {
+      "method": "POST",
+      "path": "/v3/generation/multiview-to-model",
+      "note": "paid-submit",
+      "authorization": true,
+      "count": 1,
+      "bodyBytes": 232
+    },
+    {
+      "method": "GET",
+      "path": "/v3/tasks/qa-gate-task-1",
+      "note": "task-query",
+      "authorization": true,
+      "count": 1,
+      "modelUrl": "http://127.0.0.1:57832/model.glb?sign=qa-gate-canary-signature"
+    }
+  ],
+  "non_loopback_connections": []
+}

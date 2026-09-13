@@ -1,0 +1,14 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.91s
+     Running tests/qa_t12_independent.rs (target/debug/deps/qa_t12_independent-19901661ce64b442)
+
+running 3 tests
+test qa_redirect_is_not_followed_and_bearer_is_not_forwarded ... ok
+test qa_upload_timeout_is_transport_and_safe_to_retry ... ok
+test qa_submit_timeout_is_transport_not_refused_and_sent_once ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+

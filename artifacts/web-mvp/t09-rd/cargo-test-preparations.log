@@ -1,0 +1,20 @@
+=== cargo test -p everything-manual --test preparations ===
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.98s
+     Running tests/preparations.rs (target/debug/deps/preparations-dd6846ecc3d6cc5e)
+
+running 9 tests
+test page_number_and_viewport_are_validated ... ok
+test complete_requires_if_match_and_continuous_pages ... ok
+test page_overwrite_requires_if_match_and_checks_revision ... ok
+test create_preparation_is_one_per_document_until_ready ... ok
+test complete_lists_asset_problems_when_content_is_unavailable ... ok
+test complete_seals_without_jobs_or_fees_and_blocks_further_writes ... ok
+test page_upload_is_idempotent_for_identical_content ... ok
+test page_assets_must_belong_to_item_and_match_purpose ... ok
+test preparation_endpoints_require_session ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.65s
+

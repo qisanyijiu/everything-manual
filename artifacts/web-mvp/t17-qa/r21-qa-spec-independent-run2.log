@@ -1,0 +1,110 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t17-independent.spec.ts
+
+(node:21354) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m122[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:37:47.615575Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a09531-dadf-74b1-b5ed-bb780180463d","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 8 tests using 1 worker
+
+(node:21426) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:37:49.938948Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/password.txt","schemaVersion":6,"adminId":"01a09531-e3f2-72ed-91ff-d8da5abf757e","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-kn3Fiu/password.txt；明文不落盘、不进入日志与 shell history。
+  ✓  1 [chromium] › tests/e2e/qa-t17-independent.spec.ts:191:1 › QA-T17-1 列表/详情：分列金额与服务端逐字段一致、终态停止轮询、无虚假总进度 (14.6s)
+  ✓  2 [chromium] › tests/e2e/qa-t17-independent.spec.ts:268:1 › QA-T17-2 进行中状态区分 + 浏览器关闭后服务器继续推进 (11.9s)
+  ✓  3 [chromium] › tests/e2e/qa-t17-independent.spec.ts:315:1 › QA-T17-3 断网显示网络问题（不误报业务失败），恢复后显示服务端新状态 (5.8s)
+  ✓  4 [chromium] › tests/e2e/qa-t17-independent.spec.ts:359:1 › QA-T17-4 unknown：无重试按钮、对账入口、未决预留=服务端金额（非 0）、recordNoTask 需证据 (1.8s)
+  ✘  5 [chromium] › tests/e2e/qa-t17-independent.spec.ts:421:1 › QA-T17-5 T15 P3①：详情拒绝态与端点 422 同源；允许的重试真的生效；草稿文案不承诺重试 (1.3s)
+(node:21517) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:38:27.723484Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/password.txt","schemaVersion":6,"adminId":"01a09532-778b-7269-a0b0-8ca9228dd86b","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-C2pPkd/password.txt；明文不落盘、不进入日志与 shell history。
+  ✓  6 [chromium] › tests/e2e/qa-t17-independent.spec.ts:508:1 › QA-T17-6 轮询频率：可见约 2 秒 / 后台约 15 秒；重启后仍从数据库恢复 (37.0s)
+  ✓  7 [chromium] › tests/e2e/qa-t17-independent.spec.ts:589:1 › QA-T17-7 412 走统一刷新组件（UI-008）：陈旧 ETag 不覆盖、刷新后见服务端状态 (2.2s)
+  ✓  8 [chromium] › tests/e2e/qa-t17-independent.spec.ts:632:1 › QA-T17-8 失败状态：与 unknown 明确分开、错误摘要可读、不可重试原因如实 (2.2s)
+
+
+  1) [chromium] › tests/e2e/qa-t17-independent.spec.ts:421:1 › QA-T17-5 T15 P3①：详情拒绝态与端点 422 同源；允许的重试真的生效；草稿文案不承诺重试 
+
+    Error: 部分成功也必须产出可复核草稿
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mnull[39m
+
+      455 |
+      456 |   // (c) 草稿缺项文案：不得再承诺"可对该阶段重试"（T15 P3① 的文案分叉）。
+    > 457 |   expect(detail.draftId, "部分成功也必须产出可复核草稿").toBeTruthy();
+          |                                            ^
+      458 |   const draftResponse = await request.get(
+      459 |     `${backend.base}/api/v1/items/${itemId}/drafts/${detail.draftId}`,
+      460 |   );
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t17-independent.spec.ts:457:44
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17--79c2a--422-同源；允许的重试真的生效；草稿文案不承诺重试-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17--79c2a--422-同源；允许的重试真的生效；草稿文案不承诺重试-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17--79c2a--422-同源；允许的重试真的生效；草稿文案不承诺重试-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17--79c2a--422-同源；允许的重试真的生效；草稿文案不承诺重试-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17--79c2a--422-同源；允许的重试真的生效；草稿文案不承诺重试-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/qa-t17-independent.spec.ts:421:1 › QA-T17-5 T15 P3①：详情拒绝态与端点 422 同源；允许的重试真的生效；草稿文案不承诺重试 
+  7 passed (1.4m)

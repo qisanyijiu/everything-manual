@@ -1,0 +1,6013 @@
+{
+  "components": {
+    "schemas": {
+      "AdminSummary": {
+        "description": "管理员摘要（只暴露公开 ID；口令哈希永不出现在任何响应）。",
+        "properties": {
+          "id": {
+            "example": "01993000-0000-7000-8000-000000000001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "AmountCurrencyDto": {
+        "description": "金额币种（线上取值 `creditMinor` / `usdMicros`；contracts.md §1）。",
+        "enum": [
+          "creditMinor",
+          "usdMicros"
+        ],
+        "type": "string"
+      },
+      "AmountLineDto": {
+        "description": "金额分项（单价保留目录里的十进制字面量，金额为整数最小单位）。",
+        "properties": {
+          "amountDisplay": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitPriceDecimal": {
+            "type": "string"
+          },
+          "unitPricePerUnits": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "description",
+          "quantity",
+          "unit",
+          "unitPriceDecimal",
+          "unitPricePerUnits",
+          "amountMinor",
+          "amountDisplay"
+        ],
+        "type": "object"
+      },
+      "Anchor": {
+        "additionalProperties": false,
+        "description": "热点锚点：不可变模型版本 + 内容哈希 + asset-root 局部点。",
+        "properties": {
+          "modelRevisionId": {
+            "type": "string"
+          },
+          "modelSha256": {
+            "type": "string"
+          },
+          "positionLocal": {
+            "description": "asset-root 局部坐标（`[x, y, z]`；全部数值有限）。",
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "modelRevisionId",
+          "modelSha256",
+          "positionLocal"
+        ],
+        "type": "object"
+      },
+      "ApiErrorBody": {
+        "description": "错误体。不输出堆栈、SQL、密钥或完整供应商签名 URL（contracts.md §1）。",
+        "properties": {
+          "code": {
+            "description": "机器可读错误码（SCREAMING_SNAKE_CASE，来自 `manual_core::ApiErrorCode`）。",
+            "example": "NOT_FOUND",
+            "type": "string"
+          },
+          "details": {
+            "description": "结构化细节；无细节时为 null。"
+          },
+          "message": {
+            "description": "面向用户的中文信息，不含内部细节。",
+            "example": "接口不存在",
+            "type": "string"
+          },
+          "requestId": {
+            "description": "本次响应的诊断 ID（T04 起与请求日志关联）。",
+            "example": "01993000-0000-7000-8000-000000000001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ],
+        "type": "object"
+      },
+      "ApiErrorResponse": {
+        "description": "统一错误响应包。任何非 2xx 的应用错误都使用该结构。",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "AssetDto": {
+        "description": "资产的线上表示。",
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "mime": {
+            "description": "服务器判定的 MIME（来自实测内容，不采信客户端声明）。",
+            "example": "image/jpeg",
+            "type": "string"
+          },
+          "originalName": {
+            "description": "原文件名（仅元数据；不含任何目录成分，见 `assets::upload::sanitize_original_name`）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "purpose": {
+            "example": "photo",
+            "type": "string"
+          },
+          "sha256": {
+            "description": "内容 sha256（内容寻址的主键；同内容不同 asset 共享同一值）。",
+            "type": "string"
+          },
+          "size": {
+            "description": "字节数。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "storageState": {
+            "example": "stored",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "purpose",
+          "sha256",
+          "size",
+          "mime",
+          "storageState",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AssetResponse": {
+        "description": "单个资产响应。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AssetDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "AssetUploadRequest": {
+        "description": "`POST /items/{id}/assets` 的 `multipart/form-data` 请求体（仅用于 OpenAPI 描述）。\n\n实际解析由 `http::assets` 的流式 multipart 完成；这里声明字段形状，\n让前端生成的类型与真实请求一致。",
+        "properties": {
+          "file": {
+            "description": "文件字节（流式读取；不把整个文件放进内存）。",
+            "format": "binary",
+            "type": "string"
+          },
+          "purpose": {
+            "description": "用途：document / photo / pageImage / pageText。",
+            "example": "document",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "purpose"
+        ],
+        "type": "object"
+      },
+      "BudgetLimitsDto": {
+        "additionalProperties": false,
+        "description": "用户授权的分列预算上限。",
+        "properties": {
+          "manualAiUsdMicros": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "tripoCreditMinor": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "CameraPose": {
+        "additionalProperties": false,
+        "description": "步骤视角（`CameraPose`；全部相对同一 asset-root，不是机械动作）。",
+        "properties": {
+          "fov": {
+            "format": "double",
+            "type": "number"
+          },
+          "positionLocal": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "targetLocal": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "upLocal": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "positionLocal",
+          "targetLocal",
+          "upLocal",
+          "fov"
+        ],
+        "type": "object"
+      },
+      "CancelResponse": {
+        "description": "取消响应。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CancelResultDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "CancelResultDto": {
+        "description": "取消结果：语义必须如实（不声称已取消远端付费操作）。",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/JobDetailDto"
+          },
+          "notice": {
+            "description": "固定文案：取消只停止本地推进，不撤销远端付费操作（不保证供应商撤单）。",
+            "type": "string"
+          },
+          "preservedStages": {
+            "description": "保留原状态的已提交/未决阶段（保留查询与账务）。",
+            "items": {
+              "$ref": "#/components/schemas/PreservedStageDto"
+            },
+            "type": "array"
+          },
+          "stagesCancelled": {
+            "description": "本次转为 cancelled 的未提交阶段数。",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job",
+          "stagesCancelled",
+          "preservedStages",
+          "notice"
+        ],
+        "type": "object"
+      },
+      "CapabilitiesStatus": {
+        "description": "能力开关。",
+        "properties": {
+          "generation": {
+            "description": "生成能力：Tripo 与说明书 AI **都**已配置、且价格目录可用时才为 true。\n未满足前置条件时 estimate/jobs 返回明确错误（不返回 0 费用假成功）。",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "generation"
+        ],
+        "type": "object"
+      },
+      "CheckStatus": {
+        "description": "单项自检结果。",
+        "enum": [
+          "ok",
+          "fail"
+        ],
+        "type": "string"
+      },
+      "ConfirmationDto": {
+        "description": "一次云端发送确认（写入 `audit_events`，随报价冻结）。",
+        "properties": {
+          "confirmedAt": {
+            "type": "string"
+          },
+          "quoteId": {
+            "type": "string"
+          },
+          "sendScope": {
+            "$ref": "#/components/schemas/SendScopeDto",
+            "description": "确认时展示给用户的发送范围（与报价同源；不得被后续修改）。"
+          },
+          "summary": {
+            "description": "本次确认对应的用户可见说明（\"已确认发送范围（时间）\"）。",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quoteId",
+          "confirmedAt",
+          "sendScope",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "ConfirmationResponse": {
+        "description": "确认响应（`{ data }` 包装）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ConfirmationDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "DocumentCreateRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/items/{id}/documents` 请求体。",
+        "properties": {
+          "sourceAssetId": {
+            "description": "已上传的 PDF 资产 ID；必须属于同一物品且 `purpose=document`，否则 404/422。",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "description": "可选出处链接（绝对 http(s) URL，≤[`SOURCE_URL_MAX_CHARS`] 字符）；服务端不访问该地址。",
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "description": "标题；必填，≤[`DOCUMENT_TITLE_MAX_CHARS`] 字符。",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "sourceAssetId"
+        ],
+        "type": "object"
+      },
+      "DocumentDto": {
+        "description": "document 的线上表示。",
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "sourceAssetId": {
+            "description": "绑定的 PDF 资产 ID（`purpose=document`）。",
+            "type": "string"
+          },
+          "sourceSha256": {
+            "description": "原件内容 sha256（=该资产的 blob id）；准备阶段据此校验字节一致。",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "description": "出处链接；仅记录，服务端不抓取。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "sourceAssetId",
+          "sourceSha256",
+          "title",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "DocumentListResponse": {
+        "description": "document 列表响应（`{data, nextCursor}`，按 created_at DESC 分页）。",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "example": "v1:documents:01993000-0000-7000-8000-000000000001:1789171200000:01993000-0000-7000-8000-000000000002",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "DocumentResponse": {
+        "description": "单个 document 响应。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DocumentDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "DraftDto": {
+        "description": "版本化草稿。",
+        "properties": {
+          "completeness": {
+            "description": "完备性：`complete` / `partial`（部分成功可展示）。",
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "knowledge": {
+            "description": "版本化知识聚合（外壳 `schemaVersion` + 合并结果；结构见 `drafts::knowledge`）。"
+          },
+          "missing": {
+            "description": "缺项清单（`partial` 时非空；代码稳定，供 UI 给\"去补齐\"入口）。",
+            "items": {
+              "$ref": "#/components/schemas/DraftMissingItemDto"
+            },
+            "type": "array"
+          },
+          "modelRevisionId": {
+            "description": "模型分支产出的不可变版本（部分草稿可能为 null）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notices": {
+            "description": "固定语义说明（生成完成 ≠ 已发布；不存在自动发布）。",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "review": {
+            "description": "复核状态（modelReview 等；T15 尚未写入，T19 起使用）。"
+          },
+          "revision": {
+            "description": "聚合 revision（`ETag: \"r<n>\"`；PATCH 用 If-Match）。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DraftStatusDto",
+            "description": "`needs_review` / `ready`（**都不等于已发布**）。"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "snapshotId",
+          "revision",
+          "status",
+          "completeness",
+          "missing",
+          "knowledge",
+          "notices",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "DraftMissingItemDto": {
+        "description": "草稿缺项。",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "DraftPatchRequest": {
+        "additionalProperties": false,
+        "description": "`PATCH /items/{id}/drafts/{draftId}` 请求体（T19 受限字段集）。\n\n每个字段都可缺省；**至少提供一个字段**，否则 422（空请求体）。",
+        "properties": {
+          "clearStepPoses": {
+            "description": "要清除视角的步骤 id（「清除该步骤视角」动作；与写入分开）。",
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "entities": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/EntityReviewPatchDto"
+            },
+            "description": "实体级复核（确认/取消确认、人工修订、仅文本条目）。",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "hotspots": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HotspotPatch",
+                "description": "热点写入（新建/重新绑定/解绑；人工直接拾取 = upsert confirmed + anchor）。"
+              }
+            ]
+          },
+          "modelReview": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelReviewPatch",
+                "description": "modelReview 的两个用户声明（`checkedAt` 由服务器赋值）。"
+              }
+            ]
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DraftStatusDto",
+                "description": "目标状态（`needs_review` / `ready`）；不触发发布。"
+              }
+            ]
+          },
+          "stepPoses": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CameraPose"
+            },
+            "description": "步骤视角写入：`{ \"<stepId>\": CameraPose }`（保存/覆盖；「保存当前视角」动作）。",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "DraftResponse": {
+        "description": "`GET /items/{id}/drafts/{draftId}` 响应（带 `ETag`）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DraftDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "DraftStatusDto": {
+        "description": "草稿状态（线上 snake_case：`needs_review` / `ready`）。",
+        "enum": [
+          "needs_review",
+          "ready"
+        ],
+        "type": "string"
+      },
+      "EntityReviewPatchDto": {
+        "additionalProperties": false,
+        "description": "实体级复核写入的线上形状（见 `drafts::aggregate::EntityReviewPatch`）。",
+        "properties": {
+          "reviewStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReviewStatusDto"
+              }
+            ]
+          },
+          "textOnly": {
+            "description": "「仅文本条目」：不进入 3D 但保留并明显标识（需同时确认或有修订记录）。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "userEdited": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UserEdit"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "EstimateRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/items/{id}/estimates` 请求体（字段可选以便给出字段级 422 明细）。",
+        "properties": {
+          "modelPreset": {
+            "description": "Tripo 生成预设（价格目录的 `preset`；目录里没有的预设不支持生成）。",
+            "example": "tripo-h-v3.1-standard",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "photoIds": {
+            "description": "进入 Tripo 多视图的照片（front + 至少一个侧视图；不含 detail）。",
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "preparationId": {
+            "description": "ready 状态的 PDF 准备记录（报价绑定它的原件哈希与页集合）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "HealthLiveResponse": {
+        "description": "`GET /api/v1/health/live` 响应包。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LivenessData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "HealthReadyResponse": {
+        "description": "`GET /api/v1/health/ready` 响应包。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReadinessData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "HotspotPatch": {
+        "additionalProperties": false,
+        "description": "热点写入：`upsert`（无 id = 新建，服务器分配 id）+ `remove`（解绑）。",
+        "properties": {
+          "remove": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "upsert": {
+            "items": {
+              "$ref": "#/components/schemas/HotspotUpsert"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "HotspotStatus": {
+        "description": "热点状态机：`unbound → candidate → confirmed`；人工直接拾取可 `unbound → confirmed`；\n模型 revision 变化后旧绑定进入 `stale`（不得作为有效热点显示）。",
+        "enum": [
+          "unbound",
+          "candidate",
+          "confirmed",
+          "stale"
+        ],
+        "type": "string"
+      },
+      "HotspotUpsert": {
+        "additionalProperties": false,
+        "properties": {
+          "anchor": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Anchor"
+              }
+            ]
+          },
+          "id": {
+            "description": "既有热点 id（重新绑定/解绑用）；省略 = 新建。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/HotspotStatus"
+          }
+        },
+        "required": [
+          "partId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ItemCreateRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/items` 请求体：创建物品（服务器生成 UUIDv7 与 revision=1）。\n\n名称与型号必填（缺失/空白/超长 → 422 `details.fields`）；品牌与变体可选；\n同品牌型号不强制唯一（允许不同配置并存，不用唯一约束代替业务判断）。",
+        "properties": {
+          "brand": {
+            "description": "品牌；可选，≤[`ITEM_BRAND_MAX_CHARS`] 字符。",
+            "maxLength": 100,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "description": "准确型号；必填，≤[`ITEM_MODEL_MAX_CHARS`] 字符（trim 后非空）。",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "物品名称；必填，≤[`ITEM_NAME_MAX_CHARS`] 字符（trim 后非空）。",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variant": {
+            "description": "变体/配置；可选，≤[`ITEM_VARIANT_MAX_CHARS`] 字符。",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "ItemDto": {
+        "description": "物品的线上表示（字段名与 `manual_core::domain::Item` 一致）。",
+        "properties": {
+          "archivedAt": {
+            "description": "归档时间；null 表示未归档。归档代替物理删除（已发布资料与资产仍可读）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "brand": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "revision": {
+            "description": "乐观锁版本；GET 时对应 `ETag: \"r<revision>\"`。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "variant": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "model",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ItemListResponse": {
+        "description": "物品列表响应（`{data, nextCursor}`；游标分页，默认 20／最多 100）。\n\n`nextCursor` 绑定产生它的过滤条件（items:active / items:archived）；换条件必须重开分页。",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ItemDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "description": "下一页游标；没有更多时为 null。对客户端不透明，不得自行拼接。",
+            "example": "v1:items:active:1789171200000:01993000-0000-7000-8000-000000000001",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ItemPatchRequest": {
+        "additionalProperties": false,
+        "description": "`PATCH /api/v1/items/{id}` 请求体。\n\n文本字段是双层 Option（见 [`crate::http::body::double_option`]）：缺失 = 保持原值；\n`null` = 清空可选字段 / 拒绝必填字段。",
+        "properties": {
+          "archived": {
+            "description": "归档开关：true 记录归档时间（已归档保持原时间），false 取消归档；\n显式 null = 422（状态字段没有\"清空\"语义，缺失才是保持原值）。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "brand": {
+            "description": "品牌（缺失 = 保持；null 或空白 = 清空）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "description": "型号（缺失 = 保持；null = 422）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "名称（缺失 = 保持；null = 422）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variant": {
+            "description": "变体/配置（缺失 = 保持；null 或空白 = 清空）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "ItemResponse": {
+        "description": "单个物品响应；配合 `ETag: \"r<n>\"` 返回。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ItemDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "JobAttemptDto": {
+        "description": "付费提交 attempt（对账面板数据）。",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lastError": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "remoteTaskId": {
+            "description": "远端 task ID（opaque string；对账时人工比对，不校验格式）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "responseId": {
+            "description": "同步响应 ID（**不假定可轮询/重取**）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stageId": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "submitState": {
+            "description": "`intent` / `submitting` / `accepted` / `unknown` / `failed`。",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "stageId",
+          "submitState",
+          "startedAt"
+        ],
+        "type": "object"
+      },
+      "JobCreateRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/items/{id}/jobs` 请求体。\n\n**没有费用数值字段**：金额一律由服务端从报价快照回读（\"不接受前端传入的费用数值\"）。\n`limits` 是用户本次授权的上限，必须覆盖服务端计算的保守上界。",
+        "properties": {
+          "limits": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BudgetLimitsDto",
+                "description": "用户授权的预算上限（分列；不得小于服务端计算的保守上界）。"
+              }
+            ]
+          },
+          "photoIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "preparationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quoteId": {
+            "description": "已确认且未过期的报价。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "JobDetailDto": {
+        "description": "任务详情（UI-030/UI-034/UI-038：阶段、尝试、费用、缺项、错误、下一步）。",
+        "properties": {
+          "attempts": {
+            "description": "付费提交 attempt（对账入口需要 attemptId；远端 ID 为 opaque string）。",
+            "items": {
+              "$ref": "#/components/schemas/JobAttemptDto"
+            },
+            "type": "array"
+          },
+          "budgetNotice": {
+            "description": "预算语义说明（与报价/建单同一文案）。",
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "draftId": {
+            "description": "已产出的草稿（可为 null）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "item": {
+            "$ref": "#/components/schemas/JobItemDto"
+          },
+          "reservations": {
+            "description": "费用预留（分列；unknown 保留预留）。",
+            "items": {
+              "$ref": "#/components/schemas/ReservationDto"
+            },
+            "type": "array"
+          },
+          "revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "stages": {
+            "description": "阶段明细（含 `needsInput` 缺项与 `knowledgeProduced` 事实）。",
+            "items": {
+              "$ref": "#/components/schemas/JobStageDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "item",
+          "snapshotId",
+          "status",
+          "revision",
+          "stages",
+          "attempts",
+          "reservations",
+          "budgetNotice",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "JobDetailResponse": {
+        "description": "`GET /api/v1/jobs/{id}` 响应（带 `ETag: \"r<revision>\"`）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobDetailDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "JobDto": {
+        "description": "任务摘要（本卡只创建；阶段执行属 T10/T12/T14/T15）。",
+        "properties": {
+          "budgetNotice": {
+            "description": "费用语义说明（与报价同一文案）。",
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "reservations": {
+            "description": "本次冻结的费用预留（分列；金额为服务端计算的保守上界）。",
+            "items": {
+              "$ref": "#/components/schemas/ReservationDto"
+            },
+            "type": "array"
+          },
+          "revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshotId": {
+            "type": "string"
+          },
+          "status": {
+            "description": "运行时状态（contracts.md §5；`queued` 起步）。",
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "snapshotId",
+          "status",
+          "revision",
+          "reservations",
+          "budgetNotice",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "JobItemDto": {
+        "description": "任务所属物品的展示摘要。",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "model"
+        ],
+        "type": "object"
+      },
+      "JobListResponse": {
+        "description": "`GET /api/v1/jobs` 响应（游标分页；与既有列表同形 `{data, nextCursor}`）。",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/JobSummaryDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "description": "不透明游标（原样回传；已绑定产生它的过滤条件）；无下一页时为 null\n（与既有列表同一形状：`{data, nextCursor}`，contracts §1）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "JobMissingItemDto": {
+        "description": "可行动缺项（`needs_input`）。",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "JobResponse": {
+        "description": "任务创建响应（首次 202；同键同 body 重放返回同一 job）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "JobStageDto": {
+        "description": "阶段明细行。",
+        "properties": {
+          "attemptCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "batchIndex": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "knowledgeProduced": {
+            "description": "仅 `manual_extract`：该批结果事实是否**产出正式知识**\n（T14 P3-1：展示与恢复同判据；null = 事实里没有该字段）。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "lastError": {
+            "description": "最近一次失败/阻塞原因摘要（不含密钥与原文）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "needsInput": {
+            "description": "`needs_input` 的可行动缺项。",
+            "items": {
+              "$ref": "#/components/schemas/JobMissingItemDto"
+            },
+            "type": "array"
+          },
+          "nextRunAt": {
+            "description": "下次自动运行时间（退避/轮询展示；可为 null）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pageSet": {
+            "description": "本批页号（1-based；非批处理阶段为 null）。",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "pollCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "resultAssetId": {
+            "description": "结果资产（诊断/明细入口；不含内容）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retry": {
+            "$ref": "#/components/schemas/JobStageRetryDto",
+            "description": "该阶段当前的**重试准入**（与服务端 `POST /jobs/{id}/retry` 的判定同源）。\nUI 只在 `allowed=true` 时渲染重试按钮；否则显示 `reason`/`message` 给出的\n真实恢复路径（T15 P3①：不允许\"写着可重试、点了被拒\"的分叉文案）。"
+          },
+          "stageKind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submissionStyle": {
+            "description": "付费提交形态（`asyncRemoteTask` = Tripo 远端任务：对账可用 attachRemoteTask；\n`syncResponse` = 说明书 AI 同步批次：不提供 attachRemoteTask）；非提交阶段为 null。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "usage": {
+            "description": "阶段事实摘要（模型 revision、批次 outcome/计数、用量等）。\n**临时供应商 URL 不进入 API 响应**：T20/BUG-008 起新事实只保存\n`{\"redacted\":true,\"host\":…,\"sha256\":…}` 摘要；历史行里的 URL 形态字符串\n在读取时替换为同一摘要（contracts §1/§7、AC-010）。"
+          }
+        },
+        "required": [
+          "id",
+          "stageKind",
+          "batchIndex",
+          "status",
+          "attemptCount",
+          "pollCount",
+          "needsInput",
+          "retry",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "JobStageRetryDto": {
+        "description": "阶段重试准入（判定见 `jobs::control::retry_gate`）。",
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "message": {
+            "description": "可行动的说明（与端点 422 `error.message` 同源）；`allowed=true` 时为 null。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "description": "拒绝码（`jobCancelled` / `stageNotRetryable` / `branchSubmissionUnknown` /\n`budgetNotHolding`）；`allowed=true` 时为 null。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "allowed"
+        ],
+        "type": "object"
+      },
+      "JobStageSummaryDto": {
+        "description": "阶段摘要（**计数**，不是线性百分比）。\n\n口径：`active = queued + running + retry_wait + waiting_provider`（在途）、\n`blocked = needs_input`（等人工补齐）、`unknown = submission_unknown`（等对账）。",
+        "properties": {
+          "active": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "blocked": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "cancelled": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "failed": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "succeeded": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "unknown": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "succeeded",
+          "active",
+          "blocked",
+          "unknown",
+          "failed",
+          "cancelled"
+        ],
+        "type": "object"
+      },
+      "JobSummaryDto": {
+        "description": "任务中心列表行（UI-029）。",
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "draftId": {
+            "description": "已产出的草稿（可为 null：尚未组装）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "itemModel": {
+            "type": "string"
+          },
+          "itemName": {
+            "description": "物品名称/型号（列表展示；物品归档后仍可读）。",
+            "type": "string"
+          },
+          "reservations": {
+            "description": "该任务的费用预留（分列；unknown 表示未决预留，等待对账——不得显示成 0）。",
+            "items": {
+              "$ref": "#/components/schemas/ReservationDto"
+            },
+            "type": "array"
+          },
+          "revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "stageSummary": {
+            "$ref": "#/components/schemas/JobStageSummaryDto"
+          },
+          "status": {
+            "description": "运行时状态（contracts.md §5 的枚举）。",
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "itemName",
+          "itemModel",
+          "status",
+          "revision",
+          "stageSummary",
+          "reservations",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "LimitsStatus": {
+        "description": "生效限制（字节数与页数；均为公开参数，不含路径与密钥）。",
+        "properties": {
+          "maxGlbBytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItemTotalBytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxJsonRequestBytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxPdfBytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxPdfPages": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxPhotoBytes": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "maxJsonRequestBytes",
+          "maxPdfBytes",
+          "maxPdfPages",
+          "maxPhotoBytes",
+          "maxGlbBytes",
+          "maxItemTotalBytes"
+        ],
+        "type": "object"
+      },
+      "LivenessData": {
+        "description": "存活载荷：进程能响应请求即为 ok。",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/LivenessStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "LivenessStatus": {
+        "enum": [
+          "ok"
+        ],
+        "type": "string"
+      },
+      "LoginRequest": {
+        "description": "`POST /api/v1/auth/login` 请求体。**服务端不记录请求体**（PRD §5.7）。",
+        "properties": {
+          "password": {
+            "description": "管理员密码。示例仅为占位符，禁止写入真实凭据。",
+            "example": "placeholder-not-a-real-password",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "type": "object"
+      },
+      "LoginResponse": {
+        "description": "登录成功响应（`200`）。会话 token 只经 `Set-Cookie` 返回，响应体不含它。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SessionData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ManualAiConfigDto": {
+        "description": "说明书 AI 的模型与提示词版本。",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "promptVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "promptVersion"
+        ],
+        "type": "object"
+      },
+      "ManualAiSendScopeDto": {
+        "description": "发送给说明书 AI 的内容。",
+        "properties": {
+          "imagePages": {
+            "description": "发送页图的页（1-based；扫描页/无文字层页）。",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "itemModel": {
+            "type": "string"
+          },
+          "itemName": {
+            "description": "随请求发送的物品身份文本（名称与型号；REQ-021 的\"型号文本\"）。",
+            "type": "string"
+          },
+          "maxOutputTokens": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "pageCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "pageFrom": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "pageTo": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "promptVersion": {
+            "type": "string"
+          },
+          "textPages": {
+            "description": "发送页文字的页（1-based）。",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "itemName",
+          "itemModel",
+          "model",
+          "promptVersion",
+          "pageFrom",
+          "pageTo",
+          "pageCount",
+          "textPages",
+          "imagePages",
+          "maxOutputTokens"
+        ],
+        "type": "object"
+      },
+      "ModelReviewPatch": {
+        "additionalProperties": false,
+        "description": "modelReview 的两个用户声明（服务器补 `checkedAt` 与模型身份）。",
+        "properties": {
+          "loaded": {
+            "type": "boolean"
+          },
+          "userConfirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "loaded",
+          "userConfirmed"
+        ],
+        "type": "object"
+      },
+      "PageDto": {
+        "description": "单页的线上表示。",
+        "properties": {
+          "imageAssetId": {
+            "description": "页图资产（`purpose=pageImage`，白底 JPEG）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pageNumber": {
+            "description": "1-based 页号（contracts.md §1）。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "textAssetId": {
+            "description": "页文字资产（`purpose=pageText`）；扫描页无文字时为 null。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "viewport": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ViewportDto",
+                "description": "页图坐标参照（旋转后的尺寸与旋转角）；数据迁移前的旧记录为 null。"
+              }
+            ]
+          }
+        },
+        "required": [
+          "pageNumber",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PagePutRequest": {
+        "additionalProperties": false,
+        "description": "`PUT /api/v1/preparations/{id}/pages/{pageNumber}` 请求体。",
+        "properties": {
+          "imageAssetId": {
+            "description": "页图资产（`purpose=pageImage`，白底 JPEG）；每页必需（封存时校验）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "textAssetId": {
+            "description": "页文字资产（`purpose=pageText`）；扫描页/无文字页可为 null。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "viewport": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ViewportDto",
+                "description": "页图坐标参照（旋转后尺寸 + 旋转角）；必填。"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "PageRangeDto": {
+        "description": "`[from, to]`（1-based、闭区间；contracts.md §1 页码基准）。",
+        "properties": {
+          "from": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "to": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "PageResponse": {
+        "description": "单页响应（`PUT .../pages/{n}` 返回写入后的页状态）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PageDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "PhotoCreateRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/items/{id}/photos` 请求体。",
+        "properties": {
+          "assetId": {
+            "description": "照片资产 ID；必须属于同一物品且 `purpose=photo`，否则 404/422。",
+            "type": "string"
+          },
+          "view": {
+            "description": "视图：front/left/back/right/detail（字符串 + 服务端校验以获得字段级错误明细；\n缺失/非法 → 422 `details.fields[view]`，与 items 的必填字段同一约定）。",
+            "example": "front",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "assetId"
+        ],
+        "type": "object"
+      },
+      "PhotoDto": {
+        "description": "photo 的线上表示。",
+        "properties": {
+          "assetId": {
+            "description": "照片资产 ID（`purpose=photo`，JPEG/PNG）；内容经 `/assets/{id}/content` 读取。",
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "revision": {
+            "description": "乐观锁版本；GET 时对应 `ETag: \"r<revision>\"`。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "view": {
+            "example": "front",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "assetId",
+          "view",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PhotoListResponse": {
+        "description": "照片列表响应。\n\n物品的照片集合被视图唯一性约束上界为 5 条（front/left/back/right/detail 各一张），\n因此不设分页：`nextCursor` 恒为 null（不是截断）。",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "PhotoPatchRequest": {
+        "additionalProperties": false,
+        "description": "`PATCH /api/v1/items/{id}/photos/{photoId}` 请求体。\n\n字段缺失 = 保持原值；显式 `null` = 字段级 422（照片必须始终关联资产与视图）。\n变更视图时若目标视图已被同物品的另一张照片占用 → 422 `details.reason=viewOccupied`。",
+        "properties": {
+          "assetId": {
+            "description": "替换照片资产（缺失 = 保持；null = 422）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "view": {
+            "description": "视图（缺失 = 保持；null = 422）。",
+            "example": "left",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "PhotoResponse": {
+        "description": "单个 photo 响应；配合 `ETag: \"r<n>\"` 返回（PATCH 需 If-Match）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PhotoDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "PhotoScopeDto": {
+        "description": "单张发送照片（视图 + 图片 id + 内容哈希）。",
+        "properties": {
+          "photoId": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "view": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "view",
+          "photoId",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "PreparationCompleteRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/preparations/{id}/complete` 请求体。",
+        "properties": {
+          "pageCount": {
+            "description": "声明的总页数 N；服务端校验 1..N 连续存在且每页资产可用。",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "PreparationCreateRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/documents/{id}/preparations` 请求体。",
+        "properties": {
+          "sourceSha256": {
+            "description": "原件内容 sha256；必须与 document 绑定的原件一致（否则 422），\n用于确认浏览器准备的是同一份字节（contracts.md §3）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "PreparationDetailDto": {
+        "description": "preparation 详情：状态 + 已上传页 + 缺页。",
+        "properties": {
+          "clientDerived": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "missingPages": {
+            "description": "缺页页号（升序）。\n\n未封存（`preparing`）时服务端不知道原 PDF 总页数（PDF 由浏览器解析，ADR-003），\n因此该数组为空，由客户端用自己的总页数计算\"还差哪些页\"；\n`ready` 时为 `1..pageCount` 中缺失的页号（正常应为空）。",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "pageCount": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "pages": {
+            "description": "已上传页（按 `pageNumber` 升序）。",
+            "items": {
+              "$ref": "#/components/schemas/PageDto"
+            },
+            "type": "array"
+          },
+          "revision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "sourceSha256": {
+            "type": "string"
+          },
+          "state": {
+            "example": "preparing",
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "documentId",
+          "sourceSha256",
+          "state",
+          "clientDerived",
+          "revision",
+          "pages",
+          "missingPages",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PreparationDetailResponse": {
+        "description": "`GET /preparations/{id}` 响应：准备状态 + 页状态 + 缺页（断线续传的读取入口）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PreparationDetailDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "PreparationDto": {
+        "description": "preparation 的线上表示。",
+        "properties": {
+          "clientDerived": {
+            "description": "`true` = 页资产由浏览器 PDF.js 派生上传；只证明字节一致，不证明来自原 PDF。",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "pageCount": {
+            "description": "封存时声明的页数；未封存为 null。",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "revision": {
+            "description": "乐观锁版本；`GET` 时对应 `ETag: \"r<revision>\"`，页覆盖与封存需 `If-Match`。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "sourceSha256": {
+            "description": "原件内容 sha256（与 document.sourceSha256 一致；准备期间核对字节未变）。",
+            "type": "string"
+          },
+          "state": {
+            "description": "`preparing` 或 `ready`；ready 后不可修改（contracts.md §2）。",
+            "example": "preparing",
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "documentId",
+          "sourceSha256",
+          "state",
+          "clientDerived",
+          "revision",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PreparationResponse": {
+        "description": "单个 preparation 响应（`{ data }` 包装）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PreparationDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "PreservedStageDto": {
+        "description": "被取消动作保留的阶段。",
+        "properties": {
+          "stageId": {
+            "type": "string"
+          },
+          "stageKind": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stageId",
+          "stageKind",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PriceCatalogStatus": {
+        "description": "价格目录状态（T11）：只返回\"是否可用 + 版本/快照日期\"，不返回文件路径或内容。",
+        "properties": {
+          "configured": {
+            "description": "是否已配置且解析成功（未配置 = 生成/报价不可用，409 `PRICE_CATALOG_MISSING`）。",
+            "type": "boolean"
+          },
+          "snapshotDate": {
+            "description": "价格快照日期（未配置为 null）。",
+            "example": "2026-09-11",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "description": "价格版本（未配置为 null）。",
+            "example": "2026-09-11",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "configured"
+        ],
+        "type": "object"
+      },
+      "ProviderAmountDto": {
+        "description": "单个供应商的金额块（预计 + 保守上界 + 上界分项）。",
+        "properties": {
+          "currency": {
+            "$ref": "#/components/schemas/AmountCurrencyDto"
+          },
+          "estimatedDisplay": {
+            "description": "可读展示（credits 两位小数 / USD 最多六位小数）；不用于计算。",
+            "type": "string"
+          },
+          "estimatedMinor": {
+            "description": "权威值：整数最小单位。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "upperBoundDisplay": {
+            "type": "string"
+          },
+          "upperBoundLines": {
+            "description": "上界分项（`amountMinor` 之和等于 `upperBoundMinor`）。",
+            "items": {
+              "$ref": "#/components/schemas/AmountLineDto"
+            },
+            "type": "array"
+          },
+          "upperBoundMinor": {
+            "description": "权威值：整数最小单位（预算口径）。",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "estimatedMinor",
+          "upperBoundMinor",
+          "estimatedDisplay",
+          "upperBoundDisplay",
+          "upperBoundLines"
+        ],
+        "type": "object"
+      },
+      "ProviderConfigDto": {
+        "description": "非密钥的供应商配置快照。",
+        "properties": {
+          "manualAi": {
+            "$ref": "#/components/schemas/ManualAiConfigDto"
+          },
+          "tripo": {
+            "$ref": "#/components/schemas/TripoParametersDto"
+          }
+        },
+        "required": [
+          "tripo",
+          "manualAi"
+        ],
+        "type": "object"
+      },
+      "ProviderKeyDto": {
+        "description": "供应商维度（线上取值 `tripo` / `manual_ai`）。",
+        "enum": [
+          "tripo",
+          "manual_ai"
+        ],
+        "type": "string"
+      },
+      "ProvidersConfigured": {
+        "properties": {
+          "manualAi": {
+            "description": "说明书 AI 是否已配置。",
+            "type": "boolean"
+          },
+          "tripo": {
+            "description": "Tripo（模型生成）是否已配置。",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "tripo",
+          "manualAi"
+        ],
+        "type": "object"
+      },
+      "PublishIssue": {
+        "description": "一条发布不满足项（422 `details.issues[]`）。",
+        "properties": {
+          "code": {
+            "description": "稳定代码（UI 用它选择\"去处理\"的定位方式；测试按它断言）。",
+            "type": "string"
+          },
+          "entityId": {
+            "description": "实体 id（能定位时给出；模型/输入级问题为 null）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entityKind": {
+            "description": "实体类别（`part` / `step` / `spec` / `hotspot` / `model` / `evidence` / `input`）。",
+            "type": "string"
+          },
+          "message": {
+            "description": "面向用户的中文说明（不含内部细节与路径）。",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "entityKind",
+          "message"
+        ],
+        "type": "object"
+      },
+      "QuoteAmountsDto": {
+        "description": "分列金额。",
+        "properties": {
+          "manualAi": {
+            "$ref": "#/components/schemas/ProviderAmountDto"
+          },
+          "tripo": {
+            "$ref": "#/components/schemas/ProviderAmountDto"
+          }
+        },
+        "required": [
+          "tripo",
+          "manualAi"
+        ],
+        "type": "object"
+      },
+      "QuoteDto": {
+        "description": "一条报价（服务端计算并冻结；落库与响应同源）。",
+        "properties": {
+          "amounts": {
+            "$ref": "#/components/schemas/QuoteAmountsDto",
+            "description": "分列金额（Tripo credits 与 Manual AI USD）。"
+          },
+          "budgetNotice": {
+            "description": "预算语义说明（固定文案；不得改写为\"供应商硬封顶\"）。",
+            "type": "string"
+          },
+          "confirmedAt": {
+            "description": "确认时间；未确认为 null（**不存在默认勾选**）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "consumedAt": {
+            "description": "已被某份任务消费的时间；一份报价只能创建一份任务。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "consumedJobId": {
+            "description": "消费它的任务 id（UI 用于\"该操作已存在一个任务\"的链接）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "报价到期时间（默认 10 分钟；过期后提交任务被拒，需重新报价）。",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "maxOutputTokens": {
+            "description": "说明书 AI 的最大输出 token（批次数 × 每批上限；预算口径之一）。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "modelPreset": {
+            "type": "string"
+          },
+          "pageCount": {
+            "description": "ready preparation 的页数。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "pageRange": {
+            "$ref": "#/components/schemas/PageRangeDto"
+          },
+          "preparationId": {
+            "type": "string"
+          },
+          "priceSnapshotDate": {
+            "type": "string"
+          },
+          "priceVersion": {
+            "type": "string"
+          },
+          "providerConfig": {
+            "$ref": "#/components/schemas/ProviderConfigDto",
+            "description": "非密钥的供应商配置（模型名与生成参数）；确认页展示。"
+          },
+          "sendScope": {
+            "$ref": "#/components/schemas/SendScopeDto",
+            "description": "云端发送范围（确认页必须逐项展示；未确认不允许提交）。"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "preparationId",
+          "modelPreset",
+          "providerConfig",
+          "pageCount",
+          "pageRange",
+          "maxOutputTokens",
+          "priceVersion",
+          "priceSnapshotDate",
+          "amounts",
+          "sendScope",
+          "expiresAt",
+          "createdAt",
+          "budgetNotice"
+        ],
+        "type": "object"
+      },
+      "QuoteResponse": {
+        "description": "报价响应（`{ data }` 包装）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/QuoteDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ReadinessCheck": {
+        "description": "单个自检项。",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/ReadinessCheckName"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          }
+        },
+        "required": [
+          "name",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ReadinessCheckName": {
+        "description": "自检项名称。T04 起为四项（顺序固定：process、data_directory、database、migrations）。",
+        "enum": [
+          "process",
+          "data_directory",
+          "database",
+          "migrations"
+        ],
+        "type": "string"
+      },
+      "ReadinessData": {
+        "description": "就绪载荷。\n\nT04 语义：检查项为 `process` / `data_directory` / `database` / `migrations`，\n**任一项失败**时 `status = not_ready` 且整体返回 503。**不检查云端可达**\n（REQ-007/REQ-038：供应商不可达不得使就绪失败），也不返回任何配置细节。",
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessCheck"
+            },
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReadinessStatus"
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ],
+        "type": "object"
+      },
+      "ReadinessStatus": {
+        "enum": [
+          "ready",
+          "not_ready"
+        ],
+        "type": "string"
+      },
+      "ReconcileActionDto": {
+        "description": "对账动作（线上取值 camelCase）。",
+        "enum": [
+          "attachRemoteTask",
+          "recordNoTask",
+          "authorizeReplacement"
+        ],
+        "type": "string"
+      },
+      "ReconcileRequestDto": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/jobs/{id}/reconcile` 请求体。",
+        "properties": {
+          "acknowledgeDuplicateRisk": {
+            "description": "`authorizeReplacement`：确认\"可能重复收费\"的风险。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "acknowledgeMatches": {
+            "description": "`attachRemoteTask`：二次确认\"该任务与本次未决提交对应\"。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "action": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReconcileActionDto"
+              }
+            ]
+          },
+          "evidence": {
+            "description": "`recordNoTask`：核查证据（管理员声明，不是供应商出具的证明）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "limits": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BudgetLimitsDto",
+                "description": "`authorizeReplacement`：再次预算确认（必须覆盖冻结上界）。"
+              }
+            ]
+          },
+          "remoteTaskId": {
+            "description": "`attachRemoteTask`：账户中查到的远端任务 ID（opaque string，原样填写）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stageId": {
+            "description": "处于 `submission_unknown` 的阶段 id。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "ReconcileResponse": {
+        "description": "对账响应。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReconcileResultDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ReconcileResultDto": {
+        "description": "对账结果。",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ReconcileActionDto"
+          },
+          "attemptId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "job": {
+            "$ref": "#/components/schemas/JobDetailDto"
+          },
+          "notice": {
+            "description": "动作后果的如实说明（不伪造证明、不自动释放预留、明确重复收费风险）。",
+            "type": "string"
+          },
+          "stageId": {
+            "type": "string"
+          },
+          "stageStatus": {
+            "description": "对账后阶段的目标状态（`queued` / `needs_input`）。",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job",
+          "action",
+          "stageId",
+          "stageStatus",
+          "notice"
+        ],
+        "type": "object"
+      },
+      "ReleaseDetailDto": {
+        "description": "发布详情：在摘要之上携带冻结 manifest 与 manifest 内容的 sha256。",
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "draftId": {
+            "type": "string"
+          },
+          "draftRevision": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "manifest": {
+            "description": "冻结 manifest（`manual_release_v1`：model / knowledge / review / assets / documents / counts）。"
+          },
+          "manifestAssetId": {
+            "type": "string"
+          },
+          "manifestSha256": {
+            "description": "manifest 资产的 sha256（字节比对用：发布后修改草稿不改变它）。",
+            "type": "string"
+          },
+          "modelRevisionId": {
+            "type": "string"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "draftId",
+          "draftRevision",
+          "modelRevisionId",
+          "manifestAssetId",
+          "manifestSha256",
+          "createdAt",
+          "manifest",
+          "notices"
+        ],
+        "type": "object"
+      },
+      "ReleaseDetailResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReleaseDetailDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ReleaseDto": {
+        "description": "发布版本（列表与创建响应的形状；详情在 [`ReleaseDetailDto`] 扩展 manifest）。",
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "draftId": {
+            "type": "string"
+          },
+          "draftRevision": {
+            "description": "发布时草稿的 revision（之后修改草稿不改变该版本）。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "draftRevisionAfterPublish": {
+            "description": "发布后草稿的下一个 revision（并发发布/编辑会得到 412 的依据）。",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "manifestAssetId": {
+            "type": "string"
+          },
+          "modelRevisionId": {
+            "type": "string"
+          },
+          "notices": {
+            "description": "固定语义说明（不可变、模型指向本地资产）。",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "draftId",
+          "draftRevision",
+          "modelRevisionId",
+          "manifestAssetId",
+          "createdAt",
+          "notices"
+        ],
+        "type": "object"
+      },
+      "ReleaseListResponse": {
+        "description": "`GET /items/{id}/releases` 列表响应（`{data, nextCursor}`；MVP 一次给全，`\nnextCursor` 为 null——版本数由发布次数决定，量级远小于分页阈值）。",
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ReleaseDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ReleaseResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReleaseDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ReservationDto": {
+        "description": "一笔费用预留（`cost_ledger` 的对外投影）。",
+        "properties": {
+          "currency": {
+            "$ref": "#/components/schemas/AmountCurrencyDto"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ProviderKeyDto"
+          },
+          "reservedDisplay": {
+            "type": "string"
+          },
+          "reservedMinor": {
+            "description": "预留金额（整数最小单位；unknown 时仍保留该值）。",
+            "format": "int64",
+            "type": "integer"
+          },
+          "state": {
+            "description": "`reserved` / `settled` / `released` / `unknown`（unknown = 未决预留，等待对账）。",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "currency",
+          "reservedMinor",
+          "reservedDisplay",
+          "state"
+        ],
+        "type": "object"
+      },
+      "RetryRequest": {
+        "additionalProperties": false,
+        "description": "`POST /api/v1/jobs/{id}/retry` 请求体（`Idempotency-Key` 头必填）。",
+        "properties": {
+          "stageId": {
+            "description": "要重试的阶段（来自任务详情的阶段 id）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "RetryResponse": {
+        "description": "重试响应。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RetryResultDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "RetryResultDto": {
+        "description": "重试结果：只重跑指定阶段，已完成成果保留。",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/JobDetailDto"
+          },
+          "notice": {
+            "description": "固定说明（\"已完成部分不会被覆盖\"）。",
+            "type": "string"
+          },
+          "previousStatus": {
+            "description": "重试前的阶段状态（`failed` / `needs_input`）。",
+            "type": "string"
+          },
+          "requeuedDependents": {
+            "description": "一并拉回队列的已完成下游阶段数（例如基于旧输入的部分草稿组装）。",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "stageId": {
+            "type": "string"
+          },
+          "stageKind": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job",
+          "stageId",
+          "stageKind",
+          "previousStatus",
+          "requeuedDependents",
+          "notice"
+        ],
+        "type": "object"
+      },
+      "ReviewStatusDto": {
+        "description": "线上复核状态（与 core `ReviewStatus` 同值集；core 不依赖 utoipa，此枚举只做线上形状）。",
+        "enum": [
+          "confirmed",
+          "needs_review"
+        ],
+        "type": "string"
+      },
+      "SendScopeDto": {
+        "description": "云端发送范围（REQ-021：确认页必须逐项列出\"将发送什么给谁\"）。",
+        "properties": {
+          "budgetNotice": {
+            "type": "string"
+          },
+          "manualAi": {
+            "$ref": "#/components/schemas/ManualAiSendScopeDto"
+          },
+          "plannedUpperBound": {
+            "$ref": "#/components/schemas/QuoteAmountsDto",
+            "description": "本次计划的保守上界（确认页与预算输入框的对照值）。"
+          },
+          "priceSnapshotDate": {
+            "type": "string"
+          },
+          "priceVersion": {
+            "type": "string"
+          },
+          "tripo": {
+            "$ref": "#/components/schemas/TripoSendScopeDto"
+          }
+        },
+        "required": [
+          "tripo",
+          "manualAi",
+          "priceVersion",
+          "priceSnapshotDate",
+          "plannedUpperBound",
+          "budgetNotice"
+        ],
+        "type": "object"
+      },
+      "SessionData": {
+        "description": "会话恢复数据：供刷新页面后继续调用受保护 API。",
+        "properties": {
+          "admin": {
+            "$ref": "#/components/schemas/AdminSummary"
+          },
+          "csrfToken": {
+            "description": "CSRF token：所有修改请求需通过 `X-CSRF-Token` 头回传（contracts.md §3）。",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "会话绝对过期时间（UTC RFC3339；默认 7 天，假设 A-05，无滑动续期）。",
+            "example": "2026-09-19T00:00:00Z",
+            "type": "string"
+          }
+        },
+        "required": [
+          "admin",
+          "csrfToken",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "SessionResponse": {
+        "description": "`GET /api/v1/auth/session` 响应（`200`；`Cache-Control: no-store`）。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SessionData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "SettingsStatusData": {
+        "properties": {
+          "capabilities": {
+            "$ref": "#/components/schemas/CapabilitiesStatus",
+            "description": "服务能力开关；未满足前置条件时如实为 false。"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsStatus",
+            "description": "生效的输入限制（PRD §5.3 默认值或配置覆盖值）。"
+          },
+          "priceCatalog": {
+            "$ref": "#/components/schemas/PriceCatalogStatus",
+            "description": "价格目录状态（T11；只说配置与否与版本，不含路径与内容）。"
+          },
+          "providersConfigured": {
+            "$ref": "#/components/schemas/ProvidersConfigured",
+            "description": "各供应商是否具备发起真实请求的全部配置（密钥 + 模型）。"
+          }
+        },
+        "required": [
+          "providersConfigured",
+          "priceCatalog",
+          "limits",
+          "capabilities"
+        ],
+        "type": "object"
+      },
+      "SettingsStatusResponse": {
+        "description": "`GET /api/v1/settings/status` 响应。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SettingsStatusData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "TripoParametersDto": {
+        "description": "Tripo 生成参数（`preset` 为价格目录里的预设名）。",
+        "properties": {
+          "faceLimit": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "generateParts": {
+            "type": "boolean"
+          },
+          "geometryQuality": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "pbr": {
+            "type": "boolean"
+          },
+          "preset": {
+            "description": "价格目录中的预设名。",
+            "type": "string"
+          },
+          "quad": {
+            "type": "boolean"
+          },
+          "texture": {
+            "type": "boolean"
+          },
+          "textureQuality": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "preset",
+          "model",
+          "texture",
+          "pbr",
+          "textureQuality",
+          "geometryQuality",
+          "faceLimit",
+          "quad",
+          "generateParts"
+        ],
+        "type": "object"
+      },
+      "TripoSendScopeDto": {
+        "description": "发送给 Tripo 的内容。",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/TripoParametersDto",
+            "description": "生成参数（质量/face_limit/quad/分件等；确认页必须展示\"模型名与参数\"）。"
+          },
+          "preset": {
+            "type": "string"
+          },
+          "views": {
+            "description": "多视图照片（槽位顺序；detail 不在其中）。",
+            "items": {
+              "$ref": "#/components/schemas/PhotoScopeDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "views",
+          "model",
+          "preset",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      "UserEdit": {
+        "additionalProperties": false,
+        "description": "人工修订（本地覆盖；原快照不动，出处保留在 `knowledge.knowledge` 里）。\n\n字段是显式的（不是任意 JSON）：发送实体类型不支持的字段 → 422，\n避免\"顺手改了供应商快照的形状\"。",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderedActions": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "ViewportDto": {
+        "description": "页图 viewport（旋转后的页图尺寸与旋转角）。",
+        "properties": {
+          "height": {
+            "description": "页图高度（像素）。",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rotation": {
+            "description": "旋转角（度）：0/90/180/270。",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "width": {
+            "description": "页图宽度（像素，已含页面旋转）。",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height",
+          "rotation"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "sessionCookie": {
+        "in": "cookie",
+        "name": "em_session",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "自托管交互说明书的本地 HTTP API。健康探针、认证/会话、设置状态、资产上传/内容服务（T06）、物品与说明书绑定/多视图照片（T07）、其余路由按 llmdoc/contracts.md 在同一文档上扩展。",
+    "title": "万物说明书 API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/assets/{id}/content": {
+      "get": {
+        "description": "仅资产的拥有者可读（跨物品/不存在都返回 404）。ETag 是内容 sha256 的强校验器。完整 GET 200；合法单区间 206 + Content-Range/Length；不可满足 416 + `Content-Range: bytes */N`；多区间首版回落完整 200；HEAD 与 GET 同头无 body；If-None-Match 命中 304；If-Range 不匹配返回完整 200。响应不包含磁盘路径，也不做动态压缩。",
+        "operationId": "get_asset_content",
+        "parameters": [
+          {
+            "description": "资产 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "完整内容（或 HEAD 的响应头）"
+          },
+          "206": {
+            "description": "单区间内容（Content-Range）"
+          },
+          "304": {
+            "description": "If-None-Match 命中（无 body）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "资产不存在或不可见"
+          },
+          "416": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "区间不可满足（Content-Range: bytes */N）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "读取资产内容（授权、ETag、Range）",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "校验密码并创建会话。成功时经 Set-Cookie 返回 HttpOnly + SameSite=Strict （HTTPS 判定下加 Secure）的会话 cookie，响应体返回 CSRF token。失败限速默认 5 次/分钟（429 + Retry-After）；错误不区分字段原因。",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "登录成功"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "凭据无效"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Origin 不被允许"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "请求体不符合接口结构"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "登录失败次数超出限速窗口"
+          }
+        },
+        "summary": "管理员登录",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "撤销会话并清除 cookie；旧 cookie 立即失效（再访问受保护路由返回 401）。属于修改请求：需携带 X-CSRF-Token，缺失/跨站 Origin 返回 403。",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "已注销"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录或会话已失效"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "注销当前会话",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "description": "返回管理员摘要与 CSRF token；响应带 Cache-Control: no-store。未登录返回 401。",
+        "operationId": "session",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "当前会话"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录或会话已失效"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "读取当前会话",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/documents/{id}/preparations": {
+      "post": {
+        "description": "校验 `sourceSha256` 与绑定的原件一致（不一致 422 `details.reason=sourceChanged`）。同一 document + 原件已有未完成（preparing）记录时**返回现有记录**（200），否则新建（201）——重新进入同一 document 继续准备走这条路径。加密与超页数 PDF 的权威拒绝在浏览器（那里才有 PDF 解析器，ADR-003），本端点不创建页记录、不进入 jobs、不产生任何费用。",
+        "operationId": "create_preparation",
+        "parameters": [
+          {
+            "description": "document ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreparationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationResponse"
+                }
+              }
+            },
+            "description": "复用了未完成的准备记录"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationResponse"
+                }
+              }
+            },
+            "description": "已创建新的准备记录"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "document 不存在"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段级校验失败（details.fields）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "创建或复用 PDF 准备记录",
+        "tags": [
+          "preparations"
+        ]
+      }
+    },
+    "/api/v1/health/live": {
+      "get": {
+        "description": "进程可响应请求即返回 200。不检查数据层，也不依赖云端可达。",
+        "operationId": "live",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthLiveResponse"
+                }
+              }
+            },
+            "description": "进程存活"
+          }
+        },
+        "summary": "存活探针",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "description": "检查进程、数据目录、数据库与迁移版本；任一项失败返回 503 且 status=not_ready。不检查云端可达，也不返回配置细节。",
+        "operationId": "ready",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReadyResponse"
+                }
+              }
+            },
+            "description": "数据层就绪"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReadyResponse"
+                }
+              }
+            },
+            "description": "数据层不可用（同一 {data} 结构，status=not_ready）"
+          }
+        },
+        "summary": "就绪探针",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/items": {
+      "get": {
+        "description": "稳定排序 (createdAt DESC, id DESC)。`archived` 缺省或 false 只返回未归档物品，`archived=true` 只返回已归档物品；nextCursor 是**不透明**字符串（形如 `v1:items:active:<millis>:<id>`），已绑定产生它的过滤条件——切换过滤条件时必须从头分页，复用旧游标会得到 422。未知/重复/非法查询参数 → 422 字段级明细。",
+        "operationId": "list_items",
+        "parameters": [
+          {
+            "description": "每页条数，默认 20，最大 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "上一页返回的 nextCursor（原样回传）",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "true 只看已归档；缺省/false 只看未归档",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemListResponse"
+                }
+              }
+            },
+            "description": "物品列表"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "查询参数非法（details.fields）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "物品列表（游标分页，默认排除归档）",
+        "tags": [
+          "items"
+        ]
+      },
+      "post": {
+        "description": "服务器生成 UUIDv7 id 与整数 revision（从 1 起）。名称与型号必填：缺失、空白或超长（name/model ≤200、brand ≤100、variant ≤200 字符）→ 422 + `details.fields`。同品牌型号不强制唯一（允许不同配置并存）。未知字段 → 422。",
+        "operationId": "create_item",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            },
+            "description": "已创建（响应带 ETag: \"r1\"）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段级校验失败（details.fields）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "创建物品",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/api/v1/items/{id}": {
+      "get": {
+        "description": "返回物品并带 ETag: \"r<revision>\"，供后续 PATCH 的 If-Match 使用。归档物品同样可读（归档不删除数据）。",
+        "operationId": "get_item",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            },
+            "description": "物品"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品不存在"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "读取物品",
+        "tags": [
+          "items"
+        ]
+      },
+      "patch": {
+        "description": "必须携带 If-Match（形如 \"r7\"，来自 GET/创建响应的 ETag）：缺失 428、revision 过期 412（details.currentRevision）。字段语义：缺失 = 保持原值；brand/variant 显式 null（或空白字符串）= 清空；name/model 显式 null 或空白 = 422；空请求体 = 422。archived=true 归档（记录归档时间）、false 取消归档。校验失败不修改数据、不递增 revision。MVP 不提供永久删除（DELETE → 405）。",
+        "operationId": "patch_item",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            },
+            "description": "更新后的物品（带新 ETag）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品不存在"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期（details.currentRevision）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段级校验失败或 If-Match 非法（details.fields）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "更新物品（If-Match 乐观锁；归档用 archived 字段）",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/assets": {
+      "post": {
+        "description": "字段：`file`（二进制，流式读取）+ `purpose`（document/photo/pageImage/pageText）。内容类型按文件头判定（不采信 Content-Type/扩展名）：document 必须 PDF（≤50 MiB、≤100 页）、photo/pageImage 必须 JPEG/PNG（≤20 MiB，尺寸/像素在预算内）、pageText 为 UTF-8 文本。同 sha256 内容复用同一 blob（去重）；文件名只作元数据，绝不参与路径。伪造类型 415、超限 413、像素炸弹/解码失败/页数超限 422、物品不存在 404、磁盘预留不足 413（details.reason=insufficientStorage，不半提交）。",
+        "operationId": "upload_asset",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            },
+            "description": "资产已保存（内容按 sha256 去重）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败（含 multipart 修改请求）"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品不存在"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "文件/物品累计/磁盘空间超限"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "内容类型不受支持（含伪造类型）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "内容校验失败（像素炸弹/解码失败/页数超限/字段非法）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "上传原始资料文件（multipart 流式）",
+        "tags": [
+          "assets"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/documents": {
+      "get": {
+        "description": "按 createdAt DESC, id DESC 分页；游标不透明且只在本集合（同一物品）内有效。归档物品的资料同样可读。",
+        "operationId": "list_documents",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "每页条数，默认 20，最大 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "上一页返回的 nextCursor（原样回传）",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentListResponse"
+                }
+              }
+            },
+            "description": "document 列表"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品不存在"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "查询参数非法（details.fields）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "说明书绑定列表（游标分页）",
+        "tags": [
+          "documents"
+        ]
+      },
+      "post": {
+        "description": "校验资产归属同一物品且为 PDF（purpose=document）；跨物品/未知资产 → 404。保存 sourceSha256（原件 blob 哈希）。sourceUrl 只作出处记录，服务端**不会**访问该地址（只接受绝对 http(s) URL）。加密与超页数 PDF 的拒绝发生在准备阶段（T09）。",
+        "operationId": "create_document",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            },
+            "description": "已绑定"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品或资产不存在/不属该物品"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段级校验失败（details.fields）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "绑定说明书原件（PDF 资产 → document）",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/drafts/{draftId}": {
+      "get": {
+        "description": "返回草稿的知识聚合（含 `completeness`/`missing[]`：部分成功可展示）、模型版本引用与复核状态，带 `ETag: \"r<revision>\"` 供 PATCH 的 If-Match。`status = needs_review` 只表示可复核草稿已产出——生成完成不等于已发布，不存在自动发布路径。",
+        "operationId": "get_draft",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "草稿 ID（UUIDv7）",
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftResponse"
+                }
+              }
+            },
+            "description": "草稿（带 ETag）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "草稿不存在或不属于该物品"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "读取版本化草稿（带 ETag）",
+        "tags": [
+          "drafts"
+        ]
+      },
+      "patch": {
+        "description": "必须携带 If-Match（来自 GET 的 ETag）：缺失 428、revision 过期 412。受限字段：`status`（needs_review ↔ ready）、`hotspots`（新建/重新绑定/解绑；人工直接拾取 = upsert confirmed + anchor；unbound 时 anchor 必须为 null，不得用 [0,0,0] 占位；candidate/confirmed 的 anchor 必须与当前模型 revision+sha 完全一致，旧 sha 一律 422）、`stepPoses`（CameraPose 或 null 清除；数值有限、fov 合理范围）、`entities`（confirmed/needs_review 切换、人工修订 userEdited、仅文本条目 textOnly）、`modelReview`（loaded 与 userConfirmed 两个用户声明，checkedAt 由服务器赋值）。**不能修改供应商事实快照**：knowledge 里的 Part/Step/Evidence 只读，人工修订写入独立覆盖层并保留原文本与出处；未知字段 422。空请求体 422；无实际变化的重复提交按幂等返回（不递增 revision，stale 仍 412）。动作写入 audit_events。",
+        "operationId": "patch_draft",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "草稿 ID（UUIDv7）",
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftResponse"
+                }
+              }
+            },
+            "description": "更新后的草稿（带新 ETag）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "草稿不存在或不属于该物品"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期（details.currentRevision）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段级校验失败（details.fields；含未知字段/引用不存在/旧 sha 拒绝）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "复核写入：状态、热点校准、步骤视角、知识确认与修订、modelReview（If-Match）",
+        "tags": [
+          "drafts"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/drafts/{draftId}/publish": {
+      "post": {
+        "description": "发布事务在**显式请求**中执行（不存在自动发布路径）。必须携带 If-Match （缺失 428、过期 412）与 `Idempotency-Key`（缺失 422；同 key 同 body 重放返回同一 release 并标记 `x-idempotent-replay: true`；同 key 不同 body 409）。发布不变量全部满足才返回 201：必需知识已确认或有明确人工修订记录、引用页存在、选中模型 validated 且 modelReview.loaded/userConfirmed 均 true 且 revision/hash 匹配、每个要发布的交互部件至少一个 confirmed 热点且 hash 匹配、步骤引用全部存在、无 stale/candidate 热点冒充 confirmed。不满足返回 422 且 `details.issues[]` 逐条列出；「仅文本条目」部件保留并明显标识，不为发布自动隐藏。release 与 manifest 不可变（数据库触发器拒绝修改），发布只写本地数据——不产生费用、不调用任何外部服务。",
+        "operationId": "publish_draft",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "草稿 ID（UUIDv7）",
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseResponse"
+                }
+              }
+            },
+            "description": "已发布（不可变 release；重放同一 release）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "草稿不存在或不属于该物品"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "同 key 不同 body（IDEMPOTENCY_CONFLICT）"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期/并发修改（details.currentRevision）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺 Idempotency-Key（details.fields）或发布不变量不满足（details.issues）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "发布不可变说明书版本（If-Match + Idempotency-Key）",
+        "tags": [
+          "drafts"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/estimates": {
+      "post": {
+        "description": "校验：名称/型号非空、preparation ready、至少 front + left/back/right 之一、图片同物品且每视图唯一、Provider 与价格配置存在。返回分列金额（Tripo creditMinor / Manual AI usdMicros，不相加）、保守上界、价格版本与快照日期、发送范围（确认页数据）、expiresAt（默认 10 分钟）。**不调用任何生成服务、不产生费用记录**。缺价格 → 409 `PRICE_CATALOG_MISSING`；缺 Provider → 409 `PROVIDER_NOT_CONFIGURED`；前置缺项 → 422 `details.items`。",
+        "operationId": "create_estimate",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstimateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            },
+            "description": "报价已生成（绑定输入指纹，可在有效期内确认并提交）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品/准备/照片不存在或不属于该物品"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Provider 或价格配置缺失（PROVIDER_NOT_CONFIGURED / PRICE_CATALOG_MISSING）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段级或前置条件缺项（details.fields / details.items）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "生成前报价（只计算计划，不调用生成服务）",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/estimates/{quoteId}": {
+      "get": {
+        "description": "返回报价载荷（含分列金额、保守上界、发送范围、expiresAt 与确认/消费状态）。过期报价仍可读（界面据此提示重新报价）；提交任务时服务端会再次校验。",
+        "operationId": "get_estimate",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "报价 ID（UUIDv7）",
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            },
+            "description": "报价载荷"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品或报价不存在（含跨物品）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "回读报价（确认页刷新后不丢信息）",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/estimates/{quoteId}/confirm": {
+      "post": {
+        "description": "显式确认后才允许提交任务；**不存在默认勾选**。确认动作写入 audit_events（含发送给 Tripo 的视图、发送给说明书 AI 的页范围/页图与型号文本、模型名、价格版本与预算上界）。重复确认幂等：返回首次确认时间与范围，不覆盖。过期报价不允许确认（422 `quoteExpired`）。本端点不产生任何费用记录。",
+        "operationId": "confirm_estimate",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "报价 ID（UUIDv7）",
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmationResponse"
+                }
+              }
+            },
+            "description": "确认已记录（首次或幂等读回）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品或报价不存在（含跨物品）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "报价已过期（details.reason=quoteExpired）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "确认把选定资料发送给云端（REQ-021）",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/jobs": {
+      "post": {
+        "description": "请求必须携带 `Idempotency-Key`（同 key 同 body 重放返回同一 job；同 key 不同 body → 409 `IDEMPOTENCY_CONFLICT`）。服务端重新校验报价未过期、已确认发送范围、输入未变（重算输入指纹）、价格版本未变、授权上限覆盖服务端保守上界（否则 422，不自动降质量/换模型）。同一事务内冻结快照 + 写入分列费用预留 + 创建 job 与阶段；**不接受前端传入的费用数值**（请求体无费用字段，金额以服务端计算为准）。一份报价只能创建一份任务（重复提交需重新报价）。202 只表示已入队。",
+        "operationId": "create_job",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            },
+            "description": "任务已创建（重放返回同一任务；x-idempotent-replay 标记）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品/报价不存在（含跨物品）"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "同 key 不同 body（IDEMPOTENCY_CONFLICT）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "前置/预算/确认/输入变化等（details.reason）或字段级明细"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "冻结输入并创建生成任务（幂等；首次 202）",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/photos": {
+      "get": {
+        "description": "按槽位顺序 front→left→back→right→detail 返回。集合被视图唯一性上界为 5 条，因此 nextCursor 恒为 null（不是截断），也不支持任何查询参数（分页参数会被 422 拒绝，而不是静默忽略）。detail 在此可见，但不属于多视图集合。",
+        "operationId": "list_photos",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoListResponse"
+                }
+              }
+            },
+            "description": "照片列表"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品不存在"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "携带了不支持的查询参数（details.fields）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "视图照片列表（含 detail；每视图最多一张，无分页）",
+        "tags": [
+          "photos"
+        ]
+      },
+      "post": {
+        "description": "assetId 必须属于同一物品且为照片（JPEG/PNG）；view ∈ front/left/back/right/detail。同一物品同一视图已有照片时返回 422（details.reason=viewOccupied + existingPhotoId），不静默覆盖——换视图请 PATCH 已有照片。detail 为特写，不进入多视图请求体。",
+        "operationId": "create_photo",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponse"
+                }
+              }
+            },
+            "description": "已添加（响应带 ETag: \"r1\"）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "物品或资产不存在/不属该物品"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "视图非法、资产类型不符或视图已被占用（details.fields / details.reason）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "添加视图照片（同一视图最多一张）",
+        "tags": [
+          "photos"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/photos/{photoId}": {
+      "get": {
+        "description": "返回照片并带 ETag: \"r<revision>\"；跨物品/不存在 → 404。",
+        "operationId": "get_photo",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "照片 ID（UUIDv7）",
+            "in": "path",
+            "name": "photoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponse"
+                }
+              }
+            },
+            "description": "照片"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "照片不存在或不属于该物品"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "读取视图照片",
+        "tags": [
+          "photos"
+        ]
+      },
+      "patch": {
+        "description": "字段缺失 = 保持原值；显式 null = 422（照片必须始终有资产与视图）；空请求体 = 422。修改视图时若目标视图已被同物品另一张照片占用 → 422 （details.reason=viewOccupied + existingPhotoId）。缺 If-Match → 428；revision 过期 → 412 + details.currentRevision。",
+        "operationId": "patch_photo",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "照片 ID（UUIDv7）",
+            "in": "path",
+            "name": "photoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponse"
+                }
+              }
+            },
+            "description": "更新后的照片（带新 ETag）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "照片/资产不存在或不属于该物品"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期（details.currentRevision）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段级校验失败或视图占用（details.fields / details.reason）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "修改视图照片（If-Match 乐观锁）",
+        "tags": [
+          "photos"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/releases": {
+      "get": {
+        "description": "返回该物品的不可变发布版本（`draftRevision` / `modelRevisionId` / manifest 资产）。已发布内容不可修改；列表不返回 manifest 内容，完整 manifest 用 `GET /items/{id}/releases/{releaseId}`。",
+        "operationId": "list_releases",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseListResponse"
+                }
+              }
+            },
+            "description": "版本列表"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "发布版本列表（发布时间倒序）",
+        "tags": [
+          "releases"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/releases/{releaseId}": {
+      "get": {
+        "description": "返回被冻结的 manifest：`model`（本地资产 assetId / sha256 / revision）、`knowledge`（部件/步骤/规格/出处/热点/步骤视角）、`review`（实体确认、人工修订、modelReview 声明）、`assets`（引用资产的 sha256 与来源）、`documents`（说明书原件与准备）。`manifestSha256` 供字节比对：发布后修改草稿不会改变已发布版本。",
+        "operationId": "get_release",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "发布版本 ID（UUIDv7）",
+            "in": "path",
+            "name": "releaseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseDetailResponse"
+                }
+              }
+            },
+            "description": "发布版本与 manifest"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "发布版本不存在或不属于该物品"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "读取发布版本与完整 manifest（不可变）",
+        "tags": [
+          "releases"
+        ]
+      }
+    },
+    "/api/v1/jobs": {
+      "get": {
+        "description": "稳定排序 (createdAt DESC, id DESC)。可选 `itemId` 只列该物品的任务；nextCursor 是**不透明**字符串（已绑定过滤条件）——切换过滤条件时必须从头分页。每行给出整体状态、**阶段计数摘要**（active/blocked/unknown/failed…，不是百分比）、分列费用预留与草稿 id。未知状态如实返回（前端轮询用）。",
+        "operationId": "list_jobs",
+        "parameters": [
+          {
+            "description": "每页条数，默认 20，最大 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "上一页返回的 nextCursor（原样回传）",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "只看该物品的任务",
+            "in": "query",
+            "name": "itemId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListResponse"
+                }
+              }
+            },
+            "description": "任务列表"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "查询参数非法（details.fields）"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "任务中心列表（游标分页）",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}": {
+      "get": {
+        "description": "返回阶段明细（含 `needsInput` 缺项与 `knowledgeProduced` 事实——该批是否产出正式知识，与恢复判据同源）、付费 attempt（对账入口）、分列费用预留与草稿 id。未知状态如实返回；`submission_unknown` 显示对账入口而不是重试。",
+        "operationId": "get_job",
+        "parameters": [
+          {
+            "description": "任务 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDetailResponse"
+                }
+              }
+            },
+            "description": "任务详情（带 ETag）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "任务不存在"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "任务详情（阶段/尝试/费用/缺项；ETag 供 cancel/retry/reconcile 的 If-Match）",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/cancel": {
+      "post": {
+        "description": "必须携带 If-Match（任务详情的 ETag）。未提交阶段（含无已接受 attempt 的 running）转 cancelled；**已提交给供应商的阶段（waiting_provider）与 submission_unknown 保持原状态**：供应商侧可能已在计费，取消不保证对方撤单。响应固定携带 notice，明确「取消不撤销远端付费操作」；动作写入 audit_events。已终态任务 → 422（cancelNotNeeded）。",
+        "operationId": "cancel_job",
+        "parameters": [
+          {
+            "description": "任务 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelResponse"
+                }
+              }
+            },
+            "description": "取消结果（job + 保留阶段 + 后果说明）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "任务不存在"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期（details.currentRevision）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "已终态（details.reason=cancelNotNeeded）或 If-Match 非法"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "取消任务（未提交阶段停止推进；已提交阶段保留查询与账务）",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/reconcile": {
+      "post": {
+        "description": "只处理 `submission_unknown` 的阶段；必须携带 If-Match。单管理员自托管下\"仅管理员\"=已认证会话。`attachRemoteTask`（**仅 Tripo**）：附加账户中查到的任务 ID，服务端会查询验证可访问性与任务形态，并要求 `acknowledgeMatches` 二次确认；`recordNoTask`：要求 `evidence` 核查证据（管理员声明，**不是**供应商出具的证明）；`authorizeReplacement`：要求 `acknowledgeDuplicateRisk` 与 `limits` 再次预算确认（覆盖冻结上界），创建新 attempt、保留旧 attempt 未决账务。unknown 预留不自动释放；全部动作写入 audit_events。",
+        "operationId": "reconcile_job",
+        "parameters": [
+          {
+            "description": "任务 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconcileResponse"
+                }
+              }
+            },
+            "description": "对账结果（action 后果说明）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "任务或阶段不存在"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "供应商未配置（PROVIDER_NOT_CONFIGURED）"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期（details.currentRevision）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "动作/字段/验证失败或前置不满足（details.reason/fields）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "对账 submission_unknown（attachRemoteTask / recordNoTask / authorizeReplacement）",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{id}/retry": {
+      "post": {
+        "description": "必须携带 If-Match 与 `Idempotency-Key`（重放不产生第二个 attempt）。只接受 `failed` / `needs_input` 阶段：它们被拉回队列，已完成的其他阶段成果保留，**不改变模型/质量预设**。`submission_unknown` 不是重试入口（422，需先对账）；同分支存在未对账提交或任务已取消时同样拒绝且无副作用。动作写入 audit_events。",
+        "operationId": "retry_job",
+        "parameters": [
+          {
+            "description": "任务 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryResponse"
+                }
+              }
+            },
+            "description": "重试已入队（重放返回同一结果；x-idempotent-replay 标记）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "任务或阶段不存在"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "同 key 不同 body（IDEMPOTENCY_CONFLICT）"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期（details.currentRevision）"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "不可重试/缺 Idempotency-Key/未知未对账（details.reason/fields）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "按分支重试指定阶段（只重跑失败/缺项的阶段）",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/preparations/{id}": {
+      "get": {
+        "description": "响应带 `ETag: \"r<revision>\"`（封存与页覆盖用 If-Match）。`missingPages`：未封存时为空数组（总页数只有浏览器知道），ready 时为 1..pageCount 中缺失的页号。客户端只补缺页，不重传已完成页；服务端记录是事实来源，IndexedDB 不是。",
+        "operationId": "get_preparation",
+        "parameters": [
+          {
+            "description": "preparation ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationDetailResponse"
+                }
+              }
+            },
+            "description": "准备详情"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "preparation 不存在"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "准备状态、页状态与缺页（断线续传入口）",
+        "tags": [
+          "preparations"
+        ]
+      }
+    },
+    "/api/v1/preparations/{id}/complete": {
+      "post": {
+        "description": "`If-Match` + `pageCount`；事务内校验 1..N 连续、每页有页图资产、资产属于该物品且内容可用；缺页/资产不符 → 422 列出缺项（`details.missingPages` / `details.pages`）。成功标记 `clientDerived` 并保留原件供复核。**不创建 job、不写费用账本、不产生任何外呼**。",
+        "operationId": "complete_preparation",
+        "parameters": [
+          {
+            "description": "preparation ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreparationCompleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationResponse"
+                }
+              }
+            },
+            "description": "已封存（ready）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "preparation 不存在"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "If-Match 的 revision 已过期"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺页/资产不符/页数超限/已封存"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "封存准备（ready）",
+        "tags": [
+          "preparations"
+        ]
+      }
+    },
+    "/api/v1/preparations/{id}/pages/{pageNumber}": {
+      "put": {
+        "description": "页码 1-based（≥1 且 ≤100）。资产必须属于该物品且 purpose 正确（pageText / pageImage，pageImage 必须是 JPEG），否则 404/422。相同内容（资产 blob sha256 与 viewport 都相同）重复提交幂等，不自增 revision；内容变化必须带 If-Match（缺 428、过期 412）；封存（ready）后拒写（422 `details.reason=preparationReady`）。",
+        "operationId": "put_page",
+        "parameters": [
+          {
+            "description": "preparation ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "1-based 页号（1..100）",
+            "in": "path",
+            "name": "pageNumber",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagePutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponse"
+                }
+              }
+            },
+            "description": "页已写入（相同内容幂等时同样返回 200）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "preparation 或资产不存在/不属该物品"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "If-Match 的 revision 已过期"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段/业务校验失败（页号、viewport、资产、ready 拒写）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "内容变化但缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "上传单页（页文字/页图与 viewport）",
+        "tags": [
+          "preparations"
+        ]
+      }
+    },
+    "/api/v1/releases/{releaseId}/export": {
+      "get": {
+        "description": "下载该发布版本的自包含包：`manifest.json`（schemaVersion、item、release、知识、相对资产清单与 sha256/来源）、`release/manifest.json`（冻结清单，字节原样）、`assets/model/<sha256>.glb`、`assets/document/<sha256>.pdf`。只导出该 release 有权资产；不含密钥、会话、绝对路径与临时云端 URL；不承诺可直接双击运行网站（数据便携与灾备）。",
+        "operationId": "export_release",
+        "parameters": [
+          {
+            "description": "发布版本 ID（UUIDv7）",
+            "in": "path",
+            "name": "releaseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "ZIP 自包含包（Content-Disposition: attachment）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "发布版本不存在"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "导出发布版自包含包（ZIP：原件 / GLB / manifest / 哈希）",
+        "tags": [
+          "releases"
+        ]
+      }
+    },
+    "/api/v1/settings/status": {
+      "get": {
+        "description": "返回 providersConfigured / limits / capabilities。**不含密钥或完整配置**；未配置的供应商如实为 false（不回落 mock）。",
+        "operationId": "status",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsStatusResponse"
+                }
+              }
+            },
+            "description": "配置状态"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "配置状态与能力",
+        "tags": [
+          "settings"
+        ]
+      }
+    }
+  }
+}

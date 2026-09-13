@@ -1,0 +1,10 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文）；status/progress 为归一化前的原始字段示意",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "running",
+    "progress": 50,
+    "output": {}
+  }
+}

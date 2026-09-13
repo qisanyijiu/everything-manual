@@ -1,0 +1,55 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.67s
+     Running tests/qa_t14_independent.rs (target/debug/deps/qa_t14_independent-d7ba277859999382)
+
+running 12 tests
+test qa_t14_page_instructions_cannot_change_budget_or_reach_network ... ok
+test qa_t14_persisted_result_is_advanced_on_recovery_without_repaying ... ok
+test qa_t14_rate_limit_waits_retry_after_before_second_request ... ok
+test qa_t14_merge_dedups_keeps_provenance_and_conflicts ... FAILED
+test qa_t14_out_of_plan_batch_and_released_budget_send_zero_requests ... ok
+test qa_t14_batches_are_limited_and_covered_with_independent_assets ... ok
+test qa_t14_fake_page_and_part_references_are_rejected ... ok
+test qa_t14_request_bytes_and_scan_page_image ... ok
+test qa_t14_rejections_never_produce_knowledge_and_lock_merge ... FAILED
+test qa_t14_unpersisted_response_becomes_unknown_and_pauses_branch ... FAILED
+test qa_t14_submission_window_keeps_t10_semantics_under_writer_contention ... ok
+test qa_t14_server_side_second_validation_catches_oversized_and_unknown_fields ... ok
+
+failures:
+
+---- qa_t14_merge_dedups_keeps_provenance_and_conflicts stdout ----
+QA-FIXTURE[57547]: 连接在读到头之前结束（读入 0 字节；读错误 Some("Resource temporarily unavailable (os error 35)")）
+
+thread 'qa_t14_merge_dedups_keeps_provenance_and_conflicts' (12955646) panicked at crates/server/tests/qa_t14_independent.rs:973:5:
+批次 0 未在 10 tick 内达到 succeeded（实际 submission_unknown；last_error=Some("传输失败：请求发送失败：error sending request for url (http://127.0.0.1:57547/v1/responses)")；needs_input=None）
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- qa_t14_rejections_never_produce_knowledge_and_lock_merge stdout ----
+QA-FIXTURE[57546]: POST /v1/responses body=4188 bytes connection=None
+QA-FIXTURE[57546]: POST /v1/responses body=4190 bytes connection=None
+QA-FIXTURE[57546]: 连接在读到头之前结束（读入 0 字节；读错误 Some("Resource temporarily unavailable (os error 35)")）
+
+thread 'qa_t14_rejections_never_produce_knowledge_and_lock_merge' (12955651) panicked at crates/server/tests/qa_t14_independent.rs:973:5:
+批次 2 未在 15 tick 内达到 needs_input（实际 submission_unknown；last_error=Some("传输失败：请求发送失败：error sending request for url (http://127.0.0.1:57546/v1/responses)")；needs_input=None）
+
+---- qa_t14_unpersisted_response_becomes_unknown_and_pauses_branch stdout ----
+QA-FIXTURE[57560]: 连接在读到头之前结束（读入 0 字节；读错误 Some("Resource temporarily unavailable (os error 35)")）
+
+thread 'qa_t14_unpersisted_response_becomes_unknown_and_pauses_branch' (12955712) panicked at crates/server/tests/qa_t14_independent.rs:2192:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+
+failures:
+    qa_t14_merge_dedups_keeps_provenance_and_conflicts
+    qa_t14_rejections_never_produce_knowledge_and_lock_merge
+    qa_t14_unpersisted_response_becomes_unknown_and_pauses_branch
+
+test result: FAILED. 9 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.46s
+
+error: test failed, to rerun pass `-p everything-manual --test qa_t14_independent`

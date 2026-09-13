@@ -1,0 +1,5 @@
+writer progress: acquired=100 busy=0 total=100 elapsed=0.6s
+writer progress: acquired=200 busy=0 total=200 elapsed=1.2s
+writer progress: acquired=300 busy=0 total=300 elapsed=1.9s
+writer progress: acquired=400 busy=0 total=400 elapsed=2.5s
+writer: acquired=485 busy=0 total=485

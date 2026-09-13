@@ -1,0 +1,25 @@
+init exit=0
+--- schema_migrations ---
+1|core schema|1
+2|invariants|1
+3|photos view unique|1
+4|preparation pages|1
+5|job execution|1
+6|generation requests|1
+--- model_revisions DDL ---
+CREATE TABLE model_revisions (
+    id                  TEXT PRIMARY KEY,
+    item_id             TEXT NOT NULL REFERENCES items (id) ON DELETE RESTRICT,
+    asset_id            TEXT NOT NULL REFERENCES assets (id) ON DELETE RESTRICT,
+    sha256              TEXT NOT NULL
+        CHECK (length(sha256) = 64 AND sha256 GLOB '[0-9a-f]*' AND NOT sha256 GLOB '*[^0-9a-f]*'),
+    provider_attempt_id TEXT REFERENCES provider_attempts (id) ON DELETE RESTRICT,
+    bounds              TEXT CHECK (bounds IS NULL OR json_valid(bounds)),
+    validation_state    TEXT NOT NULL DEFAULT 'pending'
+        CHECK (validation_state IN ('pending', 'validated', 'rejected')),
+    created_at          INTEGER NOT NULL
+);
+CREATE INDEX model_revisions_item ON model_revisions (item_id, created_at DESC);
+--- model_revisions indexes ---
+sqlite_autoindex_model_revisions_1|
+model_revisions_item|CREATE INDEX model_revisions_item ON model_revisions (item_id, created_at DESC)

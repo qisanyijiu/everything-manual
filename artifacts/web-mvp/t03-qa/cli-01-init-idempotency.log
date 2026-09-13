@@ -1,0 +1,73 @@
+# QA T03 CLI fresh init / idempotency / pragma readout 2026-09-11T18:53:22Z
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.22s
+7e2720da7cba6e30d1dd121ed98dca86560d59b73c5d285434372530bf5f4b90  target/debug/everything-manual
+3.51.0 2025-06-12 13:14:41 f0ca7bba1c5e232e5d279fad6338121ab55af0c8c68c84cdfb18ba5114dcaapl (64-bit)
+--- init #1
+{"timestamp":"2026-09-11T18:53:23.012255Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t03-qa/data1","passwordSource":"受限文件 /tmp/em-t03-qa/pw.txt","schemaVersion":2},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t03-qa/data1
+  - 已创建：/tmp/em-t03-qa/data1
+  - 已创建：/tmp/em-t03-qa/data1/tmp
+  - 已创建：/tmp/em-t03-qa/data1/logs
+  - 已创建：/tmp/em-t03-qa/data1/blobs
+  - 已创建：/tmp/em-t03-qa/data1/lock
+数据库：已创建并迁移（/tmp/em-t03-qa/data1/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员密码：已从 受限文件 /tmp/em-t03-qa/pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码。
+exit=0
+--- init #2 (idempotent)
+{"timestamp":"2026-09-11T18:53:23.023837Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t03-qa/data1","passwordSource":"受限文件 /tmp/em-t03-qa/pw.txt","schemaVersion":2},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t03-qa/data1
+  - 目录已存在：/tmp/em-t03-qa/data1
+  - 目录已存在：/tmp/em-t03-qa/data1/tmp
+  - 目录已存在：/tmp/em-t03-qa/data1/logs
+  - 目录已存在：/tmp/em-t03-qa/data1/blobs
+  - 锁文件已存在：/tmp/em-t03-qa/data1/lock
+数据库：已就绪（/tmp/em-t03-qa/data1/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员密码：已从 受限文件 /tmp/em-t03-qa/pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码。
+exit=0
+--- check #1
+有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /tmp/em-t03-qa/data1
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T18:53:23.034230Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+exit=0
+--- check #2
+exit=0
+--- sqlite3 _sqlx_migrations
+1|1|core schema
+2|1|invariants
+--- sqlite3 table/index/trigger counts
+20|25|4
+--- sqlite3 journal_mode (persistent)
+wal
+--- files
+total 672
+drwx------@ 9 qsyj  wheel     288  9月 12 02:53 .
+drwxr-xr-x@ 4 qsyj  wheel     128  9月 12 02:53 ..
+drwx------@ 2 qsyj  wheel      64  9月 12 02:53 blobs
+-rw-------@ 1 qsyj  wheel      36  9月 12 02:53 lock
+drwx------@ 3 qsyj  wheel      96  9月 12 02:53 logs
+-rw-------@ 1 qsyj  wheel  307200  9月 12 02:53 manual.sqlite3
+-rw-------@ 1 qsyj  wheel   32768  9月 12 02:53 manual.sqlite3-shm
+-rw-------@ 1 qsyj  wheel       0  9月 12 02:53 manual.sqlite3-wal
+drwx------@ 2 qsyj  wheel      64  9月 12 02:53 tmp

@@ -1,0 +1,174 @@
+QA 手工冒烟  2026-09-12 04:25:52 CST  binary=/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+0c457a2a5b7204c37a64d854bf5e09986894f2c1d0cbde5173781ae450bb95fa  /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+
+== 0) init + serve
+  init exit=0
+  PASS  health/ready = 200
+
+== 1) 登录（会话 + CSRF）
+  PASS  login = 200
+  csrf=a6d6569e11…  cookie=em_session=2b1e023a9…
+  itemA=f0867290-8c07-400c-a0ad-ea3936068a26 itemB=5cdf3343-9287-4456-b811-82ed2652d417
+
+== 2) AC-018 正常上传（PDF/JPEG/PNG）+ 文件名只作元数据
+  PASS  PNG 上传（filename=../../../qa-pwn.png） = 201
+  PASS    sha256 = 8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d
+  PASS    size = 377121
+  PASS    mime = image/png
+  PASS    originalName（只取 basename） = qa-pwn.png
+  PASS    storageState = stored
+  PASS    purpose = photo
+  PASS  JPEG 上传 = 201
+  PASS    mime = image/jpeg
+  PASS  PDF 上传（filename=../../../../pwned.pdf） = 201
+  PASS    mime = application/pdf
+  PASS    originalName = pwned.pdf
+
+== 2b) 负例：Content-Type/后缀不可信（magic 为准）
+  PASS  真 PNG 谎报 application/pdf + .pdf 后缀（purpose=photo） = 201
+  PASS    仍按内容识别 = image/png
+  PASS  非图片谎报 image/png（purpose=photo） = 415
+  PASS    code = UNSUPPORTED_MEDIA_TYPE
+
+== 2c) 路径穿越不产生越界写入
+  PASS  data-dir 内外均无被穿越创建的文件 = 0
+  PASS  内容只落在内容寻址路径（blobs 文件数） = 3
+
+== 3) AC-018 内容按 sha256 去重（同一 blob）
+  PASS  重复上传同内容 = 201
+  PASS    同 sha256 = 8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d
+  PASS    asset id 不同（新记录）
+  PASS    blobs 行数 = 3
+  PASS    assets 行数 = 5
+  PASS    blobs/ 文件数 = 3
+  PASS    物品 A 累计体积（去重后） = 457328
+  PASS    tmp 无残留 = 0
+
+== 4) AC-018 GET / HEAD / Range / ETag / 条件请求
+  PASS  GET 200 = 200
+  PASS  GET 字节与源文件一致
+  PASS    content-length = 377121
+  PASS    etag = "8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d"
+  PASS    accept-ranges = bytes
+  PASS    content-type = image/png
+  PASS    x-content-type-options = nosniff
+  PASS  无 content-encoding（不动态压缩）
+  PASS  HEAD 200（独立 HTTP 客户端量 body） = 200
+  PASS    body 字节数 = 0
+  PASS    content-length 与 GET 相同 = 377121
+  PASS    etag 与 GET 相同 = "8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d"
+  PASS  Range bytes=0-9 → 206 = 206
+  PASS    content-range = bytes 0-9/377121
+  PASS    content-length = 10
+  PASS    区间字节与源文件一致
+  PASS  Range bytes=10- → 206 = 206
+  PASS    content-range = bytes 10-377120/377121
+  PASS    content-length = 377111
+  PASS    区间字节与源文件一致
+  PASS  Range bytes=-5 → 206 = 206
+  PASS    content-range = bytes 377116-377120/377121
+  PASS    content-length = 5
+  PASS    区间字节与源文件一致
+  PASS  Range bytes=99999999- → 416 = 416
+  PASS    content-range = bytes */377121
+  PASS    错误体 code = VALIDATION_FAILED
+  PASS  Range bytes=-0 → 416 = 416
+  PASS    content-range = bytes */377121
+  PASS  多区间 → 完整 200（不拼接） = 200
+  PASS    多区间回落为完整内容
+  PASS  If-None-Match 命中 → 304 = 304
+artifacts/web-mvp/t06-qa/manual-smoke.sh: line 207: /tmp/em-t06-qa-work/inm.body: No such file or directory
+  FAIL    304 body 为空: expected [0] got []
+  PASS    304 带 etag = "8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d"
+  PASS  If-None-Match 不命中 → 200 = 200
+  PASS  If-Range 匹配 → 206 = 206
+  PASS  If-Range ["stale"] → 完整 200 = 200
+  PASS    完整长度 = 377121
+  PASS  If-Range [W/"8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d"] → 完整 200 = 200
+  PASS    完整长度 = 377121
+  PASS  If-Range [Wed, 21 Oct 2015 07:28:00 GMT] → 完整 200 = 200
+  PASS    完整长度 = 377121
+  PASS  HEAD + Range → 206 = 206
+  PASS    body 为空 = 0
+  PASS    content-range = bytes 0-9/377121
+  PASS  HEAD 未知资产 → 404（无 body） = 404
+
+== 5) AC-019 伪造类型 / purpose / 请求形态
+  FAIL  文本冒充 PDF → 415: expected [415] got [422]
+  PASS  PNG 冒充 PDF → 415 = 415
+  PASS  非图片冒充 JPEG → 415 = 415
+  PASS  purpose=model → 422 = 422
+  PASS  purpose=page_image（非线上值）→ 422 = 422
+  PASS  缺少 purpose → 422 = 422
+  PASS  缺少 file → 422 = 422
+  PASS  未知表单字段 → 422 = 422
+  PASS  非 multipart → 415 = 415
+  PASS  缺 CSRF → 403 = 403
+  PASS  无会话读内容 → 401 = 401
+  PASS  未知资产 → 404 = 404
+  PASS  不存在的物品上传 → 404 = 404
+
+== 6) AC-019 超限 / 像素炸弹 / 解码失败
+  PASS  21 MiB 照片（>20 MiB）→ 413 = 413
+  PASS  21 MiB 照片（purpose 在 file 之后到达）→ 413 兜底 = 413
+  PASS  52 MiB 请求体（>51 MiB 路由上限）→ 413 = 413
+  PASS  像素炸弹 60000×60000 → 422 = 422
+  PASS    details.reason = imagePixels
+  PASS    details.width = 60000
+  PASS  截断 PNG → 422 = 422
+  PASS  CRC 损坏 PNG → 422 = 422
+  PASS  缺 EOI 的 JPEG → 422 = 422
+  PASS  结构不完整 PDF → 422 = 422
+  PASS  非 UTF-8 的 pageText → 422 = 422
+
+== 7) 失败路径无半提交（行数/文件数/tmp 与失败前一致）
+  PASS    blobs 行数 = 3
+  PASS    assets 行数 = 5
+  PASS    blobs/ 文件数 = 3
+  PASS    tmp 文件数 = 0
+
+== 8) 响应/日志不泄露磁盘路径
+  PASS  响应中无 data-dir 路径与 blobs/ 字样 = 0
+
+== 9) BUG-001 生产语义复核：默认 5 次/60s + Retry-After（HTTP 层）
+  PASS  第 1 次错误密码 → 401 = 401
+  PASS  第 2 次错误密码 → 401 = 401
+  PASS  第 3 次错误密码 → 401 = 401
+  PASS  第 4 次错误密码 → 401 = 401
+  PASS  第 5 次错误密码 → 401 = 401
+  PASS  第 6 次（正确密码）→ 429（限速未变） = 429
+  PASS    retry-after = 60
+  PASS    code = RATE_LIMITED
+
+== 10) 40 MiB PDF：流式上传 + 服务进程内存观察（item B）
+  上传前 RSS=29840KB
+  采样 3 次；峰值 RSS=29840KB（Δ=0MiB），上传后 RSS=29840KB
+  FAIL  40 MiB PDF 上传: expected [201] got [422]
+artifacts/web-mvp/t06-qa/manual-smoke.sh: line 324: /tmp/em-t06-qa-work/data/blobs/f1/f172d25c30d12e03914eb4e0cc4afa682ffa18bd5c36570e85b859beb8970064: No such file or directory
+  FAIL    blob 文件大小: expected [41943880] got []
+  PASS    RSS 增量 (0MiB) 远小于文件大小 (40MiB) → 未整文件读入内存
+
+== 11) 共享 blob 安全（跨物品去重）
+  PASS  同内容上传到物品 B = 201
+  FAIL    仍只有一行 blob: expected [4] got [3]
+  FAIL    该 blob 引用计数: expected [2] got [4]
+  FAIL    blobs/ 文件数: expected [4] got [3]
+
+== 12) 崩溃残留隔离 + missing↔stored 收敛（重启 serve）
+  "event":"asset_scan","tmpQuarantined":1,"blobsQuarantined":1,"blobsKept":2,"blobsRestored":0,"blobsMarkedMissing":1
+  PASS    tmp 残留被隔离到 quarantine = yes
+  PASS    孤儿 blob 被隔离到 quarantine = yes
+  PASS    隔离内容逐字节保留 = orphan-blob-bytes
+  PASS    被引用的 blob 未被移动 = yes
+  PASS    blobs/ 根残留被隔离（无散文件） = 0
+  PASS    文件被移走 → storage_state = missing
+  PASS    missing 资产内容 → 404 = 404
+  PASS    文件恢复 → storage_state = stored
+  PASS    恢复后可读 → 200 = 200
+  PASS    二次扫描后隔离区文件数不变 = 2
+  FAIL    blobs 目录内容未变化（含恢复后的 jpg）: expected [41612f2aa3fcaecb2230f0f7f53a4803decca8206222ded8b2983eb7f1f72e95  /tmp/em-t06-qa-work/data/blobs/41/41612f2aa3fcaecb2230f0f7f53a4803decca8206222ded8b2983eb7f1f72e95
+8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d  /tmp/em-t06-qa-work/data/blobs/8f/8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d] got [41612f2aa3fcaecb2230f0f7f53a4803decca8206222ded8b2983eb7f1f72e95  /tmp/em-t06-qa-work/data/blobs/41/41612f2aa3fcaecb2230f0f7f53a4803decca8206222ded8b2983eb7f1f72e95
+8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d  /tmp/em-t06-qa-work/data/blobs/8f/8f0500064ab152e3692a8623ebd00e332bfdd186d3e9ed5ba7887ac32bd7978d
+dc300ee0f016c7338ae03e4e7c27a628c9dcc5de42752f5242a27d81373eaadf  /tmp/em-t06-qa-work/data/blobs/dc/dc300ee0f016c7338ae03e4e7c27a628c9dcc5de42752f5242a27d81373eaadf]
+
+===== 小结：PASS=121 FAIL=8 =====

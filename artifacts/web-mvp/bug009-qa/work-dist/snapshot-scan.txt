@@ -1,0 +1,6 @@
+== 快照逐表逐列扫描（job_stages / provider_attempts 全部文本列 × 全部判据）
+  （无 !! 行 = 0 命中）
+== URL 形态命中合计 = 0
+== 快照内文本（stage）=  模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=1ad284853e658cec…）)
+== 快照内文本（attempt）=  链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=d7baeacc4365aace…）已过期，请重试 | 见 '（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=cd38bfde1e241f90…）' 后重试 | 下一行 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=33d5d06af12fa061…）：以及结束 | 结尾 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=036dabd5e67ac817…），结束
+== 快照内 needs_input_json（非 JSON 列扫描口径；JSON 列走对象替换，见 BUG-011）=  (该列已无 '://')

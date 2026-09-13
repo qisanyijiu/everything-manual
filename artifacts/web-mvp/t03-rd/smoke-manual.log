@@ -1,0 +1,41 @@
+### 1) init --data-dir ./manual-data（新临时 data-dir）
+{"timestamp":"2026-09-11T18:46:37.676820Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t03-manual2/manual-data","passwordSource":"受限文件 ./pw.txt","schemaVersion":2},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t03-manual2/manual-data
+  - 已创建：/private/tmp/em-t03-manual2/manual-data
+  - 已创建：/private/tmp/em-t03-manual2/manual-data/tmp
+  - 已创建：/private/tmp/em-t03-manual2/manual-data/logs
+  - 已创建：/private/tmp/em-t03-manual2/manual-data/blobs
+  - 已创建：/private/tmp/em-t03-manual2/manual-data/lock
+数据库：已创建并迁移（/private/tmp/em-t03-manual2/manual-data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员密码：已从 受限文件 ./pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码。
+exit=0
+
+### 2) check #1（应报告 schema 就绪）
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+结果：check 通过
+exit=0
+
+### 3) check #2（幂等）
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+结果：check 通过
+exit=0
+
+### 4) serve 打开/关闭两次（同一 data-dir，确认迁移幂等与锁释放）
+serve #1: 监听 http://127.0.0.1:51873 , GET /api/v1/health/live -> 200 , SIGTERM 退出码=0
+{"timestamp":"2026-09-11T18:46:37.710509Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/private/tmp/em-t03-manual2/manual-data","schemaVersion":2},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T18:46:38.169834Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+serve #2: 监听 http://127.0.0.1:51875 , GET /api/v1/health/live -> 200 , SIGTERM 退出码=0
+{"timestamp":"2026-09-11T18:46:38.187692Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/private/tmp/em-t03-manual2/manual-data","schemaVersion":2},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T18:46:38.644314Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+
+### 5) 两次 serve 后数据库状态（迁移记录不重复）
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+total 608
+drwx------@ 7 qsyj  wheel     224  9月 12 02:46 .
+drwxr-xr-x@ 6 qsyj  wheel     192  9月 12 02:46 ..
+drwx------@ 2 qsyj  wheel      64  9月 12 02:46 blobs
+-rw-------@ 1 qsyj  wheel      37  9月 12 02:46 lock
+drwx------@ 3 qsyj  wheel      96  9月 12 02:46 logs
+-rw-------@ 1 qsyj  wheel  307200  9月 12 02:46 manual.sqlite3
+drwx------@ 2 qsyj  wheel      64  9月 12 02:46 tmp

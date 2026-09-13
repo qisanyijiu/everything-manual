@@ -1,0 +1,29 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running tests/manual_ai_contract.rs (target/debug/deps/manual_ai_contract-99f216cbdff6e57e)
+
+running 19 tests
+test batch_result_marks_scan_page_evidence_as_derived_and_keeps_server_provenance ... ok
+test extract_request_uses_responses_text_format_with_strict_schema_and_image_data_url ... ok
+test evidence_referencing_pages_outside_the_batch_input_is_rejected ... ok
+test batches_outside_the_frozen_plan_are_never_requested ... ok
+test batch_without_persisted_response_is_unknown_and_pauses_the_branch ... ok
+test merge_deduplicates_same_facts_and_keeps_provenance_from_both_batches ... ok
+test provider_registration_is_explicit_and_mutually_exclusive ... ok
+test begin_intent_survives_active_writer_contention ... ok
+test merge_is_blocked_when_plan_pages_are_not_covered ... ok
+test merge_reuses_existing_result_without_duplicating_assets ... ok
+test persisted_response_is_advanced_on_recovery_without_repaying ... ok
+test page_text_instructions_cannot_change_budget_or_trigger_actions ... ok
+test refusal_produces_no_official_knowledge_and_locks_merge ... ok
+test transport_failure_after_request_is_unknown_and_never_resent ... ok
+test step_referencing_unknown_part_is_rejected ... ok
+test rate_limit_is_retryable_and_client_error_is_actionable ... ok
+test retry_after_needs_input_clears_stale_result_before_new_attempt ... ok
+test seven_pages_split_into_batches_cover_all_pages_and_merge_dedups_with_conflicts ... ok
+test incomplete_truncated_malformed_and_schema_violations_never_become_knowledge ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.91s
+

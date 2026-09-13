@@ -1,0 +1,29 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/qa_t13_independent.rs (target/debug/deps/qa_t13_independent-6fefcc67a5ae0bf2)
+
+running 19 tests
+test qa_bug012_provider_text_signed_url_must_not_be_persisted_into_usage_json ... ignored, BUG-012 未修复（QA 回合 27）：提供方文本里的签名 URL 落库到 job_stages.usage_json；修复后去掉 ignore
+test qa_container_negatives_reject_handcrafted_bytes ... ok
+test qa_jpeg_with_sof_beyond_the_64kib_window_is_rejected ... ok
+test qa_budget_negatives_and_original_file_is_untouched ... ok
+test qa_geometry_negatives_reject_bad_data ... ok
+test qa_layout_negatives_reject_out_of_range_and_alignment ... ok
+test qa_dns_rebinding_mixed_answers_and_address_classes_are_refused ... ok
+test qa_pin_ip_keeps_hostname_and_sends_no_credentials ... ok
+test qa_resource_and_extension_negatives ... ok
+test qa_redirect_negatives_never_reach_the_next_hop ... ok
+test qa_size_gates_truncation_retry_and_disk_full ... ok
+test qa_rebinding_at_executor_level_blocks_download ... ok
+test qa_bug009_provider_text_url_never_shows_in_job_detail ... ok
+test qa_bug009_http_error_path_after_refresh_never_persists_signed_url ... ok
+test qa_refreshed_link_is_revalidated_and_never_repurchases ... ok
+test qa_valid_model_creates_immutable_validated_revision ... ok
+test qa_bug009_transport_failure_never_persists_signed_url ... ok
+test qa_over_budget_preserves_original_bytes_and_never_repurchases ... ok
+test qa_truncated_glb_at_handler_level_keeps_original ... ok
+
+test result: ok. 18 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.78s
+

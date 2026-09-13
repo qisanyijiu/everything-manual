@@ -1,0 +1,12 @@
+{"timestamp":"2026-09-12T17:23:22.964314Z","level":"INFO","fields":{"message":"恢复完成","event":"restore_cli_completed","from":"/tmp/em-t20-qa/my-backup","dataDir":"/tmp/em-t20-qa/restored-fresh","schemaVersion":7},"target":"everything_manual::config::commands"}
+恢复完成：/tmp/em-t20-qa/restored-fresh
+  来源备份：/tmp/em-t20-qa/my-backup（schema v7；快照 sha256 7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012）
+  校验通过：manifest、快照与全部 blob 的 sha256、外键与引用；恢复 blob 11 个
+  数据规模：items 2、assets 14、releases 1、blobs 11
+  下一步：everything-manual serve --data-dir /tmp/em-t20-qa/restored-fresh（schema 旧于程序时启动会自动迁移；升级前请再次备份，程序回滚不等于数据库回滚）
+restore exit=0
+manifest=7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012
+restored=7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012
+OK: 逐字节一致
+journal_mode=delete
+items=2

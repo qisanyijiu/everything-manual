@@ -1,0 +1,297 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running unittests src/lib.rs (target/debug/deps/everything_manual-10dd23b2ff1fc855)
+
+running 94 tests
+test assets::blob_store::tests::space_probe_fixed_is_deterministic ... ok
+test assets::blob_store::tests::blob_path_is_derived_from_hash_only ... ok
+test assets::maintenance::tests::scan_report_emptiness ... ok
+test assets::maintenance::tests::sha256_shape_predicate ... ok
+test assets::blob_store::tests::insufficient_space_message_mentions_both_numbers ... ok
+test assets::pdf::tests::count_refs_counts_array_entries ... ok
+test assets::pdf::tests::find_integer_reads_count ... ok
+test assets::pdf::tests::find_ref_requires_full_token_and_reference_shape ... ok
+test assets::blob_store::tests::statvfs_reports_some_space_for_temp_dir ... ok
+test assets::pdf::tests::last_integer_after_uses_last_startxref ... ok
+test assets::pdf::tests::object_header_is_recognised ... ok
+test assets::range::tests::multi_range_and_broken_syntax_fall_back_to_full ... ok
+test assets::range::tests::conditional_headers_compare_strong_etags ... ok
+test assets::range::tests::range_length_is_inclusive ... ok
+test assets::range::tests::single_range_forms_are_satisfiable ... ok
+test assets::range::tests::unsatisfiable_ranges_are_reported ... ok
+test assets::upload::tests::purpose_wire_values_are_camel_case ... ok
+test assets::validate::tests::crc32_matches_known_value ... ok
+test assets::upload::tests::original_name_never_keeps_path_components ... ok
+test assets::validate::tests::purpose_limits_follow_the_purpose ... ok
+test assets::validate::tests::pixel_budget_is_enforced_with_details ... ok
+test assets::pdf::tests::probe_rejects_non_pdf_bytes ... ok
+test config::cli::tests::bad_listen_value_is_reported ... ok
+test config::cli::tests::missing_required_backup_out_fails ... ok
+test assets::validate::tests::non_pdf_for_document_purpose_is_unsupported_type ... ok
+test config::cli::tests::unknown_subcommand_is_a_usage_error ... ok
+test config::commands::tests::unknown_subcommand_maps_to_usage_error ... ok
+test assets::validate::tests::photo_purpose_rejects_unknown_magic ... ok
+test config::cli::tests::dispatches_all_subcommands ... ok
+test config::cli::tests::password_is_never_a_command_line_option ... ok
+test assets::validate::tests::text_purpose_rejects_invalid_utf8 ... ok
+test config::error::tests::exit_codes_are_stable_contract_values ... ok
+test config::error::tests::helpers_set_expected_codes ... ok
+test config::commands::tests::backup_and_restore_report_not_implemented ... ok
+test config::file::tests::malformed_toml_is_reported_with_source ... ok
+test config::logging::tests::level_from_env_defaults_to_info ... ok
+test config::file::tests::unknown_keys_are_errors_at_every_level ... ok
+test config::commands::tests::help_exits_zero_without_error ... ok
+test config::logging::tests::log_file_path_is_under_data_dir ... ok
+test config::file::tests::parses_minimal_and_full_config ... ok
+test config::file::tests::example_config_file_matches_schema ... ok
+test config::password::tests::validation_boundaries ... ok
+test config::secret::tests::expose_and_char_count_are_explicit ... ok
+test config::secret::tests::redact_text_replaces_known_secrets_only ... ok
+test config::secret::tests::redact_url_query_strips_query_and_fragment ... ok
+test config::datadir::tests::verify_reports_missing_structure ... ok
+test config::password::tests::rejects_world_readable_file ... ok
+test config::datadir::tests::ensures_and_verifies_layout ... ok
+test config::secret::tests::secret_debug_never_prints_plaintext ... ok
+test config::password::tests::accepts_restricted_file_and_trims_trailing_newline ... ok
+test config::tests::origin_like_validation ... ok
+test config::tests::cidr_parse_and_contains ... ok
+test config::tests::provider_status_reports_missing_without_secret ... ok
+test config::password::tests::rejects_missing_empty_and_short_passwords ... ok
+test config::tests::settings_debug_does_not_leak_api_key ... ok
+test http::auth::limiter::tests::blocks_after_limit_within_window_and_recovers_after_it ... ok
+test http::auth::limiter::tests::success_clears_failures_and_ips_are_isolated ... ok
+test http::auth::limiter::tests::window_restarts_after_expiry_and_zero_limits_are_clamped ... ok
+test http::auth::password::tests::broken_stored_hash_is_an_error_not_a_match ... ok
+test http::auth::tests::cookie_parsing_matches_exact_name_only ... ok
+test http::auth::tests::client_ip_resolution_ignores_untrusted_forwarded_headers ... ok
+test http::auth::tests::csrf_check_requires_matching_header ... ok
+test http::auth::tests::origin_allowed_uses_public_origin_or_same_host ... ok
+test http::auth::limiter::tests::millisecond_window_is_deterministic_with_injected_clock ... ok
+test config::datadir::tests::lock_excludes_second_holder_in_process ... ok
+test http::auth::tests::origin_missing_passes_but_bad_origin_fails ... ok
+test http::auth::tests::session_cookie_attributes_include_secure_only_when_requested ... ok
+test http::auth::tokens::tests::constant_time_equality_behaves_like_equality ... ok
+test http::auth::tokens::tests::hashes_are_sha256_hex_and_stable ... ok
+test http::auth::tokens::tests::session_tokens_are_unique_hex_of_expected_length ... ok
+test http::auth::tests::tls_config_alone_marks_cookies_secure ... ok
+test http::auth::tokens::tests::csrf_is_derived_from_session_token_and_hashed_separately ... ok
+test http::error::tests::not_found_response_uses_contract_error_shape ... ok
+test http::error::tests::render_uses_supplied_request_id_and_extra_headers ... ok
+test http::error::tests::conflict_error_exposes_current_revision_only_in_details ... ok
+test http::openapi::tests::openapi_declares_auth_settings_and_items_routes ... ok
+test http::pagination::tests::cursor_round_trips_and_binds_scope ... ok
+test http::openapi::tests::openapi_error_responses_use_contract_shape ... ok
+test http::pagination::tests::list_params_reject_unknown_duplicate_and_bad_limit ... ok
+test http::pagination::tests::malformed_cursors_report_the_cursor_field ... ok
+test http::precondition::tests::accepts_quoted_and_bare_revisions ... ok
+test http::precondition::tests::etag_format_matches_contract ... ok
+test http::precondition::tests::missing_header_is_precondition_required_428 ... ok
+test storage::error::tests::conflict_message_carries_current_revision ... ok
+test http::precondition::tests::wildcard_weak_list_and_garbage_are_rejected_422 ... ok
+test storage::error::tests::schema_too_new_message_is_readable_and_actionable ... ok
+test storage::migrations::tests::embedded_migrations_are_ordered_and_versioned ... ok
+test storage::repo::photos::tests::view_parsing_rejects_unknown_values ... ok
+test http::openapi::tests::openapi_export_is_deterministic ... ok
+test http::openapi::tests::openapi_is_3_1_and_declares_health_paths ... ok
+test http::openapi::tests::openapi_declares_t07_item_document_and_photo_routes ... ok
+test http::openapi::tests::openapi_declares_asset_upload_and_content_routes ... ok
+test http::auth::password::tests::salt_is_random_per_hash ... ok
+test http::auth::password::tests::hash_is_argon2id_phc_and_verifies ... ok
+
+test result: ok. 94 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.80s
+
+     Running unittests src/main.rs (target/debug/deps/everything_manual-405a5ed56cbd2dac)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/assets.rs (target/debug/deps/assets-038482ff561fa1a2)
+
+running 12 tests
+test forged_types_and_invalid_purposes_are_rejected ... ok
+test db_failure_after_fsync_does_not_delete_a_shared_blob ... ok
+test oversized_uploads_are_rejected_with_413_and_no_trace ... ok
+test item_total_limit_is_enforced_with_actionable_details ... ok
+test insufficient_disk_space_reports_clear_error_without_half_commit ... ok
+test crash_orphans_are_quarantined_while_referenced_blobs_survive ... ok
+test path_traversal_filenames_are_metadata_only ... ok
+test decoding_failures_pixel_bombs_and_page_limits_are_422 ... ok
+test range_head_etag_and_conditional_requests_follow_contract ... ok
+test unauthorized_and_unknown_asset_access_is_404_without_path_leakage ... ok
+test uploads_pdf_png_jpeg_and_deduplicates_by_sha256 ... ok
+test upload_over_one_mib_is_not_blocked_by_the_json_body_limit ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.13s
+
+     Running tests/auth_api.rs (target/debug/deps/auth_api-ff61c186f07dcda6)
+
+running 13 tests
+test ready_reflects_data_layer_and_reports_not_ready_when_db_unavailable ... ok
+test json_body_errors_use_unified_envelope ... ok
+test logout_revokes_session_and_expired_session_is_401 ... ok
+test login_sets_httponly_strict_cookie_and_session_has_no_store ... ok
+test https_declared_origin_marks_cookie_secure ... ok
+test if_match_missing_is_428_and_stale_revision_is_412_with_current_revision ... ok
+test mutating_requests_require_csrf_and_same_site_origin ... ok
+test unknown_api_paths_are_json_404_without_session ... ok
+test unauthenticated_protected_routes_return_401_with_request_id ... ok
+test trusted_proxy_source_ip_is_used_for_rate_limiting ... ok
+test settings_status_reports_configuration_without_secrets ... ok
+test wrong_password_is_401_and_repeated_failures_are_429 ... ok
+test rate_limit_window_expires_and_success_resets_counter ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.95s
+
+     Running tests/bootstrap.rs (target/debug/deps/bootstrap-383bc4661c5b32b2)
+
+running 5 tests
+test unknown_versioned_api_path_also_returns_json_404 ... ok
+test non_api_unknown_path_is_not_html_200_without_embedded_ui ... ok
+test unknown_api_path_returns_json_404_not_html ... ok
+test health_live_returns_exact_minimal_json ... ok
+test health_ready_reports_declared_checks_only ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/config_cli.rs (target/debug/deps/config_cli-7b8caf7c09d7b93f)
+
+running 12 tests
+test init_requires_password_source_and_rejects_argv_password ... ok
+test example_config_is_accepted_and_no_key_material_inside ... ok
+test logs_never_contain_secrets_or_query_strings ... ok
+test non_loopback_listen_requires_tls_or_trusted_proxy ... ok
+test backup_and_restore_report_not_implemented_without_side_effects ... ok
+test usage_errors_are_readable_and_nonzero ... ok
+test missing_provider_keys_start_without_mock_fallback ... ok
+test init_creates_structure_and_never_leaks_password ... ok
+test check_and_serve_startup_make_no_external_http_requests ... ok
+test unknown_config_keys_are_rejected_at_any_level ... ok
+test second_process_on_same_data_dir_fails_fast ... ok
+test config_precedence_cli_env_toml_default ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.52s
+
+     Running tests/fixture_harness.rs (target/debug/deps/fixture_harness-3e3be1bea0ac1031)
+
+running 18 tests
+test all_committed_scenarios_parse_and_resolve ... ok
+test malformed_json_is_served_verbatim ... ok
+test disconnect_scenario_yields_connection_error_and_is_still_recorded ... ok
+test half_close_truncates_the_body ... ok
+test guarded_client_refuses_non_loopback_targets ... ok
+test manual_ai_happy_flow_serves_responses_payload ... ok
+test missing_route_returns_501_instead_of_generic_success ... ok
+test rate_limit_429_carries_retry_after ... ok
+test reset_scenario_yields_io_error ... ok
+test server_error_5xx_is_served_as_is ... ok
+test success_route_records_method_path_headers_and_body ... ok
+test exhausted_script_returns_501_unless_repeat_last ... ok
+test tripo_happy_flow_records_a_single_paid_post ... ok
+test sample_assets_are_generated_deterministically_and_validate ... ok
+test test_support_stays_out_of_the_release_dependency_tree ... ok
+test delay_scenario_is_observed_by_the_client ... ok
+test app_without_provider_keys_never_contacts_the_fixture ... ok
+test timeout_scenario_times_out_the_client ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+
+     Running tests/items.rs (target/debug/deps/items-334a1a25f34f9b99)
+
+running 11 tests
+test patch_clears_optional_fields_and_rejects_null_on_required_fields ... ok
+test patch_requires_if_match_and_concurrent_patch_has_single_winner ... ok
+test create_item_returns_201_uuidv7_revision_one_and_field_level_422 ... ok
+test list_items_paginates_with_cursor_and_hides_archived_by_default ... ok
+test document_binding_validates_pdf_ownership_and_stores_sha256 ... ok
+test detail_photo_is_listed_but_outside_the_multiview_set ... ok
+test archive_keeps_references_readable_and_delete_routes_are_absent ... ok
+test document_source_url_is_never_fetched_by_the_server ... ok
+test same_brand_model_with_different_variants_coexist_and_do_not_overwrite ... ok
+test photo_views_are_validated_and_second_photo_for_same_view_is_rejected ... ok
+test photo_patch_requires_if_match_and_revalidates_views_and_assets ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.68s
+
+     Running tests/storage.rs (target/debug/deps/storage-ddb9dd7fd6b67c35)
+
+running 15 tests
+test embedded_migrations_match_repository_files ... ok
+test enum_sql_values_match_schema_check_constraints ... ok
+test foreign_keys_reject_invalid_references_and_restrict_deletes ... ok
+test fresh_data_dir_initializes_full_schema_constraints_and_connection_settings ... ok
+test closing_and_reopening_data_dir_preserves_data ... ok
+test failed_migration_leaves_no_partial_state ... ok
+test future_schema_is_rejected_without_modifying_database_bytes ... ok
+test check_reports_migration_state_without_creating_or_modifying_database ... ok
+test invariant_triggers_protect_frozen_inputs_releases_and_remote_task_ids ... ok
+test migrations_are_idempotent_across_reopens ... ok
+test older_schema_is_migrated_automatically_and_data_preserved ... ok
+test revision_cas_rejects_stale_updates_and_reports_current_revision ... ok
+test transaction_rollback_leaves_no_partial_state ... ok
+test unique_keys_reject_duplicates ... ok
+test init_creates_database_and_check_reports_ready_twice ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.69s
+
+     Running unittests src/lib.rs (target/debug/deps/manual_core-f03636cea45a5b89)
+
+running 15 tests
+test domain::tests::item_etag_uses_integer_revision ... ok
+test domain::tests::enum_sql_and_wire_values ... ok
+test tests::api_prefix_is_versioned ... ok
+test timestamps::tests::arithmetic_is_checked ... ok
+test ids::tests::generated_ids_are_uuid_v7_and_unique ... ok
+test timestamps::tests::rfc3339_round_trip_and_serde ... ok
+test tests::error_code_wire_format_is_screaming_snake_case ... ok
+test timestamps::tests::plain_and_fractional_seconds_both_parse ... ok
+test validation::tests::create_reports_too_long_fields_by_char_count ... ok
+test validation::tests::create_requires_name_and_model_and_trims ... ok
+test validation::tests::document_title_and_url_rules ... ok
+test validation::tests::patch_empty_body_is_rejected ... ok
+test validation::tests::patch_null_clears_optional_fields ... ok
+test validation::tests::patch_null_on_required_fields_is_an_error ... ok
+test validation::tests::photo_view_field_lists_allowed_values ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/test_support-e82de81faf58326d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/generate_fixtures.rs (target/debug/deps/generate_fixtures-1df1049b9db44c5c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/xtask-1c10a59a0b3a105c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests everything_manual
+
+running 1 test
+test crates/server/src/storage/repo/items.rs - storage::repo::items (line 16) ... ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.71s; merged doctests compilation took 0.28s
+   Doc-tests manual_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests test_support
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

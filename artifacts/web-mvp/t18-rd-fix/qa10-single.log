@@ -1,0 +1,37 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t16-independent.spec.ts -g QA-10
+
+(node:79127) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m124[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T12:32:42.117823Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a0959b-0e85-75f2-9b16-113d8e6b1c59","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 1 test using 1 worker
+
+(node:79192) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） (1.3s)
+
+  1 passed (4.1s)

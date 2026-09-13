@@ -1,0 +1,74 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.74s
+     Running tests/auth_api.rs (target/debug/deps/auth_api-380323bfad504dc1)
+
+running 13 tests
+test ready_reflects_data_layer_and_reports_not_ready_when_db_unavailable ... ok
+test json_body_errors_use_unified_envelope ... ok
+test login_sets_httponly_strict_cookie_and_session_has_no_store ... ok
+test https_declared_origin_marks_cookie_secure ... ok
+test logout_revokes_session_and_expired_session_is_401 ... ok
+test if_match_missing_is_428_and_stale_revision_is_412_with_current_revision ... ok
+test mutating_requests_require_csrf_and_same_site_origin ... ok
+test unauthenticated_protected_routes_return_401_with_request_id ... ok
+test trusted_proxy_source_ip_is_used_for_rate_limiting ... ok
+test unknown_api_paths_are_json_404_without_session ... ok
+test settings_status_reports_configuration_without_secrets ... ok
+test wrong_password_is_401_and_repeated_failures_are_429 ... ok
+test rate_limit_window_expires_and_success_resets_counter ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.97s
+
+     Running tests/bootstrap.rs (target/debug/deps/bootstrap-3fcabdbd0c3aa7df)
+
+running 5 tests
+test health_live_returns_exact_minimal_json ... ok
+test non_api_unknown_path_is_not_html_200_without_embedded_ui ... ok
+test unknown_versioned_api_path_also_returns_json_404 ... ok
+test unknown_api_path_returns_json_404_not_html ... ok
+test health_ready_reports_declared_checks_only ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/config_cli.rs (target/debug/deps/config_cli-955250a2f3f05647)
+
+running 12 tests
+test init_requires_password_source_and_rejects_argv_password ... ok
+test logs_never_contain_secrets_or_query_strings ... ok
+test example_config_is_accepted_and_no_key_material_inside ... ok
+test backup_and_restore_report_not_implemented_without_side_effects ... ok
+test usage_errors_are_readable_and_nonzero ... ok
+test non_loopback_listen_requires_tls_or_trusted_proxy ... ok
+test missing_provider_keys_start_without_mock_fallback ... ok
+test init_creates_structure_and_never_leaks_password ... ok
+test unknown_config_keys_are_rejected_at_any_level ... ok
+test check_and_serve_startup_make_no_external_http_requests ... ok
+test second_process_on_same_data_dir_fails_fast ... ok
+test config_precedence_cli_env_toml_default ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.61s
+
+     Running tests/storage.rs (target/debug/deps/storage-5476808233002551)
+
+running 15 tests
+test embedded_migrations_match_repository_files ... ok
+test enum_sql_values_match_schema_check_constraints ... ok
+test foreign_keys_reject_invalid_references_and_restrict_deletes ... ok
+test fresh_data_dir_initializes_full_schema_constraints_and_connection_settings ... ok
+test check_reports_migration_state_without_creating_or_modifying_database ... ok
+test failed_migration_leaves_no_partial_state ... ok
+test closing_and_reopening_data_dir_preserves_data ... ok
+test future_schema_is_rejected_without_modifying_database_bytes ... ok
+test invariant_triggers_protect_frozen_inputs_releases_and_remote_task_ids ... ok
+test migrations_are_idempotent_across_reopens ... ok
+test older_schema_is_migrated_automatically_and_data_preserved ... ok
+test revision_cas_rejects_stale_updates_and_reports_current_revision ... ok
+test transaction_rollback_leaves_no_partial_state ... ok
+test unique_keys_reject_duplicates ... ok
+test init_creates_database_and_check_reports_ready_twice ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+

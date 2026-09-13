@@ -1,0 +1,56 @@
+fixture patched → /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/bug008-qa/qa-r26-tripo-fixture.py
+== QA 回合 26 新数据链路（工作目录 /tmp/em-r26-newdata-3Soemd；二进制 688a57b98c879e65e97aa0479102e0bffb55d379c14430fa8f485d8828c8476a）
+fixture listening on 127.0.0.1:18127 scenario=happy
+== job=01a096f0-af98-760e-9520-029a8f0a6fc9
+
+-- 阶段 1：跑到 tripo_poll 成功（新数据写入）
+
+-- 阶段 2：新数据扫描（DB 全部文本列）
+== 全库逐表 '://' 命中（含表名，便于区分预期项）
+== 供应商事实表（job_stages / provider_attempts）全部文本列 × 全部判据
+  （无输出 = 全部为 0）
+== tripo_poll.usage_json（应只含摘要 + task id/状态/计费）
+  {"billing":{"creditMinor":3000,"currency":"credit_minor","literal":"30","sourceField":"credits_consumed"},"dataKeys":["credits_consumed","output","progress","status","task_id"],"modelUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"7cd51424ce7346bf"},"normalizedStatus":"success","progress":"100","rawStatus":"success","remoteTaskId":"qa-r26-task-0001","renderedImageUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"e37756dbdf924b73"}}
+  [通过] 新数据 job_stages/provider_attempts 无 URL/签名/path 命中
+== 摘要与恢复判据保留：remoteTaskId / redacted / host / sha256(16) / billing 均在 ✔
+
+-- 阶段 3：任务详情 API 不回显完整签名 URL
+  [通过] 任务详情不含 '://'（=0）
+  [通过] 任务详情不含 'sign='（=0）
+  [通过] 任务详情不含 '/qa-r26/model.glb'（=0）
+  [通过] 任务详情不含 '/qa-r26/preview.png'（=0）
+  [通过] 任务详情不含 'qa-r26-canary-9f3c'（=0）
+  usage.modelUrl = {"host": "cdn.example.invalid", "redacted": true, "sha256": "7cd51424ce7346bf"}
+  usage.renderedImageUrl = {"host": "cdn.example.invalid", "redacted": true, "sha256": "e37756dbdf924b73"}
+
+-- 阶段 4：重启（SIGKILL）后按 task ID 重新查询（不重新购买）
+  model_download 已重置为 queued（用例前提）
+  重启完成，等待下载阶段的新查询与结论…
+  fixture 计数：submit 1 → 1；poll 2 → 3
+  [通过] 付费提交不增加（不重新购买）（=1）
+  [通过] 重启后按 task ID 重新查询（免费 GET 增加）
+  model_download 阶段状态 = needs_input（允许域为空 → 期望 needs_input，仅提示 host）
+  model_download.last_error = 模型下载域名（cdn.example.invalid）不在允许域名单内（download.allowed_hosts）：拒绝下载（不猜测供应商 CDN 域名，请按部署文档配置后重试）
+
+-- 阶段 5：重启后的第二轮扫描（含 last_error 等非 JSON 文本列）
+== 重启后（第二进程）供应商事实表全部文本列扫描
+  （没有任何命中行 = 全部为 0）
+model_download.last_error 长度 = 91
+  [通过] 重启后 job_stages/provider_attempts 全部文本列无命中
+  [通过] 重启后任务详情不含 '://'（=0）
+  [通过] 重启后任务详情不含 'sign='（=0）
+  [通过] 重启后任务详情不含 '/qa-r26/model.glb'（=0）
+  [通过] 重启后任务详情不含 '/qa-r26/preview.png'（=0）
+  [通过] 重启后任务详情不含 'qa-r26-canary-9f3c'（=0）
+
+-- 阶段 5b：出网核查（全部流量必须是回环；零真实外网）
+  [通过] serve 日志里非回环主机数（provider 全部指向本机 fixture）（=0）
+
+-- 阶段 6：日志（serve）
+  [通过] serve 日志 '://' 只来自监听横幅/baseUrl 回显（=10）
+  [通过] serve 日志其余 '://' 行（=0）
+  [通过] serve 日志不含 'qa-r26-canary-9f3c'（=0）
+  [通过] serve 日志不含 'sign='（=0）
+  [通过] serve 日志不含 '/qa-r26/model.glb'（=0）
+
+== 新数据剧本结果：PASS

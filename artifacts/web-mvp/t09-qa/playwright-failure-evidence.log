@@ -1,0 +1,67 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t09-tmp-failure.spec.ts
+
+(node:21961) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m141[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.30s
+{"timestamp":"2026-09-12T00:10:02.219299Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":4,"adminId":"01a092f3-206a-7582-847d-633e6d2d41f7","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v4；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 1 test using 1 worker
+
+(node:22025) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/qa-t09-tmp-failure.spec.ts:4:1 › 临时失败用例：Playwright 必须保留失败证据 (4ms)
+
+
+  1) [chromium] › tests/e2e/qa-t09-tmp-failure.spec.ts:4:1 › 临时失败用例：Playwright 必须保留失败证据 ────────────
+
+    Error: 故意失败：验证失败证据保留
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m2[39m
+    Received: [31m1[39m
+
+      3 |
+      4 | test("临时失败用例：Playwright 必须保留失败证据", async () => {
+    > 5 |   expect(1, "故意失败：验证失败证据保留").toBe(2);
+        |                              ^
+      6 | });
+      7 |
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t09-tmp-failure.spec.ts:5:30
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t09-tmp-failure-临时失败用例：Playwright-必须保留失败证据-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t09-tmp-failure-临时失败用例：Playwright-必须保留失败证据-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t09-tmp-failure-临时失败用例：Playwright-必须保留失败证据-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/qa-t09-tmp-failure.spec.ts:4:1 › 临时失败用例：Playwright 必须保留失败证据 ─────────────
+EXIT=1

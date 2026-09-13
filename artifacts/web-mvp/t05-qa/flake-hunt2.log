@@ -1,0 +1,20 @@
+=== flake hunt 2 start 2026-09-12T03:48:48+0800 loadavg=38.75 26.76 17.24 ===
+--- phase A: cargo test --workspace x12（16 burners）
+ws-round=1 ok
+ws-round=2 ok
+ws-round=3 ok
+ws-round=4 ok
+ws-round=5 ok
+ws-round=6 ok
+ws-round=7 ok
+ws-round=8 ok
+ws-round=9 ok
+ws-round=10 ok
+ws-round=11 ok
+ws-round=12 ok
+phaseA workspace: rounds=12 failures=0
+--- phase B: 4 并发 lib 套件 x25 轮（16 burners）
+phaseB concurrent lib suites: rounds=25 x4 failures=0
+--- phase C: 单测 x100（16 burners）
+phaseC debug-single: iterations=100 failures=0
+=== flake hunt 2 done 2026-09-12T03:54:09+0800 ===

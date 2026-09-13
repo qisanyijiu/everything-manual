@@ -1,0 +1,22 @@
+########## 场景 happy ##########
+场景 happy exit=0
+########## 场景 disconnect ##########
+场景 disconnect exit=0
+########## 场景 unknown ##########
+场景 unknown exit=0
+########## 场景 business_error ##########
+场景 business_error exit=0
+########## 场景 no_model ##########
+场景 no_model exit=0
+########## 场景 token_unknown ##########
+场景 token_unknown exit=0
+########## 场景 submit_429 ##########
+场景 submit_429 exit=0
+########## 场景 poll_503 ##########
+场景 poll_503 exit=0
+########## 场景 no_billing ##########
+场景 no_billing exit=0
+########## 场景 token_verbatim ##########
+场景 token_verbatim exit=0
+########## 汇总：ALL-PASS ##########
+EXIT=0

@@ -1,0 +1,10 @@
+== cargo tree -p everything-manual --edges normal | grep 出站 HTTP 客户端（应无 reqwest/ureq/curl/rustls/native-tls）
+(以上为空即无出站客户端)
+
+== hyper-util 仅 server 特性
+│   │   ├── hyper-util feature "server"
+│   │   │   ├── hyper-util v0.1.20 (*)
+│   │   │   └── hyper feature "server"
+
+== 非测试源码中的出站网络用法（应只有 SQLite connect）
+(无匹配)

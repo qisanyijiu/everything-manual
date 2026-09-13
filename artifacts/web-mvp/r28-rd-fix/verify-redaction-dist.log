@@ -1,0 +1,16 @@
+== RD 回合 28 · 脱敏 dist 级自查（canary=rd28-canary-transport-signature-7d31）
+restore exit=0
+  注入完成：job_stages=1 行、provider_attempts=2 行（含签名 URL 与紧邻中文）
+backup exit=0
+  快照文本 = 链接 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=779bf12a4a771900…）已过期，请重试
+  [通过] A. 备份兜底：签名消失且'已过期，请重试'保留
+  [通过] A. 快照文本含尾部中文
+  [通过] A. 快照文本无 '://'
+=== 观察（任务详情 API 响应）
+  stage.lastError = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (（临时供应商地址已脱敏：host=cdn.example.invalid；sha256=ee80a3a56adca48b…）)
+  attempts.lastError = ['链接 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=779bf12a4a771900…）已过期，请重试', '链接 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=779bf12a4a771900…）已过期，请重试']
+  断言通过：响应体无 '://'、无签名；lastError 为摘要标签
+  [通过] B. 任务详情读取侧：lastError 已脱敏
+  [通过] C. serve 日志无签名 canary
+
+== 结果：5 通过 / 0 失败

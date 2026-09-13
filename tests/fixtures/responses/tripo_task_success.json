@@ -1,0 +1,13 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文）；model_url 使用 .invalid 域，绝不指向可访问主机；T13 的下载场景必须另行提供指向本机 fixture 的 URL",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "success",
+    "progress": 100,
+    "output": {
+      "model_url": "https://cdn.example.invalid/fixture/sample-model.glb",
+      "rendered_image_url": "https://cdn.example.invalid/fixture/preview.png"
+    }
+  }
+}

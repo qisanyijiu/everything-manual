@@ -1,0 +1,66 @@
+root=/Users/qsyj/Code/rust/everything-manual out=/Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t06-qa/bug001 date=2026-09-12 04:20:25 CST
+=== ws-round-1.log : cargo test --workspace ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-round-2.log : cargo test --workspace ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-round-3.log : cargo test --workspace ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-round-4.log : cargo test --workspace ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-round-5.log : cargo test --workspace ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-round-6.log : cargo test --workspace ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-t16-round-1.log : cargo test --workspace -- --test-threads=16 ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-t16-round-2.log : cargo test --workspace -- --test-threads=16 ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-t16-round-3.log : cargo test --workspace -- --test-threads=16 ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== ws-t16-round-4.log : cargo test --workspace -- --test-threads=16 ===
+    test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== lib-round-1.log : cargo test -p everything-manual --lib ===
+    test result: ok. 89 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+    
+    EXIT=0
+=== lib-round-2.log : cargo test -p everything-manual --lib ===
+    test result: ok. 89 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+    
+    EXIT=0
+=== lib-round-3.log : cargo test -p everything-manual --lib ===
+    test result: ok. 89 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s
+    
+    EXIT=0
+=== limiter-t16-round-1.log : cargo test -p everything-manual --lib limiter -- --test-threads=16 ===
+    test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== limiter-t16-round-2.log : cargo test -p everything-manual --lib limiter -- --test-threads=16 ===
+    test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 0.00s
+    
+    EXIT=0
+=== limiter-t16-round-3.log : cargo test -p everything-manual --lib limiter -- --test-threads=16 ===
+    test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 0.00s
+    
+    EXIT=0
+ALL DONE 2026-09-12 04:22:22 CST

@@ -1,0 +1,7 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文），字段形态对齐 docs 中 files 上传的 code/data 结构；T12 接入真实文档时以官方文档为准修订",
+  "code": 0,
+  "data": {
+    "image_token": "fixture-image-token-front-0001"
+  }
+}

@@ -1,0 +1,19 @@
+/** QA 回合 21 临时探针：headless Chromium 下 `bringToFront` 是否真的产生 visibilityState=hidden。 */
+import { expect, test } from "@playwright/test";
+
+test("probe: background tab visibility", async ({ browser }) => {
+  const context = await browser.newContext();
+  const first = await context.newPage();
+  await first.goto("about:blank");
+  const second = await context.newPage();
+  await second.goto("about:blank");
+  await second.bringToFront();
+  const stateFirst = await first.evaluate(() => document.visibilityState);
+  const stateSecond = await second.evaluate(() => document.visibilityState);
+  console.log(`probe: first=${stateFirst} second=${stateSecond}`);
+  await first.bringToFront();
+  const backFirst = await first.evaluate(() => document.visibilityState);
+  console.log(`probe: first after bringToFront=${backFirst}`);
+  await context.close();
+  expect(stateFirst).toBe("hidden");
+});

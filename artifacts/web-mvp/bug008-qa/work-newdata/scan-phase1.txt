@@ -1,0 +1,6 @@
+== 全库逐表 '://' 命中（含表名，便于区分预期项）
+== 供应商事实表（job_stages / provider_attempts）全部文本列 × 全部判据
+  （无输出 = 全部为 0）
+== tripo_poll.usage_json（应只含摘要 + task id/状态/计费）
+  {"billing":{"creditMinor":3000,"currency":"credit_minor","literal":"30","sourceField":"credits_consumed"},"dataKeys":["credits_consumed","output","progress","status","task_id"],"modelUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"7cd51424ce7346bf"},"normalizedStatus":"success","progress":"100","rawStatus":"success","remoteTaskId":"qa-r26-task-0001","renderedImageUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"e37756dbdf924b73"}}
+== 摘要与恢复判据保留：remoteTaskId / redacted / host / sha256(16) / billing 均在 ✔

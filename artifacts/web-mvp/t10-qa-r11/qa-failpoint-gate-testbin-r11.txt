@@ -1,0 +1,10 @@
+=== positive control: test binary target/debug/deps/jobs_recovery-57b57957637367b5 ===
+paid_after_intent_before_submitting = 3
+paid_after_submitting_before_request = 3
+paid_after_response_before_receipt = 3
+paid_after_receipt_before_advance = 3
+manual_after_request_before_response = 3
+result_fact_before_checkpoint = 3
+EM_TEST_FAILPOINT = 2
+--- nm failpoint symbol lines (expect > 0) ---
+1251

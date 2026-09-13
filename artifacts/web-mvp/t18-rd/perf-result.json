@@ -1,0 +1,56 @@
+{
+  "measuredAt": "2026-09-12T11:40:21.726Z",
+  "platform": {
+    "os": "Darwin 25.6.0 arm64",
+    "cpus": "Apple M1",
+    "cpuCount": 8,
+    "memoryGiB": 16,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "webgl": {
+      "vendor": "Google Inc. (Apple)",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
+      "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "devicePixelRatio": 1
+    },
+    "viewport": "1600x1000 (真实窗口，非 headless)"
+  },
+  "model": {
+    "bytes": 2223572,
+    "sha256": "87cc0905ccbfc53b0cd53e8ca3676622859891e2a3bf567c624c5333c60d5cbf",
+    "triangles": 100352,
+    "textures": 1
+  },
+  "rotationSeconds": 20,
+  "frameTimeMs": {
+    "samples": 1204,
+    "p50": 16.69999999999891,
+    "p95": 18.69999999999891,
+    "p99": 18.700000000000728,
+    "max": 18.80000000000109,
+    "mean": 16.666611295681076,
+    "targetP95": 33,
+    "pass": true
+  },
+  "resources": {
+    "geometries": {
+      "created": 1,
+      "disposed": 0,
+      "alive": 1
+    },
+    "materials": {
+      "created": 1,
+      "disposed": 0,
+      "alive": 1
+    },
+    "textures": {
+      "created": 1,
+      "disposed": 0,
+      "alive": 1
+    },
+    "modelsLoaded": 1,
+    "modelsDisposed": 0,
+    "modelsAlive": 1,
+    "frames": 1329
+  },
+  "consoleErrors": []
+}

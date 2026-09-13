@@ -1,0 +1,28 @@
+# T11 QA 回合 13（BUG-004 复验）证据/文件清单（生成于 2026-09-12T02:5x；QA 现场）
+
+## 生产代码改动
+（无：本轮 QA 未改任何生产代码；仅新增 artifacts/web-mvp/t11-qa-r13/** 并追加 llmdoc 记录）
+
+## QA 测试文件完整性（派发要求 4）
+87653b7d709b08315f546e489e91fd0c8b224b22a379d1f99915b4dfebcc0f46  crates/server/tests/qa_t11_independent.rs
+
+## 本轮追加的 llmdoc（哈希在追加完成后计算）
+875ac349796baaf6848a48eb14cef7a29160cd68251718d9b4abeb05f96c1528  llmdoc/requirements/web-mvp/qa-report.md
+0723431fe4b8a687d41ec0e0ae2324cc2829ca67c8346fbc49bf2d84a3cc82a3  llmdoc/decisions.md
+
+## artifacts/web-mvp/t11-qa-r13/ 证据文件（不含本清单自身）
+e22a4764b942b59fb6cf6e932c82ddabee52b75d4ac5d83bbc88fef6018d52c5  artifacts/web-mvp/t11-qa-r13/bug004-repro-r13.log
+1acc27e380680d5492dab8eb291a9897f78e8e6f35042fa96b43e188677650f7  artifacts/web-mvp/t11-qa-r13/dist-r13.log
+f59ca823dadfda9f3a7261af81030dd82d58bcfc0713afbb7f9ed3817eae33ce  artifacts/web-mvp/t11-qa-r13/dist-sha256-r13.txt
+306552eca3279f69e03cbd21306405321986434deed23ab1eb88ba1c50596f50  artifacts/web-mvp/t11-qa-r13/failpoint-gate-r13.txt
+8e1f04c1b67a4e0535aedcd3473eecd0cc83818699b9352864a4543390d65a58  artifacts/web-mvp/t11-qa-r13/generation-requests-r13.log
+7bb7e4746efd9fd433f0c0cc1f54fd1da110894e1259161fbd10a72f920081e3  artifacts/web-mvp/t11-qa-r13/qa-bug004-four-states.log
+608c69283b584c96a2a1b164f6f17a5c239fef341eea5f7e03aac4525436206d  artifacts/web-mvp/t11-qa-r13/qa-bug004-four-states.sh
+b31efc07d928ecca671b56145a6391e8fe7af3bd71b12866579b78aa63f919b2  artifacts/web-mvp/t11-qa-r13/qa-r13-started.txt
+3657360a1b515ebba83a466dcf616817cfd71c0521dd2529e3178b9f124e0b3d  artifacts/web-mvp/t11-qa-r13/qa-t11-independent-r13.log
+869a09557d9e26017f2a7c6430756315f9d350790400e8e3b9d853191f97c460  artifacts/web-mvp/t11-qa-r13/smoke-bootstrap-1.log
+1d741b6a7d95575f28a5be9c2be3e41bfb268146de771ece3c224809f2a37348  artifacts/web-mvp/t11-qa-r13/smoke-bootstrap-2.log
+d2cda0a3a77a8c5840f11293529d9aeb629d4b62ed30802a271cf29ab7234211  artifacts/web-mvp/t11-qa-r13/workspace-check-contracts-r13.log
+
+## 本轮读过的 RD 交付（仅线索，未作通过证据）
+artifacts/web-mvp/t11-rd-bug004/**、implementation.md §T11-10

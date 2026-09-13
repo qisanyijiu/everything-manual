@@ -1,0 +1,32 @@
+== 1/4 初始化临时 data-dir ==
+{"timestamp":"2026-09-11T21:45:17.732463Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t08-qa-b3Xa4s/data","passwordSource":"受限文件 /tmp/em-t08-qa-b3Xa4s/pw.txt","schemaVersion":3,"adminId":"01a0926e-9ca4-7791-a820-1904e887a255","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t08-qa-b3Xa4s/data
+  - 已创建：/tmp/em-t08-qa-b3Xa4s/data
+  - 已创建：/tmp/em-t08-qa-b3Xa4s/data/tmp
+  - 已创建：/tmp/em-t08-qa-b3Xa4s/data/logs
+  - 已创建：/tmp/em-t08-qa-b3Xa4s/data/blobs
+  - 已创建：/tmp/em-t08-qa-b3Xa4s/data/lock
+数据库：已创建并迁移（/tmp/em-t08-qa-b3Xa4s/data/manual.sqlite3，schema v3；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /tmp/em-t08-qa-b3Xa4s/pw.txt；明文不落盘、不进入日志与 shell history。
+== 2/4 启动服务（内嵌 UI，127.0.0.1:8099）==
+health/live = 200
+== 3/4 启动无头 Chrome（CDP :9444）==
+== 4/4 浏览器走查 ==
+浏览器：Chrome/152.0.7977.84 · 应用：http://127.0.0.1:8099 · node v26.0.0
+--- 步骤 1：未登录深链 /settings + 会话恢复 ---
+[PASS] UI-002.a 恢复中显示全屏骨架、恢复期间不出现密码框（不闪登录页） · skeleton=true passwordShown=false
+[PASS] UI-002.b 未登录深链 → /login?next=%2Fsettings · /login?next=%2Fsettings
+[PASS] UI-002.c 登录页保留 next 与过期说明 · 万物说明书 /  / 输入管理员密码以继续。 /  / 登录已过期，请重新登录。 登录后将返回 /settings。
+[FAIL] UI-002.d GET /auth/session 请求与响应均为 no-store（AC-003） · req=| resp=(无)
+[PASS] UI-001.a 密码框 type=password/autocomplete=current-password、无默认值、空密码禁用提交 · {"type":"password","autocomplete":"current-password","value":"","submitDisabled":true}
+--- 步骤 2：键盘登录与 next 安全 ---
+[PASS] T08-键盘登录.1 键盘完成登录（Tab 到密码框 → 输入 → Tab 到按钮 → Enter 提交） · first=field-password second=登录 enter提交=true
+[PASS] UI-002.e 协议相对 next（//evil.com）登录后回落 / · /
+[PASS] UI-002.f 页面不出现 evil.com
+[FAIL] 走查未捕获异常：等待事件超时：Network.loadingFinished
+       当前 URL：/
+       页面文本片段：万物说明书 | 资料库 | 任务中心 | 设置 | 登出 | 资料库摘要 | 资料库 | 新建物品 | 搜索 |  | 在当前已加载的 0 条中按名称/型号筛选（首版无全文检索，A-06）。 |  | 显示已归档 | 还没有物品 |  | 先新建一个物品，再上传说明书原件与多视图照片。 |  | 新建物品
+       console.error 前 5 条：(无)
+       未捕获异常数：0
+== 走查结束（退出码 1）==

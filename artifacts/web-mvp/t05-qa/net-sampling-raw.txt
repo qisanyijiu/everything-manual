@@ -1,0 +1,656 @@
+--- sample (iter=1) ---
+fixture_h 59767 qsyj    9u  IPv4 0x1bb015918784d0f8      0t0  TCP 127.0.0.1:55264 (LISTEN)
+fixture_h 59767 qsyj   11u  IPv4 0xe55dd010c6283492      0t0  TCP 127.0.0.1:55265 (LISTEN)
+fixture_h 59767 qsyj   12u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55266->127.0.0.1:55265 (ESTABLISHED)
+fixture_h 59767 qsyj   13u  IPv4 0xb43ec4a7120df003      0t0  TCP 127.0.0.1:55265->127.0.0.1:55266 (ESTABLISHED)
+--- sample (iter=1) ---
+fixture_h 59767 qsyj    9u  IPv4 0x1bb015918784d0f8      0t0  TCP 127.0.0.1:55264 (LISTEN)
+fixture_h 59767 qsyj   11u  IPv4 0xe55dd010c6283492      0t0  TCP 127.0.0.1:55265 (LISTEN)
+fixture_h 59767 qsyj   12u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55266->127.0.0.1:55265 (ESTABLISHED)
+fixture_h 59767 qsyj   13u  IPv4 0xb43ec4a7120df003      0t0  TCP 127.0.0.1:55265->127.0.0.1:55266 (ESTABLISHED)
+--- sample (iter=1) ---
+fixture_h 59767 qsyj    9u  IPv4 0x1bb015918784d0f8      0t0  TCP 127.0.0.1:55264 (LISTEN)
+--- sample (iter=1) ---
+fixture_h 59767 qsyj    9u  IPv4 0x1bb015918784d0f8      0t0  TCP 127.0.0.1:55264 (LISTEN)
+fixture_h 59767 qsyj   11u  IPv4  0x4518590eef4bd93      0t0  TCP 127.0.0.1:55305 (LISTEN)
+fixture_h 59767 qsyj   12u  IPv4 0xd9c17a86ddf7c1d7      0t0  TCP 127.0.0.1:55306->127.0.0.1:55305 (ESTABLISHED)
+fixture_h 59767 qsyj   13u  IPv4 0x42145bec133cdbf8      0t0  TCP 127.0.0.1:55305->127.0.0.1:55306 (ESTABLISHED)
+--- sample (iter=1) ---
+fixture_h 59767 qsyj    9u  IPv4 0x1bb015918784d0f8      0t0  TCP 127.0.0.1:55264 (LISTEN)
+fixture_h 59767 qsyj   11u  IPv4  0x4518590eef4bd93      0t0  TCP 127.0.0.1:55305 (LISTEN)
+fixture_h 59767 qsyj   12u  IPv4 0xd9c17a86ddf7c1d7      0t0  TCP 127.0.0.1:55306->127.0.0.1:55305 (ESTABLISHED)
+fixture_h 59767 qsyj   13u  IPv4 0x42145bec133cdbf8      0t0  TCP 127.0.0.1:55305->127.0.0.1:55306 (ESTABLISHED)
+--- sample (iter=1) ---
+fixture_h 59767 qsyj    9u  IPv4 0x1bb015918784d0f8      0t0  TCP 127.0.0.1:55264 (LISTEN)
+fixture_h 59767 qsyj   11u  IPv4  0x4518590eef4bd93      0t0  TCP 127.0.0.1:55305 (LISTEN)
+fixture_h 59767 qsyj   12u  IPv4 0xd9c17a86ddf7c1d7      0t0  TCP 127.0.0.1:55306->127.0.0.1:55305 (ESTABLISHED)
+fixture_h 59767 qsyj   13u  IPv4 0x42145bec133cdbf8      0t0  TCP 127.0.0.1:55305->127.0.0.1:55306 (ESTABLISHED)
+--- sample (iter=1) ---
+fixture_h 59767 qsyj    9u  IPv4 0x1bb015918784d0f8      0t0  TCP 127.0.0.1:55264 (LISTEN)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+fixture_h 59849 qsyj   10u  IPv4  0x2269096fa3eb817      0t0  TCP 127.0.0.1:55316->127.0.0.1:55317 (ESTABLISHED)
+fixture_h 59849 qsyj   11u  IPv4 0xf8ca176e5f65223a      0t0  TCP 127.0.0.1:55316 (LISTEN)
+fixture_h 59849 qsyj   12u  IPv4 0x5c1c184edaa358b4      0t0  TCP 127.0.0.1:55317->127.0.0.1:55316 (ESTABLISHED)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+fixture_h 59849 qsyj   10u  IPv4  0x2269096fa3eb817      0t0  TCP 127.0.0.1:55316->127.0.0.1:55317 (ESTABLISHED)
+fixture_h 59849 qsyj   11u  IPv4 0xf8ca176e5f65223a      0t0  TCP 127.0.0.1:55316 (LISTEN)
+fixture_h 59849 qsyj   12u  IPv4 0x5c1c184edaa358b4      0t0  TCP 127.0.0.1:55317->127.0.0.1:55316 (ESTABLISHED)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+fixture_h 59849 qsyj   10u  IPv4  0x2269096fa3eb817      0t0  TCP 127.0.0.1:55316->127.0.0.1:55317 (ESTABLISHED)
+fixture_h 59849 qsyj   11u  IPv4 0xf8ca176e5f65223a      0t0  TCP 127.0.0.1:55316 (LISTEN)
+fixture_h 59849 qsyj   12u  IPv4 0x5c1c184edaa358b4      0t0  TCP 127.0.0.1:55317->127.0.0.1:55316 (ESTABLISHED)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+fixture_h 59849 qsyj   10u  IPv4 0xe3ad8a64e172328b      0t0  TCP 127.0.0.1:55356 (LISTEN)
+fixture_h 59849 qsyj   11u  IPv4 0x3729bd999dd09287      0t0  TCP 127.0.0.1:55357->127.0.0.1:55356 (ESTABLISHED)
+fixture_h 59849 qsyj   12u  IPv4 0x512b44e8168e0a6a      0t0  TCP 127.0.0.1:55356->127.0.0.1:55357 (ESTABLISHED)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+fixture_h 59849 qsyj   10u  IPv4 0xe3ad8a64e172328b      0t0  TCP 127.0.0.1:55356 (LISTEN)
+fixture_h 59849 qsyj   11u  IPv4 0x3729bd999dd09287      0t0  TCP 127.0.0.1:55357->127.0.0.1:55356 (ESTABLISHED)
+fixture_h 59849 qsyj   12u  IPv4 0x512b44e8168e0a6a      0t0  TCP 127.0.0.1:55356->127.0.0.1:55357 (ESTABLISHED)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+fixture_h 59849 qsyj   10u  IPv4 0xe3ad8a64e172328b      0t0  TCP 127.0.0.1:55356 (LISTEN)
+fixture_h 59849 qsyj   11u  IPv4 0x3729bd999dd09287      0t0  TCP 127.0.0.1:55357->127.0.0.1:55356 (ESTABLISHED)
+fixture_h 59849 qsyj   12u  IPv4 0x512b44e8168e0a6a      0t0  TCP 127.0.0.1:55356->127.0.0.1:55357 (ESTABLISHED)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+--- sample (iter=2) ---
+fixture_h 59849 qsyj    8u  IPv4 0xc7e7c4ae66683f5b      0t0  TCP 127.0.0.1:55315 (LISTEN)
+--- sample (iter=3) ---
+fixture_h 59938 qsyj    8u  IPv4 0x4b77847fc42bea6d      0t0  TCP 127.0.0.1:55366 (LISTEN)
+fixture_h 59938 qsyj   10u  IPv4 0xce11d121720f506e      0t0  TCP 127.0.0.1:55367 (LISTEN)
+fixture_h 59938 qsyj   11u  IPv4 0x682ddc6a345a579f      0t0  TCP 127.0.0.1:55368->127.0.0.1:55367 (ESTABLISHED)
+fixture_h 59938 qsyj   12u  IPv4 0x31ec20944b378ba9      0t0  TCP 127.0.0.1:55367->127.0.0.1:55368 (ESTABLISHED)
+--- sample (iter=3) ---
+fixture_h 59938 qsyj    8u  IPv4 0x4b77847fc42bea6d      0t0  TCP 127.0.0.1:55366 (LISTEN)
+fixture_h 59938 qsyj   10u  IPv4 0xce11d121720f506e      0t0  TCP 127.0.0.1:55367 (LISTEN)
+fixture_h 59938 qsyj   11u  IPv4 0x682ddc6a345a579f      0t0  TCP 127.0.0.1:55368->127.0.0.1:55367 (ESTABLISHED)
+fixture_h 59938 qsyj   12u  IPv4 0x31ec20944b378ba9      0t0  TCP 127.0.0.1:55367->127.0.0.1:55368 (ESTABLISHED)
+--- sample (iter=3) ---
+fixture_h 59938 qsyj    8u  IPv4 0x4b77847fc42bea6d      0t0  TCP 127.0.0.1:55366 (LISTEN)
+--- sample (iter=3) ---
+fixture_h 59938 qsyj    8u  IPv4 0x4b77847fc42bea6d      0t0  TCP 127.0.0.1:55366 (LISTEN)
+fixture_h 59938 qsyj   10u  IPv4 0xc29f625310403c4b      0t0  TCP 127.0.0.1:55407 (LISTEN)
+fixture_h 59938 qsyj   11u  IPv4 0x323f081426495daf      0t0  TCP 127.0.0.1:55408->127.0.0.1:55407 (ESTABLISHED)
+fixture_h 59938 qsyj   12u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55407->127.0.0.1:55408 (ESTABLISHED)
+--- sample (iter=3) ---
+fixture_h 59938 qsyj    8u  IPv4 0x4b77847fc42bea6d      0t0  TCP 127.0.0.1:55366 (LISTEN)
+fixture_h 59938 qsyj   10u  IPv4 0xc29f625310403c4b      0t0  TCP 127.0.0.1:55407 (LISTEN)
+fixture_h 59938 qsyj   11u  IPv4 0x323f081426495daf      0t0  TCP 127.0.0.1:55408->127.0.0.1:55407 (ESTABLISHED)
+fixture_h 59938 qsyj   12u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55407->127.0.0.1:55408 (ESTABLISHED)
+--- sample (iter=3) ---
+fixture_h 59938 qsyj    8u  IPv4 0x4b77847fc42bea6d      0t0  TCP 127.0.0.1:55366 (LISTEN)
+fixture_h 59938 qsyj   10u  IPv4 0xc29f625310403c4b      0t0  TCP 127.0.0.1:55407 (LISTEN)
+fixture_h 59938 qsyj   11u  IPv4 0x323f081426495daf      0t0  TCP 127.0.0.1:55408->127.0.0.1:55407 (ESTABLISHED)
+fixture_h 59938 qsyj   12u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55407->127.0.0.1:55408 (ESTABLISHED)
+--- sample (iter=3) ---
+fixture_h 59938 qsyj    8u  IPv4 0x4b77847fc42bea6d      0t0  TCP 127.0.0.1:55366 (LISTEN)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+fixture_h 60016 qsyj   10u  IPv4 0x698b05cf88655657      0t0  TCP 127.0.0.1:55418->127.0.0.1:55419 (ESTABLISHED)
+fixture_h 60016 qsyj   11u  IPv4 0xcde20059fb0f06ff      0t0  TCP 127.0.0.1:55418 (LISTEN)
+fixture_h 60016 qsyj   12u  IPv4 0xfff28b8862913186      0t0  TCP 127.0.0.1:55419->127.0.0.1:55418 (ESTABLISHED)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+fixture_h 60016 qsyj   10u  IPv4 0x698b05cf88655657      0t0  TCP 127.0.0.1:55418->127.0.0.1:55419 (ESTABLISHED)
+fixture_h 60016 qsyj   11u  IPv4 0xcde20059fb0f06ff      0t0  TCP 127.0.0.1:55418 (LISTEN)
+fixture_h 60016 qsyj   12u  IPv4 0xfff28b8862913186      0t0  TCP 127.0.0.1:55419->127.0.0.1:55418 (ESTABLISHED)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+fixture_h 60016 qsyj   10u  IPv4 0x24851c1f3b2d230c      0t0  TCP 127.0.0.1:55424 (LISTEN)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+fixture_h 60016 qsyj   10u  IPv4 0xf550a07d9eca295e      0t0  TCP 127.0.0.1:55458 (LISTEN)
+fixture_h 60016 qsyj   11u  IPv4 0x7bfd0335e5d72661      0t0  TCP 127.0.0.1:55459->127.0.0.1:55458 (ESTABLISHED)
+fixture_h 60016 qsyj   12u  IPv4 0xebb1d6b7f727ab85      0t0  TCP 127.0.0.1:55458->127.0.0.1:55459 (ESTABLISHED)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+fixture_h 60016 qsyj   10u  IPv4 0xf550a07d9eca295e      0t0  TCP 127.0.0.1:55458 (LISTEN)
+fixture_h 60016 qsyj   11u  IPv4 0x7bfd0335e5d72661      0t0  TCP 127.0.0.1:55459->127.0.0.1:55458 (ESTABLISHED)
+fixture_h 60016 qsyj   12u  IPv4 0xebb1d6b7f727ab85      0t0  TCP 127.0.0.1:55458->127.0.0.1:55459 (ESTABLISHED)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+fixture_h 60016 qsyj   10u  IPv4 0xf550a07d9eca295e      0t0  TCP 127.0.0.1:55458 (LISTEN)
+fixture_h 60016 qsyj   11u  IPv4 0x7bfd0335e5d72661      0t0  TCP 127.0.0.1:55459->127.0.0.1:55458 (ESTABLISHED)
+fixture_h 60016 qsyj   12u  IPv4 0xebb1d6b7f727ab85      0t0  TCP 127.0.0.1:55458->127.0.0.1:55459 (ESTABLISHED)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+--- sample (iter=4) ---
+fixture_h 60016 qsyj    8u  IPv4 0x5ace8eaef7b110cf      0t0  TCP 127.0.0.1:55417 (LISTEN)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj    8u  IPv4 0x30f652b17680576b      0t0  TCP 127.0.0.1:55469->127.0.0.1:55470 (ESTABLISHED)
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+fixture_h 60105 qsyj   11u  IPv4 0x6e34c7fdc50cb491      0t0  TCP 127.0.0.1:55469 (LISTEN)
+fixture_h 60105 qsyj   12u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55470->127.0.0.1:55469 (ESTABLISHED)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj    8u  IPv4 0x30f652b17680576b      0t0  TCP 127.0.0.1:55469->127.0.0.1:55470 (ESTABLISHED)
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+fixture_h 60105 qsyj   11u  IPv4 0x6e34c7fdc50cb491      0t0  TCP 127.0.0.1:55469 (LISTEN)
+fixture_h 60105 qsyj   12u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55470->127.0.0.1:55469 (ESTABLISHED)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj    8u  IPv4 0x30f652b17680576b      0t0  TCP 127.0.0.1:55469->127.0.0.1:55470 (ESTABLISHED)
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+fixture_h 60105 qsyj   11u  IPv4 0x6e34c7fdc50cb491      0t0  TCP 127.0.0.1:55469 (LISTEN)
+fixture_h 60105 qsyj   12u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55470->127.0.0.1:55469 (ESTABLISHED)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj    8u  IPv4 0x29eb2bd8ce368346      0t0  TCP 127.0.0.1:55509 (LISTEN)
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+fixture_h 60105 qsyj   11u  IPv4 0x5267e2fc2de5fd3f      0t0  TCP 127.0.0.1:55510->127.0.0.1:55509 (ESTABLISHED)
+fixture_h 60105 qsyj   12u  IPv4 0xc593e914ee37bddc      0t0  TCP 127.0.0.1:55509->127.0.0.1:55510 (ESTABLISHED)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj    8u  IPv4 0x29eb2bd8ce368346      0t0  TCP 127.0.0.1:55509 (LISTEN)
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+fixture_h 60105 qsyj   11u  IPv4 0x5267e2fc2de5fd3f      0t0  TCP 127.0.0.1:55510->127.0.0.1:55509 (ESTABLISHED)
+fixture_h 60105 qsyj   12u  IPv4 0xc593e914ee37bddc      0t0  TCP 127.0.0.1:55509->127.0.0.1:55510 (ESTABLISHED)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj    8u  IPv4 0x29eb2bd8ce368346      0t0  TCP 127.0.0.1:55509 (LISTEN)
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+fixture_h 60105 qsyj   11u  IPv4 0x5267e2fc2de5fd3f      0t0  TCP 127.0.0.1:55510->127.0.0.1:55509 (ESTABLISHED)
+fixture_h 60105 qsyj   12u  IPv4 0xc593e914ee37bddc      0t0  TCP 127.0.0.1:55509->127.0.0.1:55510 (ESTABLISHED)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+--- sample (iter=5) ---
+fixture_h 60105 qsyj   10u  IPv4 0x6f2774dd4e3c9877      0t0  TCP 127.0.0.1:55468 (LISTEN)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+fixture_h 60195 qsyj   10u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55521->127.0.0.1:55520 (ESTABLISHED)
+fixture_h 60195 qsyj   11u  IPv4 0xc29f625310403c4b      0t0  TCP 127.0.0.1:55520 (LISTEN)
+fixture_h 60195 qsyj   12u  IPv4 0x793be8db2bac9846      0t0  TCP 127.0.0.1:55520->127.0.0.1:55521 (ESTABLISHED)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+fixture_h 60195 qsyj   10u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55521->127.0.0.1:55520 (ESTABLISHED)
+fixture_h 60195 qsyj   11u  IPv4 0xc29f625310403c4b      0t0  TCP 127.0.0.1:55520 (LISTEN)
+fixture_h 60195 qsyj   12u  IPv4 0x793be8db2bac9846      0t0  TCP 127.0.0.1:55520->127.0.0.1:55521 (ESTABLISHED)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+fixture_h 60195 qsyj   10u  IPv4 0x934e535d31f71ac5      0t0  TCP 127.0.0.1:55562 (LISTEN)
+fixture_h 60195 qsyj   11u  IPv4 0xaec08a4eeecc1157      0t0  TCP 127.0.0.1:55563->127.0.0.1:55562 (ESTABLISHED)
+fixture_h 60195 qsyj   12u  IPv4   0x52c89fd006de52      0t0  TCP 127.0.0.1:55562->127.0.0.1:55563 (ESTABLISHED)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+fixture_h 60195 qsyj   10u  IPv4 0x934e535d31f71ac5      0t0  TCP 127.0.0.1:55562 (LISTEN)
+fixture_h 60195 qsyj   11u  IPv4 0xaec08a4eeecc1157      0t0  TCP 127.0.0.1:55563->127.0.0.1:55562 (ESTABLISHED)
+fixture_h 60195 qsyj   12u  IPv4   0x52c89fd006de52      0t0  TCP 127.0.0.1:55562->127.0.0.1:55563 (ESTABLISHED)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+fixture_h 60195 qsyj   10u  IPv4 0x934e535d31f71ac5      0t0  TCP 127.0.0.1:55562 (LISTEN)
+fixture_h 60195 qsyj   11u  IPv4 0xaec08a4eeecc1157      0t0  TCP 127.0.0.1:55563->127.0.0.1:55562 (ESTABLISHED)
+fixture_h 60195 qsyj   12u  IPv4   0x52c89fd006de52      0t0  TCP 127.0.0.1:55562->127.0.0.1:55563 (ESTABLISHED)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+--- sample (iter=6) ---
+fixture_h 60195 qsyj    8u  IPv4 0xca3853fc4698a8af      0t0  TCP 127.0.0.1:55519 (LISTEN)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+fixture_h 60320 qsyj   10u  IPv4 0x6e34c7fdc50cb491      0t0  TCP 127.0.0.1:55573 (LISTEN)
+fixture_h 60320 qsyj   11u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55574->127.0.0.1:55573 (ESTABLISHED)
+fixture_h 60320 qsyj   13u  IPv4 0x2d9ec278c562452e      0t0  TCP 127.0.0.1:55573->127.0.0.1:55574 (ESTABLISHED)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+fixture_h 60320 qsyj   10u  IPv4 0x6e34c7fdc50cb491      0t0  TCP 127.0.0.1:55573 (LISTEN)
+fixture_h 60320 qsyj   11u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55574->127.0.0.1:55573 (ESTABLISHED)
+fixture_h 60320 qsyj   13u  IPv4 0x2d9ec278c562452e      0t0  TCP 127.0.0.1:55573->127.0.0.1:55574 (ESTABLISHED)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+fixture_h 60320 qsyj   10u  IPv4 0xf9b1bfcffaee7cd5      0t0  TCP 127.0.0.1:55613 (LISTEN)
+fixture_h 60320 qsyj   11u  IPv4 0xd7eb1eb706592106      0t0  TCP 127.0.0.1:55614->127.0.0.1:55613 (ESTABLISHED)
+fixture_h 60320 qsyj   13u  IPv4 0xaf682c93c19c5e9e      0t0  TCP 127.0.0.1:55613->127.0.0.1:55614 (ESTABLISHED)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+fixture_h 60320 qsyj   10u  IPv4 0xf9b1bfcffaee7cd5      0t0  TCP 127.0.0.1:55613 (LISTEN)
+fixture_h 60320 qsyj   11u  IPv4 0xd7eb1eb706592106      0t0  TCP 127.0.0.1:55614->127.0.0.1:55613 (ESTABLISHED)
+fixture_h 60320 qsyj   13u  IPv4 0xaf682c93c19c5e9e      0t0  TCP 127.0.0.1:55613->127.0.0.1:55614 (ESTABLISHED)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+fixture_h 60320 qsyj   10u  IPv4 0xf9b1bfcffaee7cd5      0t0  TCP 127.0.0.1:55613 (LISTEN)
+fixture_h 60320 qsyj   11u  IPv4 0xd7eb1eb706592106      0t0  TCP 127.0.0.1:55614->127.0.0.1:55613 (ESTABLISHED)
+fixture_h 60320 qsyj   13u  IPv4 0xaf682c93c19c5e9e      0t0  TCP 127.0.0.1:55613->127.0.0.1:55614 (ESTABLISHED)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+--- sample (iter=7) ---
+fixture_h 60320 qsyj    9u  IPv4 0x8f478a7701f391ee      0t0  TCP 127.0.0.1:55572 (LISTEN)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+fixture_h 60480 qsyj   10u  IPv4 0x4f3973f6896f205d      0t0  TCP 127.0.0.1:55634 (LISTEN)
+fixture_h 60480 qsyj   11u  IPv4  0x587daab7ff3a774      0t0  TCP 127.0.0.1:55635->127.0.0.1:55634 (ESTABLISHED)
+fixture_h 60480 qsyj   12u  IPv4 0xb368078de682889f      0t0  TCP 127.0.0.1:55634->127.0.0.1:55635 (ESTABLISHED)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+fixture_h 60480 qsyj   10u  IPv4 0x4f3973f6896f205d      0t0  TCP 127.0.0.1:55634 (LISTEN)
+fixture_h 60480 qsyj   11u  IPv4  0x587daab7ff3a774      0t0  TCP 127.0.0.1:55635->127.0.0.1:55634 (ESTABLISHED)
+fixture_h 60480 qsyj   12u  IPv4 0xb368078de682889f      0t0  TCP 127.0.0.1:55634->127.0.0.1:55635 (ESTABLISHED)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+fixture_h 60480 qsyj   10u  IPv4  0x9b802c002e75b41      0t0  TCP 127.0.0.1:55674 (LISTEN)
+fixture_h 60480 qsyj   11u  IPv4 0xbdb609125c98b9b0      0t0  TCP 127.0.0.1:55675->127.0.0.1:55674 (ESTABLISHED)
+fixture_h 60480 qsyj   12u  IPv4 0x9d3de04bd5587dc4      0t0  TCP 127.0.0.1:55674->127.0.0.1:55675 (ESTABLISHED)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+fixture_h 60480 qsyj   10u  IPv4  0x9b802c002e75b41      0t0  TCP 127.0.0.1:55674 (LISTEN)
+fixture_h 60480 qsyj   11u  IPv4 0xbdb609125c98b9b0      0t0  TCP 127.0.0.1:55675->127.0.0.1:55674 (ESTABLISHED)
+fixture_h 60480 qsyj   12u  IPv4 0x9d3de04bd5587dc4      0t0  TCP 127.0.0.1:55674->127.0.0.1:55675 (ESTABLISHED)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+fixture_h 60480 qsyj   10u  IPv4  0x9b802c002e75b41      0t0  TCP 127.0.0.1:55674 (LISTEN)
+fixture_h 60480 qsyj   11u  IPv4 0xbdb609125c98b9b0      0t0  TCP 127.0.0.1:55675->127.0.0.1:55674 (ESTABLISHED)
+fixture_h 60480 qsyj   12u  IPv4 0x9d3de04bd5587dc4      0t0  TCP 127.0.0.1:55674->127.0.0.1:55675 (ESTABLISHED)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+--- sample (iter=8) ---
+fixture_h 60480 qsyj    3u  IPv4 0xa018790a0172a2a5      0t0  TCP 127.0.0.1:55633 (LISTEN)
+--- sample (iter=9) ---
+fixture_h 60597 qsyj    9u  IPv4 0xc6f8cc7f4715144f      0t0  TCP 127.0.0.1:55735 (LISTEN)
+fixture_h 60597 qsyj   11u  IPv4 0xae680287dab9b6ac      0t0  TCP 127.0.0.1:55736->127.0.0.1:55737 (ESTABLISHED)
+fixture_h 60597 qsyj   12u  IPv4 0x4f3973f6896f205d      0t0  TCP 127.0.0.1:55737->127.0.0.1:55736 (ESTABLISHED)
+fixture_h 60597 qsyj   13u  IPv4 0x8b9a82b83e6f9f26      0t0  TCP 127.0.0.1:55736 (LISTEN)
+--- sample (iter=9) ---
+fixture_h 60597 qsyj    9u  IPv4 0xc6f8cc7f4715144f      0t0  TCP 127.0.0.1:55735 (LISTEN)
+fixture_h 60597 qsyj   11u  IPv4 0xae680287dab9b6ac      0t0  TCP 127.0.0.1:55736->127.0.0.1:55737 (ESTABLISHED)
+fixture_h 60597 qsyj   12u  IPv4 0x4f3973f6896f205d      0t0  TCP 127.0.0.1:55737->127.0.0.1:55736 (ESTABLISHED)
+fixture_h 60597 qsyj   13u  IPv4 0x8b9a82b83e6f9f26      0t0  TCP 127.0.0.1:55736 (LISTEN)
+--- sample (iter=9) ---
+fixture_h 60597 qsyj    9u  IPv4 0xc6f8cc7f4715144f      0t0  TCP 127.0.0.1:55735 (LISTEN)
+fixture_h 60597 qsyj   11u  IPv4 0xe474eb0a9479781e      0t0  TCP 127.0.0.1:55763 (LISTEN)
+fixture_h 60597 qsyj   12u  IPv4 0x6ed2ef8cc8336488      0t0  TCP 127.0.0.1:55764->127.0.0.1:55763 (ESTABLISHED)
+fixture_h 60597 qsyj   13u  IPv4 0xfd444f4f456cc71f      0t0  TCP 127.0.0.1:55763->127.0.0.1:55764 (ESTABLISHED)
+--- sample (iter=9) ---
+fixture_h 60597 qsyj    9u  IPv4 0xc6f8cc7f4715144f      0t0  TCP 127.0.0.1:55735 (LISTEN)
+fixture_h 60597 qsyj   11u  IPv4 0xfd1f6a8855d22f55      0t0  TCP 127.0.0.1:55778 (LISTEN)
+fixture_h 60597 qsyj   12u  IPv4 0x63e9f9d4ad633365      0t0  TCP 127.0.0.1:55779->127.0.0.1:55778 (ESTABLISHED)
+fixture_h 60597 qsyj   13u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55778->127.0.0.1:55779 (ESTABLISHED)
+--- sample (iter=9) ---
+fixture_h 60597 qsyj    9u  IPv4 0xc6f8cc7f4715144f      0t0  TCP 127.0.0.1:55735 (LISTEN)
+fixture_h 60597 qsyj   11u  IPv4 0xfd1f6a8855d22f55      0t0  TCP 127.0.0.1:55778 (LISTEN)
+fixture_h 60597 qsyj   12u  IPv4 0x63e9f9d4ad633365      0t0  TCP 127.0.0.1:55779->127.0.0.1:55778 (ESTABLISHED)
+fixture_h 60597 qsyj   13u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55778->127.0.0.1:55779 (ESTABLISHED)
+--- sample (iter=9) ---
+fixture_h 60597 qsyj    9u  IPv4 0xc6f8cc7f4715144f      0t0  TCP 127.0.0.1:55735 (LISTEN)
+fixture_h 60597 qsyj   11u  IPv4 0xfd1f6a8855d22f55      0t0  TCP 127.0.0.1:55778 (LISTEN)
+fixture_h 60597 qsyj   12u  IPv4 0x63e9f9d4ad633365      0t0  TCP 127.0.0.1:55779->127.0.0.1:55778 (ESTABLISHED)
+fixture_h 60597 qsyj   13u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55778->127.0.0.1:55779 (ESTABLISHED)
+--- sample (iter=9) ---
+fixture_h 60597 qsyj    9u  IPv4 0xc6f8cc7f4715144f      0t0  TCP 127.0.0.1:55735 (LISTEN)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+fixture_h 60680 qsyj   10u  IPv4 0x677a9ca0c54edacc      0t0  TCP 127.0.0.1:55790 (LISTEN)
+fixture_h 60680 qsyj   11u  IPv4  0xecd04d2c1462a8c      0t0  TCP 127.0.0.1:55791->127.0.0.1:55790 (ESTABLISHED)
+fixture_h 60680 qsyj   13u  IPv4 0xbfe336f029db2ff0      0t0  TCP 127.0.0.1:55790->127.0.0.1:55791 (ESTABLISHED)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+fixture_h 60680 qsyj   10u  IPv4 0x677a9ca0c54edacc      0t0  TCP 127.0.0.1:55790 (LISTEN)
+fixture_h 60680 qsyj   11u  IPv4  0xecd04d2c1462a8c      0t0  TCP 127.0.0.1:55791->127.0.0.1:55790 (ESTABLISHED)
+fixture_h 60680 qsyj   13u  IPv4 0xbfe336f029db2ff0      0t0  TCP 127.0.0.1:55790->127.0.0.1:55791 (ESTABLISHED)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+fixture_h 60680 qsyj   10u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55830 (LISTEN)
+fixture_h 60680 qsyj   11u  IPv4 0xd87fdcd534a41ed8      0t0  TCP 127.0.0.1:55831->127.0.0.1:55830 (ESTABLISHED)
+fixture_h 60680 qsyj   13u  IPv4 0x35dc51965c9bf411      0t0  TCP 127.0.0.1:55830->127.0.0.1:55831 (ESTABLISHED)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+fixture_h 60680 qsyj   10u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55830 (LISTEN)
+fixture_h 60680 qsyj   11u  IPv4 0xd87fdcd534a41ed8      0t0  TCP 127.0.0.1:55831->127.0.0.1:55830 (ESTABLISHED)
+fixture_h 60680 qsyj   13u  IPv4 0x35dc51965c9bf411      0t0  TCP 127.0.0.1:55830->127.0.0.1:55831 (ESTABLISHED)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+fixture_h 60680 qsyj   10u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55830 (LISTEN)
+fixture_h 60680 qsyj   11u  IPv4 0xd87fdcd534a41ed8      0t0  TCP 127.0.0.1:55831->127.0.0.1:55830 (ESTABLISHED)
+fixture_h 60680 qsyj   13u  IPv4 0x35dc51965c9bf411      0t0  TCP 127.0.0.1:55830->127.0.0.1:55831 (ESTABLISHED)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+--- sample (iter=10) ---
+fixture_h 60680 qsyj    8u  IPv4 0x95cdcfb06e4ee529      0t0  TCP 127.0.0.1:55789 (LISTEN)
+--- sample (iter=11) ---
+fixture_h 60777 qsyj    8u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55841 (LISTEN)
+fixture_h 60777 qsyj   10u  IPv4 0xedbfa943b89e180a      0t0  TCP 127.0.0.1:55843->127.0.0.1:55842 (ESTABLISHED)
+fixture_h 60777 qsyj   11u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55842 (LISTEN)
+fixture_h 60777 qsyj   12u  IPv4  0x587daab7ff3a774      0t0  TCP 127.0.0.1:55842->127.0.0.1:55843 (ESTABLISHED)
+--- sample (iter=11) ---
+fixture_h 60777 qsyj    8u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55841 (LISTEN)
+fixture_h 60777 qsyj   10u  IPv4 0xedbfa943b89e180a      0t0  TCP 127.0.0.1:55843->127.0.0.1:55842 (ESTABLISHED)
+fixture_h 60777 qsyj   11u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55842 (LISTEN)
+fixture_h 60777 qsyj   12u  IPv4  0x587daab7ff3a774      0t0  TCP 127.0.0.1:55842->127.0.0.1:55843 (ESTABLISHED)
+--- sample (iter=11) ---
+fixture_h 60777 qsyj    8u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55841 (LISTEN)
+fixture_h 60777 qsyj   10u  IPv4 0xedbfa943b89e180a      0t0  TCP 127.0.0.1:55843->127.0.0.1:55842 (ESTABLISHED)
+fixture_h 60777 qsyj   11u  IPv4 0x348e08b4fe8b3d77      0t0  TCP 127.0.0.1:55842 (LISTEN)
+fixture_h 60777 qsyj   12u  IPv4  0x587daab7ff3a774      0t0  TCP 127.0.0.1:55842->127.0.0.1:55843 (ESTABLISHED)
+--- sample (iter=11) ---
+fixture_h 60777 qsyj    8u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55841 (LISTEN)
+fixture_h 60777 qsyj   10u  IPv4 0x96ba39fbfbc67038      0t0  TCP 127.0.0.1:55882 (LISTEN)
+fixture_h 60777 qsyj   11u  IPv4 0x4c3b4f7a62e36c48      0t0  TCP 127.0.0.1:55883->127.0.0.1:55882 (ESTABLISHED)
+fixture_h 60777 qsyj   12u  IPv4 0x24acfde8b4ab86d1      0t0  TCP 127.0.0.1:55882->127.0.0.1:55883 (ESTABLISHED)
+--- sample (iter=11) ---
+fixture_h 60777 qsyj    8u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55841 (LISTEN)
+fixture_h 60777 qsyj   10u  IPv4 0x96ba39fbfbc67038      0t0  TCP 127.0.0.1:55882 (LISTEN)
+fixture_h 60777 qsyj   11u  IPv4 0x4c3b4f7a62e36c48      0t0  TCP 127.0.0.1:55883->127.0.0.1:55882 (ESTABLISHED)
+fixture_h 60777 qsyj   12u  IPv4 0x24acfde8b4ab86d1      0t0  TCP 127.0.0.1:55882->127.0.0.1:55883 (ESTABLISHED)
+--- sample (iter=11) ---
+fixture_h 60777 qsyj    8u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55841 (LISTEN)
+fixture_h 60777 qsyj   10u  IPv4 0x96ba39fbfbc67038      0t0  TCP 127.0.0.1:55882 (LISTEN)
+fixture_h 60777 qsyj   11u  IPv4 0x4c3b4f7a62e36c48      0t0  TCP 127.0.0.1:55883->127.0.0.1:55882 (ESTABLISHED)
+fixture_h 60777 qsyj   12u  IPv4 0x24acfde8b4ab86d1      0t0  TCP 127.0.0.1:55882->127.0.0.1:55883 (ESTABLISHED)
+--- sample (iter=11) ---
+fixture_h 60777 qsyj    8u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:55841 (LISTEN)
+--- sample (iter=12) ---
+fixture_h 60863 qsyj    8u  IPv4 0x9a3d415683376774      0t0  TCP 127.0.0.1:55892 (LISTEN)
+fixture_h 60863 qsyj   10u  IPv4 0xd4bd7ab9cabf7ee8      0t0  TCP 127.0.0.1:55893->127.0.0.1:55894 (ESTABLISHED)
+fixture_h 60863 qsyj   11u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:55893 (LISTEN)
+fixture_h 60863 qsyj   12u  IPv4 0x72784ff1cd9f11db      0t0  TCP 127.0.0.1:55894->127.0.0.1:55893 (ESTABLISHED)
+--- sample (iter=12) ---
+fixture_h 60863 qsyj    8u  IPv4 0x9a3d415683376774      0t0  TCP 127.0.0.1:55892 (LISTEN)
+fixture_h 60863 qsyj   10u  IPv4 0xd4bd7ab9cabf7ee8      0t0  TCP 127.0.0.1:55893->127.0.0.1:55894 (ESTABLISHED)
+fixture_h 60863 qsyj   11u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:55893 (LISTEN)
+fixture_h 60863 qsyj   12u  IPv4 0x72784ff1cd9f11db      0t0  TCP 127.0.0.1:55894->127.0.0.1:55893 (ESTABLISHED)
+--- sample (iter=12) ---
+fixture_h 60863 qsyj    8u  IPv4 0x9a3d415683376774      0t0  TCP 127.0.0.1:55892 (LISTEN)
+--- sample (iter=12) ---
+fixture_h 60863 qsyj    8u  IPv4 0x9a3d415683376774      0t0  TCP 127.0.0.1:55892 (LISTEN)
+fixture_h 60863 qsyj   10u  IPv4 0x8638b1988d7c35fd      0t0  TCP 127.0.0.1:55933 (LISTEN)
+fixture_h 60863 qsyj   11u  IPv4 0x233ece551b2c0f34      0t0  TCP 127.0.0.1:55934->127.0.0.1:55933 (ESTABLISHED)
+fixture_h 60863 qsyj   12u  IPv4 0xd00dc47f89d448ec      0t0  TCP 127.0.0.1:55933->127.0.0.1:55934 (ESTABLISHED)
+--- sample (iter=12) ---
+fixture_h 60863 qsyj    8u  IPv4 0x9a3d415683376774      0t0  TCP 127.0.0.1:55892 (LISTEN)
+fixture_h 60863 qsyj   10u  IPv4 0x8638b1988d7c35fd      0t0  TCP 127.0.0.1:55933 (LISTEN)
+fixture_h 60863 qsyj   11u  IPv4 0x233ece551b2c0f34      0t0  TCP 127.0.0.1:55934->127.0.0.1:55933 (ESTABLISHED)
+fixture_h 60863 qsyj   12u  IPv4 0xd00dc47f89d448ec      0t0  TCP 127.0.0.1:55933->127.0.0.1:55934 (ESTABLISHED)
+--- sample (iter=12) ---
+fixture_h 60863 qsyj    8u  IPv4 0x9a3d415683376774      0t0  TCP 127.0.0.1:55892 (LISTEN)
+fixture_h 60863 qsyj   10u  IPv4 0x8638b1988d7c35fd      0t0  TCP 127.0.0.1:55933 (LISTEN)
+fixture_h 60863 qsyj   11u  IPv4 0x233ece551b2c0f34      0t0  TCP 127.0.0.1:55934->127.0.0.1:55933 (ESTABLISHED)
+fixture_h 60863 qsyj   12u  IPv4 0xd00dc47f89d448ec      0t0  TCP 127.0.0.1:55933->127.0.0.1:55934 (ESTABLISHED)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+fixture_h 60952 qsyj   10u  IPv4 0xc92927ffec58bdf2      0t0  TCP 127.0.0.1:55945->127.0.0.1:55944 (ESTABLISHED)
+fixture_h 60952 qsyj   11u  IPv4 0xe6edf38bdce5685e      0t0  TCP 127.0.0.1:55944 (LISTEN)
+fixture_h 60952 qsyj   12u  IPv4 0x11a3e55b8cfbe078      0t0  TCP 127.0.0.1:55944->127.0.0.1:55945 (ESTABLISHED)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+fixture_h 60952 qsyj   10u  IPv4 0xc92927ffec58bdf2      0t0  TCP 127.0.0.1:55945->127.0.0.1:55944 (ESTABLISHED)
+fixture_h 60952 qsyj   11u  IPv4 0xe6edf38bdce5685e      0t0  TCP 127.0.0.1:55944 (LISTEN)
+fixture_h 60952 qsyj   12u  IPv4 0x11a3e55b8cfbe078      0t0  TCP 127.0.0.1:55944->127.0.0.1:55945 (ESTABLISHED)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+fixture_h 60952 qsyj   10u  IPv4 0x92e56075a280c557      0t0  TCP 127.0.0.1:55984 (LISTEN)
+fixture_h 60952 qsyj   11u  IPv4 0xcef0be26d0ef23b1      0t0  TCP 127.0.0.1:55985->127.0.0.1:55984 (ESTABLISHED)
+fixture_h 60952 qsyj   12u  IPv4 0xca2a095b0b7ca84a      0t0  TCP 127.0.0.1:55984->127.0.0.1:55985 (ESTABLISHED)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+fixture_h 60952 qsyj   10u  IPv4 0x92e56075a280c557      0t0  TCP 127.0.0.1:55984 (LISTEN)
+fixture_h 60952 qsyj   11u  IPv4 0xcef0be26d0ef23b1      0t0  TCP 127.0.0.1:55985->127.0.0.1:55984 (ESTABLISHED)
+fixture_h 60952 qsyj   12u  IPv4 0xca2a095b0b7ca84a      0t0  TCP 127.0.0.1:55984->127.0.0.1:55985 (ESTABLISHED)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+fixture_h 60952 qsyj   10u  IPv4 0x92e56075a280c557      0t0  TCP 127.0.0.1:55984 (LISTEN)
+fixture_h 60952 qsyj   11u  IPv4 0xcef0be26d0ef23b1      0t0  TCP 127.0.0.1:55985->127.0.0.1:55984 (ESTABLISHED)
+fixture_h 60952 qsyj   12u  IPv4 0xca2a095b0b7ca84a      0t0  TCP 127.0.0.1:55984->127.0.0.1:55985 (ESTABLISHED)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+--- sample (iter=13) ---
+fixture_h 60952 qsyj    8u  IPv4 0x4d36c76a90418dc5      0t0  TCP 127.0.0.1:55943 (LISTEN)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+fixture_h 61044 qsyj   10u  IPv4 0x1505df98411b24de      0t0  TCP 127.0.0.1:55995->127.0.0.1:55996 (ESTABLISHED)
+fixture_h 61044 qsyj   11u  IPv4 0xfbfdf39f622a6142      0t0  TCP 127.0.0.1:55995 (LISTEN)
+fixture_h 61044 qsyj   12u  IPv4 0xd9c87e7dd9509878      0t0  TCP 127.0.0.1:55996->127.0.0.1:55995 (ESTABLISHED)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+fixture_h 61044 qsyj   10u  IPv4 0x1505df98411b24de      0t0  TCP 127.0.0.1:55995->127.0.0.1:55996 (ESTABLISHED)
+fixture_h 61044 qsyj   11u  IPv4 0xfbfdf39f622a6142      0t0  TCP 127.0.0.1:55995 (LISTEN)
+fixture_h 61044 qsyj   12u  IPv4 0xd9c87e7dd9509878      0t0  TCP 127.0.0.1:55996->127.0.0.1:55995 (ESTABLISHED)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+fixture_h 61044 qsyj   10u  IPv4 0x1505df98411b24de      0t0  TCP 127.0.0.1:55995->127.0.0.1:55996 (ESTABLISHED)
+fixture_h 61044 qsyj   11u  IPv4 0xfbfdf39f622a6142      0t0  TCP 127.0.0.1:55995 (LISTEN)
+fixture_h 61044 qsyj   12u  IPv4 0xd9c87e7dd9509878      0t0  TCP 127.0.0.1:55996->127.0.0.1:55995 (ESTABLISHED)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+fixture_h 61044 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56035 (LISTEN)
+fixture_h 61044 qsyj   11u  IPv4 0x38645249707d6a77      0t0  TCP 127.0.0.1:56036->127.0.0.1:56035 (ESTABLISHED)
+fixture_h 61044 qsyj   12u  IPv4 0x84e628be66842b81      0t0  TCP 127.0.0.1:56035->127.0.0.1:56036 (ESTABLISHED)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+fixture_h 61044 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56035 (LISTEN)
+fixture_h 61044 qsyj   11u  IPv4 0x38645249707d6a77      0t0  TCP 127.0.0.1:56036->127.0.0.1:56035 (ESTABLISHED)
+fixture_h 61044 qsyj   12u  IPv4 0x84e628be66842b81      0t0  TCP 127.0.0.1:56035->127.0.0.1:56036 (ESTABLISHED)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+fixture_h 61044 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56035 (LISTEN)
+fixture_h 61044 qsyj   11u  IPv4 0x38645249707d6a77      0t0  TCP 127.0.0.1:56036->127.0.0.1:56035 (ESTABLISHED)
+fixture_h 61044 qsyj   12u  IPv4 0x84e628be66842b81      0t0  TCP 127.0.0.1:56035->127.0.0.1:56036 (ESTABLISHED)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+--- sample (iter=14) ---
+fixture_h 61044 qsyj    8u  IPv4 0x390befd485a99e05      0t0  TCP 127.0.0.1:55994 (LISTEN)
+--- sample (iter=15) ---
+fixture_h 61133 qsyj    8u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:56045 (LISTEN)
+fixture_h 61133 qsyj   10u  IPv4 0x72784ff1cd9f11db      0t0  TCP 127.0.0.1:56046 (LISTEN)
+fixture_h 61133 qsyj   11u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:56047->127.0.0.1:56046 (ESTABLISHED)
+fixture_h 61133 qsyj   12u  IPv4 0xedbfa943b89e180a      0t0  TCP 127.0.0.1:56046->127.0.0.1:56047 (ESTABLISHED)
+--- sample (iter=15) ---
+fixture_h 61133 qsyj    8u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:56045 (LISTEN)
+fixture_h 61133 qsyj   10u  IPv4 0x72784ff1cd9f11db      0t0  TCP 127.0.0.1:56046 (LISTEN)
+fixture_h 61133 qsyj   11u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:56047->127.0.0.1:56046 (ESTABLISHED)
+fixture_h 61133 qsyj   12u  IPv4 0xedbfa943b89e180a      0t0  TCP 127.0.0.1:56046->127.0.0.1:56047 (ESTABLISHED)
+--- sample (iter=15) ---
+fixture_h 61133 qsyj    8u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:56045 (LISTEN)
+fixture_h 61133 qsyj   10u  IPv4 0x72784ff1cd9f11db      0t0  TCP 127.0.0.1:56046 (LISTEN)
+fixture_h 61133 qsyj   11u  IPv4 0x6662b7142d077e27      0t0  TCP 127.0.0.1:56047->127.0.0.1:56046 (ESTABLISHED)
+fixture_h 61133 qsyj   12u  IPv4 0xedbfa943b89e180a      0t0  TCP 127.0.0.1:56046->127.0.0.1:56047 (ESTABLISHED)
+--- sample (iter=15) ---
+fixture_h 61133 qsyj    8u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:56045 (LISTEN)
+fixture_h 61133 qsyj   10u  IPv4 0xfce5aea56c25014b      0t0  TCP 127.0.0.1:56086 (LISTEN)
+fixture_h 61133 qsyj   11u  IPv4 0x7d1d34fd51fa6b51      0t0  TCP 127.0.0.1:56087->127.0.0.1:56086 (ESTABLISHED)
+fixture_h 61133 qsyj   12u  IPv4 0x4bf581ec6ddcd714      0t0  TCP 127.0.0.1:56086->127.0.0.1:56087 (ESTABLISHED)
+--- sample (iter=15) ---
+fixture_h 61133 qsyj    8u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:56045 (LISTEN)
+fixture_h 61133 qsyj   10u  IPv4 0xfce5aea56c25014b      0t0  TCP 127.0.0.1:56086 (LISTEN)
+fixture_h 61133 qsyj   11u  IPv4 0x7d1d34fd51fa6b51      0t0  TCP 127.0.0.1:56087->127.0.0.1:56086 (ESTABLISHED)
+fixture_h 61133 qsyj   12u  IPv4 0x4bf581ec6ddcd714      0t0  TCP 127.0.0.1:56086->127.0.0.1:56087 (ESTABLISHED)
+--- sample (iter=15) ---
+fixture_h 61133 qsyj    8u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:56045 (LISTEN)
+fixture_h 61133 qsyj   10u  IPv4 0xfce5aea56c25014b      0t0  TCP 127.0.0.1:56086 (LISTEN)
+fixture_h 61133 qsyj   11u  IPv4 0x7d1d34fd51fa6b51      0t0  TCP 127.0.0.1:56087->127.0.0.1:56086 (ESTABLISHED)
+fixture_h 61133 qsyj   12u  IPv4 0x4bf581ec6ddcd714      0t0  TCP 127.0.0.1:56086->127.0.0.1:56087 (ESTABLISHED)
+--- sample (iter=15) ---
+fixture_h 61133 qsyj    8u  IPv4 0x5c46d8b21bc99017      0t0  TCP 127.0.0.1:56045 (LISTEN)
+--- sample (iter=16) ---
+fixture_h 61211 qsyj    8u  IPv4 0x2d80b5c831d9dd17      0t0  TCP 127.0.0.1:56096 (LISTEN)
+fixture_h 61211 qsyj   10u  IPv4 0xcb971468b968328c      0t0  TCP 127.0.0.1:56097->127.0.0.1:56098 (ESTABLISHED)
+fixture_h 61211 qsyj   11u  IPv4 0x787cd3e30b567710      0t0  TCP 127.0.0.1:56097 (LISTEN)
+fixture_h 61211 qsyj   12u  IPv4 0xf6074b62a9d23f65      0t0  TCP 127.0.0.1:56098->127.0.0.1:56097 (ESTABLISHED)
+--- sample (iter=16) ---
+fixture_h 61211 qsyj    8u  IPv4 0x2d80b5c831d9dd17      0t0  TCP 127.0.0.1:56096 (LISTEN)
+fixture_h 61211 qsyj   10u  IPv4 0xcb971468b968328c      0t0  TCP 127.0.0.1:56097->127.0.0.1:56098 (ESTABLISHED)
+fixture_h 61211 qsyj   11u  IPv4 0x787cd3e30b567710      0t0  TCP 127.0.0.1:56097 (LISTEN)
+fixture_h 61211 qsyj   12u  IPv4 0xf6074b62a9d23f65      0t0  TCP 127.0.0.1:56098->127.0.0.1:56097 (ESTABLISHED)
+--- sample (iter=16) ---
+fixture_h 61211 qsyj    8u  IPv4 0x2d80b5c831d9dd17      0t0  TCP 127.0.0.1:56096 (LISTEN)
+fixture_h 61211 qsyj   10u  IPv4 0xcb971468b968328c      0t0  TCP 127.0.0.1:56097->127.0.0.1:56098 (ESTABLISHED)
+fixture_h 61211 qsyj   11u  IPv4 0x787cd3e30b567710      0t0  TCP 127.0.0.1:56097 (LISTEN)
+fixture_h 61211 qsyj   12u  IPv4 0xf6074b62a9d23f65      0t0  TCP 127.0.0.1:56098->127.0.0.1:56097 (ESTABLISHED)
+--- sample (iter=16) ---
+fixture_h 61211 qsyj    8u  IPv4 0x2d80b5c831d9dd17      0t0  TCP 127.0.0.1:56096 (LISTEN)
+fixture_h 61211 qsyj   10u  IPv4 0x41c180a346e50d9d      0t0  TCP 127.0.0.1:56137 (LISTEN)
+fixture_h 61211 qsyj   11u  IPv4 0x74e0b05d5ea31015      0t0  TCP 127.0.0.1:56138->127.0.0.1:56137 (ESTABLISHED)
+fixture_h 61211 qsyj   12u  IPv4 0x9fd1c97ab3fbf173      0t0  TCP 127.0.0.1:56137->127.0.0.1:56138 (ESTABLISHED)
+--- sample (iter=16) ---
+fixture_h 61211 qsyj    8u  IPv4 0x2d80b5c831d9dd17      0t0  TCP 127.0.0.1:56096 (LISTEN)
+fixture_h 61211 qsyj   10u  IPv4 0x41c180a346e50d9d      0t0  TCP 127.0.0.1:56137 (LISTEN)
+fixture_h 61211 qsyj   11u  IPv4 0x74e0b05d5ea31015      0t0  TCP 127.0.0.1:56138->127.0.0.1:56137 (ESTABLISHED)
+fixture_h 61211 qsyj   12u  IPv4 0x9fd1c97ab3fbf173      0t0  TCP 127.0.0.1:56137->127.0.0.1:56138 (ESTABLISHED)
+--- sample (iter=16) ---
+fixture_h 61211 qsyj    8u  IPv4 0x2d80b5c831d9dd17      0t0  TCP 127.0.0.1:56096 (LISTEN)
+fixture_h 61211 qsyj   10u  IPv4 0x41c180a346e50d9d      0t0  TCP 127.0.0.1:56137 (LISTEN)
+fixture_h 61211 qsyj   11u  IPv4 0x74e0b05d5ea31015      0t0  TCP 127.0.0.1:56138->127.0.0.1:56137 (ESTABLISHED)
+fixture_h 61211 qsyj   12u  IPv4 0x9fd1c97ab3fbf173      0t0  TCP 127.0.0.1:56137->127.0.0.1:56138 (ESTABLISHED)
+--- sample (iter=16) ---
+fixture_h 61211 qsyj    8u  IPv4 0x2d80b5c831d9dd17      0t0  TCP 127.0.0.1:56096 (LISTEN)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+fixture_h 61302 qsyj   11u  IPv4 0x87c8540a9bd9b4d8      0t0  TCP 127.0.0.1:56148 (LISTEN)
+fixture_h 61302 qsyj   12u  IPv4 0xaf48d68c8b0b92c5      0t0  TCP 127.0.0.1:56149->127.0.0.1:56148 (ESTABLISHED)
+fixture_h 61302 qsyj   14u  IPv4 0xec2be035a7cb6c36      0t0  TCP 127.0.0.1:56148->127.0.0.1:56149 (ESTABLISHED)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+fixture_h 61302 qsyj   11u  IPv4 0x87c8540a9bd9b4d8      0t0  TCP 127.0.0.1:56148 (LISTEN)
+fixture_h 61302 qsyj   12u  IPv4 0xaf48d68c8b0b92c5      0t0  TCP 127.0.0.1:56149->127.0.0.1:56148 (ESTABLISHED)
+fixture_h 61302 qsyj   14u  IPv4 0xec2be035a7cb6c36      0t0  TCP 127.0.0.1:56148->127.0.0.1:56149 (ESTABLISHED)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+fixture_h 61302 qsyj   11u  IPv4 0x4abfc28d357cba94      0t0  TCP 127.0.0.1:56188 (LISTEN)
+fixture_h 61302 qsyj   12u  IPv4 0xcf43803430d25963      0t0  TCP 127.0.0.1:56189->127.0.0.1:56188 (ESTABLISHED)
+fixture_h 61302 qsyj   14u  IPv4 0x47e2ccba5576d15e      0t0  TCP 127.0.0.1:56188->127.0.0.1:56189 (ESTABLISHED)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+fixture_h 61302 qsyj   11u  IPv4 0x4abfc28d357cba94      0t0  TCP 127.0.0.1:56188 (LISTEN)
+fixture_h 61302 qsyj   12u  IPv4 0xcf43803430d25963      0t0  TCP 127.0.0.1:56189->127.0.0.1:56188 (ESTABLISHED)
+fixture_h 61302 qsyj   14u  IPv4 0x47e2ccba5576d15e      0t0  TCP 127.0.0.1:56188->127.0.0.1:56189 (ESTABLISHED)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+fixture_h 61302 qsyj   11u  IPv4 0x4abfc28d357cba94      0t0  TCP 127.0.0.1:56188 (LISTEN)
+fixture_h 61302 qsyj   12u  IPv4 0xcf43803430d25963      0t0  TCP 127.0.0.1:56189->127.0.0.1:56188 (ESTABLISHED)
+fixture_h 61302 qsyj   14u  IPv4 0x47e2ccba5576d15e      0t0  TCP 127.0.0.1:56188->127.0.0.1:56189 (ESTABLISHED)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+--- sample (iter=17) ---
+fixture_h 61302 qsyj    8u  IPv4 0x7c42004a123a654c      0t0  TCP 127.0.0.1:56147 (LISTEN)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj    8u  IPv4 0xe3947aac2681986c      0t0  TCP 127.0.0.1:56199 (LISTEN)
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+fixture_h 61415 qsyj   11u  IPv4 0x5f1c9ece41527a4b      0t0  TCP 127.0.0.1:56200->127.0.0.1:56199 (ESTABLISHED)
+fixture_h 61415 qsyj   12u  IPv4 0x2f54022c6af5e766      0t0  TCP 127.0.0.1:56199->127.0.0.1:56200 (ESTABLISHED)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj    8u  IPv4 0xe3947aac2681986c      0t0  TCP 127.0.0.1:56199 (LISTEN)
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+fixture_h 61415 qsyj   11u  IPv4 0x5f1c9ece41527a4b      0t0  TCP 127.0.0.1:56200->127.0.0.1:56199 (ESTABLISHED)
+fixture_h 61415 qsyj   12u  IPv4 0x2f54022c6af5e766      0t0  TCP 127.0.0.1:56199->127.0.0.1:56200 (ESTABLISHED)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj    8u  IPv4 0xe3947aac2681986c      0t0  TCP 127.0.0.1:56199 (LISTEN)
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+fixture_h 61415 qsyj   11u  IPv4  0x484094e661b1791      0t0  TCP 127.0.0.1:56201->127.0.0.1:56199 (SYN_SENT)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj    8u  IPv4 0xb1dbe0800ce94bdd      0t0  TCP 127.0.0.1:56239 (LISTEN)
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+fixture_h 61415 qsyj   11u  IPv4 0x6a88e05e1a25bdaf      0t0  TCP 127.0.0.1:56240->127.0.0.1:56239 (ESTABLISHED)
+fixture_h 61415 qsyj   12u  IPv4 0xe9377ca54777ddb6      0t0  TCP 127.0.0.1:56239->127.0.0.1:56240 (ESTABLISHED)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj    8u  IPv4 0xb1dbe0800ce94bdd      0t0  TCP 127.0.0.1:56239 (LISTEN)
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+fixture_h 61415 qsyj   11u  IPv4 0x6a88e05e1a25bdaf      0t0  TCP 127.0.0.1:56240->127.0.0.1:56239 (ESTABLISHED)
+fixture_h 61415 qsyj   12u  IPv4 0xe9377ca54777ddb6      0t0  TCP 127.0.0.1:56239->127.0.0.1:56240 (ESTABLISHED)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj    8u  IPv4 0xb1dbe0800ce94bdd      0t0  TCP 127.0.0.1:56239 (LISTEN)
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+fixture_h 61415 qsyj   11u  IPv4 0x6a88e05e1a25bdaf      0t0  TCP 127.0.0.1:56240->127.0.0.1:56239 (ESTABLISHED)
+fixture_h 61415 qsyj   12u  IPv4 0xe9377ca54777ddb6      0t0  TCP 127.0.0.1:56239->127.0.0.1:56240 (ESTABLISHED)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+--- sample (iter=18) ---
+fixture_h 61415 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56198 (LISTEN)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+fixture_h 61541 qsyj   10u  IPv4 0x9fd1c97ab3fbf173      0t0  TCP 127.0.0.1:56250->127.0.0.1:56251 (ESTABLISHED)
+fixture_h 61541 qsyj   11u  IPv4 0x3c532740815f82d5      0t0  TCP 127.0.0.1:56250 (LISTEN)
+fixture_h 61541 qsyj   12u  IPv4 0x6665213d387fda42      0t0  TCP 127.0.0.1:56251->127.0.0.1:56250 (ESTABLISHED)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+fixture_h 61541 qsyj   10u  IPv4 0x9fd1c97ab3fbf173      0t0  TCP 127.0.0.1:56250->127.0.0.1:56251 (ESTABLISHED)
+fixture_h 61541 qsyj   11u  IPv4 0x3c532740815f82d5      0t0  TCP 127.0.0.1:56250 (LISTEN)
+fixture_h 61541 qsyj   12u  IPv4 0x6665213d387fda42      0t0  TCP 127.0.0.1:56251->127.0.0.1:56250 (ESTABLISHED)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+fixture_h 61541 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56290 (LISTEN)
+fixture_h 61541 qsyj   11u  IPv4 0xb1dbe0800ce94bdd      0t0  TCP 127.0.0.1:56291->127.0.0.1:56290 (ESTABLISHED)
+fixture_h 61541 qsyj   12u  IPv4 0xe9377ca54777ddb6      0t0  TCP 127.0.0.1:56290->127.0.0.1:56291 (ESTABLISHED)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+fixture_h 61541 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56290 (LISTEN)
+fixture_h 61541 qsyj   11u  IPv4 0xb1dbe0800ce94bdd      0t0  TCP 127.0.0.1:56291->127.0.0.1:56290 (ESTABLISHED)
+fixture_h 61541 qsyj   12u  IPv4 0xe9377ca54777ddb6      0t0  TCP 127.0.0.1:56290->127.0.0.1:56291 (ESTABLISHED)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+fixture_h 61541 qsyj   10u  IPv4 0x2f693d179ad027b0      0t0  TCP 127.0.0.1:56290 (LISTEN)
+fixture_h 61541 qsyj   11u  IPv4 0xb1dbe0800ce94bdd      0t0  TCP 127.0.0.1:56291->127.0.0.1:56290 (ESTABLISHED)
+fixture_h 61541 qsyj   12u  IPv4 0xe9377ca54777ddb6      0t0  TCP 127.0.0.1:56290->127.0.0.1:56291 (ESTABLISHED)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+--- sample (iter=19) ---
+fixture_h 61541 qsyj    8u  IPv4 0x3d3d4f62a83d1690      0t0  TCP 127.0.0.1:56249 (LISTEN)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+fixture_h 61665 qsyj   10u  IPv4 0x9616fd009c78ec36      0t0  TCP 127.0.0.1:56302->127.0.0.1:56301 (ESTABLISHED)
+fixture_h 61665 qsyj   11u  IPv4 0x27baeae5b6be9734      0t0  TCP 127.0.0.1:56301 (LISTEN)
+fixture_h 61665 qsyj   12u  IPv4 0xadac47c7abf9d75b      0t0  TCP 127.0.0.1:56301->127.0.0.1:56302 (ESTABLISHED)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+fixture_h 61665 qsyj   10u  IPv4 0x9616fd009c78ec36      0t0  TCP 127.0.0.1:56302->127.0.0.1:56301 (ESTABLISHED)
+fixture_h 61665 qsyj   11u  IPv4 0x27baeae5b6be9734      0t0  TCP 127.0.0.1:56301 (LISTEN)
+fixture_h 61665 qsyj   12u  IPv4 0xadac47c7abf9d75b      0t0  TCP 127.0.0.1:56301->127.0.0.1:56302 (ESTABLISHED)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+fixture_h 61665 qsyj   10u  IPv4 0xc22fae8123ac7c7d      0t0  TCP 127.0.0.1:56341 (LISTEN)
+fixture_h 61665 qsyj   11u  IPv4 0x62585269ade57a2c      0t0  TCP 127.0.0.1:56342->127.0.0.1:56341 (ESTABLISHED)
+fixture_h 61665 qsyj   12u  IPv4 0x3e3961fd475d0639      0t0  TCP 127.0.0.1:56341->127.0.0.1:56342 (ESTABLISHED)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+fixture_h 61665 qsyj   10u  IPv4 0xc22fae8123ac7c7d      0t0  TCP 127.0.0.1:56341 (LISTEN)
+fixture_h 61665 qsyj   11u  IPv4 0x62585269ade57a2c      0t0  TCP 127.0.0.1:56342->127.0.0.1:56341 (ESTABLISHED)
+fixture_h 61665 qsyj   12u  IPv4 0x3e3961fd475d0639      0t0  TCP 127.0.0.1:56341->127.0.0.1:56342 (ESTABLISHED)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+fixture_h 61665 qsyj   10u  IPv4 0xc22fae8123ac7c7d      0t0  TCP 127.0.0.1:56341 (LISTEN)
+fixture_h 61665 qsyj   11u  IPv4 0x62585269ade57a2c      0t0  TCP 127.0.0.1:56342->127.0.0.1:56341 (ESTABLISHED)
+fixture_h 61665 qsyj   12u  IPv4 0x3e3961fd475d0639      0t0  TCP 127.0.0.1:56341->127.0.0.1:56342 (ESTABLISHED)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)
+--- sample (iter=20) ---
+fixture_h 61665 qsyj    8u  IPv4 0xd59da6ceda4906d3      0t0  TCP 127.0.0.1:56300 (LISTEN)

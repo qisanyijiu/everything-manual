@@ -1,0 +1,59 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [ 3 0 R 5 0 R ] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [ 0 0 595 842 ] /Resources << /Font << /F1 7 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 224 >>
+stream
+BT
+/F1 18 Tf
+72 760 Td
+(Sample Manual - Synthetic Fixture \(Page 1 of 2\)) Tj
+0 -28 Td
+(Model X100: self-built test document, not a real manual.) Tj
+0 -28 Td
+(Step 1: Loosen the four captive screws on the rear cover.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [ 0 0 595 842 ] /Resources << /Font << /F1 7 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 220 >>
+stream
+BT
+/F1 18 Tf
+72 760 Td
+(Sample Manual - Synthetic Fixture \(Page 2 of 2\)) Tj
+0 -28 Td
+(Step 2: Route the sensor cable away from the heat sink.) Tj
+0 -28 Td
+(Specification: DC 12 V, 2.5 A, operating range 0-40 C.) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000123 00000 n 
+0000000251 00000 n 
+0000000525 00000 n 
+0000000653 00000 n 
+0000000923 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+993
+%%EOF

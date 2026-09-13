@@ -1,0 +1,199 @@
+{
+  "说明": "10 次草稿切换（真实后端）。deleteDeltas 是每次切换期间真实发生的 gl.deleteBuffer/deleteTexture 调用数（QA 独立原型计数）；glRawSamples 是累计原始计数（含 three 每个渲染器实例自建的 4 张 empty texture：TEXTURE_2D/CUBE/2D_ARRAY/3D，因此累计 createTexture 会随上下文数增长，这不是应用资源泄漏指标）；contexts = 真正拿到 WebGL 上下文的 canvas 数。",
+  "draftIds": [
+    "01a0977a-eae2-7673-a001-6f3e770918a9",
+    "01a0977a-e89b-75e7-a088-8264f83806b7",
+    "01a0977a-eae2-7673-a001-6f3e770918a9",
+    "01a0977a-e89b-75e7-a088-8264f83806b7",
+    "01a0977a-eae2-7673-a001-6f3e770918a9",
+    "01a0977a-e89b-75e7-a088-8264f83806b7",
+    "01a0977a-eae2-7673-a001-6f3e770918a9",
+    "01a0977a-e89b-75e7-a088-8264f83806b7",
+    "01a0977a-eae2-7673-a001-6f3e770918a9",
+    "01a0977a-e89b-75e7-a088-8264f83806b7"
+  ],
+  "aliveSamples": [
+    "1/1/1",
+    "1/1/1",
+    "1/1/1",
+    "1/1/1",
+    "1/1/1",
+    "1/1/1",
+    "1/1/1",
+    "1/1/1",
+    "1/1/1",
+    "1/1/1"
+  ],
+  "deleteDeltas": [
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    },
+    {
+      "buffers": 4,
+      "textures": 1
+    }
+  ],
+  "glRawSamples": [
+    {
+      "draws": 10,
+      "buffersCreated": 8,
+      "buffersDeleted": 4,
+      "texturesCreated": 12,
+      "texturesDeleted": 1,
+      "programsDeleted": 1,
+      "contexts": 3,
+      "contextsLost": 1
+    },
+    {
+      "draws": 17,
+      "buffersCreated": 12,
+      "buffersDeleted": 8,
+      "texturesCreated": 18,
+      "texturesDeleted": 2,
+      "programsDeleted": 2,
+      "contexts": 4,
+      "contextsLost": 2
+    },
+    {
+      "draws": 24,
+      "buffersCreated": 16,
+      "buffersDeleted": 12,
+      "texturesCreated": 24,
+      "texturesDeleted": 3,
+      "programsDeleted": 3,
+      "contexts": 5,
+      "contextsLost": 3
+    },
+    {
+      "draws": 31,
+      "buffersCreated": 20,
+      "buffersDeleted": 16,
+      "texturesCreated": 30,
+      "texturesDeleted": 4,
+      "programsDeleted": 4,
+      "contexts": 6,
+      "contextsLost": 4
+    },
+    {
+      "draws": 40,
+      "buffersCreated": 24,
+      "buffersDeleted": 20,
+      "texturesCreated": 36,
+      "texturesDeleted": 5,
+      "programsDeleted": 5,
+      "contexts": 7,
+      "contextsLost": 5
+    },
+    {
+      "draws": 49,
+      "buffersCreated": 28,
+      "buffersDeleted": 24,
+      "texturesCreated": 42,
+      "texturesDeleted": 6,
+      "programsDeleted": 6,
+      "contexts": 8,
+      "contextsLost": 6
+    },
+    {
+      "draws": 57,
+      "buffersCreated": 32,
+      "buffersDeleted": 28,
+      "texturesCreated": 48,
+      "texturesDeleted": 7,
+      "programsDeleted": 7,
+      "contexts": 9,
+      "contextsLost": 7
+    },
+    {
+      "draws": 64,
+      "buffersCreated": 36,
+      "buffersDeleted": 32,
+      "texturesCreated": 54,
+      "texturesDeleted": 8,
+      "programsDeleted": 8,
+      "contexts": 10,
+      "contextsLost": 8
+    },
+    {
+      "draws": 72,
+      "buffersCreated": 40,
+      "buffersDeleted": 36,
+      "texturesCreated": 60,
+      "texturesDeleted": 9,
+      "programsDeleted": 9,
+      "contexts": 11,
+      "contextsLost": 9
+    },
+    {
+      "draws": 80,
+      "buffersCreated": 44,
+      "buffersDeleted": 40,
+      "texturesCreated": 66,
+      "texturesDeleted": 10,
+      "programsDeleted": 10,
+      "contexts": 12,
+      "contextsLost": 10
+    }
+  ],
+  "contexts": 12,
+  "heapSamples": [
+    25920452,
+    25459068,
+    24660420,
+    26453696,
+    28765344,
+    25584480,
+    26730872,
+    26057308,
+    27441020,
+    27357616
+  ],
+  "heapRatio": 1.055445175107286,
+  "heapRetainedSamples": [
+    23373684,
+    23871004,
+    24327600,
+    24771880,
+    24868208,
+    25130984,
+    25260848,
+    25883572,
+    26102524,
+    26276240
+  ],
+  "heapRetainedRatio": 1.0934824526023288,
+  "heapGcApplied": true
+}

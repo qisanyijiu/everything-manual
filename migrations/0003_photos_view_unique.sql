@@ -1,0 +1,13 @@
+-- 0003_photos_view_unique —— 「同一物品每视图最多一张照片」钉在 schema 上
+-- （contracts.md §2 photos 的"必须保证"、REQ-013、AC-021）。
+--
+-- 为什么用唯一索引而不是只靠服务层检查：
+--   * 该不变量是合同明文（"同一快照每视图最多一张"），并发/误用时不能出现两张；
+--   * 服务层仍在事务内先做占用查询以给出可读错误
+--     （422 + details.reason=viewOccupied + existingPhotoId，供 UI 提示"请先移除或改选"），
+--     唯一索引是并发窗口下的最终防线（冲突映射为同一个 422 原因）。
+--
+-- 视图枚举与 detail 语义（detail 不进多视图请求体）由 photos.view 的 CHECK（0001）
+-- 与仓储 list_multiview_for_item 承担，本迁移只负责唯一性。
+-- 迁移只追加，不修改历史文件（ADR-009）。
+CREATE UNIQUE INDEX photos_item_view_unique ON photos (item_id, view);

@@ -1,0 +1,22 @@
+# QA T03 health/ready live + check side effects 2026-09-11T18:54:48Z
+== openapi ready description
+T01 仅进程自检；T03 起扩展到数据库/迁移/数据目录。云端不可达不影响本探针。
+
+== live serve on data1: ready response
+addr=127.0.0.1:52009
+{"data":{"status":"ready","checks":[{"name":"process","status":"ok"}]}}
+serve exit=0
+
+== check side-effect inventory on data1
+check exit=0
+-- diff before/after (only expected: log append):
+1,2c1,2
+< 1e230bd8a14ea4801aa6801deb7ed9ffa4a42b8097299ddcfc6e2e4ac22ba28d  /tmp/em-t03-qa/data1/lock
+< bd07b7d7fc2ca57d0959be9fccd2a40187786d2bc7ad1d64ea5fe2739a9d0fba  /tmp/em-t03-qa/data1/logs/everything-manual.log
+---
+> b79ed2383027aa78ea21d2eeb6c8a8e084205693a54adcf20c8b126469fbe9a1  /tmp/em-t03-qa/data1/lock
+> 370d172b30c8f521772f02a1d65e9c6a55686778225771e06dec8caa856178aa  /tmp/em-t03-qa/data1/logs/everything-manual.log
+-- tmp/ residue:
+total 0
+drwx------@ 2 qsyj  wheel   64  9月 12 02:54 .
+drwx------@ 7 qsyj  wheel  224  9月 12 02:54 ..

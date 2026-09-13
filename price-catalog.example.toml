@@ -1,0 +1,37 @@
+# 万物说明书 · 价格目录示例（T11；复制为运营文件后由 price_catalog_path 指向）
+#
+# 说明（语义与规则见 llmdoc/requirements/web-mvp/implementation.md §T11）：
+#   * 全部金额是**十进制字面量**（字符串），服务端用精确 decimal 换算为整数最小单位：
+#     Tripo credits → creditMinor（1/100 credit）；USD → usdMicros（1/1,000,000 USD）。
+#     禁止浮点累加；小数位多于最小单位时按"向上取整"（保守上界）。
+#   * version / snapshot_date 会随报价、快照与费用账本一起冻结（审计与复算依据）。
+#   * 未知键报错（不会静默忽略）；预设名重复、金额非法、日期形状错误都会让
+#     serve/check 启动失败（退出码 3），避免"用猜测的价格生成"。
+#   * 目录里没有的预设/模型不能生成：estimate 返回明确错误（不是 0 费用假成功）。
+#
+# 价格快照（2026-09-11，PRD §5.2、architecture §5.3）：
+#   Tripo H 系列 v3.1-20260211，texture=true、pbr=true、standard 质量、
+#   face_limit=100000、quad=false、generate_parts=false，标准带纹理多视图生成 30 credits。
+#   说明书 AI 单价由部署者按实际合同填写（示例值不代表任何供应商承诺）。
+
+version = "2026-09-11"
+snapshot_date = "2026-09-11"
+
+[[tripo.presets]]
+preset = "tripo-h-v3.1-standard"
+model = "v3.1-20260211"
+credits = "30"
+texture = true
+pbr = true
+texture_quality = "standard"
+geometry_quality = "standard"
+face_limit = 100000
+quad = false
+generate_parts = false
+
+# 键 = providers.manual_ai.model（配置里的模型名必须能在本目录找到单价，
+# 否则 estimate 返回 409 PRICE_CATALOG_MISSING 并说明缺哪一项）。
+[manual_ai.models.gpt-5-mini]
+input_usd_per_million_tokens = "0.25"
+output_usd_per_million_tokens = "2.00"
+image_usd_per_image = "0.01"

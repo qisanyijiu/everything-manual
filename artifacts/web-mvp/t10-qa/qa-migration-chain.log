@@ -1,0 +1,26 @@
+== 二进制 sha256：c7832470b7b5c5d288b9c812c69477844a19b26ab59ea32b47a08656daf92f43
+== 工作目录：/tmp/em-t10-qa-mig-32285
+fresh_init_exit=0
+合成 v4 库：0001–0004 已应用，校验和与 sqlx 一致
+迁移行数：4，最新 v4
+job_stage_deps 存在：0
+
+== check（只读，不得迁移）
+check_v4_exit=0
+[检查] 数据库 schema：待迁移（库 v4 → 程序 v5；serve/init 启动时自动迁移，本命令不修改数据）
+结果：check 通过
+check 后迁移行数：1，job_stage_deps 存在：0
+
+== serve（应自动迁移到 v5）
+"event":"database_ready","dataDir":"/tmp/em-t10-qa-mig-32285/data-v4","schemaVersion":5
+serve_v4_exit=0
+升级后迁移行数：5，最新 v5
+job_stage_deps 存在：1
+job_stages 新列数：3
+admins 保留：0
+ok
+== 升级后 check
+check_after_exit=0
+[检查] 数据库 schema：已就绪（v5；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+结果：check 通过
+== 完成（临时目录已清理）

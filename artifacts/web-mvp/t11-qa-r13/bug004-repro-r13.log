@@ -1,0 +1,13 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/qa_t11_independent.rs (target/debug/deps/qa_t11_independent-cf73e901cecbc975)
+
+running 1 test
+AFTER_CONFIRM: GET confirmedAt="2026-09-12T02:47:06.065Z" （确认响应="2026-09-12T02:47:06.065Z"）
+AFTER_JOB: GET consumedAt="2026-09-12T02:47:06.068Z" consumedJobId="01a09382-ec55-70c5-91bd-5892c35dac96" （真实 job=01a09382-ec55-70c5-91bd-5892c35dac96）
+test qa_defect_get_estimate_reflects_confirmation_and_consumption ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.66s
+

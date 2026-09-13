@@ -1,0 +1,61 @@
+== 环境：macOS 26.6.2，工具链 1.98.1，2026-09-12 02:05:16 +0800
+
+== 手工冒烟脚本（原始输出，debug 二进制）
+
+### init --data-dir ./manual-data --password-file ./pw.txt
+{"timestamp":"2026-09-11T18:05:16.950745Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t02-artifact/manual-data","passwordSource":"受限文件 ./pw.txt"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t02-artifact/manual-data
+  - 已创建：/private/tmp/em-t02-artifact/manual-data
+  - 已创建：/private/tmp/em-t02-artifact/manual-data/tmp
+  - 已创建：/private/tmp/em-t02-artifact/manual-data/logs
+  - 已创建：/private/tmp/em-t02-artifact/manual-data/blobs
+  - 已创建：/private/tmp/em-t02-artifact/manual-data/lock
+管理员密码：已从 受限文件 ./pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码，也不创建数据库。
+(exit=0)
+
+### check --data-dir ./manual-data
+有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-t02-artifact/manual-data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：尚未建立（T03 起提供迁移与 schema 校验；当前不影响）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T18:05:16.956111Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+(exit=0)
+
+### serve --data-dir ./manual-data --listen 127.0.0.1:18081
+### curl -i http://127.0.0.1:18081/api/v1/health/live
+HTTP/1.1 200 OK
+content-type: application/json
+x-request-id: 01a091a5-33f2-75fa-9c49-9123c987005e
+content-length: 24
+### curl http://127.0.0.1:18081/api/v1/health/ready
+{"data":{"status":"ready","checks":[{"name":"process","status":"ok"}]}}
+### 第二个进程（同一 data-dir）
+错误：data-dir 正被另一个进程使用（排他锁 /private/tmp/em-t02-artifact/manual-data/lock 已被持有，持有者信息：pid=93775 started_at_unix=1789149916）；同一 data-dir 只允许一个进程，请先停止该进程
+(exit=5)
+### serve 原始 stdout（含请求日志与优雅停止）
+{"timestamp":"2026-09-11T18:05:16.960355Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T18:05:16.960422Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T18:05:16.960448Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:18081","dataDir":"/private/tmp/em-t02-artifact/manual-data","securityMode":"loopback"},"target":"everything_manual::config::commands"}
+listening on http://127.0.0.1:18081
+{"timestamp":"2026-09-11T18:05:18.194595Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091a5-33f2-75fa-9c49-9123c987005e","method":"GET","path":"/api/v1/health/live","status":200,"errorCode":"-","durationMs":0.058084000000000004},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T18:05:18.210831Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091a5-3402-741c-8092-65e1638f598f","method":"GET","path":"/api/v1/health/ready","status":200,"errorCode":"-","durationMs":0.052042},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T18:05:18.217633Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+已停止：data-dir 排他锁已释放。

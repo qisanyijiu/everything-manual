@@ -1,0 +1,58 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test job-recovery.spec.ts
+
+(node:20225) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m126[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:33:20.360095Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a0952d-c6e7-723c-85c4-7822a12b9061","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 8 tests using 1 worker
+
+(node:20298) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:33:22.577605Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/password.txt","schemaVersion":6,"adminId":"01a0952d-cf91-71d0-b062-460ac1c033eb","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-job-recovery-dIYwbk/password.txt；明文不落盘、不进入日志与 shell history。
+  ✓  1 [chromium] › tests/e2e/job-recovery.spec.ts:136:1 › 列表与详情：状态、阶段、分列费用，不出现虚假线性总进度 (2.2s)
+  ✓  2 [chromium] › tests/e2e/job-recovery.spec.ts:191:1 › 浏览器关闭后服务器继续：关页面 → 服务端推进 → 重开看到新状态 (10.0s)
+  ✓  3 [chromium] › tests/e2e/job-recovery.spec.ts:231:1 › 服务重启恢复：页面从数据库读到同一状态 (2.1s)
+  ✓  4 [chromium] › tests/e2e/job-recovery.spec.ts:265:1 › unknown：不渲染重试按钮，渲染对账入口，预留保留为未决 (1.8s)
+  ✓  5 [chromium] › tests/e2e/job-recovery.spec.ts:305:1 › 重复操作不多收费：重复点击与重放不产生新的付费提交 (2.8s)
+  ✓  6 [chromium] › tests/e2e/job-recovery.spec.ts:361:1 › needs_input：缺项与真实恢复动作一致（P3① 不再承诺可重试）；断网不误报业务失败 (6.2s)
+  ✓  7 [chromium] › tests/e2e/job-recovery.spec.ts:414:1 › 失败阶段：错误摘要可读，不可重试的原因如实（不误导） (1.6s)
+  ✓  8 [chromium] › tests/e2e/job-recovery.spec.ts:440:1 › 轮询频率：可见约 2 秒、后台降频、终态停止 (37.2s)
+
+  8 passed (1.1m)

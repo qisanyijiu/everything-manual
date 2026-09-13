@@ -1,0 +1,56 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Checking manual-core v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/core)
+error: this `if` statement can be collapsed
+   --> crates/server/src/drafts/aggregate.rs:814:5
+    |
+814 | /     if let Some(text_only) = patch.text_only {
+815 | |         if text_only {
+816 | |             if !matches!(kind, Kind::Part) {
+817 | |                 issues.push(FieldIssue::new(
+...   |
+842 | |     }
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#collapsible_if
+    = note: `-D clippy::collapsible-if` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+    |
+814 ~     if let Some(text_only) = patch.text_only
+815 ~         && text_only {
+816 |             if !matches!(kind, Kind::Part) {
+...
+840 |             }
+841 ~         }
+    |
+
+error: unnecessary closure used to substitute value for `Option::None`
+   --> crates/server/src/releases/service.rs:495:19
+    |
+495 |       let release = releases_repo::get(conn, &release_id)
+    |  ___________________^
+496 | |         .await?
+497 | |         .ok_or_else(|| PublishError::NotFound {
+498 | |             entity: "manual_release",
+499 | |             id: release_id,
+500 | |         })?;
+    | |__________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#unnecessary_lazy_evaluations
+    = note: `-D clippy::unnecessary-lazy-evaluations` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::unnecessary_lazy_evaluations)]`
+help: use `ok_or` instead
+    |
+497 ~         .ok_or(PublishError::NotFound {
+498 +             entity: "manual_release",
+499 +             id: release_id,
+500 ~         })?;
+    |
+
+error: could not compile `everything-manual` (lib) due to 2 previous errors

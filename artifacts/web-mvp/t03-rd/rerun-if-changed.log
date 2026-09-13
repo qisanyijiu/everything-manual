@@ -1,0 +1,87 @@
+### 迁移文件 sha256（改动前）
+d2244c1e6e45e34e0c170aa5304d6b54e7ea365433e32a6546b967af6d743ca6  migrations/0001_core_schema.sql
+372d6ff5c56329ea1af975330442266b0a997cbb61a8e1366cf310ad5234198d  migrations/0002_invariants.sql
+
+### 二进制 sha256（改动前）
+6ab02e382796bc1c5fa49b488d4a523000469fa4639e7cdefa3d79bb8619adae  target/debug/everything-manual
+
+### 向 0002_invariants.sql 追加一行注释（模拟 SQL 变更）
+
+### cargo build -p everything-manual（应触发重编译）
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.18s
+exit=0
+
+### 二进制 sha256（SQL 变更后）
+359550ae1e60404d5846bf8dce383c2b1d30ec8bb27d2e973130bf4b0c6e1e91  target/debug/everything-manual
+### 恢复迁移 SQL 后重新构建
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.09s
+exit=0
+
+### 迁移文件 sha256（恢复后，应与改动前一致）
+d2244c1e6e45e34e0c170aa5304d6b54e7ea365433e32a6546b967af6d743ca6  migrations/0001_core_schema.sql
+c28d816e7974720a8b7691ba930cb0d6fc425cb60db0b381662ec5778663cfe9  migrations/0002_invariants.sql
+
+### 二进制 sha256（恢复后，应与改动前一致）
+7583957a0e257066efadf2b046e7f4812ea8ceab1a627b6f596907613d752b76  target/debug/everything-manual
+
+### 再跑一次构建（无变更时不应重编译）
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+
+### 工作树状态（migrations/ 为新增未跟踪目录；llmdoc 与源码改动见下）
+ M .gitignore
+ M llmdoc/decisions.md
+ M llmdoc/requirements/web-mvp/state.yaml
+?? .cargo/
+?? Cargo.lock
+?? Cargo.toml
+?? apps/
+?? artifacts/
+?? config.example.toml
+?? contracts/
+?? crates/
+?? llmdoc/requirements/web-mvp/implementation.md
+?? llmdoc/requirements/web-mvp/prd.md
+?? llmdoc/requirements/web-mvp/qa-report.md
+?? migrations/
+?? rust-toolchain.toml
+?? xtask/
+
+### （修复尾随空行后）恢复迁移 SQL 并重建
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.10s
+
+### 迁移文件 sha256（恢复后，与改动前逐字节一致）
+d2244c1e6e45e34e0c170aa5304d6b54e7ea365433e32a6546b967af6d743ca6  migrations/0001_core_schema.sql
+372d6ff5c56329ea1af975330442266b0a997cbb61a8e1366cf310ad5234198d  migrations/0002_invariants.sql
+
+### 二进制 sha256（恢复后，应与改动前一致：6ab02e38…）
+a73809506ade4cdd0882525900fddf021f4629018d58e222f8153b850596a08c  target/debug/everything-manual
+
+### 无变更时再次构建（不应重编译）
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+
+### 复验（CARGO_INCREMENTAL=0，消除 debug 增量编译的非确定性）
+# 基线构建
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.56s
+基线 sha256 = 771a4b404494aa8cd08cbc02d14c3a9dfb22cb0954dd8adb50a44db54bb6b06a
+# 追加临时注释到 0002_invariants.sql 并构建
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.29s
+SQL 变更后 sha256 = 99122411b490bea8ec3da665d7a09cda34a68007efd221001e965fbc55708fd8
+# 恢复 SQL 后再构建
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.25s
+恢复后 sha256 = a62637ac24284b7be69c594865f58ddc9cf85872c3f8874a5d72aad19f688e1a
+### 迁移文件 sha256（恢复后应逐字节等于原始值）
+d2244c1e6e45e34e0c170aa5304d6b54e7ea365433e32a6546b967af6d743ca6  migrations/0001_core_schema.sql
+a7b3077071b3c3be00fb83927bf739a857fc9b9246796985a12c2689dad1e2ed  migrations/0002_invariants.sql
+# 恢复 SQL（逐字节等于原始）后再构建
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.26s
+恢复后 sha256 = 771a4b404494aa8cd08cbc02d14c3a9dfb22cb0954dd8adb50a44db54bb6b06a
+（基线 771a4b404494aa8cd08cbc02d14c3a9dfb22cb0954dd8adb50a44db54bb6b06a / SQL 变更后 99122411b490bea8ec3da665d7a09cda34a68007efd221001e965fbc55708fd8）
+### 最终工作树迁移文件 sha256
+d2244c1e6e45e34e0c170aa5304d6b54e7ea365433e32a6546b967af6d743ca6  migrations/0001_core_schema.sql
+372d6ff5c56329ea1af975330442266b0a997cbb61a8e1366cf310ad5234198d  migrations/0002_invariants.sql

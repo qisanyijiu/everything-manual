@@ -1,0 +1,18 @@
+=== flake hunt start 2026-09-12T03:47:01+0800 ===
+--- phase 1: 单测 x80（debug，12 个 CPU burner 加压）
+phase1 debug-single: iterations=80 failures=0
+--- phase 2: 单测 x60（release，12 burners）
+phase2 release-single: iterations=60 failures=0
+--- phase 3: 整个 lib 测试二进制 x10（debug，12 burners）
+phase3 debug-lib-suite: iterations=10 failures=0
+--- phase 4: cargo test --lib --test-threads=1 x3 / =16 x3（12 burners）
+phase4 test-threads=1: ok
+phase4 test-threads=1: ok
+phase4 test-threads=1: ok
+phase4 test-threads=16: ok
+phase4 test-threads=16: ok
+phase4 test-threads=16: ok
+--- phase 5: cargo test --workspace x2（12 burners）
+phase5 workspace round=1: ok
+phase5 workspace round=2: ok
+=== flake hunt done 2026-09-12T03:48:19+0800 ===

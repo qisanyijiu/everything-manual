@@ -1,0 +1,83 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test viewer.spec.ts
+
+(node:75410) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m125[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T12:11:00.490354Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a09587-320a-733e-a884-7a5be3a256f2","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 9 tests using 1 worker
+
+(node:75484) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:11:04[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  1 [chromium] › tests/e2e/viewer.spec.ts:199:3 › GLB 阅读器与资源恢复（T18） › 3D 懒加载：资料库首屏不下载 three，进入阅读页按需加载并渲染（AC-050/REQ-040） (3.1s)
+[2m[WebServer] [22m[2m20:11:06[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  2 [chromium] › tests/e2e/viewer.spec.ts:233:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+[2m[WebServer] [22m[2m20:11:10[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:11[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:11[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.WebGLRenderer: WEBGL_lose_context extension not supported.
+  ✓  3 [chromium] › tests/e2e/viewer.spec.ts:305:3 › GLB 阅读器与资源恢复（T18） › WebGL 上下文丢失 → 提示 → 恢复后继续渲染并保留相机（AC-050/UI-044） (12.8s)
+[2m[WebServer] [22m[2m20:11:23[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:23[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mWarning: getOperatorList - ignoring errors during "GetOperatorList: page 0" task: "Error: Worker task was terminated".
+[2m[WebServer] [22m[2m20:11:23[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  4 [chromium] › tests/e2e/viewer.spec.ts:403:3 › GLB 阅读器与资源恢复（T18） › 卸载/换模型：资源被释放、旧资源与旧热点不串入（AC-050/AC-051） (3.2s)
+[2m[WebServer] [22m[2m20:11:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:28[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:28[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:28[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:29[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:29[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m20:11:29[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+T18 资源趋势：存活(geometry/material/texture)=1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1
+T18 堆用量采样（字节，Chrome 专有）：44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000
+T18 堆用量首末比：1.00（1.0 附近为正常；不设阈值）
+  ✓  5 [chromium] › tests/e2e/viewer.spec.ts:458:3 › GLB 阅读器与资源恢复（T18） › 连续切换 10 次模型：资源数不增长（AC-062/REQ-040 的资源趋势） (5.9s)
+  ✓  6 [chromium] › tests/e2e/viewer.spec.ts:500:3 › GLB 阅读器与资源恢复（T18） › 3D 失败时文字与 PDF 仍可读（AC-050/UI-045） (3.0s)
+  ✓  7 [chromium] › tests/e2e/viewer.spec.ts:527:3 › GLB 阅读器与资源恢复（T18） › WebGL 不可用：给出可读原因，文字与 PDF 仍可用（UI-044/UI-045） (3.0s)
+[2m[WebServer] [22m[2m20:11:38[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  8 [chromium] › tests/e2e/viewer.spec.ts:556:3 › GLB 阅读器与资源恢复（T18） › AC-051 浏览器侧：同一局部点在不同旋转/缩放下世界位置一致、锚点不漂移 (3.0s)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.35s
+{"timestamp":"2026-09-12T12:11:40.930447Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/password.txt","schemaVersion":6,"adminId":"01a09587-d002-7082-99b4-cc4b342cf4ae","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t18-rd-real-fgvRX3/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m20:11:43[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  9 [chromium] › tests/e2e/viewer.spec.ts:702:3 › 真实链路：真实草稿 + 真实资产字节（不拦截草稿/模型字节） › 真实草稿与模型字节驱动阅读器：加载/操作/文字路径（AC-050/REQ-032；零拦截） (2.3s)
+
+  9 passed (46.1s)

@@ -1,0 +1,117 @@
+== 1/4 初始化临时 data-dir ==
+{"timestamp":"2026-09-11T23:11:43.799732Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t08-qa-sikOOo/data","passwordSource":"受限文件 /tmp/em-t08-qa-sikOOo/pw.txt","schemaVersion":3,"adminId":"01a092bd-beb7-73cb-a9a8-d3f0eca7c8e6","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t08-qa-sikOOo/data
+  - 已创建：/tmp/em-t08-qa-sikOOo/data
+  - 已创建：/tmp/em-t08-qa-sikOOo/data/tmp
+  - 已创建：/tmp/em-t08-qa-sikOOo/data/logs
+  - 已创建：/tmp/em-t08-qa-sikOOo/data/blobs
+  - 已创建：/tmp/em-t08-qa-sikOOo/data/lock
+数据库：已创建并迁移（/tmp/em-t08-qa-sikOOo/data/manual.sqlite3，schema v3；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /tmp/em-t08-qa-sikOOo/pw.txt；明文不落盘、不进入日志与 shell history。
+== 2/4 启动服务（内嵌 UI，127.0.0.1:8099）==
+health/live = 200
+== 3/4 启动无头 Chrome（CDP :9444）==
+== 4/4 浏览器走查 ==
+浏览器：Chrome/152.0.7977.84 · 应用：http://127.0.0.1:8099 · node v26.0.0
+--- 步骤 1：未登录深链 /settings + 会话恢复 ---
+[PASS] UI-002.a 恢复中显示全屏骨架、恢复期间不出现密码框（不闪登录页） · skeleton=true passwordShown=false
+[PASS] UI-002.b 未登录深链 → /login?next=%2Fsettings · /login?next=%2Fsettings
+[PASS] UI-002.c 登录页保留 next 与过期说明 · 万物说明书 /  / 输入管理员密码以继续。 /  / 登录已过期，请重新登录。 登录后将返回 /settings。
+[PASS] AC-003.401 未登录 GET /auth/session 返回 401（UI-002 会话探测） · status=401
+[PASS] UI-001.a 密码框 type=password/autocomplete=current-password、无默认值、空密码禁用提交 · {"type":"password","autocomplete":"current-password","value":"","submitDisabled":true}
+--- 步骤 2：键盘登录与 next 安全 ---
+[PASS] T08-键盘登录.1 键盘完成登录（Tab 到密码框 → 输入 → Tab 到按钮 → Enter 提交） · first=field-password second=登录 enter提交=true
+[PASS] UI-002.e 协议相对 next（//evil.com）登录后回落 / · /
+[PASS] UI-002.f 页面不出现 evil.com
+[PASS] UI-001.b 登录响应体含 csrfToken 与会话信息 · csrf长度=64
+[PASS] UI-002.g 绝对 URL next 登录后回落 / · /
+[PASS] UI-002.h 合法站内 next（/settings）登录后确实返回该路径 · /settings
+--- 步骤 3：错误密码与错误关联 ---
+[PASS] UI-001.c 401 显示「密码不正确」 · 密码不正确
+[PASS] UI-001.d 失败后焦点在错误摘要（role=alert） · focused=true
+[PASS] UI-001.e 字段通过 aria-describedby 关联同一条错误文案 · describedBy=field-password-error invalid=true
+[PASS] UI-001.f 错误摘要含诊断请求 ID
+[PASS] AC-003.401 登录失败 HTTP 状态为 401 · status=401
+[PASS] UI-001.h 跨站 Origin 的登录请求被服务端拒绝（403；页面文案由单元用例覆盖） · status=403
+--- 步骤 4：登录成功、顶栏与凭据不泄露 ---
+[PASS] AC-003.2 正确密码登录返回 200 · status=200
+[PASS] §6.1.1.a 顶栏含产品名、主导航与登出 · 万物说明书 | 资料库 | 任务中心 | 设置 | 登出
+[PASS] T08-不泄露.1 CSRF token 不在 DOM/localStorage/sessionStorage/document.cookie，输入框无残留 · dom=false local=false session=false cookie=false
+[PASS] AC-003.1 会话 cookie 为 HttpOnly + SameSite=Strict（JS 不可读） · httpOnly=true sameSite=Strict jsVisible=false
+[PASS] UI-002.d 已登录 GET /auth/session 响应 200 + Cache-Control: no-store，且未从缓存读取（AC-003） · status=200 cache-control=no-store fromDiskCache=false
+       未登录 401 响应头（无凭据，仅记录）：cache-control=(无)；前端用 fetch cache:"no-store" 阻断 401 缓存。
+--- 步骤 5：Tab 顺序 ---
+[PASS] §6.1.5.a Tab 顺序为 顶栏（品牌/导航/登出）→ 主栏 · A:万物说明书 → A:资料库 → A:任务中心 → A:设置 → BUTTON:登出 → BUTTON:资料库摘要
+--- 步骤 6：设置页只读状态（UI-003） ---
+[PASS] UI-003.a 页面声明未配置并保持可读说明，与接口一致 · tripo=false manualAi=false
+[PASS] UI-003.b limits 数值按二进制单位展示且与接口一致 · pdf=50 MiB pages=100 photo=20 MiB
+[PASS] UI-003.c 健康检查 live/ready 与逐项状态可见
+[PASS] UI-003.d 无密钥输入/配置入口、无证书或 TLS 配置项、页面不含密钥样式字符串（ADR-017 D-4） · {"inputs":0,"certEntry":true,"keyPattern":false}
+[PASS] AC-012.1 /settings/status 响应不含密钥字段 · 字段：providersConfigured,limits,capabilities
+--- 步骤 7：资料库、物品表单与 CSRF 真实写 ---
+[PASS] UI-005.a 空态显示「还没有物品」与新建入口
+[PASS] UI-006.a 表单字段为 名称/品牌/准确型号/变体配置 四项、无来源链接输入 · field-name,field-model,field-brand,field-variant
+[PASS] UI-006.b 明确说明物品不保存来源链接（ADR-017 D-1）
+[PASS] UI-006.c 必填为空时保存按钮禁用 · disabled=true
+[PASS] UI-006.e 超长型号 422 → 字段级错误 + aria-describedby 关联 + 焦点移到第一个错误字段（UI-065） · {"describedBy":"field-model-error","invalid":"true","errorText":"长度不能超过 200 个字符（当前 201）","focused":true,"summaryText":"请修正以下问题\n型号：长度不能超过 200 个字符（当前 201）"}
+[PASS] T08-CSRF.1 新建物品 POST 实际携带 x-csrf-token（Fetch 拦截实测头）且返回 201 · status=201 实测头csrf=true 拦截头清单=["Cookie","Origin","Referer","User-Agent","accept","content-type","sec-ch-ua","sec-ch-ua-mobile","sec-ch-ua-platform","x-csrf-token"]
+[PASS] AC-003.5 浏览器修改请求携带同源 Origin（服务端 origin_check 的放行条件） · origin=http://127.0.0.1:8099
+[PASS] T08-CSRF.2 GET 请求不注入 x-csrf-token（只对修改请求注入） · get=/api/v1/items/01a092be-49f8-7192-a53a-81fb2573b6cc csrf=(无)
+[PASS] UI-006.d 创建后跳转物品概览并显示名称、型号与 r1
+[PASS] §6.1.1.b 顶栏显示当前物品名·型号
+[DEFECT-P3] BUG-001 成功通知条（.notices 固定顶部条）盖住顶栏，指针点击落在通知条上被吞掉 · {"noticeText":"已创建物品「QA 验收相机」\n\n关闭","noticeHeight":61,"linkTop":28,"linkCenterY":41,"hitTag":"DIV","hitInNotice":true,"hitIsLink":false}
+       指针点击顶栏「资料库」被通知条吞掉（BUG-001 现场）
+[PASS] BUG-001 补充：通知条覆盖顶栏时键盘（Tab+Enter）路径仍可完成导航 · 焦点=资料库 键盘导航=true
+[PASS] UI-005.b 列表行显示名称/型号/状态/更新时间（服务端数据，非假数据） · QA 验收相机 |  | QA-X100V-01 |  | 使用中r1 | 更新于 | 2026-09-12 07:12 | 打开
+[PASS] UI-007.a 归档 PATCH 携带 If-Match 与 CSRF，且状态文本变「已归档」 · if-match="r1" 实测头csrf=true
+       点击「资料库」后未导航到 /（现场见 BUG-001 证据）；回退 goto 以继续后续步骤
+[PASS] UI-007.b 归档物品默认不出现在列表
+[PASS] UI-007.d 归档视图（archived=true）能看到已归档行
+[PASS] UI-007.c 归档物品可恢复（列表开关 + 恢复按钮）
+[PASS] T08-CSRF.3 服务端强制 CSRF：无 token 403 / 有 token 201（反证浏览器请求必带 token） · 无token=403 有token=201
+--- 步骤 8：If-Match 与 412 恢复 ---
+[PASS] UI-008.a 外部并发更新成功（构造 412 前置条件） · status=200 revision 3 → 4
+[PASS] T08-IfMatch.1 编辑 PATCH 原样回传页面 GET 的 ETag（含引号）并注入 CSRF（Fetch 实测头） · if-match="r3" 页面 GET ETag="r3" 实测头csrf=true
+[PASS] UI-008.b 412 显示 details.currentRevision 且不自动覆盖 · 该内容已被其他操作更新（当前 r4）
+[PASS] UI-008.c 冲突后保留表单输入并禁用提交 · value=QA 验收相机（QA 改名）·保留输入 disabled=true
+[PASS] UI-008.d 提供「刷新后重试」入口
+[PASS] AC-017.412 服务端返回 412 · status=412
+[PASS] UI-008.e 刷新后使用服务端最新 revision 且保留输入，可再次提交 · value=QA 验收相机（QA 改名）·保留输入
+[PASS] UI-008.f 刷新后用服务端最新 ETag 重新提交成功（200） · if-match="r4" 服务端 ETag="r4"
+--- 步骤 9：占位路由（无假数据/无业务请求） ---
+[PASS] T08-占位.1 全部占位路由明确显示「该页面尚未实现」 · 9 条路由
+[PASS] T08-占位.2 占位路由不请求业务接口、不发写请求（无假数据/无假动作） · 仅 session/物品上下文/health
+[PASS] T08-占位.3 任务中心不显示编造的任务计数或状态 · 万物说明书 / 资料库 / 任务中心 / 设置
+[PASS] §6.1.2 向导占位页保留五步步骤条且当前步 aria-current=step · {"count":5,"current":"准备"}
+--- 步骤 10：深链接与刷新 ---
+[PASS] §6.1.1.c 物品深链接可直接打开且刷新后仍渲染同一物品 · before=QA 验收相机（QA 改名）·保留输入 after=QA 验收相机（QA 改名）·保留输入
+[PASS] §6.1.1.d 设置页深链接与刷新可用
+--- 步骤 11：断点布局与抽屉 ---
+[PASS] §6.1.1.e ≥1280px 三栏：侧栏直接并排显示（同一页面同一数据） · 资料库摘要 | 已加载 | 2 条 | 当前范围 | 仅使用中 |  | 进行中任务摘要需要任务中心接口（T15/T17），本页暂不显示该数字。
+[PASS] §6.1.1.f 768–1279px：主栏 + 单个可折叠侧栏（不并排第三栏） · {"aside":false,"trigger":true}
+[PASS] §6.1.1.g 中段展开侧栏显示同一份数据
+[PASS] §6.1.1.h <768px：单栏（侧栏不并排、未打开时无对话框） · {"aside":false,"dialog":false}
+[PASS] UI-062.a 窄屏抽屉为模态对话框、同一时刻只一个、焦点移入抽屉 · aria-modal=true count=1 focusInDialog=true
+[PASS] UI-062.b Tab 焦点被陷阱在抽屉内循环 · focus=关闭 inDialog=true
+[PASS] UI-062.c Esc 关闭抽屉并把焦点归还触发按钮 · {"tag":"BUTTON","id":null,"role":null,"text":"资料库摘要","inDialog":false}
+[PASS] UI-062.d 窗口拉宽后无需刷新即恢复三栏（宽度判定，非 UA） · {"aside":true,"trigger":false}
+--- 步骤 12：减少动效 ---
+[PASS] UI-064.a prefers-reduced-motion: reduce 把骨架动画/过渡压到 ≤1ms，默认仍为 1.4s · reduce={"animation":"1e-06s","transition":"1e-06s"} normal={"animation":"1.4s","transition":"0s"}
+--- 步骤 13：错误边界（响应注入合同违约载荷） ---
+[PASS] §6.1.1.i 错误边界显示 requestId、不显示堆栈（浏览器侧） · 页面出现异常 /  / 页面渲染时发生错误，请重试或返回资料库。
+--- 步骤 14：401 处理与登出 ---
+[PASS] UI-002.i 业务请求 401 → 丢弃状态跳 /login?next=%2Fsettings 并提示登录已过期 · /login?next=%2Fsettings · status=401
+[PASS] AC-003.3 登出 POST /auth/logout 携带 CSRF 并回到登录页 · csrf=已注入
+[PASS] AC-003.4 登出后旧 cookie 再请求返回 401 · status=401
+--- 步骤 15：登录限速 ---
+[PASS] UI-001.g-服务端 连续错误密码触发 429 限速（含 Retry-After） · 序列=401,401,401,401,401,429 Retry-After=60
+[PASS] UI-001.g-页面 限速期间登录失败显示「尝试过于频繁，请稍后再试」（role=alert） · 429 文案已出现
+--- 步骤 16：禁用措辞扫描 ---
+[PASS] §6.3.2 已访问页面文本不含禁用措辞清单 · 8 条措辞 × 15 份页面文本
+[PASS] T08-控制台.1 除故意的错误边界注入期间外，全程 0 条 console.error · 总计=1（其中错误边界注入期间=1，为 React 对被捕获异常的常规上报）样例=["TypeError: Cannot read properties of null (reading 'slice')\n    at http://127.0.0.1:8099/assets/index-B6p0J4kW.js:11:45484\n    at Array.map (<anonymous>)\n    at"]
+[PASS] T08-控制台.2 全程 0 个未捕获异常 · count=0
+[PASS] T08-不泄露.2 控制台/日志不含 CSRF token 值 · csrf长度=64
+
+走查结果：78 passed / 0 failed（无失败项）
+== 走查结束（退出码 0）==

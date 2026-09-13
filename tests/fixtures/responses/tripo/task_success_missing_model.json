@@ -1,0 +1,12 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）：status=success 但 output 里没有可下载模型（model_url 缺失/为空）。合同要求 success 必须有可下载模型，否则不组装成功（保留 task_id 继续查询）。",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "success",
+    "progress": 100,
+    "output": {
+      "model_url": null
+    }
+  }
+}

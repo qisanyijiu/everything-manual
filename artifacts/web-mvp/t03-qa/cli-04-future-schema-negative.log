@@ -1,0 +1,17 @@
+# QA T03 future-schema rejection (real binary) 2026-09-11T18:53:44Z
+init exit=0
+0|0|0
+future row inserted
+sha_before=c1f41cc7aee3a397aec612c86990b9e53831ac630c510ce243809c9e63bf9eb8
+--- serve (expect exit 4, no listening)
+错误：数据库 schema 版本（v9999）高于本程序支持的版本（v2）：该 data-dir 由更新版本的程序创建。本程序拒绝打开且不会修改其中数据；请使用创建该 data-dir 的程序版本，或先备份后用旧版本可读的备份恢复
+serve exit=4
+sha_after_serve=c1f41cc7aee3a397aec612c86990b9e53831ac630c510ce243809c9e63bf9eb8
+DB_BYTES_UNCHANGED_AFTER_SERVE=yes
+--- check (expect exit 4)
+check exit=4
+错误：数据库 schema 版本（v9999）高于本程序支持的版本（v2）：该 data-dir 由更新版本的程序创建。本程序拒绝打开且不会修改其中数据；请使用创建该 data-dir 的程序版本，或先备份后用旧版本可读的备份恢复
+sha_after_check=c1f41cc7aee3a397aec612c86990b9e53831ac630c510ce243809c9e63bf9eb8
+DB_BYTES_UNCHANGED_AFTER_CHECK=yes
+--- data still readable (sqlite3 read-only)
+Error: in prepare, unable to open database file (14)

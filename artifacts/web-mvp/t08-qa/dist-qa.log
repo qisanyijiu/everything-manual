@@ -1,0 +1,59 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running `target/debug/xtask dist --target aarch64-apple-darwin`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm ci)
+
+added 263 packages, and audited 264 packages in 2s
+
+64 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  05:42:13
+   Duration  1.14s (environment 48%, tests 28%, transform 13%, setup 6%, import 5%)
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 92 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:   0.31 kB
+dist/assets/index-QoC9xBFM.css    7.55 kB │ gzip:   2.14 kB
+dist/assets/index-B6p0J4kW.js   343.00 kB │ gzip: 106.01 kB
+
+✓ built in 419ms
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo build --release --locked --features embedded-ui --target aarch64-apple-darwin --package everything-manual)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 14.26s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : 668e9958d6fdad9006d1baf2d9607817dd30c832435af4f02fd050e07f680491
+  size   : 9051776 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json

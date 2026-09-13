@@ -1,0 +1,207 @@
+/**
+ * QA 回合 20 · 临时探针（运行后删除）：判定 QA-10 在 1280px 的失败是
+ * **产品布局不稳定** 还是 **测试自身的跨档瞬态**。
+ *
+ * 方法：在页面内用 requestAnimationFrame 逐帧采样（避免 CDP 往返掩盖真实瞬态），
+ * 记录每次视口跨 1280px 前后的 `rowW / identityW / grid / layoutClass / innerWidth` 时间线；
+ * 再在静置 1.3s 后连续采样确认"稳定态"是否正确且不振荡。
+ *
+ * 输出 JSON 到 `artifacts/web-mvp/bug006-qa/`。
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+
+import { expect, test } from "@playwright/test";
+
+import { loginViaUi, runtime, seedItem } from "./helpers";
+
+const password = (): string => runtime().password;
+const apiBase = (): string => runtime().apiBase;
+
+interface Frame {
+  t: number;
+  rowW: number | null;
+  identityW: number | null;
+  nameW: number | null;
+  grid: string | null;
+  layoutClass: string | null;
+  innerWidth: number;
+}
+
+declare global {
+  interface Window {
+    __qaProbe?: Frame[];
+  }
+}
+
+async function startSampler(page: import("@playwright/test").Page, ms: number): Promise<void> {
+  await page.evaluate((duration) => {
+    const frames: Frame[] = [];
+    window.__qaProbe = frames;
+    const start = performance.now();
+    const read = () => {
+      const node = document.querySelector(".item-row");
+      const pick = (selector: string): number | null => {
+        const element = node?.querySelector(selector);
+        if (!element) return null;
+        return Number(element.getBoundingClientRect().width.toFixed(2));
+      };
+      frames.push({
+        t: Number((performance.now() - start).toFixed(1)),
+        rowW: node ? Number(node.getBoundingClientRect().width.toFixed(2)) : null,
+        identityW: pick(".item-row__identity"),
+        nameW: pick(".item-row__name"),
+        grid: node ? getComputedStyle(node).gridTemplateColumns : null,
+        layoutClass: document.querySelector(".page-layout")?.className ?? null,
+        innerWidth: window.innerWidth,
+      });
+      if (performance.now() - start < duration) {
+        requestAnimationFrame(read);
+      }
+    };
+    requestAnimationFrame(read);
+  }, ms);
+}
+
+test("R20 PROBE：1280px 跨档瞬态与稳定态逐帧采样", async ({ page, request }) => {
+  await seedItem(request, apiBase(), password(), "QA R20 布局瞬态");
+  await loginViaUi(page, "", password());
+  await page.goto("/");
+
+  const outDir = path.join(
+    path.resolve(import.meta.dirname, "../../../../artifacts/web-mvp/bug006-qa"),
+  );
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const row = page.locator(".item-row").filter({ hasText: "QA R20 布局瞬态" });
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await expect(row).toBeVisible();
+  await page.waitForTimeout(500);
+
+  const settledCheck = async (tag: string): Promise<unknown> => {
+    const samples: unknown[] = [];
+    for (let i = 0; i < 12; i += 1) {
+      samples.push(
+        await row.evaluate((node) => ({
+          rowW: Number(node.getBoundingClientRect().width.toFixed(2)),
+          identityW: (() => {
+            const el = node.querySelector(".item-row__identity");
+            return el ? Number(el.getBoundingClientRect().width.toFixed(2)) : null;
+          })(),
+          nameW: (() => {
+            const el = node.querySelector(".item-row__name");
+            return el ? Number(el.getBoundingClientRect().width.toFixed(2)) : null;
+          })(),
+          grid: getComputedStyle(node).gridTemplateColumns,
+          layoutClass: document.querySelector(".page-layout")?.className ?? null,
+          innerWidth: window.innerWidth,
+        })),
+      );
+      await page.waitForTimeout(150);
+    }
+    return { tag, samples };
+  };
+
+  const cycles: unknown[] = [];
+  for (let cycle = 1; cycle <= 5; cycle += 1) {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.waitForTimeout(600);
+    const before = await settledCheck(`cycle${cycle}-1024`);
+
+    await startSampler(page, 1200);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.waitForTimeout(1350);
+    const frames = await page.evaluate(() => window.__qaProbe ?? []);
+    const after = await settledCheck(`cycle${cycle}-1280-settled`);
+
+    // 逐帧时间线原始数据 + 关键计数（详细分析在 artifacts 侧用 python 复核）
+    const at1280 = frames.filter((frame) => frame.innerWidth >= 1280);
+    const badAt1280 = at1280.filter(
+      (frame) => frame.identityW === null || frame.identityW < 120,
+    );
+    const identityNullFrames = at1280.filter((frame) => frame.identityW === null);
+    const rowWidths = Array.from(new Set(at1280.map((frame) => frame.rowW)));
+    const distinctStates = at1280.reduce<string[]>((acc, frame) => {
+      const key = `${frame.rowW}/${frame.identityW}/${frame.layoutClass}`;
+      if (acc[acc.length - 1] !== key) acc.push(key);
+      return acc;
+    }, []);
+    cycles.push({
+      cycle,
+      frameCount: frames.length,
+      framesAt1280: at1280.length,
+      badFramesAt1280: badAt1280.length,
+      identityNullFrames: identityNullFrames.length,
+      rowWidthsAt1280: rowWidths,
+      distinctStateSequence: distinctStates,
+      settledRowW: frames.at(-1)?.rowW ?? null,
+      settledIdentity: frames.at(-1)?.identityW ?? null,
+      inputFirstFrame: frames[0] ?? null,
+      frames,
+      before,
+      after,
+    });
+    // 回到 1024 准备下一轮
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.waitForTimeout(400);
+  }
+
+  // 断点边界附近（1276/1278/1280/1282）是否振荡
+  const boundary: unknown[] = [];
+  for (const width of [1276, 1278, 1280, 1282, 1280, 1278, 1276]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForTimeout(700);
+    boundary.push(
+      await row.evaluate((node, w) => {
+        const identity = node.querySelector(".item-row__identity");
+        return {
+          width: w,
+          rowW: Number(node.getBoundingClientRect().width.toFixed(2)),
+          identityW: identity ? Number(identity.getBoundingClientRect().width.toFixed(2)) : null,
+          grid: getComputedStyle(node).gridTemplateColumns,
+          layoutClass: document.querySelector(".page-layout")?.className ?? null,
+        };
+      }, width),
+    );
+  }
+
+  fs.writeFileSync(
+    path.join(outDir, "r20-layout-probe.json"),
+    JSON.stringify({ cycles, boundary }, null, 2),
+  );
+
+  const summary = cycles.map((entry) => {
+    const cycle = entry as {
+      cycle: number;
+      frameCount: number;
+      framesAt1280: number;
+      badFramesAt1280: number;
+      identityNullFrames: number;
+      rowWidthsAt1280: (number | null)[];
+      distinctStateSequence: string[];
+      settledRowW: number | null;
+      settledIdentity: number | null;
+      inputFirstFrame: Frame | null;
+    };
+    return {
+      cycle: cycle.cycle,
+      frames: cycle.frameCount,
+      framesAt1280: cycle.framesAt1280,
+      badFramesAt1280: cycle.badFramesAt1280,
+      identityNullFrames: cycle.identityNullFrames,
+      rowWidthsAt1280: cycle.rowWidthsAt1280,
+      distinctStates: cycle.distinctStateSequence.length,
+      firstFrameInput: {
+        rowW: cycle.inputFirstFrame?.rowW ?? null,
+        innerWidth: cycle.inputFirstFrame?.innerWidth ?? null,
+        layoutClass: cycle.inputFirstFrame?.layoutClass ?? null,
+      },
+      settledRowW: cycle.settledRowW,
+      settledIdentity: cycle.settledIdentity,
+    };
+  });
+  console.log("R20PROBE ", JSON.stringify(summary));
+  console.log("R20PROBE-boundary ", JSON.stringify(boundary));
+  expect(cycles.length).toBe(5);
+});

@@ -1,0 +1,9 @@
+counter listener on 127.0.0.1:51439
+init exit: 0
+check exit: 0
+check stdout line 'providers.tripo =': ['  providers.tripo = 已配置（密钥来源：环境变量 EM_TEST_TRIPO_KEY）']
+check says zero network: True
+files added by check: set()
+serve exit after SIGTERM: 0
+TOTAL CONNECTIONS TO COUNTER LISTENER: 0 []
+VERDICT: PASS (0 external calls)

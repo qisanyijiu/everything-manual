@@ -1,0 +1,18 @@
+=== npm --prefix apps/web run typecheck ===
+> tsc --noEmit
+
+=== npm --prefix apps/web run lint ===
+> eslint . --max-warnings=0
+
+=== npm --prefix apps/web run test -- --run ===
+ Test Files  6 passed (6)
+      Tests  46 passed (46)
+=== npm --prefix apps/web run build ===
+dist/index.html                              0.45 kB │ gzip:   0.31 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-DNj-MCMM.css               8.90 kB │ gzip:   2.35 kB
+dist/assets/index-BGmBqSvU.js              343.53 kB │ gzip: 106.25 kB
+dist/assets/PreparePage-B4Xao0pC.js        444.71 kB │ gzip: 134.20 kB
+
+✓ built in 169ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）

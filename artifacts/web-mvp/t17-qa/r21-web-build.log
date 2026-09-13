@@ -1,0 +1,18 @@
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 119 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.31 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-CWB0ANYl.css              16.16 kB │ gzip:   3.51 kB
+dist/assets/index-BpQwd_fv.js              416.03 kB │ gzip: 126.19 kB
+dist/assets/PreparePage-BZEwphqJ.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 803ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）

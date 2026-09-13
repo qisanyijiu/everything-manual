@@ -1,0 +1,152 @@
+{
+  "说明": "真实流水线（测试构建后端 + 本机 fixture 供应商）产出的草稿 DTO；QA 回合 22。模型字节来自 tests/fixtures/assets/sample-model.glb，经真实 job 下载/校验/落库。",
+  "fixtureCounts": {
+    "upload": 4,
+    "submit": 2,
+    "task": 2,
+    "manual": 2,
+    "cdn": 2
+  },
+  "sampleModelSha": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+  "draftA": {
+    "itemId": "01a0977a-e647-77e5-ba74-2a9d21ae4e78",
+    "draftId": "01a0977a-e89b-75e7-a088-8264f83806b7",
+    "assetId": "01a0977a-e897-75b1-a2a1-11e9063546a3",
+    "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+    "revisionId": "01a0977a-e899-711e-9cb9-803362de657b"
+  },
+  "draftB": {
+    "itemId": "01a0977a-e8d3-765d-af72-aa67f94bfb2c",
+    "draftId": "01a0977a-eae2-7673-a001-6f3e770918a9",
+    "assetId": "01a0977a-eacf-772b-b923-e39a63548531",
+    "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+    "revisionId": "01a0977a-ead4-721d-90f5-7e83caf1b093"
+  },
+  "draftA_knowledge": {
+    "completeness": "complete",
+    "hotspots": [],
+    "knowledge": {
+      "conflicts": [],
+      "coverage": {
+        "batches": [
+          {
+            "batchIndex": 0,
+            "pages": [
+              1
+            ],
+            "partCount": 1,
+            "specCount": 1,
+            "stepCount": 1,
+            "uncertaintyCount": 0
+          }
+        ],
+        "complete": true,
+        "pageCount": 1,
+        "pages": [
+          1
+        ]
+      },
+      "pageFrom": 1,
+      "pageTo": 1,
+      "parts": [
+        {
+          "description": "第 1 页描述的部件",
+          "evidence": [
+            {
+              "bbox": null,
+              "derived": false,
+              "documentId": "01a0977a-e65d-7276-a1e9-c17406051512",
+              "pageNumber": 1,
+              "preparationId": "01a0977a-e764-72a5-a8ce-97e665d65020",
+              "quote": null
+            }
+          ],
+          "id": "part-ed2421a4942c",
+          "name": "后盖",
+          "reviewStatus": "needs_review",
+          "sourceBatches": [
+            0
+          ]
+        }
+      ],
+      "promptVersion": "manual_extract_v1",
+      "schemaVersion": "manual_extract_v1",
+      "specs": [
+        {
+          "evidence": [
+            {
+              "bbox": null,
+              "derived": false,
+              "documentId": "01a0977a-e65d-7276-a1e9-c17406051512",
+              "pageNumber": 1,
+              "preparationId": "01a0977a-e764-72a5-a8ce-97e665d65020",
+              "quote": null
+            }
+          ],
+          "id": "spec-bf9abd54cec5",
+          "label": "供电",
+          "reviewStatus": "needs_review",
+          "sourceBatches": [
+            0
+          ],
+          "value": "DC 12 V / 2.5 A"
+        }
+      ],
+      "steps": [
+        {
+          "evidence": [
+            {
+              "bbox": null,
+              "derived": false,
+              "documentId": "01a0977a-e65d-7276-a1e9-c17406051512",
+              "pageNumber": 1,
+              "preparationId": "01a0977a-e764-72a5-a8ce-97e665d65020",
+              "quote": "Loosen the four captive screws."
+            }
+          ],
+          "id": "step-5e23481ed267",
+          "orderedActions": [
+            "松开固定件",
+            "取下后盖"
+          ],
+          "partIds": [
+            "part-ed2421a4942c"
+          ],
+          "reviewStatus": "needs_review",
+          "safetyNotes": [
+            "操作前断电。"
+          ],
+          "sourceBatches": [
+            0
+          ],
+          "title": "取下后盖"
+        }
+      ],
+      "uncertainties": []
+    },
+    "missing": [],
+    "model": {
+      "assetId": "01a0977a-e897-75b1-a2a1-11e9063546a3",
+      "bounds": {
+        "max": [
+          1,
+          1,
+          1
+        ],
+        "min": [
+          -1,
+          -1,
+          -1
+        ],
+        "triangles": 12,
+        "vertices": 24
+      },
+      "revisionId": "01a0977a-e899-711e-9cb9-803362de657b",
+      "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+      "validationState": "validated"
+    },
+    "schemaVersion": "manual_draft_v1",
+    "sourceJobId": "01a0977a-e7ca-7106-99e2-fc4fae83e502",
+    "stepPoses": {}
+  }
+}

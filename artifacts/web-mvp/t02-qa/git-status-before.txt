@@ -1,0 +1,16 @@
+ M .gitignore
+ M llmdoc/decisions.md
+ M llmdoc/requirements/web-mvp/state.yaml
+?? .cargo/
+?? Cargo.lock
+?? Cargo.toml
+?? apps/
+?? artifacts/
+?? config.example.toml
+?? contracts/
+?? crates/
+?? llmdoc/requirements/web-mvp/implementation.md
+?? llmdoc/requirements/web-mvp/prd.md
+?? llmdoc/requirements/web-mvp/qa-report.md
+?? rust-toolchain.toml
+?? xtask/

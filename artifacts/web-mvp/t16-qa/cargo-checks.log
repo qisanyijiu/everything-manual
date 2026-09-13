@@ -1,0 +1,66 @@
+### cargo xtask check
+[通过] npm --prefix apps/web run typecheck
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  16:17:30
+   Duration  1.91s (environment 62%, tests 15%, transform 11%, setup 8%, import 3%, worker 1%)
+
+[通过] npm --prefix apps/web run test -- --run
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && /Users/qsyj/Code/rust/everything-manual/apps/web/node_modules/.bin/openapi-typescript /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79215/openapi.json -o /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79215/generated.ts)
+✨ openapi-typescript 7.13.0
+🚀 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79215/openapi.json → /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79215/generated.ts [64.8ms]
+  [一致] contracts/openapi.json
+  [一致] apps/web/src/api/generated.ts
+合同检查通过：openapi.json 与 generated.ts 均与 Rust DTO 一致。
+[通过] cargo xtask contracts --check
+
+全部检查通过。
+### cargo xtask contracts --check
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/xtask contracts --check`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && /Users/qsyj/Code/rust/everything-manual/apps/web/node_modules/.bin/openapi-typescript /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79658/openapi.json -o /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79658/generated.ts)
+✨ openapi-typescript 7.13.0
+🚀 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79658/openapi.json → /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-79658/generated.ts [79.9ms]
+  [一致] contracts/openapi.json
+  [一致] apps/web/src/api/generated.ts
+合同检查通过：openapi.json 与 generated.ts 均与 Rust DTO 一致。
+### cargo test --workspace
+test result: ok. 139 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.22s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.01s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.89s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.59s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.97s
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.00s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.54s
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.59s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.02s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.77s
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.67s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+test result: ok. 12 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.98s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.20s
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.91s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.19s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.44s
+test result: ok. 51 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

@@ -1,0 +1,502 @@
+Gathering diagnostics for ID 5A0E2395-8C56-470B-9371-ECA088C97751 into /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/5A0E2395-8C56-470B-9371-ECA088C97751/20260913040931.zip.
+This may take up to 15 minutes.
+[2026-09-13T04:09:31.558157000Z][com.docker.diagnose.ipc] a1bdf8f1-diagnose -> <HOME>/Library/Containers/com.docker.docker/Data/backend.sock BackendAPI
+[2026-09-13T04:09:31.618929000Z][com.docker.diagnose.ipc] (e6217fe4-0) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:09:31.626501000Z][com.docker.diagnose.ipc] (e6217fe4-0) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (7.75475ms): 0x11563868e5f0
+[2026-09-13T04:09:32.619387000Z][com.docker.diagnose.ipc] (e6217fe4-1) a1bdf8f1-diagnose C->S BackendAPI GET /idle
+[2026-09-13T04:09:32.624856000Z][com.docker.diagnose.ipc] (e6217fe4-1) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI GET /idle (5.371084ms): {"apisInFlight":{"/_ping from Docker-Desktop":1},"booted":true,"busyReason":["1 calls to /_ping from Docker-Desktop","timed activities: map[/idle/make-busy:29001168042 Go-http-client/1.1 /grpc:149719639750]"],"timedActivities":{"/idle/make-busy":29001168042,"Go-http-client/1.1 /grpc":149719639750},"vmRunning":true}
+[2026-09-13T04:09:32.625232000Z][com.docker.diagnose.ipc] 159b6db2-com.docker.diagnose -> <HOME>/Library/Containers/com.docker.docker/Data/dns-forwarder.sock dns-forwarder
+[2026-09-13T04:09:32.625370000Z][com.docker.diagnose.ipc] (b5ec0c23-0) 159b6db2-com.docker.diagnose C->S dns-forwarder POST /diagnostics
+[2026-09-13T04:09:32.625650000Z][com.docker.diagnose] Triggering Linux sysrq and log flushes via a unix socket: <HOME>/Library/Containers/com.docker.docker/Data/diagnosticd.sock
+[2026-09-13T04:09:33.627038000Z][com.docker.diagnose][W] /flush failed: Post "http://unix/flush": context deadline exceeded
+[2026-09-13T04:09:37.627840000Z][com.docker.diagnose.ipc][W] (b5ec0c23-0) 159b6db2-com.docker.diagnose C<-S ConnectionClosed POST /diagnostics (5.002475041s): Post "http://ipc/diagnostics": context deadline exceeded
+[2026-09-13T04:09:37.628215000Z][com.docker.diagnose.ipc] (b5ec0c23-1) 159b6db2-com.docker.diagnose C->S dns-forwarder GET /ping
+[2026-09-13T04:09:37.629233000Z][com.docker.diagnose.ipc][W] (b5ec0c23-1) 159b6db2-com.docker.diagnose C<-S ConnectionClosed GET /ping (1.033209ms): Get "http://ipc/ping": context deadline exceeded
+unable to trigger dns-forwarder diagnostics: Post "http://ipc/diagnostics": context deadline exceeded
+[2026-09-13T04:09:37.776224000Z][com.docker.diagnose] Executing: [/usr/local/bin/kubectl.docker --context docker-desktop version]
+[2026-09-13T04:09:37.809626000Z][com.docker.diagnose][W] [/usr/local/bin/kubectl.docker --context docker-desktop version] exit status 1
+[2026-09-13T04:09:37.843102000Z][com.docker.diagnose] Start gathering list of 108 elements
+[2026-09-13T04:09:37.843643000Z][com.docker.diagnose] Gathering BackendGatherer
+[2026-09-13T04:09:37.843688000Z][com.docker.diagnose] Gathering system
+[2026-09-13T04:09:37.843668000Z][com.docker.diagnose] Gathering VirtualizationAPIGatherer
+[2026-09-13T04:09:37.843884000Z][com.docker.diagnose] Gathering ProcessGatherer
+[2026-09-13T04:09:37.847823000Z][com.docker.diagnose.ipc] 2c3ad856-DiagkitPKG -> <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock Virtualization
+[2026-09-13T04:09:37.847950000Z][com.docker.diagnose] Executing: [sw_vers -productVersion]
+[2026-09-13T04:09:37.847956000Z][com.docker.diagnose.ipc] (d7e9ab54-0) 2c3ad856-DiagkitPKG C->S Virtualization GET /goroutines/stacks
+[2026-09-13T04:09:37.852448000Z][com.docker.diagnose.ipc][W] (d7e9ab54-0) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /goroutines/stacks (4.4605ms): Get "http://ipc/goroutines/stacks": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:37.852619000Z][com.docker.diagnose.ipc] (d7e9ab54-1) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:37.852835000Z][com.docker.diagnose.ipc][W] (d7e9ab54-1) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (228.5µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:37.863334000Z][com.docker.diagnose] Executing: [sw_vers -buildVersion]
+[2026-09-13T04:09:37.876956000Z][com.docker.diagnose] Executing: [uname -r]
+[2026-09-13T04:09:37.887613000Z][com.docker.diagnose.ipc] 930989b6-DiagkitPKG -> <HOME>/Library/Containers/com.docker.docker/Data/backend.sock BackendAPI
+[2026-09-13T04:09:37.887720000Z][com.docker.diagnose.ipc] (2de1faae-0) 930989b6-DiagkitPKG C->S BackendAPI GET /goroutines/stacks
+[2026-09-13T04:09:37.895979000Z][com.docker.diagnose] Executing: [sysctl kern.boottime]
+[2026-09-13T04:09:37.903886000Z][com.docker.diagnose] Executing: [sysctl hw.memsize]
+[2026-09-13T04:09:37.909338000Z][com.docker.diagnose] Gathering ProcessGatherer took 61.441125ms
+[2026-09-13T04:09:37.909415000Z][com.docker.diagnose] Gathering uname -a (timeout 0s)
+[2026-09-13T04:09:37.909858000Z][com.docker.diagnose] Executing: [uname -a]
+[2026-09-13T04:09:37.910935000Z][com.docker.diagnose] Executing: [vm_stat]
+[2026-09-13T04:09:37.913719000Z][com.docker.diagnose] Gathering uname -a (timeout 0s) took 4.275959ms
+[2026-09-13T04:09:37.913775000Z][com.docker.diagnose] Gathering ps uax (timeout 0s)
+[2026-09-13T04:09:37.913942000Z][com.docker.diagnose] Executing: [ps uax]
+[2026-09-13T04:09:37.918109000Z][com.docker.diagnose] Executing: [sysctl machdep.cpu]
+[2026-09-13T04:09:37.922820000Z][com.docker.diagnose] Gathering system took 75.209583ms
+[2026-09-13T04:09:37.922871000Z][com.docker.diagnose] Gathering Docker process footprints
+[2026-09-13T04:09:38.078432000Z][com.docker.diagnose] Gathering ps uax (timeout 0s) took 164.622042ms
+[2026-09-13T04:09:38.078549000Z][com.docker.diagnose] Gathering dmesg  (timeout 0s)
+[2026-09-13T04:09:38.080484000Z][com.docker.diagnose] Executing: [dmesg]
+[2026-09-13T04:09:38.084277000Z][com.docker.diagnose][W] [dmesg] exit status 1
+[2026-09-13T04:09:38.084656000Z][com.docker.diagnose] Gathering dmesg  (timeout 0s) took 6.08725ms
+[2026-09-13T04:09:38.084688000Z][com.docker.diagnose] Gathering id  (timeout 0s)
+[2026-09-13T04:09:38.085099000Z][com.docker.diagnose] Executing: [id]
+[2026-09-13T04:09:38.117324000Z][com.docker.diagnose] Gathering id  (timeout 0s) took 32.555666ms
+[2026-09-13T04:09:38.117491000Z][com.docker.diagnose] Gathering sysctl -a (timeout 0s)
+[2026-09-13T04:09:38.118347000Z][com.docker.diagnose] Executing: [sysctl -a]
+[2026-09-13T04:09:38.148292000Z][com.docker.diagnose] Gathering sysctl -a (timeout 0s) took 30.705375ms
+[2026-09-13T04:09:38.148368000Z][com.docker.diagnose] Gathering mount  (timeout 0s)
+[2026-09-13T04:09:38.151451000Z][com.docker.diagnose] Executing: [mount]
+[2026-09-13T04:09:38.158446000Z][com.docker.diagnose] Gathering mount  (timeout 0s) took 10.044042ms
+[2026-09-13T04:09:38.158495000Z][com.docker.diagnose] Gathering df -h (timeout 0s)
+[2026-09-13T04:09:38.158752000Z][com.docker.diagnose] Executing: [df -h]
+[2026-09-13T04:09:38.163922000Z][com.docker.diagnose] Gathering df -h (timeout 0s) took 5.380875ms
+[2026-09-13T04:09:38.163977000Z][com.docker.diagnose] Gathering launchctl print-disabled system (timeout 0s)
+[2026-09-13T04:09:38.164238000Z][com.docker.diagnose] Executing: [launchctl print-disabled system]
+[2026-09-13T04:09:38.170537000Z][com.docker.diagnose] Gathering launchctl print-disabled system (timeout 0s) took 6.51925ms
+[2026-09-13T04:09:38.170622000Z][com.docker.diagnose] Gathering system_profiler SPHardwareDataType (timeout 0s)
+[2026-09-13T04:09:38.170958000Z][com.docker.diagnose] Executing: [system_profiler SPHardwareDataType]
+[2026-09-13T04:09:38.184787000Z][com.docker.diagnose.ipc] (2de1faae-0) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /goroutines/stacks (294.164458ms): 0x115637fafa40
+[2026-09-13T04:09:38.286465000Z][com.docker.diagnose.ipc] (2de1faae-1) 930989b6-DiagkitPKG C->S BackendAPI GET /events
+[2026-09-13T04:09:38.288208000Z][com.docker.diagnose.ipc] (2de1faae-1) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /events (1.720292ms): &[1789272422304457000 idle: running 1789272422304465000 dockerAPI: starting (configuring proxies)  1789272422313038000 dockerAPI: stopping (closing API proxies)  1789272422314110000 dockerAPI: stopped (API proxies closed)  1789272422322641000 dockerAPI: stopping (closing API proxies)  1789272422324145000 dockerAPI: stopped (API proxies closed)  1789272422325909000 docker: starting 1789272422344493000 dockerAPI: starting (configuring proxies)  1789272423343984000 docker: running 1789272423865461000 docker: stopping 1789272424262539000 docker: stopped 1789272496419979000 idle: running 1789272496421132000 docker: starting 1789272497431959000 docker: running 1789272497519216000 docker: stopping 1789272498317449000 docker: stopped]
+[2026-09-13T04:09:38.289959000Z][com.docker.diagnose.ipc] (2de1faae-2) 930989b6-DiagkitPKG C->S BackendAPI GET /forwards/list
+[2026-09-13T04:09:38.290763000Z][com.docker.diagnose.ipc] (2de1faae-2) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /forwards/list (784.5µs): &[]
+[2026-09-13T04:09:38.290965000Z][com.docker.diagnose.ipc] (2de1faae-3) 930989b6-DiagkitPKG C->S BackendAPI GET /network/routes
+[2026-09-13T04:09:38.291879000Z][com.docker.diagnose.ipc] (2de1faae-3) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /network/routes (898.792µs): &[{Destination:fdc4:f303:9324::7/128 Gateway:fdc4:f303:9324::3 Nic:1 SourceHint:} {Destination:fdc4:f303:9324::/64 Gateway: Nic:1 SourceHint:} {Destination:192.168.65.7/32 Gateway:192.168.65.3 Nic:1 SourceHint:} {Destination:192.168.65.0/24 Gateway: Nic:1 SourceHint:}]
+[2026-09-13T04:09:38.292121000Z][com.docker.diagnose.ipc] (2de1faae-4) 930989b6-DiagkitPKG C->S BackendAPI GET /features
+[2026-09-13T04:09:38.294234000Z][com.docker.diagnose.ipc] (2de1faae-4) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /features (1.02275ms): {"AgentSandboxes":{"categories":["AI","Security"],"description":"Enables the Agent Sandboxes feature, to run AI agents in sandboxed environments, isolated from the host system","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"AskGordonDesktop":{"categories":["AI"],"description":"Enables Gordon","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"AutoDownloadUpdatesDefault":{"categories":["Update"],"description":"Changes the default value of AutoDownloadUpdates to true","enabled":true,"hidden":true,"jira":"DKP-2612","label":"","type":"unleash","valueSource":"remote"},"<API_KEY>":{"categories":["GUI"],"description":"When enabled, the settings UI is blocked when the engine is in certain states","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"BuildsViewGABanner":{"categories":["Builds","GUI"],"description":"Displays a sign-up form for next generation Docker build","enabled":true,"hidden":true,"label":"","type":"unleash","userFacingDescription":"...","valueSource":"remote"},"CYCheckoutFlow":{"categories":["GUI"],"description":"Enable the new checkout flow","enabled":true,"jira":"GRO-187","label":"","type":"unleash","valueSource":"remote"},"CliCompletions":{"categories":["CLI"],"description":"Enables CLI Completions for macOS","enabled":false,"jira":"DR-1475","label":"","type":"unleash","valueSource":"remote"},"ContainerdBuildxForWindows":{"categories":["Engine"],"description":"Enables containerd and buildx for Windows containers","enabled":false,"jira":"DKP-2702","label":"","type":"unleash","valueSource":"remote"},"ContainerdEnableAfterReset":{"categories":["Engine"],"description":"Enables the containerd image store when the user resets data","enabled":true,"hidden":true,"jira":"DR-527","label":"","type":"unleash","valueSource":"remote"},"ContainerdEnableByDefault":{"categories":["Engine"],"description":"Enables the containerd image store by default on new installations","enabled":true,"hidden":true,"jira":"DR-527","label":"","type":"unleash","valueSource":"remote"},"CreateContainer":{"categories":["GUI"],"description":"Enables the new create a container in the GUI feature","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"<API_KEY>":"map[string]interface {}","DDSV2Theme":{"categories":["GUI"],"description":"Enables new DDS V2 theme for Docker Desktop","enabled":true,"hidden":true,"label":"","type":"unleash","valueSource":"remote"},"DDUpgradeButton":{"categories":["GUI"],"description":"Enable the new upgrade button in DD sidebar","enabled":true,"jira":"GRO-225","label":"","type":"unleash","valueSource":"remote"},"DashboardOutdatedVersionBanner":{"categories":["GUI"],"description":"Enable a banner shown on the dashboard when the running version is severely outdated","enabled":true,"jira":"DKP-2288","label":"","type":"unleash","valueSource":"remote","variant":"Primary","variantPayload":"{\n  \"unsupportedVersionBanner\": {\n    \"enabled\": true,\n    \"visibilityThresholdInDays\": 184\n  },\n  \"availableUpdateBanner\": {\n    \"enabled\": true,\n    \"dismissalPersistenceInDays\": 28,\n    \"visibilityThresholdInDays\": 15,\n    \"showAgeThresholdInDays\": 60\n  }\n}"},"DashboardSettingsSyncV2":{"categories":["GUI"],"description":"Switches to dynamic method for settings sync","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"DefaultHostOnlyPortBinding":{"categories":["Networking"],"description":"Allow the setting for default host-only port binding to take effect","enabled":true,"jira":"PRS-612","label":"","type":"unleash","valueSource":"remote"},"DesktopAgentsTab":{"categories":["AI"],"description":"Enable the Agents tab in the dashboard","enabled":false,"label":"","type":"internal","valueSource":"default"},"DesktopCagent":{"categories":["AI"],"description":"Enable docker-agent-backed GUI in Docker Desktop","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"DesktopContentSecurityPolicy":{"categories":["GUI"],"description":"Set a Content Security Policy for Desktop","enabled":true,"hidden":true,"label":"","type":"unleash","valueSource":"remote"},"DesktopMarlinTracking":{"categories":["Data"],"description":"Use Marlin for Docker Desktop usage tracking","enabled":true,"jira":"DR-2597","label":"","type":"unleash","valueSource":"remote"},"DesktopMonitorTracking":{"categories":["Data"],"description":"Allow the user to monitor analytics emitted by Docker Desktop","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"DesktopTerminal":{"categories":["GUI"],"description":"Enables the terminal in Docker Desktop","enabled":true,"hidden":true,"jira":"DR-544","label":"","type":"unleash","valueSource":"remote"},"DockerFileStepMetadata":{"categories":["GUI","Builds"],"description":"Enables Dockerfile step metadata in Builds view","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"DockerVMMv2":{"categories":["Engine"],"description":"Use the next-generation virtual machine monitor","enabled":false,"jira":"DDB-332","label":"","type":"internal","valueSource":"default"},"ElectronDockerEngineClientV2":{"categories":["GUI"],"description":"Enables a new implementation of the communication between the dashboard and the Docker socket","enabled":false,"jira":"DKP-2690","label":"","type":"unleash","valueSource":"remote"},"ElectronGuiModule":{"description":"Allow updating Electron UI as a module","enabled":false,"jira":"DR-1703","label":"","type":"unleash","valueSource":"remote"},"ElectronNetworkClientV2":{"categories":["GUI"],"description":"Enable new network client implementation in the dashboard","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"ElectronV8CacheOptions":{"categories":["GUI"],"description":"Enables v8CacheOptions","enabled":true,"label":"","type":"unleash","valueSource":"remote","variant":"bypassHeatCheck","variantPayload":"bypassHeatCheck"},"GordonChatNonLogin":{"categories":["AI"],"description":"Allow sending first message to Gordon without logging in","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"GordonModelPullFromProxy":{"categories":["AI"],"description":"Allow pulling Gordon models from a proxy","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"GordonUsage":{"categories":["AI"],"description":"Displays Gordon usage information","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"GroDDOnboardingHome":{"categories":["GUI"],"description":"Enables home onboarding UI elements","enabled":false,"jira":"GRO-67","label":"","type":"unleash","valueSource":"remote"},"Harmonia":{"categories":["Cloud"],"description":"Enables Harmonia","enabled":false,"hidden":true,"label":"","type":"internal","valueSource":"default"},"HideSkipBtn":"map[string]interface {}","IPv6":{"categories":["Engine","Networking"],"description":"IPv6 support","enabled":true,"jira":"DR-1656","label":"","type":"unleash","valueSource":"remote"},"InferenceAvailable":{"categories":["AI"],"description":"Makes the inference engine setting available","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"LearningCenterAIML":{"categories":["AI","GUI"],"description":"Enables the AIML section in the Learning Center","enabled":true,"hidden":true,"label":"","type":"unleash","valueSource":"remote"},"LocalModelChatV2":{"categories":["AI","GUI"],"description":"Enables the Local Model Chat feature with MCP support","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"LocalSandboxes":{"categories":["AI","Security"],"description":"Enables the Local Sandboxes feature, to easily create sandboxed environments to run arbitrary code in","enabled":false,"label":"","type":"internal","valueSource":"default"},"LoginPromptV2":{"categories":["GUI"],"description":"Enables the new UI for the login prompt","enabled":true,"hidden":true,"jira":"DR-1779","label":"","type":"unleash","valueSource":"remote"},"LoginUpdatePrompt":{"categories":["GUI"],"description":"Enables the new UI for the login prompt via updates","enabled":true,"hidden":true,"jira":"DR-1779","label":"","type":"unleash","valueSource":"remote"},"LogsGABanner":{"categories":["GUI"],"description":"Displays a banner promoting the consolidated Logs tab on legacy log views","enabled":true,"jira":"ADUI-2092","label":"","type":"unleash","valueSource":"remote"},"LogsTab":{"categories":["GUI"],"description":"Enables the consolidated Logs core tab","enabled":true,"jira":"ADUI-1841","label":"","type":"unleash","valueSource":"remote"},"MCPGovernance":{"categories":["GUI"],"description":"Enables the MCP governance features","enabled":false,"jira":"MCPT-416","label":"","type":"unleash","valueSource":"remote"},"MCPOnboardingM1":{"categories":["GUI","AI"],"description":"Enable MCP onboarding walkthrough and new UI","enabled":true,"jira":"ADUI-1667","label":"","type":"unleash","valueSource":"remote"},"McpOauthDcr":{"description":"Enable Dynamic Client Registration (DCR) for automatic OAuth client setup in MCP servers","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"MinimumWSLVersion":{"categories":["Engine"],"description":"Enables the minimum WSL version check","enabled":false,"hidden":true,"label":"","type":"unleash","valueSource":"remote"},"NetworkingUI":{"categories":["GUI","Networking"],"description":"Enables the new networking UI","enabled":false,"jira":"DR-1846","label":"","type":"unleash","valueSource":"remote"},"NightlyBuilds":{"categories":["GUI"],"description":"In the GUI, show the 'use nightly builds' setting","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"<API_KEY>":"map[string]interface {}","OnboardingHomeTab":{"categories":["GUI"],"description":"Enables the new onboarding home tab","enabled":false,"jira":"GRO-89","label":"","type":"unleash","valueSource":"remote"},"ProUser":"map[string]interface {}","ScoutHealthScoresDesktop":{"categories":["Security"],"description":"Display Scout Health Scores for remote images","enabled":true,"hidden":true,"label":"","type":"unleash","valueSource":"remote"},"ScoutLegacyPlansAreDeprecated":{"categories":["Security"],"description":"Enable UI reflecting new plans/that legacy plans are deprecated","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"SettingsSearch":{"categories":["GUI"],"description":"Enable settings search","enabled":true,"jira":"ADUI-1260","label":"","type":"unleash","valueSource":"remote"},"SignInV2":{"description":"Enables the new Auth refreshers","enabled":false,"hidden":true,"jira":"ART-184","label":"","type":"unleash","valueSource":"remote"},"<API_KEY>":{"description":"Allow both Linux and Windows containers simultaneously using docker cli contexts","enabled":false,"label":"","type":"entitlements","valueSource":"entitlement"},"Stage":{"description":"Connect to hub-stage.docker.com instead of hub.docker.com. Must quit and re-open Docker Desktop to take effect","enabled":false,"label":"","type":"internal","valueSource":"default"},"TrackComposeCliCommands":{"categories":["Compose","Data"],"description":"Track every compose cli command","enabled":true,"label":"","type":"unleash","valueSource":"remote"},"TrackErrorLogs":{"categories":["Data"],"description":"Track logged errors","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"TrackTrustedImages":{"categories":["Data"],"description":"Track Trusted Images","enabled":false,"hidden":true,"label":"","type":"unleash","valueSource":"remote"},"TrackUIViews":{"categories":["Data"],"description":"Normalized UI view tracking, including page (route) and feature views","enabled":true,"jira":"ADUI-1206","label":"","type":"unleash","valueSource":"remote"},"TrackWarningLogs":{"categories":["Data"],"description":"Track logged warnings","enabled":false,"label":"","type":"unleash","valueSource":"remote"},"UpdateNetworkAwareDownloads":{"categories":["Update"],"description":"Enables cancelling and resuming automatic downloads based on network conditions","enabled":false,"jira":"DKP-2617","label":"","type":"unleash","valueSource":"remote"},"UpdateOsNotifications":{"categories":["Update"],"description":"Enables OS notifications for updates","enabled":true,"jira":"DKP-2506","label":"","type":"unleash","valueSource":"remote"},"UpdateWindowsPrepareUpdate":{"categories":["Update"],"description":"Enables prepare update after download on Windows","enabled":false,"jira":"DKP-2618","label":"","type":"unleash","valueSource":"remote"},"VolumesCloudBackup":{"categories":["GUI"],"description":"Enables Volumes Backup to the cloud in Docker Desktop","enabled":true,"hidden":true,"jira":"DR-1504","label":"","type":"unleash","valueSource":"remote"},"WSL2MonoDistroMigrationP2_1_1":{"categories":["Engine"],"description":"Enables migration to mono-distro mode for the WSL2 engine","enabled":true,"jira":"DR-1764","label":"","type":"unleash","valueSource":"remote"},"WSL2MonoDistroP1":{"categories":["Engine"],"description":"Enables the mono-distro mode for the WSL2 engine in Docker Desktop (requires factory reset to enable or disable)","enabled":true,"hidden":true,"label":"","type":"internal","valueSource":"default"}}
+[2026-09-13T04:09:38.302561000Z][com.docker.diagnose.ipc] (2de1faae-5) 930989b6-DiagkitPKG C->S BackendAPI GET /network/tcp
+[2026-09-13T04:09:38.303708000Z][com.docker.diagnose.ipc] (2de1faae-5) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /network/tcp (1.13575ms): {}
+[2026-09-13T04:09:38.304192000Z][com.docker.diagnose.ipc] (2de1faae-6) 930989b6-DiagkitPKG C->S BackendAPI GET /idle
+[2026-09-13T04:09:38.305114000Z][com.docker.diagnose.ipc] (2de1faae-6) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /idle (882.291µs): {"apisInFlight":{"/_ping from Docker-Desktop":1},"booted":true,"busyReason":["1 calls to /_ping from Docker-Desktop","timed activities: map[/idle/make-busy:23319370125 Go-http-client/1.1 /grpc:144037842208]"],"timedActivities":{"/idle/make-busy":23319370125,"Go-http-client/1.1 /grpc":144037842208},"vmRunning":true}
+[2026-09-13T04:09:38.305463000Z][com.docker.diagnose.ipc] (2de1faae-7) 930989b6-DiagkitPKG C->S BackendAPI GET /socketforwarder/debug
+[2026-09-13T04:09:38.306340000Z][com.docker.diagnose.ipc] (2de1faae-7) 930989b6-DiagkitPKG C<-S d8f2dd07-BackendAPI GET /socketforwarder/debug (880.833µs): OK
+[2026-09-13T04:09:38.308965000Z][com.docker.diagnose.ipc] ca220944-DiagkitPKG -> <HOME>/Library/Containers/com.docker.docker/Data/debug-socketforwarder.sock BackendAPI
+[2026-09-13T04:09:38.309031000Z][com.docker.diagnose.ipc] (0bd4c0c2-0) ca220944-DiagkitPKG C->S BackendAPI GET /socketforwarder/debug
+[2026-09-13T04:09:38.378569000Z][com.docker.diagnose] Gathering system_profiler SPHardwareDataType (timeout 0s) took 207.880625ms
+[2026-09-13T04:09:38.378721000Z][com.docker.diagnose] Gathering kextstat  (timeout 0s)
+[2026-09-13T04:09:38.380056000Z][com.docker.diagnose] Executing: [kextstat]
+[2026-09-13T04:09:38.673916000Z][com.docker.diagnose] Gathering kextstat  (timeout 0s) took 295.128834ms
+[2026-09-13T04:09:38.673971000Z][com.docker.diagnose] Gathering ifconfig -a -v (timeout 0s)
+[2026-09-13T04:09:38.674246000Z][com.docker.diagnose] Executing: [ifconfig -a -v]
+[2026-09-13T04:09:38.684651000Z][com.docker.diagnose] Gathering ifconfig -a -v (timeout 0s) took 10.652166ms
+[2026-09-13T04:09:38.684724000Z][com.docker.diagnose] Gathering netstat -lna (timeout 0s)
+[2026-09-13T04:09:38.685395000Z][com.docker.diagnose] Executing: [netstat -lna]
+[2026-09-13T04:09:38.704184000Z][com.docker.diagnose] Gathering netstat -lna (timeout 0s) took 19.428333ms
+[2026-09-13T04:09:38.704253000Z][com.docker.diagnose] Gathering netstat -mm (timeout 0s)
+[2026-09-13T04:09:38.704886000Z][com.docker.diagnose] Executing: [netstat -mm]
+[2026-09-13T04:09:38.708291000Z][com.docker.diagnose] Gathering netstat -mm (timeout 0s) took 4.010416ms
+[2026-09-13T04:09:38.708357000Z][com.docker.diagnose] Gathering netstat -nr (timeout 0s)
+[2026-09-13T04:09:38.708631000Z][com.docker.diagnose] Executing: [netstat -nr]
+[2026-09-13T04:09:38.715153000Z][com.docker.diagnose] Gathering netstat -nr (timeout 0s) took 6.765125ms
+[2026-09-13T04:09:38.715220000Z][com.docker.diagnose] Gathering /etc/resolv.conf
+[2026-09-13T04:09:38.715265000Z][com.docker.diagnose] Gathering: /etc/resolv.conf
+[2026-09-13T04:09:38.716669000Z][com.docker.diagnose] Gathering /etc/resolv.conf took 1.427375ms
+[2026-09-13T04:09:38.716715000Z][com.docker.diagnose] Gathering /etc/hosts
+[2026-09-13T04:09:38.716754000Z][com.docker.diagnose] Gathering: /etc/hosts
+[2026-09-13T04:09:38.717170000Z][com.docker.diagnose] Gathering /etc/hosts took 441.708µs
+[2026-09-13T04:09:38.717347000Z][com.docker.diagnose] Gathering scutil --dns (timeout 0s)
+[2026-09-13T04:09:38.718056000Z][com.docker.diagnose] Executing: [scutil --dns]
+[2026-09-13T04:09:38.725071000Z][com.docker.diagnose] Gathering scutil --dns (timeout 0s) took 7.664458ms
+[2026-09-13T04:09:38.725114000Z][com.docker.diagnose] Gathering scutil --nc list (timeout 0s)
+[2026-09-13T04:09:38.725370000Z][com.docker.diagnose] Executing: [scutil --nc list]
+[2026-09-13T04:09:38.741512000Z][com.docker.diagnose] Gathering scutil --nc list (timeout 0s) took 16.36175ms
+[2026-09-13T04:09:38.741576000Z][com.docker.diagnose] Gathering scutil --proxy list (timeout 0s)
+[2026-09-13T04:09:38.741798000Z][com.docker.diagnose] Executing: [scutil --proxy list]
+[2026-09-13T04:09:38.749529000Z][com.docker.diagnose] Gathering scutil --proxy list (timeout 0s) took 7.920708ms
+[2026-09-13T04:09:38.749597000Z][com.docker.diagnose] Gathering system_profiler SPFirewallDataType (timeout 0s)
+[2026-09-13T04:09:38.749903000Z][com.docker.diagnose] Executing: [system_profiler SPFirewallDataType]
+[2026-09-13T04:09:38.855027000Z][com.docker.diagnose.ipc] (d7e9ab54-2) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:38.855357000Z][com.docker.diagnose.ipc][W] (d7e9ab54-2) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (339.084µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:38.911562000Z][com.docker.diagnose] Gathering Docker process footprints took 988.686375ms
+[2026-09-13T04:09:38.911649000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/version
+[2026-09-13T04:09:38.911690000Z][com.docker.diagnose] HTTP GET: localhost /v1.44/version
+[2026-09-13T04:09:38.929049000Z][com.docker.diagnose] Gathering system_profiler SPFirewallDataType (timeout 0s) took 179.420666ms
+[2026-09-13T04:09:38.929154000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/info
+[2026-09-13T04:09:38.929190000Z][com.docker.diagnose] HTTP GET: localhost /v1.44/info
+[2026-09-13T04:09:39.865314000Z][com.docker.diagnose.ipc] (d7e9ab54-3) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:39.865894000Z][com.docker.diagnose.ipc][W] (d7e9ab54-3) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (595.709µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:40.868172000Z][com.docker.diagnose.ipc] (d7e9ab54-4) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:40.868434000Z][com.docker.diagnose.ipc][W] (d7e9ab54-4) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (268.208µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:41.870389000Z][com.docker.diagnose.ipc] (d7e9ab54-5) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:41.870924000Z][com.docker.diagnose.ipc][W] (d7e9ab54-5) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (545.042µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:42.712635000Z][com.docker.diagnose.ipc] a090e6c7-diagnose -> <HOME>/Library/Containers/com.docker.docker/Data/backend.sock BackendAPI
+[2026-09-13T04:09:42.713565000Z][com.docker.diagnose.ipc] 50db3eba-diagnose -> <HOME>/.docker/run/docker.sock Proxy
+[2026-09-13T04:09:42.713679000Z][com.docker.diagnose.ipc] (9288ed0d-0) 50db3eba-diagnose C->S Proxy GET /docker-api-proxy/ping
+[2026-09-13T04:09:42.714091000Z][com.docker.diagnose.ipc][W] (9288ed0d-0) 50db3eba-diagnose C<-S UnknownServer GET /docker-api-proxy/ping (399.834µs): status code not OK but 503: Docker Desktop is unable to start
+
+
+[2026-09-13T04:09:42.873206000Z][com.docker.diagnose.ipc] (d7e9ab54-6) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:42.873489000Z][com.docker.diagnose.ipc][W] (d7e9ab54-6) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (286.667µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:43.309576000Z][com.docker.diagnose.ipc][W] (0bd4c0c2-0) ca220944-DiagkitPKG C<-S ConnectionClosed GET /socketforwarder/debug (5.000647208s): Get "http://ipc/socketforwarder/debug": context deadline exceeded
+[2026-09-13T04:09:43.309996000Z][com.docker.diagnose.ipc] (2de1faae-8) 930989b6-DiagkitPKG C->S BackendAPI GET /mutagen/file-shares
+[2026-09-13T04:09:43.875641000Z][com.docker.diagnose.ipc] (d7e9ab54-7) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:43.875891000Z][com.docker.diagnose.ipc][W] (d7e9ab54-7) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (263.458µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:43.913692000Z][com.docker.diagnose][W] context deadline exceeded
+[2026-09-13T04:09:43.914086000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/version took 5.002494708s
+[2026-09-13T04:09:43.914126000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/containers/json?all=1
+[2026-09-13T04:09:43.914165000Z][com.docker.diagnose] HTTP GET: localhost /v1.44/containers/json?all=1
+[2026-09-13T04:09:43.914210000Z][com.docker.diagnose][W] context deadline exceeded
+[2026-09-13T04:09:43.914639000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/containers/json?all=1 took 475.417µs
+[2026-09-13T04:09:43.914675000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/nodes
+[2026-09-13T04:09:43.914706000Z][com.docker.diagnose] HTTP GET: localhost /v1.44/nodes
+[2026-09-13T04:09:43.914850000Z][com.docker.diagnose][W] context deadline exceeded
+[2026-09-13T04:09:43.915110000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/nodes took 410.583µs
+[2026-09-13T04:09:43.915149000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/services
+[2026-09-13T04:09:43.915172000Z][com.docker.diagnose] HTTP GET: localhost /v1.44/services
+[2026-09-13T04:09:43.915198000Z][com.docker.diagnose][W] context deadline exceeded
+[2026-09-13T04:09:43.915295000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/services took 123.708µs
+[2026-09-13T04:09:43.915324000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/networks
+[2026-09-13T04:09:43.915355000Z][com.docker.diagnose] HTTP GET: localhost /v1.44/networks
+[2026-09-13T04:09:43.915380000Z][com.docker.diagnose][W] context deadline exceeded
+[2026-09-13T04:09:43.915441000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/networks took 86.334µs
+[2026-09-13T04:09:43.915470000Z][com.docker.diagnose] Gathering docker context ls (timeout 5s)
+[2026-09-13T04:09:43.915665000Z][com.docker.diagnose] Executing: [docker context ls]
+[2026-09-13T04:09:43.929591000Z][com.docker.diagnose][W] context deadline exceeded
+[2026-09-13T04:09:43.929871000Z][com.docker.diagnose] Gathering HTTP GET localhost /v1.44/info took 5.000781s
+[2026-09-13T04:09:43.929903000Z][com.docker.diagnose] Gathering docker context inspect default (timeout 5s)
+[2026-09-13T04:09:43.930123000Z][com.docker.diagnose] Executing: [docker context inspect default]
+[2026-09-13T04:09:44.031886000Z][com.docker.diagnose] Gathering docker context ls (timeout 5s) took 116.3815ms
+[2026-09-13T04:09:44.031949000Z][com.docker.diagnose] Gathering docker context inspect desktop-linux (timeout 5s)
+[2026-09-13T04:09:44.032474000Z][com.docker.diagnose] Executing: [docker context inspect desktop-linux]
+[2026-09-13T04:09:44.044638000Z][com.docker.diagnose] Gathering docker context inspect default (timeout 5s) took 114.702791ms
+[2026-09-13T04:09:44.044694000Z][com.docker.diagnose] Gathering docker context inspect desktop-windows (timeout 5s)
+[2026-09-13T04:09:44.044957000Z][com.docker.diagnose] Executing: [docker context inspect desktop-windows]
+[2026-09-13T04:09:44.148232000Z][com.docker.diagnose] Gathering docker context inspect desktop-linux (timeout 5s) took 116.236917ms
+[2026-09-13T04:09:44.148312000Z][com.docker.diagnose] Gathering docker info (timeout 5s)
+[2026-09-13T04:09:44.148553000Z][com.docker.diagnose] Executing: [docker info]
+[2026-09-13T04:09:44.158739000Z][com.docker.diagnose][W] [docker context inspect desktop-windows] exit status 1
+[2026-09-13T04:09:44.159526000Z][com.docker.diagnose] Gathering docker context inspect desktop-windows (timeout 5s) took 114.799583ms
+[2026-09-13T04:09:44.159661000Z][com.docker.diagnose] Gathering {
+  "id": "5A0E2395-8C56-470B-9371-ECA088C97751",
+  "date": "2026-09-13 04:09:37.629525 +0000 UTC"
+}
+[2026-09-13T04:09:44.200305000Z][com.docker.diagnose][W] Could not get HyperKit version: fork/exec /Applications/Docker.app/Contents/Resources/bin/com.docker.hyperkit: no such file or directory
+[2026-09-13T04:09:44.201581000Z][com.docker.diagnose] Gathering {
+  "id": "5A0E2395-8C56-470B-9371-ECA088C97751",
+  "date": "2026-09-13 04:09:37.629525 +0000 UTC"
+}
+ took 41.861458ms
+[2026-09-13T04:09:44.201678000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe pods
+[2026-09-13T04:09:44.202401000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.202488000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe pods took 771.917µs
+[2026-09-13T04:09:44.202580000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe daemonset
+[2026-09-13T04:09:44.203302000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.203402000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe daemonset took 716.083µs
+[2026-09-13T04:09:44.203446000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe replicaset
+[2026-09-13T04:09:44.204274000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.204359000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe replicaset took 813.625µs
+[2026-09-13T04:09:44.204488000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe deployments
+[2026-09-13T04:09:44.205839000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.205873000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace docker describe deployments took 1.296ms
+[2026-09-13T04:09:44.205920000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe pods
+[2026-09-13T04:09:44.206497000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.206579000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe pods took 566.625µs
+[2026-09-13T04:09:44.206687000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe daemonset
+[2026-09-13T04:09:44.207051000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.207082000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe daemonset took 306.625µs
+[2026-09-13T04:09:44.207130000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe replicaset
+[2026-09-13T04:09:44.207473000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.207495000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe replicaset took 334.292µs
+[2026-09-13T04:09:44.207534000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe deployments
+[2026-09-13T04:09:44.207775000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:44.207799000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace kube-system describe deployments took 233.084µs
+[2026-09-13T04:09:44.207847000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/log/vm/**
+[2026-09-13T04:09:44.207882000Z][com.docker.diagnose] Gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/vm
+[2026-09-13T04:09:44.208003000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/console.log
+[2026-09-13T04:09:44.210841000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/console.log.20260913-120816.452
+[2026-09-13T04:09:44.212271000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/console.log.20260913-120702.353
+[2026-09-13T04:09:44.213435000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/console.log.20260913-120626.171
+[2026-09-13T04:09:44.214669000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/console.log.20260913-120327.475
+[2026-09-13T04:09:44.216304000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/console.log.20260913-071204.306
+[2026-09-13T04:09:44.217388000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/console.log.20260529-233133.074
+[2026-09-13T04:09:44.499536000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log
+[2026-09-13T04:09:44.502584000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260913-120626.885
+[2026-09-13T04:09:44.505253000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260706-212110.676
+[2026-09-13T04:09:44.507901000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260629-130714.977
+[2026-09-13T04:09:44.511569000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260628-115545.827
+[2026-09-13T04:09:44.514972000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260628-034017.339
+[2026-09-13T04:09:44.518774000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260627-192706.886
+[2026-09-13T04:09:44.522503000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260627-111049.057
+[2026-09-13T04:09:44.526331000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260627-025532.732
+[2026-09-13T04:09:44.528399000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/vm/init.log.20260626-184025.581
+[2026-09-13T04:09:44.853167000Z][com.docker.diagnose][W] [docker info] exit status 1
+[2026-09-13T04:09:44.854057000Z][com.docker.diagnose] Gathering docker info (timeout 5s) took 705.737459ms
+[2026-09-13T04:09:44.854093000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/log/host/**
+[2026-09-13T04:09:44.854122000Z][com.docker.diagnose] Gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host
+[2026-09-13T04:09:44.854319000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/Docker Desktop.stderr.log
+[2026-09-13T04:09:44.855482000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/Docker Desktop.stdout.log
+[2026-09-13T04:09:44.856012000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/Docker.log
+[2026-09-13T04:09:44.856633000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log
+[2026-09-13T04:09:44.859088000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260913-071203.984
+[2026-09-13T04:09:44.861348000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260628-153820.705
+[2026-09-13T04:09:44.863502000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260628-111837.314
+[2026-09-13T04:09:44.866959000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260628-065853.058
+[2026-09-13T04:09:44.869755000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260628-024010.488
+[2026-09-13T04:09:44.872272000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260627-222803.684
+[2026-09-13T04:09:44.875545000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260627-180758.499
+[2026-09-13T04:09:44.878006000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260627-135018.136
+[2026-09-13T04:09:44.878033000Z][com.docker.diagnose.ipc] (d7e9ab54-8) 2c3ad856-DiagkitPKG C->S Virtualization GET /ping
+[2026-09-13T04:09:44.878560000Z][com.docker.diagnose.ipc][W] (d7e9ab54-8) 2c3ad856-DiagkitPKG C<-S ConnectionClosed GET /ping (532.709µs): Get "http://ipc/ping": dial unix <HOME>/Library/Containers/com.docker.docker/Data/virtualization.sock: connect: connection refused
+[2026-09-13T04:09:44.880834000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.backend.log.20260627-093140.466
+[2026-09-13T04:09:45.853679000Z][com.docker.diagnose] Gathering VirtualizationAPIGatherer took 8.006056834s
+[2026-09-13T04:09:45.853810000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/backend.error.json
+[2026-09-13T04:09:45.853935000Z][com.docker.diagnose][W] <HOME>/Library/Containers/com.docker.docker/backend.error.json not included
+[2026-09-13T04:09:45.854010000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/backend.error.json took 125.375µs
+[2026-09-13T04:09:45.854093000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/installer.error.json
+[2026-09-13T04:09:45.854183000Z][com.docker.diagnose][W] <HOME>/Library/Containers/com.docker.docker/installer.error.json not included
+[2026-09-13T04:09:45.854256000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/installer.error.json took 90.167µs
+[2026-09-13T04:09:45.854354000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/hypervisor.error.json
+[2026-09-13T04:09:45.854452000Z][com.docker.diagnose][W] <HOME>/Library/Containers/com.docker.docker/hypervisor.error.json not included
+[2026-09-13T04:09:45.854524000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/hypervisor.error.json took 99.833µs
+[2026-09-13T04:09:45.854605000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/features-overrides.json
+[2026-09-13T04:09:45.854698000Z][com.docker.diagnose] Gathering: <HOME>/Library/Group Containers/group.com.docker/features-overrides.json
+[2026-09-13T04:09:45.856115000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/features-overrides.json took 1.433333ms
+[2026-09-13T04:09:45.856182000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/unleash-repo-schema-v1-Docker Desktop.json
+[2026-09-13T04:09:45.856234000Z][com.docker.diagnose][W] <HOME>/Library/Group Containers/group.com.docker/unleash-repo-schema-v1-Docker Desktop.json not included
+[2026-09-13T04:09:45.856272000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/unleash-repo-schema-v1-Docker Desktop.json took 43.958µs
+[2026-09-13T04:09:45.856316000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/registry.json
+[2026-09-13T04:09:45.856344000Z][com.docker.diagnose][W] /Library/Application Support/com.docker.docker/registry.json not included
+[2026-09-13T04:09:45.856371000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/registry.json took 29.375µs
+[2026-09-13T04:09:45.856407000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/access.json
+[2026-09-13T04:09:45.856434000Z][com.docker.diagnose][W] /Library/Application Support/com.docker.docker/access.json not included
+[2026-09-13T04:09:45.856461000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/access.json took 27.709µs
+[2026-09-13T04:09:45.856492000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/admin-settings.json
+[2026-09-13T04:09:45.856522000Z][com.docker.diagnose][W] /Library/Application Support/com.docker.docker/admin-settings.json not included
+[2026-09-13T04:09:45.856550000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/admin-settings.json took 29.5µs
+[2026-09-13T04:09:45.856584000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/install-settings.json
+[2026-09-13T04:09:45.856612000Z][com.docker.diagnose][W] /Library/Application Support/com.docker.docker/install-settings.json not included
+[2026-09-13T04:09:45.856641000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/install-settings.json took 30.291µs
+[2026-09-13T04:09:45.856674000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/registry-access-management-state.json
+[2026-09-13T04:09:45.856713000Z][com.docker.diagnose][W] <HOME>/Library/Group Containers/group.com.docker/registry-access-management-state.json not included
+[2026-09-13T04:09:45.856749000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/registry-access-management-state.json took 38.916µs
+[2026-09-13T04:09:45.856790000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/auth-token-family-creation-time.txt
+[2026-09-13T04:09:45.856828000Z][com.docker.diagnose][W] <HOME>/Library/Group Containers/group.com.docker/auth-token-family-creation-time.txt not included
+[2026-09-13T04:09:45.856863000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/auth-token-family-creation-time.txt took 38.458µs
+[2026-09-13T04:09:45.856905000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  version 
+[2026-09-13T04:09:45.857194000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.857210000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  version  took 268.875µs
+[2026-09-13T04:09:45.857242000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  config get-contexts
+[2026-09-13T04:09:45.857490000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.857503000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  config get-contexts took 231.333µs
+[2026-09-13T04:09:45.857536000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  config current-context
+[2026-09-13T04:09:45.857768000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.857781000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  config current-context took 216.833µs
+[2026-09-13T04:09:45.857816000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  get nodes
+[2026-09-13T04:09:45.858029000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.858045000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  get nodes took 204.791µs
+[2026-09-13T04:09:45.858078000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  get namespaces
+[2026-09-13T04:09:45.858292000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.858304000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  get namespaces took 199.459µs
+[2026-09-13T04:09:45.858338000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe nodes
+[2026-09-13T04:09:45.858537000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.858553000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe nodes took 190.375µs
+[2026-09-13T04:09:45.858587000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe pods
+[2026-09-13T04:09:45.858792000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.858808000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe pods took 196.167µs
+[2026-09-13T04:09:45.858845000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  cluster-info dump
+[2026-09-13T04:09:45.859055000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.859071000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  cluster-info dump took 196.5µs
+[2026-09-13T04:09:45.859106000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe services
+[2026-09-13T04:09:45.859314000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.859326000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe services took 194.417µs
+[2026-09-13T04:09:45.859361000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe storageclass,pv,pvc
+[2026-09-13T04:09:45.859569000Z][com.docker.diagnose] kubernetes is disabled
+[2026-09-13T04:09:45.859584000Z][com.docker.diagnose] Gathering kubectl --context docker-desktop --namespace  describe storageclass,pv,pvc took 192.333µs
+[2026-09-13T04:09:45.859621000Z][com.docker.diagnose] Gathering docker logs -t -n10000 kind-registry-mirror (timeout 10s)
+[2026-09-13T04:09:45.859784000Z][com.docker.diagnose] Executing: [docker logs -t -n10000 kind-registry-mirror]
+[2026-09-13T04:09:45.979774000Z][com.docker.diagnose][W] [docker logs -t -n10000 kind-registry-mirror] exit status 1
+[2026-09-13T04:09:45.994663000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/log/vm/** took 1.786785125s
+[2026-09-13T04:09:45.994812000Z][com.docker.diagnose] Gathering docker logs -t -n10000 desktop-control-plane (timeout 10s)
+[2026-09-13T04:09:45.996117000Z][com.docker.diagnose] Gathering docker logs -t -n10000 kind-registry-mirror (timeout 10s) took 136.467667ms
+[2026-09-13T04:09:45.996164000Z][com.docker.diagnose] Gathering docker ps -a -flabel=io.kubernetes.pod.namespace=kube-system (timeout 0s)
+[2026-09-13T04:09:45.996349000Z][com.docker.diagnose] Executing: [docker logs -t -n10000 desktop-control-plane]
+[2026-09-13T04:09:45.996433000Z][com.docker.diagnose] Executing: [docker ps -a -flabel=io.kubernetes.pod.namespace=kube-system]
+[2026-09-13T04:09:46.118102000Z][com.docker.diagnose][W] [docker ps -a -flabel=io.kubernetes.pod.namespace=kube-system] exit status 1
+[2026-09-13T04:09:46.118447000Z][com.docker.diagnose] Gathering docker ps -a -flabel=io.kubernetes.pod.namespace=kube-system (timeout 0s) took 122.244625ms
+[2026-09-13T04:09:46.118498000Z][com.docker.diagnose] Gathering log process contains[c] "docker" || (process in {"kernel", "ReportCrash", "launchd", "launchservicesd", "taskgated-helper", "syspolicyd", "trustd", "dasd", "tccd", "docker-sandbox", "Finder", "Autoupdate"} && eventMessage contains[c] "docker")
+[2026-09-13T04:09:46.118667000Z][com.docker.diagnose][W] [docker logs -t -n10000 desktop-control-plane] exit status 1
+[2026-09-13T04:09:46.118709000Z][com.docker.diagnose] Executing: [/bin/sh -c /usr/bin/log show --debug --info --style syslog --last 1h --predicate 'process contains[c] "docker" || (process in {"kernel", "ReportCrash", "launchd", "launchservicesd", "taskgated-helper", "syspolicyd", "trustd", "dasd", "tccd", "docker-sandbox", "Finder", "Autoupdate"} && eventMessage contains[c] "docker")']
+[2026-09-13T04:09:46.118874000Z][com.docker.diagnose] Gathering docker logs -t -n10000 desktop-control-plane (timeout 10s) took 123.856125ms
+[2026-09-13T04:09:46.118918000Z][com.docker.diagnose] Gathering DarwinSyslog Sender = docker Docker Message = docker Docker
+[2026-09-13T04:09:46.120506000Z][com.docker.diagnose] Executing: [syslog -F $((Time)(JZ)) $Host $(Sender)[$(Facility)][$(PID)] <$((Level)(str))>: $Message -o -k Sender Seq docker -o -k Sender Seq Docker -o -k Message Seq docker -o -k Message Seq Docker]
+[2026-09-13T04:09:46.138941000Z][com.docker.diagnose] Gathering DarwinSyslog Sender = docker Docker Message = docker Docker took 19.986084ms
+[2026-09-13T04:09:46.139000000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/vms/0/console-ring
+[2026-09-13T04:09:46.139060000Z][com.docker.diagnose][W] <HOME>/Library/Containers/com.docker.docker/Data/vms/0/console-ring not included
+[2026-09-13T04:09:46.139092000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/vms/0/console-ring took 58.667µs
+[2026-09-13T04:09:46.139134000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/desktop.plist
+[2026-09-13T04:09:46.139170000Z][com.docker.diagnose][W] /Library/Application Support/com.docker.docker/desktop.plist not included
+[2026-09-13T04:09:46.139198000Z][com.docker.diagnose] Gathering /Library/Application Support/com.docker.docker/desktop.plist took 29.792µs
+[2026-09-13T04:09:46.139229000Z][com.docker.diagnose] Gathering /Library/LaunchDaemons/com.docker.vmnetd.plist
+[2026-09-13T04:09:46.139258000Z][com.docker.diagnose][W] /Library/LaunchDaemons/com.docker.vmnetd.plist not included
+[2026-09-13T04:09:46.139281000Z][com.docker.diagnose] Gathering /Library/LaunchDaemons/com.docker.vmnetd.plist took 30.625µs
+[2026-09-13T04:09:46.139314000Z][com.docker.diagnose] Gathering /Library/LaunchDaemons/com.docker.socket.plist
+[2026-09-13T04:09:46.139344000Z][com.docker.diagnose][W] /Library/LaunchDaemons/com.docker.socket.plist not included
+[2026-09-13T04:09:46.139372000Z][com.docker.diagnose] Gathering /Library/LaunchDaemons/com.docker.socket.plist took 30.875µs
+[2026-09-13T04:09:46.139408000Z][com.docker.diagnose] Gathering lsof -n -P -p 98969 (timeout 0s)
+[2026-09-13T04:09:46.139548000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 98969]
+[2026-09-13T04:09:46.166452000Z][com.docker.diagnose] Gathering lsof -n -P -p 98969 (timeout 0s) took 27.010708ms
+[2026-09-13T04:09:46.166511000Z][com.docker.diagnose] Gathering lsof -n -P -p 98971 (timeout 0s)
+[2026-09-13T04:09:46.166761000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 98971]
+[2026-09-13T04:09:46.195913000Z][com.docker.diagnose] Gathering lsof -n -P -p 98971 (timeout 0s) took 29.371ms
+[2026-09-13T04:09:46.195969000Z][com.docker.diagnose] Gathering lsof -n -P -p 98972 (timeout 0s)
+[2026-09-13T04:09:46.197215000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 98972]
+[2026-09-13T04:09:46.223409000Z][com.docker.diagnose] Gathering lsof -n -P -p 98972 (timeout 0s) took 27.404667ms
+[2026-09-13T04:09:46.223459000Z][com.docker.diagnose] Gathering lsof -n -P -p 99015 (timeout 0s)
+[2026-09-13T04:09:46.223693000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99015]
+[2026-09-13T04:09:46.252223000Z][com.docker.diagnose] Gathering lsof -n -P -p 99015 (timeout 0s) took 28.720875ms
+[2026-09-13T04:09:46.252299000Z][com.docker.diagnose] Gathering lsof -n -P -p 99022 (timeout 0s)
+[2026-09-13T04:09:46.252745000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99022]
+[2026-09-13T04:09:46.285584000Z][com.docker.diagnose] Gathering lsof -n -P -p 99022 (timeout 0s) took 33.256166ms
+[2026-09-13T04:09:46.285653000Z][com.docker.diagnose] Gathering lsof -n -P -p 99039 (timeout 0s)
+[2026-09-13T04:09:46.286718000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99039]
+[2026-09-13T04:09:46.314617000Z][com.docker.diagnose] Gathering lsof -n -P -p 99039 (timeout 0s) took 28.922834ms
+[2026-09-13T04:09:46.314685000Z][com.docker.diagnose] Gathering lsof -n -P -p 99040 (timeout 0s)
+[2026-09-13T04:09:46.315092000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99040]
+[2026-09-13T04:09:46.449038000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.build.log
+[2026-09-13T04:09:46.449460000Z][com.docker.diagnose] Gathering lsof -n -P -p 99040 (timeout 0s) took 134.749125ms
+[2026-09-13T04:09:46.449496000Z][com.docker.diagnose] Gathering lsof -n -P -p 99047 (timeout 0s)
+[2026-09-13T04:09:46.449930000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99047]
+[2026-09-13T04:09:46.450100000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.diagnose.log
+[2026-09-13T04:09:46.459517000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/com.docker.virtualization.log
+[2026-09-13T04:09:46.463666000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/docker-desktop.log
+[2026-09-13T04:09:46.480108000Z][com.docker.diagnose] Gathering lsof -n -P -p 99047 (timeout 0s) took 30.567792ms
+[2026-09-13T04:09:46.480160000Z][com.docker.diagnose] Gathering lsof -n -P -p 99086 (timeout 0s)
+[2026-09-13T04:09:46.480512000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99086]
+[2026-09-13T04:09:46.481939000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/docker-sandbox.log
+[2026-09-13T04:09:46.484233000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/electron-2026-09-13.log
+[2026-09-13T04:09:46.487123000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/electron-audit-log.json
+[2026-09-13T04:09:46.488042000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/electron-errd-2026-09-13.log
+[2026-09-13T04:09:46.488463000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/electron-errd-audit-log.json
+[2026-09-13T04:09:46.488943000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/electron-ui-console-2026-05-29.log
+[2026-09-13T04:09:46.489233000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/electron-ui-console-2026-09-13.log
+[2026-09-13T04:09:46.489456000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/electron-ui-console-audit-log.json
+[2026-09-13T04:09:46.489865000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/httpproxy.log
+[2026-09-13T04:09:46.493434000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/httpproxy.log.20260623-153222.344
+[2026-09-13T04:09:46.498115000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/httpproxy.log.20260614-193238.847
+[2026-09-13T04:09:46.500604000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/httpproxy.log.20260605-173123.459
+[2026-09-13T04:09:46.513087000Z][com.docker.diagnose] Gathering lsof -n -P -p 99086 (timeout 0s) took 32.892625ms
+[2026-09-13T04:09:46.513152000Z][com.docker.diagnose] Gathering lsof -n -P -p 99087 (timeout 0s)
+[2026-09-13T04:09:46.514111000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99087]
+[2026-09-13T04:09:46.541981000Z][com.docker.diagnose] Gathering lsof -n -P -p 99087 (timeout 0s) took 28.794125ms
+[2026-09-13T04:09:46.542050000Z][com.docker.diagnose] Gathering lsof -n -P -p 99088 (timeout 0s)
+[2026-09-13T04:09:46.542479000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99088]
+[2026-09-13T04:09:46.570514000Z][com.docker.diagnose] Gathering lsof -n -P -p 99088 (timeout 0s) took 28.424958ms
+[2026-09-13T04:09:46.570581000Z][com.docker.diagnose] Gathering lsof -n -P -p 99089 (timeout 0s)
+[2026-09-13T04:09:46.571005000Z][com.docker.diagnose] Executing: [/bin/sh -c lsof -n -P -p 99089]
+[2026-09-13T04:09:46.598426000Z][com.docker.diagnose] Gathering lsof -n -P -p 99089 (timeout 0s) took 27.8075ms
+[2026-09-13T04:09:46.598496000Z][com.docker.diagnose] Gathering ls -l <HOME>/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw (timeout 0s)
+[2026-09-13T04:09:46.598933000Z][com.docker.diagnose] Executing: [ls -l <HOME>/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw]
+[2026-09-13T04:09:46.605425000Z][com.docker.diagnose] Gathering ls -l <HOME>/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw (timeout 0s) took 6.871791ms
+[2026-09-13T04:09:46.605496000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/DockerAppStderr.txt
+[2026-09-13T04:09:46.605563000Z][com.docker.diagnose] Gathering: <HOME>/Library/Group Containers/group.com.docker/DockerAppStderr.txt
+[2026-09-13T04:09:46.606108000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/DockerAppStderr.txt took 579.083µs
+[2026-09-13T04:09:46.606152000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/already-enabled-features.json
+[2026-09-13T04:09:46.606189000Z][com.docker.diagnose][W] <HOME>/Library/Group Containers/group.com.docker/already-enabled-features.json not included
+[2026-09-13T04:09:46.606228000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/already-enabled-features.json took 43.75µs
+[2026-09-13T04:09:46.606273000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/dhcp.json
+[2026-09-13T04:09:46.606315000Z][com.docker.diagnose] Gathering: <HOME>/Library/Group Containers/group.com.docker/dhcp.json
+[2026-09-13T04:09:46.606822000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/dhcp.json took 516.083µs
+[2026-09-13T04:09:46.606868000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/features.json
+[2026-09-13T04:09:46.606903000Z][com.docker.diagnose][W] <HOME>/Library/Group Containers/group.com.docker/features.json not included
+[2026-09-13T04:09:46.606934000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/features.json took 35.167µs
+[2026-09-13T04:09:46.606971000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/settings.json
+[2026-09-13T04:09:46.607013000Z][com.docker.diagnose] Gathering: <HOME>/Library/Group Containers/group.com.docker/settings.json
+[2026-09-13T04:09:46.608043000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/settings.json took 1.0435ms
+[2026-09-13T04:09:46.608096000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/settings-store.json
+[2026-09-13T04:09:46.608129000Z][com.docker.diagnose] Gathering: <HOME>/Library/Group Containers/group.com.docker/settings-store.json
+[2026-09-13T04:09:46.609106000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/settings-store.json took 981.5µs
+[2026-09-13T04:09:46.609149000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/cloud-settings.json
+[2026-09-13T04:09:46.609186000Z][com.docker.diagnose][W] <HOME>/Library/Group Containers/group.com.docker/cloud-settings.json not included
+[2026-09-13T04:09:46.609216000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/cloud-settings.json took 34.333µs
+[2026-09-13T04:09:46.609252000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/cloud-signature.json
+[2026-09-13T04:09:46.609286000Z][com.docker.diagnose][W] <HOME>/Library/Group Containers/group.com.docker/cloud-signature.json not included
+[2026-09-13T04:09:46.609317000Z][com.docker.diagnose] Gathering <HOME>/Library/Group Containers/group.com.docker/cloud-signature.json took 35.875µs
+[2026-09-13T04:09:46.609353000Z][com.docker.diagnose] Gathering <HOME>/Library/Preferences/group.com.docker.plist
+[2026-09-13T04:09:46.609389000Z][com.docker.diagnose][W] <HOME>/Library/Preferences/group.com.docker.plist not included
+[2026-09-13T04:09:46.609418000Z][com.docker.diagnose] Gathering <HOME>/Library/Preferences/group.com.docker.plist took 42.125µs
+[2026-09-13T04:09:46.609461000Z][com.docker.diagnose] Gathering ls <HOME>/.docker /var/run /usr/local/bin /Library/PrivilegedHelperTools /Library/LaunchDaemons <HOME>/Library/LaunchAgents /Library/Application Support/Docker/DockerDesktop <HOME>/Library/Group Containers/group.com.docker <HOME>/Library/Containers/com.docker.docker /Applications/Docker.app
+[2026-09-13T04:09:46.627513000Z][com.docker.diagnose][W] exit status 1
+[2026-09-13T04:09:46.653235000Z][com.docker.diagnose][W] exit status 1
+[2026-09-13T04:09:46.796895000Z][com.docker.diagnose] Gathering ls <HOME>/.docker /var/run /usr/local/bin /Library/PrivilegedHelperTools /Library/LaunchDaemons <HOME>/Library/LaunchAgents /Library/Application Support/Docker/DockerDesktop <HOME>/Library/Group Containers/group.com.docker <HOME>/Library/Containers/com.docker.docker /Applications/Docker.app took 187.33475ms
+[2026-09-13T04:09:46.797036000Z][com.docker.diagnose] Gathering Redacted <HOME>/.docker/config.json
+[2026-09-13T04:09:46.797147000Z][com.docker.diagnose] Gathering: <HOME>/.docker/config.json
+[2026-09-13T04:09:46.798003000Z][com.docker.diagnose] Gathering Redacted <HOME>/.docker/config.json took 943.292µs
+[2026-09-13T04:09:46.798043000Z][com.docker.diagnose] Gathering <HOME>/.docker/daemon.json
+[2026-09-13T04:09:46.798063000Z][com.docker.diagnose] Gathering: <HOME>/.docker/daemon.json
+[2026-09-13T04:09:46.798353000Z][com.docker.diagnose] Gathering <HOME>/.docker/daemon.json took 293.292µs
+[2026-09-13T04:09:46.798385000Z][com.docker.diagnose] Gathering <HOME>/.docker/canary.json
+[2026-09-13T04:09:46.798405000Z][com.docker.diagnose][W] <HOME>/.docker/canary.json not included
+[2026-09-13T04:09:46.798424000Z][com.docker.diagnose] Gathering <HOME>/.docker/canary.json took 23.125µs
+[2026-09-13T04:09:46.798449000Z][com.docker.diagnose] Gathering <HOME>/.docker/features.json
+[2026-09-13T04:09:46.798468000Z][com.docker.diagnose] Gathering: <HOME>/.docker/features.json
+[2026-09-13T04:09:46.798718000Z][com.docker.diagnose] Gathering <HOME>/.docker/features.json took 251.708µs
+[2026-09-13T04:09:46.798763000Z][com.docker.diagnose] Gathering mutagenGatherer
+[2026-09-13T04:09:46.798799000Z][com.docker.diagnose.ipc] e1725d23-MutagenGatherer -> <HOME>/Library/Containers/com.docker.docker/Data/backend.sock BackendAPI
+[2026-09-13T04:09:46.798857000Z][com.docker.diagnose.ipc] (cad4152c-0) e1725d23-MutagenGatherer C->S BackendAPI GET /mutagen/file-shares
+[2026-09-13T04:09:47.191200000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/inference.log
+[2026-09-13T04:09:47.193006000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/ipc.stacks.log
+[2026-09-13T04:09:47.287863000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log
+[2026-09-13T04:09:47.291856000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260913-120702.313
+[2026-09-13T04:09:47.301450000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260913-071203.679
+[2026-09-13T04:09:47.309007000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260628-191254.357
+[2026-09-13T04:09:47.317493000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260628-190430.992
+[2026-09-13T04:09:47.323924000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260628-185631.873
+[2026-09-13T04:09:47.334569000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260628-184956.075
+[2026-09-13T04:09:47.342848000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260628-184217.002
+[2026-09-13T04:09:47.346747000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260628-183429.620
+[2026-09-13T04:09:47.357229000Z][com.docker.diagnose] gathering rotated: <HOME>/Library/Containers/com.docker.docker/Data/log/host/monitor.log.20260628-182648.232
+[2026-09-13T04:09:48.822273000Z][com.docker.diagnose] gathering: <HOME>/Library/Containers/com.docker.docker/Data/log/host/supervisor.log
+[2026-09-13T04:09:48.897138000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/log/host/** took 4.0430845s
+[2026-09-13T04:09:48.897241000Z][com.docker.diagnose] Gathering cloud (External)
+[2026-09-13T04:09:49.517639000Z][com.docker.diagnose][W] <HOME>/.docker/cloud/error.log not included
+[2026-09-13T04:09:49.517694000Z][com.docker.diagnose][W] <HOME>/.docker/cloud/state.json not included
+[2026-09-13T04:09:49.517736000Z][com.docker.diagnose] Gathering: <HOME>/.docker/cloud/logs
+[2026-09-13T04:09:49.517859000Z][com.docker.diagnose] Gathering: <HOME>/.docker/cloud/logs/diagnostic.json
+[2026-09-13T04:09:49.518200000Z][com.docker.diagnose] Gathering cloud (External) took 620.951625ms
+[2026-09-13T04:09:49.518255000Z][com.docker.diagnose] Gathering ProfileGatherer
+[2026-09-13T04:09:59.341297000Z][com.docker.diagnose] Gathering log process contains[c] "docker" || (process in {"kernel", "ReportCrash", "launchd", "launchservicesd", "taskgated-helper", "syspolicyd", "trustd", "dasd", "tccd", "docker-sandbox", "Finder", "Autoupdate"} && eventMessage contains[c] "docker") took 13.222978208s
+[2026-09-13T04:09:59.342178000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/diagnosticd.sock
+[2026-09-13T04:09:59.342218000Z][com.docker.diagnose] Getting Linux Diagnostics via a unix socket: <HOME>/Library/Containers/com.docker.docker/Data/diagnosticd.sock
+[2026-09-13T04:10:01.628065000Z][com.docker.diagnose.ipc] (e6217fe4-2) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:10:01.629724000Z][com.docker.diagnose.ipc] (e6217fe4-2) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (1.6655ms): 0x115637fb61d0
+[2026-09-13T04:10:29.343839000Z][com.docker.diagnose][W] /diagnostics failed: Get "http://unix/diagnostics?timeout=30": context deadline exceeded
+[2026-09-13T04:10:29.344861000Z][com.docker.diagnose] Gathering <HOME>/Library/Containers/com.docker.docker/Data/diagnosticd.sock took 30.003261125s
+[2026-09-13T04:10:31.631379000Z][com.docker.diagnose.ipc] (e6217fe4-3) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:10:31.632902000Z][com.docker.diagnose.ipc] (e6217fe4-3) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (1.537375ms): 0x115637eb2328
+[2026-09-13T04:11:01.633477000Z][com.docker.diagnose.ipc] (e6217fe4-4) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:11:01.634566000Z][com.docker.diagnose.ipc] (e6217fe4-4) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (1.099708ms): 0x11563830a470
+[2026-09-13T04:11:31.634602000Z][com.docker.diagnose.ipc] (e6217fe4-5) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:11:31.637029000Z][com.docker.diagnose.ipc] (e6217fe4-5) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (2.436708ms): 0x11563830af80
+[2026-09-13T04:11:34.646118000Z][com.docker.diagnose] Gathering ProfileGatherer took 1m45.130012667s
+[2026-09-13T04:12:01.637837000Z][com.docker.diagnose.ipc] (e6217fe4-6) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:12:01.647559000Z][com.docker.diagnose.ipc] (e6217fe4-6) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (9.686792ms): 0x115637eb2e48
+[2026-09-13T04:12:31.649409000Z][com.docker.diagnose.ipc] (e6217fe4-7) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:12:31.652565000Z][com.docker.diagnose.ipc] (e6217fe4-7) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (3.163792ms): 0x11563830a700
+[2026-09-13T04:13:01.653541000Z][com.docker.diagnose.ipc] (e6217fe4-8) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:13:01.654301000Z][com.docker.diagnose.ipc] (e6217fe4-8) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (1.131708ms): 0x115637eb23a0
+[2026-09-13T04:13:31.655878000Z][com.docker.diagnose.ipc] (e6217fe4-9) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:13:31.657735000Z][com.docker.diagnose.ipc] (e6217fe4-9) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (1.890875ms): 0x11563830b0c0
+[2026-09-13T04:14:01.659409000Z][com.docker.diagnose.ipc] (e6217fe4-10) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:14:01.675686000Z][com.docker.diagnose.ipc] (e6217fe4-10) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (16.267625ms): 0x11563830b880
+[2026-09-13T04:14:31.677377000Z][com.docker.diagnose.ipc] (e6217fe4-11) a1bdf8f1-diagnose C->S BackendAPI POST /idle/make-busy
+[2026-09-13T04:14:31.680903000Z][com.docker.diagnose.ipc] (e6217fe4-11) a1bdf8f1-diagnose C<-S d8f2dd07-BackendAPI POST /idle/make-busy (3.535375ms): 0x115637fb6298
+[2026-09-13T04:14:43.305118000Z][com.docker.diagnose.ipc][W] (2de1faae-8) 930989b6-DiagkitPKG C<-S ConnectionClosed GET /mutagen/file-shares (5m0.001356s): Get "http://ipc/mutagen/file-shares": context deadline exceeded
+[2026-09-13T04:14:43.305949000Z][com.docker.diagnose] Gathering BackendGatherer took 5m5.468640083s
+[2026-09-13T04:14:46.794821000Z][com.docker.diagnose.ipc][W] (cad4152c-0) e1725d23-MutagenGatherer C<-S ConnectionClosed GET /mutagen/file-shares (5m0.002221583s): Get "http://ipc/mutagen/file-shares": context deadline exceeded
+[2026-09-13T04:14:46.795456000Z][com.docker.diagnose] Gathering mutagenGatherer took 5m0.002929875s
+[2026-09-13T04:14:46.795522000Z][com.docker.diagnose] All 108 gatherers finished in 5m8.958873125s
+
+
+Diagnostics Bundle: /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/5A0E2395-8C56-470B-9371-ECA088C97751/20260913040931.zip
+
+✓ Diagnose done.
+EXIT=0

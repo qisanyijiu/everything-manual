@@ -1,0 +1,125 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test import-flow.spec.ts
+
+(node:66899) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m129[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 13.19s
+{"timestamp":"2026-09-12T07:37:02.659684Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a0948c-5fc3-724b-ad7c-481ebc963e40","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 6 tests using 1 worker
+
+(node:66987) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✘  1 [chromium] › tests/e2e/import-flow.spec.ts:85:3 › 资料库与新建向导（T16） › 正常向导：建物品 → PDF → 照片 → 准备 → 报价 → 确认 → 生成进入等待 (1.4s)
+(node:66994) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  2 [chromium] › tests/e2e/import-flow.spec.ts:205:3 › 资料库与新建向导（T16） › 缺 front：生成入口禁用并说明缺项 (1.4s)
+  ✓  3 [chromium] › tests/e2e/import-flow.spec.ts:230:3 › 资料库与新建向导（T16） › 上传失败重试：超限文件 + 注入一次失败后重试成功 (5.6s)
+  ✘  4 [chromium] › tests/e2e/import-flow.spec.ts:282:3 › 资料库与新建向导（T16） › 预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报） (709ms)
+(node:67013) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  5 [chromium] › tests/e2e/import-flow.spec.ts:345:3 › 资料库与新建向导（T16） › 返回上一步与刷新：只改 URL，不丢服务端已保存的资料 (1.7s)
+  ✓  6 [chromium] › tests/e2e/import-flow.spec.ts:386:3 › 资料库与新建向导（T16） › 窄屏（<768px）键盘：Tab/Enter 完成第 1 步，抽屉焦点陷阱与 Esc (1.1s)
+
+
+  1) [chromium] › tests/e2e/import-flow.spec.ts:85:3 › 资料库与新建向导（T16） › 正常向导：建物品 → PDF → 照片 → 准备 → 报价 → 确认 → 生成进入等待 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('T16 联调说明书')
+    Expected: visible
+    Error: strict mode violation: getByText('T16 联调说明书') resolved to 2 elements:
+        1) <span class="entity-list__title">T16 联调说明书</span> aka getByText('T16 联调说明书', { exact: true })
+        2) <p role="status" class="notice__message">已绑定说明书「T16 联调说明书」</p> aka getByText('已绑定说明书「T16 联调说明书」')
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for getByText('T16 联调说明书')[22m
+
+
+      109 |     await page.getByRole("button", { name: "绑定为说明书" }).click();
+      110 |     await expect(page.getByRole("heading", { name: "已绑定的说明书" })).toBeVisible();
+    > 111 |     await expect(page.getByText("T16 联调说明书")).toBeVisible();
+          |                                               ^
+      112 |     const documents = await fetchDocuments(request, apiBase(), itemId);
+      113 |     expect(documents.map((document) => document.title)).toContain("T16 联调说明书");
+      114 |     await captureTo("t16-rd", page, "02-document-bound");
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/import-flow.spec.ts:111:47
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）--33843--照片-→-准备-→-报价-→-确认-→-生成进入等待-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）--33843--照片-→-准备-→-报价-→-确认-→-生成进入等待-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）--33843--照片-→-准备-→-报价-→-确认-→-生成进入等待-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）--33843--照片-→-准备-→-报价-→-确认-→-生成进入等待-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › tests/e2e/import-flow.spec.ts:282:3 › 资料库与新建向导（T16） › 预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报） 
+
+    Error: POST http://127.0.0.1:18080/api/v1/preparations/01a0948c-8929-77be-a4d0-76856fbff46f/complete → 412 {"error":{"code":"REVISION_CONFLICT","message":"该资源已被其他操作更新：请刷新后重试","details":{"currentRevision":2},"requestId":"01a0948c-894e-73f0-beab-427543a679b5"}}
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+       at helpers.ts:64
+
+      62 |   });
+      63 |   const text = await response.text();
+    > 64 |   expect(response.ok(), `${options.method} ${options.url} → ${response.status()} ${text}`).toBe(true);
+         |                                                                                            ^
+      65 |   return text === "" ? (undefined as T) : (JSON.parse(text) as T);
+      66 | }
+      67 |
+        at apiFetch (/Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/helpers.ts:64:92)
+        at seedReadyPreparation (/Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/helpers.ts:300:3)
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/import-flow.spec.ts:296:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）-预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报）-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）-预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报）-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）-预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报）-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/import-flow-资料库与新建向导（T16）-预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报）-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › tests/e2e/import-flow.spec.ts:85:3 › 资料库与新建向导（T16） › 正常向导：建物品 → PDF → 照片 → 准备 → 报价 → 确认 → 生成进入等待 
+    [chromium] › tests/e2e/import-flow.spec.ts:282:3 › 资料库与新建向导（T16） › 预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报） 
+  4 passed (29.4s)

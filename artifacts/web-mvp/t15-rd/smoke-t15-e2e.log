@@ -1,0 +1,51 @@
+== T15 冒烟工作目录：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t15-smoke-0ueof77j（结束删除；KEEP_WORK=1 保留）
+== 启动本机 fixture（Tripo v3 + 说明书 AI + 模型 CDN；只绑定 127.0.0.1）
+  组装阶段处理器已注册（本地确定性组装；不存在自动发布）
+== 登录完成（假凭据；仅本机 fixture）
+
+== A) 建物品 → 准备（3 页）→ 报价 → 确认 → 建单 → 两分支 → 草稿
+  准备 ready（3 页）、照片 front+left、job=01a0946b-81a1-7545-a5ec-9f9b6231035b
+  job 状态 = succeeded / revision=5；草稿 01a0946b-8e2b-71d7-9ff3-ffce34b6845c status=needs_review revision=1 completeness=complete
+  草稿模型版本 = 01a0946b-8e29-7211…；知识部件 = 4、步骤 = 1、页覆盖 complete=True
+  **manual_releases 计数 = 0（无自动发布路径）**；cost_ledger = [('manual_ai', 'usd_micros', 8525, None, 'reserved'), ('tripo', 'credit_minor', 3000, 3000, 'settled')]
+  fixture 计数：付费提交 = 1、说明书批次请求 = 1、模型下载 = 1
+  GET 草稿 = 200（completeness=complete；notices[0]=生成完成不等于已发布：草稿需要人工确认知识并完成热点校准后，显式发布才会产出不可变版本）
+
+== B) 知识分支失败（fixture 拒答一次）→ 只重试该批次
+  job 状态 = needs_input；批次 status=needs_input producedKnowledge=False errorCode=manual_ai_refusal
+  模型分支：tripo_submit=succeeded、model_validate=queued（独立完成）
+  重试前 fixture 付费提交计数 = 2（job A 1 次 + job B 1 次）
+  重试响应：previousStatus=needs_input、requeuedDependents=0、notice=只重跑指定阶段：已完成的其他阶段成果保留，不改变模型/质量预设，不自动降质量或换模型
+  重试后 job 状态 = succeeded；草稿 completeness=complete；付费提交计数 = 2（**未重新购买**）
+  说明书批次请求合计 = 3（A:1 + B:拒答1 + B:重试1）
+
+== C) cancel（已提交阶段保留、未提交阶段停止、取消后无新付费步骤）
+  cancel 响应：job=cancelled；stagesCancelled=3；preserved=[('tripo_poll', 'waiting_provider')]
+  notice=取消只停止本地的后续推进：已提交给供应商的付费操作不会被撤销，已提交阶段保留查询与账务记录（不保证供应商撤单）
+  未提交阶段（model_download）= cancelled；已提交阶段（tripo_poll）= waiting_provider（保留查询/账务）
+  job C 账本 = [('manual_ai', 'reserved', 8525, None), ('tripo', 'reserved', 3000, None)]（未因取消静默释放）
+  取消后 fixture 新增行数 = 0（**不新增任何付费步骤**）
+
+== fixture 原始记录（摘要）
+  POST /v3/files #1 bytes=415
+  POST /v1/responses #1 pages=[1, 2, 3] model=gpt-5-mini max_output_tokens=4096 store=False
+  POST /v3/files #2 bytes=12659
+  POST /v3/generation/multiview-to-model #1（付费提交）body={"inputs":[{"front":"smoke-token-1"},{"left":"smoke-token-2"}],"model":"v3.1-20260211","texture":true,"pbr":true,"texture_quality":"standard","geometry_quality":"standard","face_limit":100000,"quad":f
+  GET /v3/tasks/t15-smoke-task-0001 #1 -> running
+  GET /v3/tasks/t15-smoke-task-0001 #2 -> success（model_url=本机 CDN）
+  GET /cdn/model.glb（样例 GLB）
+  POST /v3/files #3 bytes=415
+  POST /v1/responses #2 -> refusal（控制文件已消费）
+  POST /v3/files #4 bytes=12659
+  POST /v3/generation/multiview-to-model #2（付费提交）body={"inputs":[{"front":"smoke-token-3"},{"left":"smoke-token-4"}],"model":"v3.1-20260211","texture":true,"pbr":true,"texture_quality":"standard","geometry_quality":"standard","face_limit":100000,"quad":f
+  GET /v3/tasks/t15-smoke-task-0001 #3 -> running
+  POST /v1/responses #3 pages=[1, 2, 3] model=gpt-5-mini max_output_tokens=4096 store=False
+  GET /v3/tasks/t15-smoke-task-0001 #4 -> success（model_url=本机 CDN）
+  GET /cdn/model.glb（样例 GLB）
+  POST /v3/files #5 bytes=415
+  POST /v1/responses #4 pages=[1, 2, 3] model=gpt-5-mini max_output_tokens=4096 store=False
+  POST /v3/files #6 bytes=12659
+  POST /v3/generation/multiview-to-model #3（付费提交）body={"inputs":[{"front":"smoke-token-5"},{"left":"smoke-token-6"}],"model":"v3.1-20260211","texture":true,"pbr":true,"texture_quality":"standard","geometry_quality":"standard","face_limit":100000,"quad":f
+  GET /v3/tasks/t15-smoke-task-0001 #5 -> running
+
+== 冒烟通过：A 全链路草稿 + B 按分支重试 + C 取消语义（零真实外网/付费）

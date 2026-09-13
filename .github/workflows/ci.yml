@@ -1,0 +1,98 @@
+# 最小 CI（T22）。**本文件在本轮（T22）未推送、未触发**；触发后的行为以本文件为准。
+#
+# 触发条件：推送到 master / 对 master 的 PR / 手动 workflow_dispatch。
+#
+# 覆盖范围：
+#   check     —— 与本地 `cargo xtask check` 同一入口（cargo fmt --check、clippy -D warnings、
+#                cargo test --workspace、前端 lint/typecheck/vitest、合同漂移 `contracts --check`）。
+#                注意：check 不编译 embedded-ui（见 ADR-010 / QA 回合 1 知识），发布构图由 dist-musl 覆盖。
+#   dist-musl —— Linux x86_64 **原生**构建 musl 静态单二进制（`cargo xtask dist`），并跑正式包
+#                smoke（validation-release §7 的 7 步，含从 T20 样例备份恢复、Range/HEAD、重启持久化、
+#                备份→恢复链）。动态依赖证据（file/ldd）随 dist 产物上传。
+#
+# 未覆盖（不得据此宣称通过；本地证据见 llmdoc/requirements/web-mvp/implementation.md §T22）：
+#   - 浏览器矩阵（Firefox/Edge）与全量 Playwright e2e：CI 未安装浏览器，未纳入本轮最小 CI。
+#   - macOS aarch64 构建与 sandbox-exec 断网复检：CI 无 macOS runner；macOS 证据在本地原生构建采集。
+#   - 真正断网的 Linux 运行：CI runner 有外网；离线性证据由本地 `docker run --network none` 采集。
+#   - 真实 Provider（Tripo / 说明书 AI）与费用：需授权与预算，属 T23；CI 不允许真实收费调用。
+#   - 代码签名 / 公证：需用户账号授权，未做（validation-release §6）。
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # 与根 .cargo/config.toml 一致：使用官方 sparse 索引（不依赖 git 索引）。
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+
+jobs:
+  check:
+    name: cargo xtask check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装固定工具链（按 rust-toolchain.toml = 1.98.1）
+        run: rustup show
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: 前端依赖（严格按锁文件）
+        run: npm --prefix apps/web ci
+
+      - name: 全量本地检查入口
+        run: cargo xtask check
+
+  dist-musl:
+    name: dist + smoke（x86_64-unknown-linux-musl）
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装固定工具链与 musl 目标
+        run: |
+          rustup show
+          rustup target add x86_64-unknown-linux-musl
+
+      - name: musl 工具链与依赖检查工具
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends musl-tools file
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: 前端依赖（严格按锁文件）
+        run: npm --prefix apps/web ci
+
+      - name: 构建单二进制（含 SHA256 / licenses / build-info / 动态依赖）
+        run: cargo xtask dist --target x86_64-unknown-linux-musl
+
+      - name: 正式包冒烟（§7 的 7 步；样例备份取自仓库 artifacts）
+        run: |
+          cargo xtask smoke --binary "$PWD/dist/x86_64-unknown-linux-musl/everything-manual" \
+            --backup "$PWD/artifacts/web-mvp/t20-rd/sample-backup"
+
+      - name: 上传发布产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-x86_64-unknown-linux-musl
+          path: dist/x86_64-unknown-linux-musl/
+          if-no-files-found: error

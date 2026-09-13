@@ -1,0 +1,11 @@
+injected v99, sha256 9c68ee067c9e8f20
+=== check（新 schema -> 拒绝，退出码 4） ===
+check exit=4
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+错误：数据库 schema 版本（v99）高于本程序支持的版本（v7）：该 data-dir 由更新版本的程序创建。本程序拒绝打开且不会修改其中数据；请使用创建该 data-dir 的程序版本，或先备份后用旧版本可读的备份恢复
+=== serve（新 schema -> 拒绝，退出码 4） ===
+serve exit=4
+错误：数据库 schema 版本（v99）高于本程序支持的版本（v7）：该 data-dir 由更新版本的程序创建。本程序拒绝打开且不会修改其中数据；请使用创建该 data-dir 的程序版本，或先备份后用旧版本可读的备份恢复
+OK: 被拒时库文件未被修改

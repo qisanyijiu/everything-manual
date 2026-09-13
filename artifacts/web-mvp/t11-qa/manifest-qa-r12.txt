@@ -1,0 +1,38 @@
+# T11 QA 回合 12 证据/文件清单（生成于 2026-09-12T02:34:56Z）
+
+## QA 新增/改动文件（源码树）
+87653b7d709b08315f546e489e91fd0c8b224b22a379d1f99915b4dfebcc0f46  crates/server/tests/qa_t11_independent.rs
+2d696538f8142735c8a36ad1cbf09dd4d7c6eee3fd972c780cb44275ec993a16  artifacts/web-mvp/t11-qa/qa-smoke-t11.sh
+878743326bf6fef760cd36cc65b0b24954a91674f89c8cfee744ba19b45ba260  artifacts/web-mvp/t11-qa/qa-t11-migration-chain.sh
+
+## QA 追加的 llmdoc
+5cee514031ac89557c386474f70fdd2b3800de0adcb5d3b614f4043a7fa86d8f  llmdoc/requirements/web-mvp/qa-report.md
+9a9a1b9bb0cb7325185576423b908225c81ce02bf47c4420c3cd38bfb9e32d9e  llmdoc/decisions.md
+
+## 生产代码/合同是否被 QA 改动（应无输出）
+（无输出 = 未改动；dist 同哈希 3b02e24a… 亦为旁证）
+
+## artifacts/web-mvp/t11-qa/ 全部证据文件
+drwxr-xr-x@ 23 qsyj  staff    736  9月 12 10:34 .
+drwxr-xr-x@ 45 qsyj  staff   1440  9月 12 10:22 ..
+-rw-r--r--@  1 qsyj  staff   1338  9月 12 10:32 bug004-repro.log
+-rw-r--r--@  1 qsyj  staff   1104  9月 12 10:28 contracts-check.log
+-rw-r--r--@  1 qsyj  staff    434  9月 12 10:33 dep-tree-no-client.txt
+-rw-r--r--@  1 qsyj  staff    110  9月 12 10:30 dist-1-sha256.txt
+-rw-r--r--@  1 qsyj  staff   2703  9月 12 10:30 dist-1.log
+-rw-r--r--@  1 qsyj  staff    165  9月 12 10:30 failpoint-gate-dist.txt
+-rw-r--r--@  1 qsyj  staff    132  9月 12 10:30 failpoint-gate-testbin.txt
+-rw-r--r--@  1 qsyj  staff   2108  9月 12 10:22 generation-requests-qa.log
+-rw-r--r--@  1 qsyj  staff    846  9月 12 10:34 manifest-qa-r12.txt
+-rw-r--r--@  1 qsyj  staff   1295  9月 12 10:32 qa-migration-chain.log
+-rwxr-xr-x@  1 qsyj  staff  13614  9月 12 10:32 qa-smoke-t11.sh
+-rw-r--r--@  1 qsyj  staff   3358  9月 12 10:32 qa-smoke.log
+-rw-r--r--@  1 qsyj  staff   1436  9月 12 10:32 qa-t11-independent-final.log
+-rw-r--r--@  1 qsyj  staff   2115  9月 12 10:25 qa-t11-independent-run1.log
+-rwxr-xr-x@  1 qsyj  staff   5246  9月 12 10:32 qa-t11-migration-chain.sh
+-rw-r--r--@  1 qsyj  staff   3567  9月 12 10:30 smoke-bootstrap-1.log
+-rw-r--r--@  1 qsyj  staff   3567  9月 12 10:30 smoke-bootstrap-2.log
+-rw-r--r--@  1 qsyj  staff  26102  9月 12 10:27 workspace-tests.log
+-rw-r--r--@  1 qsyj  staff  28960  9月 12 10:29 xtask-check-final.log
+-rw-r--r--@  1 qsyj  staff  28874  9月 12 10:33 xtask-check-final2.log
+-rw-r--r--@  1 qsyj  staff  29728  9月 12 10:28 xtask-check.log

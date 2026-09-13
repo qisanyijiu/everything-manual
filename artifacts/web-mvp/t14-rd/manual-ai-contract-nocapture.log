@@ -1,0 +1,41 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/manual_ai_contract.rs (target/debug/deps/manual_ai_contract-99f216cbdff6e57e)
+
+running 19 tests
+test batch_result_marks_scan_page_evidence_as_derived_and_keeps_server_provenance ... ok
+test extract_request_uses_responses_text_format_with_strict_schema_and_image_data_url ... ok
+test evidence_referencing_pages_outside_the_batch_input_is_rejected ... ok
+test batches_outside_the_frozen_plan_are_never_requested ... ok
+
+thread 'batch_without_persisted_response_is_unknown_and_pauses_the_branch' (12939260) panicked at crates/server/src/jobs/failpoints.rs:105:39:
+命中测试断点 manual_after_request_before_response（job-failpoints feature）
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test batch_without_persisted_response_is_unknown_and_pauses_the_branch ... ok
+test merge_deduplicates_same_facts_and_keeps_provenance_from_both_batches ... ok
+test provider_registration_is_explicit_and_mutually_exclusive ... ok
+test begin_intent_survives_active_writer_contention ... ok
+test merge_is_blocked_when_plan_pages_are_not_covered ... ok
+
+thread 'persisted_response_is_advanced_on_recovery_without_repaying' (12939333) panicked at crates/server/src/jobs/failpoints.rs:105:39:
+命中测试断点 result_fact_before_checkpoint（job-failpoints feature）
+test persisted_response_is_advanced_on_recovery_without_repaying ... ok
+test page_text_instructions_cannot_change_budget_or_trigger_actions ... ok
+test merge_reuses_existing_result_without_duplicating_assets ... ok
+test refusal_produces_no_official_knowledge_and_locks_merge ... ok
+test retry_after_needs_input_clears_stale_result_before_new_attempt ... ok
+test step_referencing_unknown_part_is_rejected ... ok
+test transport_failure_after_request_is_unknown_and_never_resent ... ok
+test rate_limit_is_retryable_and_client_error_is_actionable ... ok
+=== T14 手工证据：job=01a09429-cbea-7143-836d-b148d000e0bb ===
+批次覆盖：{"complete":true,"pageCount":7,"pages":[1,2,3,4,5,6,7],"batches":[{"batchIndex":0,"pages":[1,2,3,4,5],"partCount":2,"stepCount":1,"specCount":1,"uncertaintyCount":1},{"batchIndex":1,"pages":[6,7],"partCount":2,"stepCount":0,"specCount":1,"uncertaintyCount":0}]}
+实体与出处：{"parts":[{"description":"机身背部可拆盖板，由四颗不脱落螺钉固定。","evidence":[{"derived":false,"page":1,"quote":"Loosen the four captive screws on the rear cover."}],"id":"part-9e887e7c5e6d","name":"后盖","sourceBatches":[0]},{"description":"后盖内侧的电池安放区域。","evidence":[{"derived":true,"page":2,"quote":null}],"id":"part-62719753b9e5","name":"电池仓","sourceBatches":[0]},{"description":"卡扣固定：沿边缘撬开后盖。","evidence":[{"derived":false,"page":6,"quote":"Pry the rear cover along the edge."}],"id":"part-64bc0788c1fb","name":"后盖","sourceBatches":[1]},{"description":"后盖周围的防水密封圈。","evidence":[{"derived":false,"page":7,"quote":"Check the gasket seating."}],"id":"part-f303aa5d7661","name":"密封圈","sourceBatches":[1]}],"specs":2,"steps":1}
+冲突保留：[{"entityKind":"part","key":"后盖","reviewStatus":"needs_review","variants":[{"entityId":"part-9e887e7c5e6d","summary":"机身背部可拆盖板，由四颗不脱落螺钉固定。","evidence":[{"documentId":"01a09429-c954-7579-bb55-94fcdff71950","preparationId":"01a09429-c959-72f7-b70e-fca26d0683ec","pageNumber":1,"quote":"Loosen the four captive screws on the rear cover.","bbox":null,"derived":false}]},{"entityId":"part-64bc0788c1fb","summary":"卡扣固定：沿边缘撬开后盖。","evidence":[{"documentId":"01a09429-c954-7579-bb55-94fcdff71950","preparationId":"01a09429-c959-72f7-b70e-fca26d0683ec","pageNumber":6,"quote":"Pry the rear cover along the edge.","bbox":null,"derived":false}]}]},{"entityKind":"spec","key":"供电","reviewStatus":"needs_review","variants":[{"entityId":"spec-bf9abd54cec5","summary":"DC 12 V / 2.5 A","evidence":[{"documentId":"01a09429-c954-7579-bb55-94fcdff71950","preparationId":"01a09429-c959-72f7-b70e-fca26d0683ec","pageNumber":2,"quote":null,"bbox":null,"derived":true}]},{"entityId":"spec-786335c5ebc0","summary":"DC 9 V / 1.5 A","evidence":[{"documentId":"01a09429-c954-7579-bb55-94fcdff71950","preparationId":"01a09429-c959-72f7-b70e-fca26d0683ec","pageNumber":6,"quote":"9 V DC input.","bbox":null,"derived":false}]}]}]
+结果资产：批次0=Some("01a09429-cc14-75fe-850a-8c4ffb9b4ec5") 批次1=Some("01a09429-cc33-77e0-a05b-915be24b0d6c") 合并=Some("01a09429-cc44-72fd-b193-0272c4f1a6bc")
+test seven_pages_split_into_batches_cover_all_pages_and_merge_dedups_with_conflicts ... ok
+test incomplete_truncated_malformed_and_schema_violations_never_become_knowledge ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.08s
+

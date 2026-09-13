@@ -1,0 +1,7 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文）；task_id 在 fixture 中不是真实任务，禁止据此发起真实查询",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001"
+  }
+}

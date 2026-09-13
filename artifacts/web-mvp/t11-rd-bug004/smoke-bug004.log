@@ -1,0 +1,30 @@
+== init / serve（Provider 假凭据；不会被调用）
+密码来源：受限文件 ./pw.txt；明文不落盘、不进入日志与 shell history。
+== 物品 + 准备（1 页文字 + 1 页扫描）+ front/left 照片
+  准备状态： ready 页数： 2
+== 1) 建报价（201）
+  HTTP 201
+== 2) 回读（未确认未消费）
+  HTTP 200
+  confirmedAt = None  consumedAt = None  consumedJobId = None
+== 3) 确认（200）
+  HTTP 200
+  确认响应 confirmedAt = 2026-09-12T02:44:32.354Z
+== 4) 回读（已确认未消费）：confirmedAt 必须等于确认响应；消费仍为 null
+  HTTP 200
+  confirmedAt = '2026-09-12T02:44:32.354Z'  consumedAt = None  consumedJobId = None
+  与确认响应一致：OK
+== 5) 建单（202）
+  HTTP 202
+  job = 01a09380-9422-75a9-ac70-c1f8da03e700
+== 6) 回读（已消费）：consumedAt/consumedJobId 必须反映真实 job
+  HTTP 200
+  confirmedAt = '2026-09-12T02:44:32.354Z'  consumedAt = '2026-09-12T02:44:32.418Z'  consumedJobId = '01a09380-9422-75a9-ac70-c1f8da03e700'
+  与真实 job 一致：OK
+== 7) 与 DB 三列逐值比对（quotes 表事实）
+  DB 原始毫秒：confirmed_at = 1789181072354  consumed_at = 1789181072418  consumed_job_id = 01a09380-9422-75a9-ac70-c1f8da03e700
+  GET 回读    ：confirmedAt = 2026-09-12T02:44:32.354Z  consumedAt = 2026-09-12T02:44:32.418Z  consumedJobId = 01a09380-9422-75a9-ac70-c1f8da03e700
+  （confirmed/consumed 时间戳格式为 RFC3339 毫秒，与 DB 毫秒值同源）
+  jobs = 1  provider_attempts = 0
+== 冒烟完成（临时目录将在退出时删除）
+EXIT=0

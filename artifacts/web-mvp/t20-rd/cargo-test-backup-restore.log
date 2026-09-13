@@ -1,0 +1,19 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.28s
+     Running tests/backup_restore.rs (target/debug/deps/backup_restore-32aa263c9b0de75d)
+
+running 8 tests
+test prepare_rehearsal_datadir ... ignored, 手工演练造数（需要 EM_T20_REHEARSAL_DIR；不在常规 cargo test 中执行）
+test legacy_schema_backup_restores_and_migrates_automatically ... ok
+test export_contains_only_release_assets_and_no_secrets ... ok
+test backup_fails_on_corrupted_source_blob_without_touching_source ... ok
+test restore_rejects_backup_with_newer_schema ... ok
+test backup_requires_stopped_server_and_produces_consistent_snapshot ... ok
+test restore_verifies_backup_and_rejects_damage_without_creating_target ... ok
+test restore_into_new_directory_reproduces_readable_release_pdf_and_glb ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 2.99s
+

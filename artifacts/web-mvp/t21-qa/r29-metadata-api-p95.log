@@ -1,0 +1,13 @@
+== QA R29 元数据 API 时延（本机 127.0.0.1，dist 二进制）==
+binary: /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+everything-manual 0.1.0
+requests: 300，端口: 19180，时间: 2026-09-13 05:19:50 CST
+
+GET /api/v1/items（列表，30 个物品）：样本 300，p50=0.6ms，p95=0.6ms，max=1.0ms
+GET /api/v1/jobs（空列表）：样本 100，p50=0.5ms，p95=0.6ms，max=0.6ms
+GET /health/ready：样本 100，p50=0.4ms，p95=0.4ms，max=0.5ms
+
+判决：p95 ≤ 200ms 目标（PRD AC-061）
+  GET /api/v1/items p95=0.6ms → 通过
+（判定依据：本机 CPU/磁盘；不含供应商等待。）
+原始样本：artifacts/web-mvp/t21-qa/metadata-*-times.txt

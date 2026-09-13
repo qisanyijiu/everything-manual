@@ -1,0 +1,9 @@
+# 工程命令合同（validation-release.md §2）：`cargo xtask <command>`。
+[alias]
+xtask = "run --package xtask --"
+
+# 本机全局 ~/.cargo/config 把 crates-io 指到 git 索引；在受限网络下 github.com
+# 不可达而 index.crates.io 可达。项目层显式覆盖为官方 sparse 索引（cargo ≥1.70
+# 的默认协议），不修改用户全局配置；Cargo.lock 中的 source 标识不变。
+[source.crates-io]
+registry = "sparse+https://index.crates.io/"

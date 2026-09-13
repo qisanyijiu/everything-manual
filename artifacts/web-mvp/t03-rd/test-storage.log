@@ -1,0 +1,27 @@
+$ cargo test -p everything-manual --test storage
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running tests/storage.rs (target/debug/deps/storage-ce5ac962521e4d23)
+
+running 15 tests
+test embedded_migrations_match_repository_files ... ok
+test enum_sql_values_match_schema_check_constraints ... ok
+test fresh_data_dir_initializes_full_schema_constraints_and_connection_settings ... ok
+test foreign_keys_reject_invalid_references_and_restrict_deletes ... ok
+test closing_and_reopening_data_dir_preserves_data ... ok
+test failed_migration_leaves_no_partial_state ... ok
+test invariant_triggers_protect_frozen_inputs_releases_and_remote_task_ids ... ok
+test migrations_are_idempotent_across_reopens ... ok
+test older_schema_is_migrated_automatically_and_data_preserved ... ok
+test revision_cas_rejects_stale_updates_and_reports_current_revision ... ok
+test transaction_rollback_leaves_no_partial_state ... ok
+test unique_keys_reject_duplicates ... ok
+test future_schema_is_rejected_without_modifying_database_bytes ... ok
+test check_reports_migration_state_without_creating_or_modifying_database ... ok
+test init_creates_database_and_check_reports_ready_twice ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.91s
+
+exit=0

@@ -1,0 +1,26 @@
+# QA T03 rerun-if-changed (CARGO_INCREMENTAL=0) 2026-09-11T18:55:48Z
+== baseline build
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.10s
+sha_base=771a4b404494aa8cd08cbc02d14c3a9dfb22cb0954dd8adb50a44db54bb6b06a
+== append comment to 0002_invariants.sql
+cf116352ccf6dff4839d77115ca70191391ddd5b62e2b7a2268a14f9c5534aa8  migrations/0002_invariants.sql
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.96s
+sha_after_sql_change=26c7ccc3d3ebccc7650e3fdc82ed959928b9c06bcf064957341bef6349462bcf
+REBUILD_TRIGGERED_AND_BINARY_CHANGED=yes
+== bonus: serve with modified applied migration (checksum mismatch; expect refusal)
+错误：数据库迁移失败：migration 2 was previously applied but has been modified
+serve_mismatch exit=4
+DB_UNCHANGED_ON_CHECKSUM_MISMATCH=yes
+-- check with modified applied migration:
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+结果：check 通过
+check_mismatch exit=0
+== restore 0002 byte-exact
+372d6ff5c56329ea1af975330442266b0a997cbb61a8e1366cf310ad5234198d  migrations/0002_invariants.sql
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.27s
+sha_restored=771a4b404494aa8cd08cbc02d14c3a9dfb22cb0954dd8adb50a44db54bb6b06a
+SHA_RETURNED_TO_BASELINE=yes
+== build again with no changes (expect no Compiling)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s

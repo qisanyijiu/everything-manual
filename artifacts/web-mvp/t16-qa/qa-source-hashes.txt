@@ -1,0 +1,24 @@
+# QA 回合 18（T16）现场源码/测试哈希（sha256）
+# 生成时间：2026-09-12 16:26:44 CST
+# git HEAD：cb69afb44ee2a6088f440eade3f1424546fbb62d（T01–T16 仍未提交）
+# 说明：终版文件（全量 e2e 33 passed / 0 failed / 1 skipped 与 QA 用例 11 passed / 1 fixme 均基于此版本）
+
+db74e51e2748beeae96e0d3d441f0e089cccc24117eb24931b8000cdd247c833  apps/web/tests/e2e/import-flow.spec.ts
+b6d4ff721d8465e8def3360061a7222a160ba4806fac9e836b4dd4bb2609ebca  apps/web/tests/e2e/qa-t16-independent.spec.ts
+35dd4efce97c916fc24b370d005568a065c48a4da13328645d7cf1042a265668  apps/web/tests/e2e/helpers.ts
+5d40d8ad9eb40b6d7da940722697e2c03a60f3a9afa8c1bd3d18957cbc1240c7  apps/web/tests/e2e/global-setup.ts
+91fa37da6409f1c6f87152bc7cbc3889a758ba6bcbd19ec53c807d723c7c42e5  apps/web/src/features/import/ConfirmStepPage.tsx
+ac7891c1c22f295c243a15e34177f2518773361840edb9c2b1805e3e2d9df280  apps/web/src/features/library/LibraryPage.tsx
+7f3686c290dd1397901d923a71b2c11ea139b06e197ec26c206f16a8caff7bc8  apps/web/src/features/library/ItemFormPage.tsx
+25808ebe790352b7499a8d34773f18f1132ac47d9476c95a510ce25458cb075c  apps/web/src/features/library/ItemOverviewPage.tsx
+37f7f5b5175ae9dade7842215d0ed04548868142299761aaac3b1fea0a2515e6  apps/web/src/features/import/views.ts
+352c784b0f5d46ee9bb29dc21edadb9a305785a8c839800211bad4d2a106f138  apps/web/src/features/import/upload-messages.ts
+1b43dccd58964b5804dfd3397c42fe8d1bc506c4578912f95e7bddb47eca8406  apps/web/src/features/import/ViewsStepPage.tsx
+ca414367715e514c8d42d31e74bb146c711d2ad5142b9609dd14a1449e251b44  apps/web/src/features/import/DocumentStepPage.tsx
+f8c2237c0d571c59609f383440a71faed089ceb704f25420509de7293f99a91f  apps/web/src/features/import/AssetUploadCard.tsx
+f1e512e9f88125266cdbd6f5abe1d1eb296a7df6d06dde91383f7b0e2c036192  apps/web/src/styles.css
+c1dad72016d673b13fdc060115d042d141cf9f60df077d60cf6849e0b3d51c5f  apps/web/src/App.tsx
+
+# 构建产物 / 发布二进制
+9857eec27d9ff6f2737da5fdc7b384d02180ff9a134e79464f1a6cc5eaf033f1  apps/web/dist/assets/index-RBZqRvKh.js
+5c33ce93adaea07d00560a353eeda97aecd3226abfed323868f2412dc08f48cf  dist/aarch64-apple-darwin/everything-manual

@@ -1,0 +1,31 @@
+== 1) multipart POST 到受保护路由（无 CSRF）→ 应 403 CSRF（证明 CSRF 覆盖 multipart）==
+POST /api/v1/items multipart 无CSRF → 403
+== 1b) multipart POST 带 CSRF（无此路由）→ 405/404 语义 ==
+HTTP/1.1 405 Method Not Allowed
+x-request-id: 01a091eb-ae94-7255-bcfa-6f4ae9f028e1
+allow: GET,HEAD
+content-length: 0
+date: Fri, 11 Sep 2026 19:22:17 GMT
+
+
+== 2) 物品 PATCH 边界（T07 越界评估）==
+-- 空白 name → ?
+{"error":{"code":"VALIDATION_FAILED","message":"请求内容未通过数据库约束校验","details":null,"requestId":"01a091eb-ae9d-71bf-ac45-2216b544150e"}}
+-- 超长 name(300 字符) → ?
+long name → 200
+-- 未知字段（deny_unknown_fields）→ ?
+unknown field → 422
+-- 空白 model → ?
+blank model → 412
+-- archived=true 后列表是否过滤（T07 才要求过滤）→ ?
+archive → 412
+列表条数: 1 含 archivedAt: [None]
+-- 归档后 GET 单条 → ?
+archived GET → 200
+-- 直接 POST /api/v1/items（创建属 T07）→ ?
+POST create → 405
+
+== 3) 物品数据现状（确认手工负例后的库状态）==
+01993000-0000-7000-8000-0000000000cc|长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长|QA-M1|2|
+无残留 serve 进程
+已清理 /tmp/em-t04-qa3.aVCS90

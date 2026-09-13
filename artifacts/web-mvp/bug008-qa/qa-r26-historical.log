@@ -1,0 +1,109 @@
+== QA 回合 26 历史数据剧本（工作目录 /tmp/em-r26-hist-VvoVy2）
+二进制 sha256: 688a57b98c879e65e97aa0479102e0bffb55d379c14430fa8f485d8828c8476a
+
+-- 0) 归档样例库（修复前二进制产生）的 URL 行（QA 自证）
+  [通过] 样例库 dump 的 '://' 行数（修复前证据）（=1）
+  tripo_poll | modelUrl":"http://127.0.0.1:60643/model.glb","normalizedStatus":"success","progress":"100","rawStatus":"success","remote
+
+-- 1) restore 归档样例 → /tmp/em-r26-hist-VvoVy2/data
+  [通过] restore 退出码（=0）
+  [通过] 源库仍保留历史 URL（不强制迁移）（=1）
+
+-- 2) QA 注入历史现场（canary=qa-r26-hist-9c4d）
+  注入完成：含 URL 的 usage 行 1；job=01a09677-67e3-741e-826a-3d6af9f52523
+  [通过] 注入现场：供应商事实表含 URL 的行数（=3）
+
+-- 3) 备份前：源库与 blob 指纹
+  库文件 sha256 = 934308699fcf5c1f7586d5872b36a1d005c76acaf1c128be137fdfb08cd89487
+
+-- 4) backup（修复后二进制）
+  [通过] backup 退出码（=0）
+  {"timestamp":"2026-09-12T18:29:34.346440Z","level":"INFO","fields":{"message":"备份完成（一致快照 + 被引用 blob + manifest；不含会话与供应商临时 URL）","event":"backup_created","outDir":"/private/tmp/em-r26-hist-VvoVy2/./backup","schemaVersion":7,"databaseSha256":"85b673567fc10d5ce5375e18f426ccd96626099757fb42fafbb6fef8acce6170","blobsCopied":11,"missingBlobs":0,"totalBytes":393592,"sessionsRemoved":0,"tempUrlsRedacted":4},"target":"everything_manual::backup::create"}
+    供应商临时 URL 脱敏：快照内 4 处临时/签名地址已替换为 sha256 摘要 + host（AC-010；恢复后按 task_id 重新查询链接）
+  [通过] backup 输出报告脱敏处数
+
+-- 5) 备份后：源库指纹必须不变（无就地 UPDATE）
+  [通过] 源库文件/dump/blob 指纹逐行一致（未被改写）
+  [通过] 源库仍含注入的 URL（不迁移）（=3）
+
+-- 6) 快照扫描（判据：'://'、'sign='、path、canary）
+== 供应商事实表全部文本列 × 判据
+  （无命中行 = 全部为 0）
+== 快照内 tripo_poll.usage_json（应只含摘要 + task id/计费）
+  {"billing":{"creditMinor":3000,"currency":"credit_minor","literal":"30","sourceField":"credits_consumed"},"dataKeys":["credits_consumed","output","progress","status","task_id"],"modelUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"ad3e27fd80a23163"},"normalizedStatus":"success","progress":"100","rawStatus":"success","remoteTaskId":"t20-fixture-task-0001","renderedImageUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"4e76c6db7f43f548"}}
+== 摘要（redacted/host/sha256）+ task id + 计费保留 ✔
+== 非 JSON 文本列 last_error 的兜底结果
+  job_stages[6] = 模型下载失败：链接过期 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=96ca7850b18182df…） 请重试
+  provider_attempts[1] = 查询远端任务失败 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=4e76c6db7f43f548…）（已过期）
+== 用户出处链接（documents.source_url）必须原样保留（并不过度清洗）
+  https://user.example.invalid/spec?sig=qa-r26-user-link-3ad9
+  [通过] 快照：供应商事实 0 命中、摘要保留、用户出处链接保留
+
+-- 6b) 快照 manifest / SHA256SUMS
+  [通过] 快照 sha256 == manifest.database.sha256（=85b673567fc10d5ce5375e18f426ccd96626099757fb42fafbb6fef8acce6170）
+  manifest notes:
+   - 本备份由 everything-manual backup 在服务停止并取得 data-dir 排他锁后生成
+   - 快照为 VACUUM INTO 产生的事务一致副本（含 WAL 中已提交事务），不是主文件的字节复制
+   - 备份不包含会话（恢复后必须重新登录）；管理员口令哈希保留，用于恢复后登录
+   - SHA256SUMS 可用标准工具校验整个备份：shasum -a 256 -c SHA256SUMS（在备份目录内执行）
+   - 恢复要求目标目录不存在或为空：everything-manual restore --from <本目录> --data-dir <新目录>
+   - 升级前请先备份；程序回滚不等于数据库回滚（回滚程序不能读取比它新的 schema）
+   - 快照内供应商临时/签名 URL 已脱敏为 sha256 摘要 + host（AC-010）；恢复后仍按 task_id 重新查询链接，不重新购买
+  ✔ notes 含脱敏说明
+  [通过] shasum -a 256 -c SHA256SUMS 全部 OK
+
+-- 7) restore 新快照 → ./data2（恢复后仍可用）
+  [通过] restore（新快照）退出码（=0）
+== 行数对比（源 → 恢复后）
+  ✔ items: 1 → 1
+  ✔ jobs: 1 → 1
+  ✔ job_stages: 9 → 9
+  ✔ provider_attempts: 2 → 2
+  ✔ assets: 14 → 14
+  ✔ blobs: 11 → 11
+  ✔ pages: 3 → 3
+  ✔ documents: 1 → 1
+  ✔ preparations: 1 → 1
+  ✔ photos: 2 → 2
+  ✔ manual_releases: 1 → 1
+  ✔ model_revisions: 1 → 1
+== 恢复库供应商事实表 URL 命中 = 0（应为 0）
+== 恢复库用户出处链接保留： https://user.example.invalid/spec?sig=qa-r26-user-link-3ad9
+  [通过] 恢复库：行数保留、供应商事实 0 命中、用户链接保留
+
+-- 8) serve 恢复库 → 登录 → 任务详情 → 导出
+  [通过] 恢复后可登录（口令哈希保留）（=200）
+  [通过] GET /jobs/{id}（=200）
+  [通过] 恢复库任务详情不含 '://'（=0）
+  [通过] 恢复库任务详情不含 'sign='（=0）
+  [通过] 恢复库任务详情不含 'qa-r26-hist-9c4d'（=0）
+  [通过] 恢复库任务详情不含 '/qa-r26-hist/'（=0）
+  usage.modelUrl = {"host": "cdn.example.invalid", "redacted": true, "sha256": "ad3e27fd80a23163"}
+  usage.remoteTaskId = "t20-fixture-task-0001"
+  [通过] GET /releases/{id}/export（=200）
+== 导出包 URL/签名 canary 命中 = 0（应为 0）
+   条目： assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf, assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb, manifest.json, release/manifest.json
+  [通过] 导出包干净（历史 URL 与用户链接都未进入）
+  [通过] 恢复库 blob e18cf61a… 字节一致（=e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda）
+  [通过] 恢复库 blob a9f884c2… 字节一致（=a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb）
+
+-- 8b) 恢复库 + 本机 fixture：下载阶段按 task_id 重新查询（免费 GET，无付费 POST）
+  model_download 已重置为 queued 且清空本地副本引用（用例前提）
+  fixture 计数：poll=2（期望 ≥1，按 task_id 重查）；submit=0（期望 0）
+  [通过] 恢复库按 task_id 重新查询（免费 GET）
+  [通过] 恢复路径没有付费 POST（=0）
+  下载阶段状态=needs_input；last_error=模型下载域名（cdn.example.invalid）不在允许域名单内（download.allowed_hosts）：拒绝下载（不猜测供应商 CDN 域名，请按部署文档配置后重试）
+
+-- 9) fail-closed（导出）：注入 URL → 导出必须失败且不出包
+artifacts/web-mvp/bug008-qa/qa-r26-historical-backup.sh: line 344: 42900 Killed: 9               python3 "${QA_DIR}/qa-r26-tripo-fixture.py" --port "${FIXTURE_PORT}" --log ./fixture2.jsonl --scenario happy > fixture2.out 2>&1
+artifacts/web-mvp/bug008-qa/qa-r26-historical-backup.sh: line 344: 42907 Killed: 9               QA_TRIPO_KEY="qa-r26-fake" "${BIN}" serve --data-dir ./data2 --listen "127.0.0.1:${APP_PORT}" > serve2b.log 2>&1
+  注入完成：新 manifest sha=d03637f36b71…（asset=01a09677-685a-7542-8e2f-0b852e27cfc5）
+  导出 HTTP 状态 = 500（期望 5xx，拒绝而不是带出链接）
+  [通过] 注入 URL 后导出被拒绝（fail-closed）
+  [通过] 拒绝时未产生 ZIP 包（响应体为错误 JSON，非 zip）
+  [通过] 服务端日志给出 export_manifest_url_forbidden
+  [通过] 拒绝响应体不含 'qa-r26-hist-9c4d'（=0）
+  [通过] 拒绝响应体不含 'sign='（=0）
+artifacts/web-mvp/bug008-qa/qa-r26-historical-backup.sh: line 387: 42918 Killed: 9               QA_TRIPO_KEY="qa-r26-fake" QA_MANUAL_AI_KEY="qa-r26-fake" "${BIN}" serve --data-dir ./data3 --listen "127.0.0.1:${APP2_PORT}" > serve3.log 2>&1
+
+== 历史数据剧本结果：PASS

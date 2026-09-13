@@ -1,0 +1,27 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文）：refusal 形态——该批不产生正式知识，T14 必须把它归入待复核而不是解析成功",
+  "id": "resp_fixture_refusal_0001",
+  "object": "response",
+  "created_at": 1757635200,
+  "status": "completed",
+  "model": "manual-ai-fixture-model",
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_fixture_refusal_0001",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "refusal",
+          "refusal": "无法从提供的页图中可靠识别该内容。"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 1200,
+    "output_tokens": 24,
+    "total_tokens": 1224
+  }
+}

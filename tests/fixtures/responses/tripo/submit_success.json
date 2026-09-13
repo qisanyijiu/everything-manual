@@ -1,0 +1,7 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）。task_id 为 fixture 生成的 opaque 字符串（不是真实任务）；字段形态依据 llmdoc/contracts.md §6「读取 code/data.task_id」。禁止据此发起真实查询或生成。",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001"
+  }
+}

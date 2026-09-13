@@ -1,0 +1,9 @@
+{
+  "说明": "BUG-007 修复后：手动「立即重建」→ 等待 8.5 秒的现场（RD viewer.spec.ts 用例 3；修复前为 statusText=3D 显示已中断，正在重建…、resetButtonDisabled=true、rebuildButtonVisible=true）",
+  "statusText": "模型已加载，可旋转/缩放。",
+  "resetButtonDisabled": false,
+  "fitButtonDisabled": false,
+  "rebuildButtonCount": 0,
+  "modelsAlive": 1,
+  "frames": 553
+}

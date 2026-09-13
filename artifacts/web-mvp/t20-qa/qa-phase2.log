@@ -1,0 +1,90 @@
+
+=== [A] 非空目标目录 -> 期望 4，现场不动
+exit=4
+stderr: 错误：恢复目标已存在且非空：/tmp/em-t20-qa/neg/nonempty；恢复只允许写入不存在或为空的目录（不合并、不覆盖）
+target EXISTS: keep.txt 
+keep.txt = keep
+
+=== [B] 目标是已存在文件 -> 期望 4
+exit=4
+stderr: 错误：恢复目标已存在且不是目录：/tmp/em-t20-qa/neg/target-file；请指定不存在或为空的目标
+target EXISTS: /tmp/em-t20-qa/neg/target-file 
+
+=== [C] 备份 blob 损坏（翻转 1 字节）-> 期望 7，目标不创建
+victim=/tmp/em-t20-qa/neg/backup-corrupt/blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+flipped 1 byte, size 12420
+exit=7
+stderr: 错误：备份中的 blob的 sha256 与 manifest 不符：/tmp/em-t20-qa/neg/backup-corrupt/blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+  期望：0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+  实际：43ceb6f785a401eb19edf92fef6159820f871f9bdd80e7d8956cbdc5c3617a6a
+备份已损坏（未创建/修改任何目标目录，保留现场）
+target NOT created
+
+=== [D] 备份 blob 被换成符号链接 -> 期望 7
+symlink: -> /tmp/em-t20-qa/neg/backup-symlink/manifest.json
+exit=7
+stderr: 错误：备份中的 blob是符号链接（备份内容不可信）：/tmp/em-t20-qa/neg/backup-symlink/blobs/e6/e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69；未创建/修改任何目标目录
+target NOT created
+
+=== [E] 备份缺一个 blob 文件 -> 期望 7
+exit=7
+stderr: 错误：备份中的 blob缺失或不可读：/tmp/em-t20-qa/neg/backup-missing-blob/blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890（备份不完整；未创建/修改任何目标目录）
+target NOT created
+
+=== [F] manifest 路径穿越（../../）-> 期望 7，目标不创建
+path -> ../../etc/passwd
+exit=7
+stderr: 错误：备份 manifest 中的路径不安全（包含 .. 组件）：../../etc/passwd
+target NOT created
+
+=== [F2] manifest 绝对路径 -> 期望 7
+exit=7
+stderr: 错误：备份 manifest 中的路径不安全（绝对路径不允许出现在备份中）：/etc/passwd
+target NOT created
+
+=== [G] manifest 多余字段（未知字段）-> 期望 7，不 panic
+exit=7
+stderr: 错误：备份 manifest 不是本程序认识的格式：unknown field `surprise`, expected one of `schemaVersion`, `createdAtMillis`, `programVersion`, `database`, `blobs`, `missingBlobs`, `counts`, `notes` at line 85 column 12
+target NOT created
+
+=== [G2] manifest sha256 明显非法（短串）-> 期望受控失败（7），不 panic/不 101
+exit=7
+stderr: 错误：备份中的 blob的 sha256 与 manifest 不符：/tmp/em-t20-qa/neg/backup-short-sha/blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+  期望：x
+  实际：0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+备份已损坏（未创建/修改任何目标目录，保留现场）
+target NOT created
+
+=== [G3] manifest 未知格式版本 -> 期望 7
+exit=7
+stderr: 错误：备份格式版本不受支持：manual_backup_v9（本程序支持 manual_backup_v1）；请使用创建该备份的（或更新的）程序恢复
+target NOT created
+
+=== [H] 快照带 WAL 边车 -> 期望 7（拒绝'只复制主文件'的假快照）
+exit=7
+stderr: 错误：备份快照带有 WAL 边车文件（/tmp/em-t20-qa/neg/backup-sidecar/database/manual.sqlite3-wal）：快照不完整（不能只复制运行中 WAL 数据库的主文件），请重新备份
+target NOT created
+
+=== [I] 备份 schema 比程序新 -> 期望 4（与 check/serve 同一门禁）
+injected v99, snapshot sha a77e52ae5c3b2d85
+exit=4
+stderr: 错误：备份的 schema 版本（v99）比程序支持的版本（v7）新：请使用创建该备份的（或更新的）程序恢复；本程序不会打开比它新的数据库
+target NOT created
+
+=== [J] 备份目录不存在 -> 期望 4
+exit=4
+stderr: 错误：备份目录不存在或不是目录：/tmp/em-t20-qa/neg/no-such-backup（--from）
+target NOT created
+
+=== [K] 恢复目标被其他进程 flock 持有 -> 观察实际退出码
+flock held
+exit=4
+stderr: 错误：恢复目标已存在且非空：/tmp/em-t20-qa/neg/locked-empty；恢复只允许写入不存在或为空的目录（不合并、不覆盖）
+target EXISTS: lock 
+
+=== [L] 合法恢复（对照）-> 期望 0
+exit=0
+stderr: 
+target EXISTS: blobs lock logs manual.sqlite3 tmp 
+
+phase2 完成

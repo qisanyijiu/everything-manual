@@ -1,0 +1,19 @@
+== 1) 默认（无 [download] 段）
+  download = allowed_hosts=[(空：拒绝一切下载；未配置允许域时不猜测供应商 CDN 域名)] allow_local_fixture=false（仅测试构建生效）
+exit=0
+== 2) 合法精确域名
+  download = allowed_hosts=[cdn.example.com] allow_local_fixture=false（仅测试构建生效）
+exit=0
+== 3) 非法：带 scheme
+错误：download.allowed_hosts 只接受精确主机名（不含 scheme/端口/路径/通配符）：https://cdn.example.com
+exit=3
+== 4) 非法：通配符
+错误：download.allowed_hosts 只接受精确主机名（不含 scheme/端口/路径/通配符）：*.example.com
+exit=3
+== 5) 非法：带端口
+错误：download.allowed_hosts 只接受精确主机名（不含 scheme/端口/路径/通配符）：cdn.example.com:443
+exit=3
+== 6) 未知键
+unknown field `bogus_key`, expected `allowed_hosts` or `allow_local_fixture`
+
+exit=3

@@ -1,0 +1,7 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）。字段形态依据 llmdoc/contracts.md §6（2026-09-11 架构阶段核对官方文档后冻结）与 docs/everything-manual-implementation-plan.md §6.2 的记录（上传返回 file_token）；developers.tripo3d.ai 在 2026-09-12 的本机环境不可达（curl 20s 超时），未逐字复核官方原文——T12 适配器对 file_token/image_token 两种候选字段名容错，并记录实际来源字段；T23 实测后收敛。",
+  "code": 0,
+  "data": {
+    "file_token": "fixture-file-token-front-0001"
+  }
+}

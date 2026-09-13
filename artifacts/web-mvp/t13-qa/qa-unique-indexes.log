@@ -1,0 +1,7 @@
+--- UNIQUE indexes ---
+cost_ledger|cost_ledger_active_reservation|CREATE UNIQUE INDEX cost_ledger_active_reservation
+    ON cost_ledger (snapshot_id, provider) WHERE state = 'reserved'
+photos|photos_item_view_unique|CREATE UNIQUE INDEX photos_item_view_unique ON photos (item_id, view)
+provider_attempts|provider_attempts_unresolved_stage|CREATE UNIQUE INDEX provider_attempts_unresolved_stage
+    ON provider_attempts (stage_id)
+    WHERE submit_state IN ('intent', 'submitting', 'unknown')

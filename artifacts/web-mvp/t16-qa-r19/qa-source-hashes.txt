@@ -1,0 +1,7 @@
+# QA 回合 19 源文件哈希（2026-09-12）
+bebffc8ebfaeea2c85d48a58f4e42d624d03ea8b94d1818f1bc6c28522170681  apps/web/src/styles.css
+7e3bf8795f1974a3358972874b3311b30e1687c6f8037e96af98f9fa04a8507e  apps/web/src/features/library/LibraryPage.tsx
+6c2fd30d8bf771eba36befbcfc097da76ddda5bfdd27b8e3b7202c6dc567070c  apps/web/tests/e2e/library-row-layout.spec.ts
+80bb9b60722f7e499c6b72fb81ea601fa070eccf3eea9bd5764671cf9d79d449  apps/web/tests/e2e/qa-t16-independent.spec.ts
+b756ef2c6d4ae7b3ec87c59f7e37a0ded4cd9aeeec6fbacb135270e73d3b3107  crates/server/src/http/photos.rs
+7cfec5c2c038b46c0d22ca4c36551c8799bafb875fa0ddbc4cd3d9e2db838013  crates/server/src/jobs/submission.rs

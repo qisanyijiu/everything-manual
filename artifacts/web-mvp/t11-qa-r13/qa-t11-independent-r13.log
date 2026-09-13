@@ -1,0 +1,23 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/qa_t11_independent.rs (target/debug/deps/qa_t11_independent-cf73e901cecbc975)
+
+running 13 tests
+test qa_ac031_interrupted_transaction_leaves_no_partial_state ... ok
+test qa_ac028_quote_math_expiry_and_no_cost_records ... ok
+test qa_ac030_unconfirmed_rejected_and_confirmation_audited_once ... ok
+test qa_ac032_expired_quote_and_input_change_are_rejected_without_jobs ... ok
+test qa_ac031_twenty_replays_conflict_and_key_scope ... ok
+test qa_defect_get_estimate_reflects_confirmation_and_consumption ... ignored, BUG-004 复现：GET 报价不反映确认/消费状态（RD 修复后由 QA 复验）
+test qa_ac031_concurrent_same_key_and_same_quote_race ... ok
+test qa_card_cross_item_references_and_auth_boundaries ... ok
+test qa_card_snapshot_frozen_hashes_match_content_and_no_secrets ... ok
+test qa_ac032_price_version_budget_and_frontend_fees ... ok
+test qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split ... ok
+test qa_ac029_provider_missing_and_unsupported_preset ... ok
+test qa_ac029_missing_price_catalog_and_precondition_gaps ... ok
+
+test result: ok. 12 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.18s
+

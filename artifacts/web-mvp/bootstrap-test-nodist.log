@@ -1,0 +1,15 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running tests/bootstrap.rs (target/debug/deps/bootstrap-cd6b48898faad67e)
+
+running 5 tests
+test non_api_unknown_path_is_not_html_200_without_embedded_ui ... ok
+test health_live_returns_exact_minimal_json ... ok
+test health_ready_reports_declared_checks_only ... ok
+test unknown_versioned_api_path_also_returns_json_404 ... ok
+test unknown_api_path_returns_json_404_not_html ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

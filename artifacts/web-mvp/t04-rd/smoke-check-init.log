@@ -1,0 +1,60 @@
+== 环境 ==
+binary: /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+
+== init（首次，受限文件）==
+{"timestamp":"2026-09-11T19:19:01.234106Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t04-check/data","passwordSource":"受限文件 pw.txt","schemaVersion":2,"adminId":"01a091e8-b171-7555-93a3-5c502125c0c2","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t04-check/data
+  - 已创建：/private/tmp/em-t04-check/data
+  - 已创建：/private/tmp/em-t04-check/data/tmp
+  - 已创建：/private/tmp/em-t04-check/data/logs
+  - 已创建：/private/tmp/em-t04-check/data/blobs
+  - 已创建：/private/tmp/em-t04-check/data/lock
+数据库：已创建并迁移（/private/tmp/em-t04-check/data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 pw.txt；明文不落盘、不进入日志与 shell history。
+退出码=0
+
+== check ==
+有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-t04-check/data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  session = ttl=168h login_rate_limit=5/60s cookie_secure=false
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T19:19:01.241695Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+退出码=0
+
+== 再次 init（重置密码路径：更新哈希并撤销既有会话）==
+{"timestamp":"2026-09-11T19:19:01.265792Z","level":"INFO","fields":{"message":"管理员密码已更新，既有会话已撤销","event":"admin_password_reset","adminId":"01a091e8-b171-7555-93a3-5c502125c0c2","revokedSessions":0},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T19:19:01.265829Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t04-check/data","passwordSource":"受限文件 pw2.txt","schemaVersion":2,"adminId":"01a091e8-b171-7555-93a3-5c502125c0c2","adminStatus":"已更新"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t04-check/data
+  - 目录已存在：/private/tmp/em-t04-check/data
+  - 目录已存在：/private/tmp/em-t04-check/data/tmp
+  - 目录已存在：/private/tmp/em-t04-check/data/logs
+  - 目录已存在：/private/tmp/em-t04-check/data/blobs
+  - 锁文件已存在：/private/tmp/em-t04-check/data/lock
+数据库：已就绪（/private/tmp/em-t04-check/data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已更新（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+  既有会话已全部撤销（重置密码后需重新登录）。
+密码来源：受限文件 pw2.txt；明文不落盘、不进入日志与 shell history。
+退出码=0
+
+== admins 表实际内容（只显示 PHC 前缀，无明文）==
+$argon2id$v=19$m=19456,t=2,p=1$i7uJqMTb+…|97
+0

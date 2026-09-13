@@ -1,0 +1,28 @@
+=== A) 失败恢复不修改备份目录（失败前后备份树指纹） ===
+exit=7
+OK: 失败的 restore 未改动备份目录（43ba1dd7eb621bbff4edd2cf4d6babb30c6d99fc4bf3c094a9223d2fc46d5af1）
+
+=== B) 恢复到已有空目录 -> 期望 0 ===
+exit=0 （期望 0）
+
+=== C) 恢复目标在备份目录内（嵌套）-> 期望 4 ===
+错误：恢复目标不能与备份目录互相嵌套（备份 /tmp/em-t20-qa/my-backup，目标 /tmp/em-t20-qa/my-backup/inside）
+exit=4 （期望 4）
+
+=== D) 源 data-dir 有一个 blob 文件缺失时的备份语义 ===
+removed: /tmp/em-t20-qa/data-missingblob/blobs/09/094b4342eef5b8726eac54db4a5e0fd47804fbb91a58ddff0770438e1e1d68c2
+{"timestamp":"2026-09-12T17:34:51.760771Z","level":"WARN","fields":{"message":"被引用的 blob 文件缺失：备份如实记录，不伪造内容","event":"backup_blob_missing","sha256":"094b4342eef5b8726eac54db4a5e0fd47804fbb91a58ddff0770438e1e1d68c2","storageState":"stored"},"target":"everything_manual::backup::create"}
+备份完成：/tmp/em-t20-qa/missingblob-backup
+  一致快照：database/manual.sqlite3（sha256 1414794ac3f5f8cb406dc0b137435bae04760e2256049ad530c72d8dc8c2dc85，348160 字节，schema v7；VACUUM INTO，含 WAL 中已提交事务）
+  被引用 blob：复制 0 个；**另有 1 个 blob 在源 data-dir 中文件缺失**（manifest 的 missingBlobs 已如实记录）
+  manifest 与 sha256：manifest.json；会话已从快照中清空（恢复后需重新登录，共清空 0 条）
+  恢复方式：everything-manual restore --from /tmp/em-t20-qa/missingblob-backup --data-dir <不存在或为空的新目录>
+backup exit=0
+missingBlobs: [{'sha256': '094b4342eef5b8726eac54db4a5e0fd47804fbb91a58ddff0770438e1e1d68c2', 'storageState': 'stored'}] | blobs: 0
+restore exit=0 （期望 0，如实缺一个）
+
+=== E) 备份目录内是否含绝对路径（DB dump 扫描） ===
+0
+=== F) 备份内是否含临时云端 URL（DB dump） ===
+https://cdn.example.invalid/preview.png
+1

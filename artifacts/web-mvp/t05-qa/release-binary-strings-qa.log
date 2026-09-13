@@ -1,0 +1,7 @@
+fixture script missing   => 0
+fixture-accept           => 0
+test.support             => 0
+fixture_harness          => 0
+tests/fixtures           => 0
+openapi.tripo3d.ai       => 1
+127.0.0.1                => 5

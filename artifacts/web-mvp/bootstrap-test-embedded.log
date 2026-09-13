@@ -1,0 +1,33 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling typenum v1.20.1
+   Compiling const-oid v0.10.2
+   Compiling same-file v1.0.6
+   Compiling cpufeatures v0.3.1
+   Compiling mime_guess v2.0.5
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+   Compiling walkdir v2.5.0
+   Compiling hybrid-array v0.4.15
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling digest v0.11.3
+   Compiling sha2 v0.11.0
+   Compiling rust-embed-utils v8.12.0
+   Compiling rust-embed-impl v8.12.0
+   Compiling rust-embed v8.12.0
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.00s
+     Running tests/bootstrap.rs (target/debug/deps/bootstrap-27342b0f541e6a1f)
+
+running 8 tests
+test embedded_ui::spa_navigation_path_returns_index_html ... ok
+test embedded_ui::root_serves_embedded_index_html ... ok
+test unknown_versioned_api_path_also_returns_json_404 ... ok
+test health_live_returns_exact_minimal_json ... ok
+test health_ready_reports_declared_checks_only ... ok
+test embedded_ui::missing_static_asset_is_404_not_html ... ok
+test unknown_api_path_returns_json_404_not_html ... ok
+test embedded_ui::embedded_hashed_asset_is_served ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

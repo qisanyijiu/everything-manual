@@ -1,0 +1,231 @@
+# QA T03 schema inspection via system sqlite3 2026-09-11T18:53:27Z
+== tables
+_sqlx_migrations
+admins
+assets
+audit_events
+blobs
+cost_ledger
+documents
+generation_snapshots
+idempotency_records
+items
+job_stages
+jobs
+manual_drafts
+manual_releases
+model_revisions
+pages
+photos
+preparations
+provider_attempts
+sessions
+== foreign keys per table
+-- admins
+-- sessions
+0|0|admins|admin_id|id|NO ACTION|CASCADE|NONE
+-- items
+-- blobs
+-- assets
+0|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+1|0|blobs|blob_id|sha256|NO ACTION|RESTRICT|NONE
+-- documents
+0|0|blobs|source_sha256|sha256|NO ACTION|RESTRICT|NONE
+1|0|assets|source_asset_id|id|NO ACTION|RESTRICT|NONE
+2|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+-- preparations
+0|0|blobs|source_sha256|sha256|NO ACTION|RESTRICT|NONE
+1|0|documents|document_id|id|NO ACTION|RESTRICT|NONE
+-- pages
+0|0|assets|image_asset_id|id|NO ACTION|RESTRICT|NONE
+1|0|assets|text_asset_id|id|NO ACTION|RESTRICT|NONE
+2|0|preparations|preparation_id|id|NO ACTION|RESTRICT|NONE
+-- photos
+0|0|assets|asset_id|id|NO ACTION|RESTRICT|NONE
+1|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+-- generation_snapshots
+0|0|preparations|preparation_id|id|NO ACTION|RESTRICT|NONE
+1|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+-- jobs
+0|0|generation_snapshots|snapshot_id|id|NO ACTION|RESTRICT|NONE
+1|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+-- job_stages
+0|0|assets|result_asset_id|id|NO ACTION|RESTRICT|NONE
+1|0|jobs|job_id|id|NO ACTION|RESTRICT|NONE
+-- provider_attempts
+0|0|job_stages|stage_id|id|NO ACTION|RESTRICT|NONE
+1|0|jobs|job_id|id|NO ACTION|RESTRICT|NONE
+-- idempotency_records
+0|0|admins|admin_id|id|NO ACTION|RESTRICT|NONE
+-- cost_ledger
+0|0|provider_attempts|attempt_id|id|NO ACTION|RESTRICT|NONE
+1|0|generation_snapshots|snapshot_id|id|NO ACTION|RESTRICT|NONE
+-- model_revisions
+0|0|provider_attempts|provider_attempt_id|id|NO ACTION|RESTRICT|NONE
+1|0|assets|asset_id|id|NO ACTION|RESTRICT|NONE
+2|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+-- manual_drafts
+0|0|model_revisions|model_revision_id|id|NO ACTION|RESTRICT|NONE
+1|0|generation_snapshots|snapshot_id|id|NO ACTION|RESTRICT|NONE
+2|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+-- manual_releases
+0|0|assets|manifest_asset_id|id|NO ACTION|RESTRICT|NONE
+1|0|model_revisions|model_revision_id|id|NO ACTION|RESTRICT|NONE
+2|0|manual_drafts|draft_id|id|NO ACTION|RESTRICT|NONE
+3|0|items|item_id|id|NO ACTION|RESTRICT|NONE
+-- audit_events
+== named indexes
+assets_blob|assets
+assets_item|assets
+audit_events_created|audit_events
+audit_events_entity|audit_events
+cost_ledger_attempt|cost_ledger
+cost_ledger_snapshot|cost_ledger
+documents_item|documents
+generation_snapshots_item|generation_snapshots
+idempotency_records_resource|idempotency_records
+items_created|items
+job_stages_due|job_stages
+job_stages_job|job_stages
+jobs_item|jobs
+jobs_status|jobs
+manual_drafts_item|manual_drafts
+manual_releases_draft|manual_releases
+manual_releases_item|manual_releases
+model_revisions_item|model_revisions
+photos_item|photos
+preparations_document|preparations
+provider_attempts_job|provider_attempts
+provider_attempts_stage|provider_attempts
+provider_attempts_unresolved_stage|provider_attempts
+sessions_admin|sessions
+sessions_expires|sessions
+== triggers
+== triggers
+generation_snapshots_immutable|generation_snapshots
+manual_releases_immutable|manual_releases
+manual_releases_no_delete|manual_releases
+provider_attempts_remote_task_id_monotonic|provider_attempts
+== create SQL spot check
+CREATE TABLE assets (
+    id            TEXT PRIMARY KEY,
+    blob_id       TEXT NOT NULL REFERENCES blobs (sha256) ON DELETE RESTRICT,
+    item_id       TEXT NOT NULL REFERENCES items (id) ON DELETE RESTRICT,
+    purpose       TEXT NOT NULL
+        CHECK (purpose IN ('document', 'photo', 'page_image', 'page_text', 'model')),
+    -- 原文件名只作元数据，不参与路径拼接（contracts.md §2、REQ-011）。
+    original_name TEXT,
+    created_at    INTEGER NOT NULL
+)
+CREATE TABLE blobs (
+    sha256        TEXT PRIMARY KEY
+        CHECK (length(sha256) = 64 AND sha256 GLOB '[0-9a-f]*' AND NOT sha256 GLOB '*[^0-9a-f]*'),
+    size          INTEGER NOT NULL CHECK (size >= 0),
+    mime          TEXT NOT NULL,
+    storage_state TEXT NOT NULL DEFAULT 'stored'
+        CHECK (storage_state IN ('stored', 'quarantined', 'missing')),
+    created_at    INTEGER NOT NULL
+)
+CREATE TABLE cost_ledger (
+    id            TEXT PRIMARY KEY,
+    snapshot_id   TEXT NOT NULL REFERENCES generation_snapshots (id) ON DELETE RESTRICT,
+    attempt_id    TEXT REFERENCES provider_attempts (id) ON DELETE RESTRICT,
+    provider      TEXT NOT NULL CHECK (provider IN ('tripo', 'manual_ai')),
+    currency      TEXT NOT NULL CHECK (currency IN ('credit_minor', 'usd_micros')),
+    reserved      INTEGER NOT NULL CHECK (reserved >= 0),
+    actual        INTEGER CHECK (actual IS NULL OR actual >= 0),
+    state         TEXT NOT NULL CHECK (state IN ('reserved', 'settled', 'released', 'unknown')),
+    price_version TEXT NOT NULL,
+    created_at    INTEGER NOT NULL,
+    updated_at    INTEGER NOT NULL,
+    CHECK (state <> 'settled' OR actual IS NOT NULL),
+    CHECK (state <> 'unknown' OR actual IS NULL)
+)
+CREATE TABLE items (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL CHECK (length(trim(name)) > 0),
+    brand       TEXT,
+    model       TEXT NOT NULL CHECK (length(trim(model)) > 0),
+    variant     TEXT,
+    revision    INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1),
+    archived_at INTEGER,
+    created_at  INTEGER NOT NULL,
+    updated_at  INTEGER NOT NULL
+    -- 同品牌型号不强制唯一：允许“同型号不同配置”并存（contracts.md §2、REQ-010）。
+)
+CREATE TABLE job_stages (
+    id              TEXT PRIMARY KEY,
+    job_id          TEXT NOT NULL REFERENCES jobs (id) ON DELETE RESTRICT,
+    stage_kind      TEXT NOT NULL CHECK (stage_kind IN (
+        'freeze_inputs', 'manual_extract', 'manual_merge', 'tripo_upload',
+        'tripo_submit', 'tripo_poll', 'model_download', 'model_validate',
+        'assemble_draft'
+    )),
+    batch_index     INTEGER NOT NULL DEFAULT 0 CHECK (batch_index >= 0),
+    page_set        TEXT CHECK (page_set IS NULL OR json_valid(page_set)),
+    input_hash      TEXT NOT NULL,
+    result_asset_id TEXT REFERENCES assets (id) ON DELETE RESTRICT,
+    usage_json      TEXT CHECK (usage_json IS NULL OR json_valid(usage_json)),
+    status          TEXT NOT NULL DEFAULT 'queued' CHECK (status IN (
+        'queued', 'running', 'waiting_provider', 'retry_wait', 'needs_input',
+        'submission_unknown', 'succeeded', 'failed', 'cancelled'
+    )),
+    lease_owner     TEXT,
+    lease_epoch     INTEGER NOT NULL DEFAULT 0 CHECK (lease_epoch >= 0),
+    lease_until     INTEGER,
+    next_run_at     INTEGER,
+    attempt_count   INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
+    created_at      INTEGER NOT NULL,
+    updated_at      INTEGER NOT NULL,
+    UNIQUE (job_id, stage_kind, batch_index),
+    CHECK (stage_kind = 'manual_extract' OR batch_index = 0)
+)
+CREATE TABLE manual_drafts (
+    id                TEXT PRIMARY KEY,
+    item_id           TEXT NOT NULL REFERENCES items (id) ON DELETE RESTRICT,
+    snapshot_id       TEXT NOT NULL UNIQUE REFERENCES generation_snapshots (id) ON DELETE RESTRICT,
+    model_revision_id TEXT REFERENCES model_revisions (id) ON DELETE RESTRICT,
+    revision          INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1),
+    status            TEXT NOT NULL DEFAULT 'needs_review'
+        CHECK (status IN ('needs_review', 'ready')),
+    knowledge_json    TEXT NOT NULL CHECK (json_valid(knowledge_json)),
+    review_json       TEXT CHECK (review_json IS NULL OR json_valid(review_json)),
+    created_at        INTEGER NOT NULL,
+    updated_at        INTEGER NOT NULL
+)
+CREATE TABLE pages (
+    preparation_id TEXT NOT NULL REFERENCES preparations (id) ON DELETE RESTRICT,
+    page_number    INTEGER NOT NULL CHECK (page_number >= 1),
+    text_asset_id  TEXT REFERENCES assets (id) ON DELETE RESTRICT,
+    image_asset_id TEXT REFERENCES assets (id) ON DELETE RESTRICT,
+    created_at     INTEGER NOT NULL,
+    updated_at     INTEGER NOT NULL,
+    PRIMARY KEY (preparation_id, page_number)
+)
+CREATE TABLE provider_attempts (
+    id             TEXT PRIMARY KEY,
+    job_id         TEXT NOT NULL REFERENCES jobs (id) ON DELETE RESTRICT,
+    stage_id       TEXT NOT NULL REFERENCES job_stages (id) ON DELETE RESTRICT,
+    request_hash   TEXT NOT NULL,
+    submit_state   TEXT NOT NULL CHECK (submit_state IN (
+        'intent', 'submitting', 'accepted', 'unknown', 'failed'
+    )),
+    remote_task_id TEXT,
+    -- 同步 Manual AI 的 response_id 不等于可轮询任务（contracts.md §2）。
+    response_id    TEXT,
+    started_at     INTEGER NOT NULL,
+    last_error     TEXT,
+    created_at     INTEGER NOT NULL,
+    updated_at     INTEGER NOT NULL
+)
+CREATE TABLE sessions (
+    id                 TEXT PRIMARY KEY,
+    admin_id           TEXT NOT NULL REFERENCES admins (id) ON DELETE CASCADE,
+    -- 会话明文只返回 cookie，不落库/日志：这里只存哈希（contracts.md §2）。
+    session_token_hash TEXT NOT NULL UNIQUE CHECK (length(session_token_hash) > 0),
+    csrf_hash          TEXT NOT NULL CHECK (length(csrf_hash) > 0),
+    created_at         INTEGER NOT NULL,
+    expires_at         INTEGER NOT NULL,
+    revoked_at         INTEGER,
+    CHECK (expires_at > created_at)
+)

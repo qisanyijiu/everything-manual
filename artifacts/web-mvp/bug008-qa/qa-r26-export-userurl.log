@@ -1,0 +1,9 @@
+== QA 回合 26 · 导出：用户内容 URL 不误伤（canary=qa-r26-user-src-58be）
+  注入完成：knowledge 内含用户链接（新 manifest sha=d6cf445c6557…）
+  [通过] 用户内容含 URL 时导出仍成功（200）
+  条目： assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf, assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb, manifest.json, release/manifest.json
+  manifest.json 的 knowledge.userNote = 用户出处链接 https://user.example.invalid/spec?sig=qa-r26-user-src-58be
+  ✔ 用户出处链接随包保留（未被 fail-closed 拦下、也未被清洗）
+  ✔ 包内 '://' 仅来自用户内容字段（这是要求而不是泄露）
+  [通过] 导出包保留用户链接（并含 '://'，符合 ADR-032 第 4 条）
+== 结果：PASS

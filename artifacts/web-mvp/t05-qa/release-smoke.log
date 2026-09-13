@@ -1,0 +1,41 @@
+=== binary sha256 ===
+b8aa9172f452593a4a676e364ac99dbd794eb79712c47e25c42abefcb7a38cb4  everything-manual
+=== init ===
+{"timestamp":"2026-09-11T19:50:30.098769Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t05-qa-release-smoke/data","passwordSource":"受限文件 /tmp/em-t05-qa-release-smoke/pw.txt","schemaVersion":2,"adminId":"01a09205-83d2-76b2-aa29-8858795571db","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t05-qa-release-smoke/data
+  - 目录已存在：/tmp/em-t05-qa-release-smoke/data
+  - 已创建：/tmp/em-t05-qa-release-smoke/data/tmp
+  - 已创建：/tmp/em-t05-qa-release-smoke/data/logs
+  - 已创建：/tmp/em-t05-qa-release-smoke/data/blobs
+  - 已创建：/tmp/em-t05-qa-release-smoke/data/lock
+数据库：已创建并迁移（/tmp/em-t05-qa-release-smoke/data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /tmp/em-t05-qa-release-smoke/pw.txt；明文不落盘、不进入日志与 shell history。
+init exit=0
+=== phase 1: serve without provider keys ===
+serve pid=59076 addr=http://127.0.0.1:54902
+GET /health/live -> 200
+GET /health/ready -> 200
+ready body: {"data":{"status":"ready","checks":[{"name":"process","status":"ok"},{"name":"data_directory","status":"ok"},{"name":"database","status":"ok"},{"name":"migrations","status":"ok"}]}}
+--- lsof（进程持有的网络连接）---
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 59076 qsyj   16u  IPv4 0x31db2579c85e1061      0t0  TCP 127.0.0.1:54902 (LISTEN)
+--- provider_not_configured 日志行 ---
+"event":"provider_not_configured","provider":"tripo","missi
+"event":"provider_not_configured","provider":"ma
+grep_provider_not_configured_count=2
+grep_回退mock_count=2
+--- 登录 + /settings/status ---
+POST /auth/login -> 200
+GET /settings/status -> 200
+{"data":{"providersConfigured":{"tripo":false,"manualAi":false},"limits":{"maxJsonRequestBytes":1048576,"maxPdfBytes":52428800,"maxPdfPages":100,"maxPhotoBytes":20971520,"maxGlbBytes":157286400,"maxItemTotalBytes":524288000},"capabilities":{"generation":false}}}
+--- 进程仍无外部连接（二次采样）---
+nonloopback_lines=0
+serve exit=0
+=== phase 2: unreachable cloud base_url ===
+serve pid=59106 addr=http://127.0.0.1:54907
+GET /health/ready -> 200
+ready body: {"data":{"status":"ready","checks":[{"name":"process","status":"ok"},{"name":"data_directory","status":"ok"},{"name":"database","status":"ok"},{"name":"migrations","status":"ok"}]}}
+grep_provider_not_configured_count=2
+nonloopback_lines=0
+=== 完成；保留 /tmp/em-t05-qa-release-smoke 供复核（QA 收尾时删除）===

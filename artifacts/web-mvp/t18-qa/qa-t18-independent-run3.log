@@ -1,0 +1,133 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t18-independent.spec.ts
+
+(node:71825) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m140[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T11:56:00.110458Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a09579-74ee-7307-92cf-a94c18b44fa2","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 6 tests using 1 worker
+
+(node:71891) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T11:56:02.691779Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/password.txt","schemaVersion":6,"adminId":"01a09579-7f03-7495-98f0-b4e97aab94c6","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-ElemUX/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m19:56:06[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  1 [chromium] › tests/e2e/qa-t18-independent.spec.ts:526:1 › QA-T18-1 真实链路：真实草稿 + 真实资产字节驱动阅读器（零正常响应伪造） (2.6s)
+[2m[WebServer] [22m[2m19:56:09[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  2 [chromium] › tests/e2e/qa-t18-independent.spec.ts:569:1 › QA-T18-2 坐标一致性（真实模型 + 第一性原理重算 + 相机旋转/缩放不变） (2.5s)
+[2m[WebServer] [22m[2m19:56:11[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:13[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:13[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.WebGLRenderer: WEBGL_lose_context extension not supported.
+  ✘  3 [chromium] › tests/e2e/qa-t18-independent.spec.ts:667:1 › QA-T18-3 上下文丢失 → 真实绘制中断 → restored 后真实恢复（独立 draw 计数） (8.9s)
+(node:71986) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T11:56:20.828205Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/password.txt","schemaVersion":6,"adminId":"01a09579-c5db-7508-97b3-b80b2cac73ef","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t18-EaS1et/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m19:56:24[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:25[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mWarning: getOperatorList - ignoring errors during "GetOperatorList: page 0" task: "Error: Worker task was terminated".
+[2m[WebServer] [22m[2m19:56:25[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:25[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:25[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+QA 资源趋势：存活=1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1
+QA 每轮真实 GL 删除=4b/1t 4b/1t 4b/1t 4b/1t 4b/1t 4b/1t 4b/1t 4b/1t 4b/1t 4b/1t
+QA 累计原始计数（含 three 每渲染器 4 张 empty texture）：8c/4d b, 12c/1d t | 12c/8d b, 18c/2d t | 16c/12d b, 24c/3d t | 20c/16d b, 30c/4d t | 24c/20d b, 36c/5d t | 28c/24d b, 42c/6d t | 32c/28d b, 48c/7d t | 36c/32d b, 54c/8d t | 40c/36d b, 60c/9d t | 44c/40d b, 66c/10d t
+QA WebGL 上下文数=12
+QA CDP 堆采样=25973840, 26046564, 24255372, 30368504, 26798968, 32495404, 27433056, 26590552, 28230948, 26943908（首末比 1.04）
+  ✓  4 [chromium] › tests/e2e/qa-t18-independent.spec.ts:773:1 › QA-T18-4 资源释放与 10 次切换趋势（真实 GL 计数 + 账本对照 + CDP 堆采样） (5.1s)
+[2m[WebServer] [22m[2m19:56:31[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:56:32[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  5 [chromium] › tests/e2e/qa-t18-independent.spec.ts:900:1 › QA-T18-5 加载与错误状态可观察（延迟/500 故障注入真实端点）+ 重试真的生效 (4.5s)
+  ✓  6 [chromium] › tests/e2e/qa-t18-independent.spec.ts:940:1 › QA-T18-6 WebGL 不可用：真实降级（不下载 three）+ 文字/PDF 可用 + 键盘与减少动效 (2.4s)
+
+
+  1) [chromium] › tests/e2e/qa-t18-independent.spec.ts:667:1 › QA-T18-3 上下文丢失 → 真实绘制中断 → restored 后真实恢复（独立 draw 计数） 
+
+    Error: 重建成功后状态必须回到可用（见 BUG-007）
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoContain[2m([22m[32mexpected[39m[2m) // indexOf[22m
+
+    Expected substring: [32m"模型已加载"[39m
+    Received string:    [31m"3D 显示已中断，正在重建…"[39m
+
+      767 |
+      768 |   // 要求（UI-044/UI-043/AC-050）：手动重建成功后，面板必须回到可用态。
+    > 769 |   expect(statusAfterRebuild, "重建成功后状态必须回到可用（见 BUG-007）").toContain("模型已加载");
+          |                                                          ^
+      770 |   expect(resetDisabled, "重建成功后键盘等价控件必须可用（见 BUG-007）").toBe(false);
+      771 | });
+      772 |
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t18-independent.spec.ts:769:58
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-independent-QA-T18--252ae--restored-后真实恢复（独立-draw-计数）-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-independent-QA-T18--252ae--restored-后真实恢复（独立-draw-计数）-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-independent-QA-T18--252ae--restored-后真实恢复（独立-draw-计数）-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-independent-QA-T18--252ae--restored-后真实恢复（独立-draw-计数）-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-independent-QA-T18--252ae--restored-后真实恢复（独立-draw-计数）-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/qa-t18-independent.spec.ts:667:1 › QA-T18-3 上下文丢失 → 真实绘制中断 → restored 后真实恢复（独立 draw 计数） 
+  5 passed (36.8s)

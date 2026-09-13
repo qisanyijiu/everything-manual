@@ -1,0 +1,84 @@
+
+=== [0] 启动真实 serve（dist 二进制，持有 data-dir 排他锁）
+serve pid=27501
+{"data":{"status":"ready","checks":[{"name":"process","status":"ok"},{"name":"data_directory","status":"ok"},{"name":"database","status":"ok"},{"name":"migrations","status":"ok"}]}}
+
+=== [1] 登录（拿到会话 cookie；备份必须不含该会话）
+login body: {"data":{"admin":{"id":"01a09677-6630-7469-a8f0-d0a5ed668921"},"csrfToken":"e910c764326a7b64056fe5cbe060f52775ff6dd1268e6d2df28c1b46469d5848","expiresAt":"2026-09-19T17:21:28.286Z"}}
+csrf=e910c764326a... session_token=...
+
+=== [2] 运行中执行 backup -> 期望退出码 5、说明需先停服、不创建输出
+exit=5
+--- stdout ---
+--- stderr ---
+错误：备份要求先停止服务（data-dir 排他锁被占用）：data-dir 正被另一个进程使用（排他锁 /tmp/em-t20-qa/data/lock 已被持有，持有者信息：pid=27501 started_at_unix=1789233688）；同一 data-dir 只允许一个进程，请先停止该进程。请停止服务后重新执行 backup（运行中备份无法保证一致快照）
+OK: 被拒绝时未创建输出目录
+
+=== [3] 运行中写入新数据（走真实 HTTP；commit 只会进 WAL）
+create item: {"data":{"id":"01a096a3-6f21-7431-a983-5b5198552aef","name":"QA 独立验收物品","brand":"QA","model":"WAL-ONLY-2026","variant":null,"revision":1,"archivedAt":null,"createdAt":"2026-09-12T17:21:28.353Z","updatedAt":"2026-09-12T17:21:28.353Z"}}
+new item id: 01a096a3-6f21-7431-a983-5b5198552aef
+
+=== [4] 记录源库/WAL 指纹（主文件在 kill -9 之后仍不得包含新数据）
+主文件（未含 WAL）items 数 = 2
+6e539b6233d60cde5223e79a5c722c82ebc2e507c80eff040a03a110e6a8f9b1  /tmp/em-t20-qa/data/manual.sqlite3
+-rw-------@ 1 qsyj  wheel  360448  9月 13 01:21 /tmp/em-t20-qa/data/manual.sqlite3
+-rw-------@ 1 qsyj  wheel   32768  9月 13 01:21 /tmp/em-t20-qa/data/manual.sqlite3-shm
+-rw-------@ 1 qsyj  wheel   32992  9月 13 01:21 /tmp/em-t20-qa/data/manual.sqlite3-wal
+
+=== [5] kill -9（模拟崩溃停机：锁由内核释放，WAL 里保留已提交事务）
+artifacts/web-mvp/t20-qa/qa-phase1-lock-and-wal.sh: line 71: 27501 Killed: 9               "$BIN" serve --data-dir "$DATA" --listen 127.0.0.1:$PORT > "$WORK/serve.log" 2>&1
+OK: serve 已终止
+-rw-------@ 1 qsyj  wheel  360448  9月 13 01:21 /tmp/em-t20-qa/data/manual.sqlite3
+-rw-------@ 1 qsyj  wheel   32768  9月 13 01:21 /tmp/em-t20-qa/data/manual.sqlite3-shm
+-rw-------@ 1 qsyj  wheel   32992  9月 13 01:21 /tmp/em-t20-qa/data/manual.sqlite3-wal
+
+=== [6] 负对照：把主文件复制到别处读（模拟'只复制主文件'的备份）
+只复制主文件的副本 items 数 = Error: in prepare, unable to open database file (14)
+只复制主文件的副本中是否含新物品 = Error: in prepare, unable to open database file (14) （1=含，0=不含）
+
+=== [7] 停服后 backup -> 期望退出码 0
+源 data-dir 全量指纹（主文件+全部 blob）前置：0b51c491e774a61c3e3f03a2887dee388451ea60a09480d80d3a633e4338dcab
+exit=0
+{"timestamp":"2026-09-12T17:21:29.078680Z","level":"INFO","fields":{"message":"备份完成（一致快照 + 被引用 blob + manifest；不含会话）","event":"backup_created","outDir":"/tmp/em-t20-qa/my-backup","schemaVersion":7,"databaseSha256":"7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012","blobsCopied":11,"missingBlobs":0,"totalBytes":393440,"sessionsRemoved":1},"target":"everything_manual::backup::create"}
+备份完成：/tmp/em-t20-qa/my-backup
+  一致快照：database/manual.sqlite3（sha256 7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012，360448 字节，schema v7；VACUUM INTO，含 WAL 中已提交事务）
+  被引用 blob：复制 11 个
+  manifest 与 sha256：manifest.json；会话已从快照中清空（恢复后需重新登录，共清空 1 条）
+  恢复方式：everything-manual restore --from /tmp/em-t20-qa/my-backup --data-dir <不存在或为空的新目录>
+源 data-dir 全量指纹（主文件+全部 blob）后置：0b51c491e774a61c3e3f03a2887dee388451ea60a09480d80d3a633e4338dcab
+OK: 备份前后源数据逐字节一致
+
+=== [8] 快照里必须含 kill -9 前已提交的新物品（证明快照含 WAL 中已提交事务）
+2
+1
+备份测试物品|X100V
+QA 独立验收物品|WAL-ONLY-2026
+
+=== [9] 快照内容检查：sessions=0、管理员口令哈希保留、外键完整、无 -wal/-shm
+0
+1
+ok
+total 704
+-rw-r--r--@ 1 qsyj  wheel  360448  9月 13 01:21 manual.sqlite3
+
+=== [10] SHA256SUMS 用系统 shasum 全量校验 + 快照 sha256 与 manifest 一致
+blobs/c2/c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465: OK
+blobs/da/daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf: OK
+blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda: OK
+blobs/e6/e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69: OK
+manifest.json: OK
+manifest.database.sha256 = 7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012
+实际快照 sha256          = 7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012
+OK: 快照与 manifest 一致
+
+=== [11] 已存在的输出路径不被覆盖（再备份一次 -> 退出码 4，产物逐字节不变）
+exit=4
+错误：备份输出路径已存在，绝不覆盖：/tmp/em-t20-qa/my-backup；请换一个不存在的路径
+OK: 已有备份逐字节不变
+
+=== [12] 备份输出在 data-dir 内（嵌套）-> 退出码 4
+exit=4
+错误：备份输出路径不能与 data-dir 互相嵌套（data-dir /tmp/em-t20-qa/data，--out /tmp/em-t20-qa/data/inside）：请把备份放在 data-dir 之外（磁盘故障时两者不会一起丢失）
+OK: 未创建嵌套输出
+
+phase1 完成

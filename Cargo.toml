@@ -1,0 +1,75 @@
+[workspace]
+resolver = "3"
+# crates/test-support 只作为 dev-dependency 使用（T05）：
+# 本机 HTTP fixture、场景脚本与样例资产校验，不进入生产依赖树。
+members = ["crates/core", "crates/server", "crates/test-support", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# MSRV：SQLx 0.9 系列（T03 引入）要求 Rust ≥ 1.94（architecture.md §3）。
+rust-version = "1.94"
+publish = false
+
+[workspace.dependencies]
+# multipart：T06 的 `POST /items/{id}/assets` 用官方 `axum::extract::Multipart`
+# （流式 `Field::chunk()`，不把整个文件读进内存），不手写 multipart 解析器。
+axum = { version = "0.8", features = ["multipart"] }
+# debug-embed：调试构建也从二进制读资源（避免“开发机可用、拷走即坏”）。
+# deterministic-timestamps：默认实现会把每个内嵌文件的 mtime 编入二进制，
+# 重新生成 dist 后即使内容不变，产物哈希也会变化（实测见 implementation.md）。
+rust-embed = { version = "8", features = ["debug-embed", "deterministic-timestamps"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# fs/io-util：T06 的流式上传（tmp 写入 + fsync）与 Range 内容服务（seek + 流式读）。
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "macros",
+    "net",
+    "signal",
+    "fs",
+    "io-util",
+] }
+# io：`ReaderStream` 把文件读句柄变成响应体流，不把整个资产读进内存（T06）。
+tokio-util = { version = "0.7", features = ["io"] }
+utoipa = { version = "5", features = ["macros"] }
+uuid = { version = "1", features = ["v7"] }
+
+# T02 配置/CLI/日志：toml 解析（deny_unknown_fields）、结构化日志（json 输出）、
+# libc 仅用于 Unix 的 flock 排他锁与终端密码不回显（#[cfg(unix)]）。
+toml = "1.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "time"] }
+libc = "0.2"
+
+# T03 持久化：SQLx 0.9 系列（architecture.md §3 固定系列，要求 Rust ≥ 1.94）。
+# `sqlite` = bundled SQLite（运行不依赖系统 SQLite）；runtime-tokio 与后端运行时一致；
+# migrate 提供内嵌 Migrator；macros 提供 `sqlx::migrate!`（不使用需要 DATABASE_URL 的
+# 编译期查询宏，构建不要求数据库在场）。不使用任何 TLS/网络后端（服务端暂不发外部请求）。
+sqlx = { version = "0.9", default-features = false, features = [
+    "runtime-tokio",
+    "sqlite",
+    "migrate",
+    "macros",
+] }
+
+# T04 认证：管理员口令用 Argon2id（RustCrypto）；会话/CSRF token 用 SHA-256 哈希入库，
+# 随机数取 OS 熵源（getrandom，uuid v7 已传递依赖，这里显式声明）。
+argon2 = "0.5"
+getrandom = "0.4"
+
+# xtask（工程命令）依赖
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+# 外部 HTTP（T12 起为**生产依赖**，不只 xtask）：架构 §3 固定"reqwest 0.13 系列、rustls，
+# 禁用默认 features，启用 json/multipart/stream/rustls"。这里放生产侧的共同集合；
+# xtask 单独追加 `blocking`（其冒烟检查用同步客户端），服务端不启用 blocking。
+reqwest = { version = "0.13", default-features = false, features = [
+    "json",
+    "multipart",
+    "stream",
+    "rustls",
+] }
+sha2 = "0.10"
+# formatting+parsing：core 的时间类型需要 RFC3339 格式化与解析（contracts.md §1）。
+time = { version = "0.3", features = ["formatting", "parsing"] }

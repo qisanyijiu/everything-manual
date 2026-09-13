@@ -1,0 +1,252 @@
+== 0. 演练前置 ==
+二进制：/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+二进制 sha256：b8776b115a01e2a90090a92c1351e59117c18f3ef09dfbdf64e0642851d8be2a
+演练目录：/tmp/em-t20-rehearsal
+item=01a09677-6737-7665-a84b-335aaf2a4af8 release=01a09677-685a-7542-8e2f-0b866c8a1fbc
+
+== 1. 服务运行中请求 backup（必须拒绝并要求先停服）==
+错误：备份要求先停止服务（data-dir 排他锁被占用）：data-dir 正被另一个进程使用（排他锁 /tmp/em-t20-rehearsal/data/lock 已被持有，持有者信息：pid=26243 started_at_unix=1789233087）；同一 data-dir 只允许一个进程，请先停止该进程。请停止服务后重新执行 backup（运行中备份无法保证一致快照）
+[通过] 运行中 backup 被拒绝（exit 5，要求停服）（退出码 5 = 期望值）
+--- backup stderr（运行中）---
+错误：备份要求先停止服务（data-dir 排他锁被占用）：data-dir 正被另一个进程使用（排他锁 /tmp/em-t20-rehearsal/data/lock 已被持有，持有者信息：pid=26243 started_at_unix=1789233087）；同一 data-dir 只允许一个进程，请先停止该进程。请停止服务后重新执行 backup（运行中备份无法保证一致快照）
+[通过] 被拒时未创建任何备份目录
+
+== 2. 停服后备份（一致快照 + 被引用 blob + manifest + sha256）==
+serve 已停止（SIGTERM；pid 26243 已退出，排他锁已释放）
+{"timestamp":"2026-09-12T17:11:27.272317Z","level":"INFO","fields":{"message":"备份完成（一致快照 + 被引用 blob + manifest；不含会话）","event":"backup_created","outDir":"/tmp/em-t20-rehearsal/backup-out","schemaVersion":7,"databaseSha256":"c75ad3366c6f7233e2c2f327c3688ba49d2cb41ef92de10e77a40e99a29d7237","blobsCopied":11,"missingBlobs":0,"totalBytes":393440,"sessionsRemoved":1},"target":"everything_manual::backup::create"}
+备份完成：/tmp/em-t20-rehearsal/backup-out
+  一致快照：database/manual.sqlite3（sha256 c75ad3366c6f7233e2c2f327c3688ba49d2cb41ef92de10e77a40e99a29d7237，360448 字节，schema v7；VACUUM INTO，含 WAL 中已提交事务）
+  被引用 blob：复制 11 个
+  manifest 与 sha256：manifest.json；会话已从快照中清空（恢复后需重新登录，共清空 1 条）
+  恢复方式：everything-manual restore --from /tmp/em-t20-rehearsal/backup-out --data-dir <不存在或为空的新目录>
+[通过] 停服 backup 成功（退出码 0 = 期望值）
+--- 备份产物 ---
+blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+blobs/12/122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586
+blobs/60/6040550076320303894e351b83bb7844d84ea5431ae7a209947026accd79c79b
+blobs/74/74b3edaa5bcc408629228edf8365bd691844025c8135c50cc4892bc1acdbb20b
+blobs/97/972f6c241a5c0bfcec4af02a660218f9cd0689d77840fe5cf49a8ffe97edd010
+blobs/a9/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb
+blobs/c0/c017464ac0b990e826e3d2c527aeac4b351a169a09b10a4f84fb07959f19e4f1
+blobs/c2/c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465
+blobs/da/daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf
+blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+blobs/e6/e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69
+database/manual.sqlite3
+manifest.json
+SHA256SUMS
+--- manifest.json ---
+{
+  "schemaVersion": "manual_backup_v1",
+  "createdAtMillis": 1789233087241,
+  "programVersion": "0.1.0",
+  "database": {
+    "path": "database/manual.sqlite3",
+    "sha256": "c75ad3366c6f7233e2c2f327c3688ba49d2cb41ef92de10e77a40e99a29d7237",
+    "size": 360448,
+    "schemaVersion": 7,
+    "sessionsRemoved": true,
+    "sessionsRemovedCount": 1
+  },
+  "blobs": [
+    {
+      "path": "blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890",
+      "sha256": "0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890",
+      "size": 12420
+    },
+    {
+      "path": "blobs/12/122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586",
+      "sha256": "122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586",
+      "size": 174
+    },
+    {
+      "path": "blobs/60/6040550076320303894e351b83bb7844d84ea5431ae7a209947026accd79c79b",
+      "sha256": "6040550076320303894e351b83bb7844d84ea5431ae7a209947026accd79c79b",
+      "size": 39
+    },
+    {
+      "path": "blobs/74/74b3edaa5bcc408629228edf8365bd691844025c8135c50cc4892bc1acdbb20b",
+      "sha256": "74b3edaa5bcc408629228edf8365bd691844025c8135c50cc4892bc1acdbb20b",
+      "size": 1815
+    },
+    {
+      "path": "blobs/97/972f6c241a5c0bfcec4af02a660218f9cd0689d77840fe5cf49a8ffe97edd010",
+      "sha256": "972f6c241a5c0bfcec4af02a660218f9cd0689d77840fe5cf49a8ffe97edd010",
+      "size": 39
+    },
+    {
+      "path": "blobs/a9/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+      "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+      "size": 2912
+    },
+    {
+      "path": "blobs/c0/c017464ac0b990e826e3d2c527aeac4b351a169a09b10a4f84fb07959f19e4f1",
+      "sha256": "c017464ac0b990e826e3d2c527aeac4b351a169a09b10a4f84fb07959f19e4f1",
+      "size": 1962
+    },
+    {
+      "path": "blobs/c2/c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465",
+      "sha256": "c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465",
+      "size": 5181
+    },
+    {
+      "path": "blobs/da/daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf",
+      "sha256": "daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf",
+      "size": 39
+    },
+    {
+      "path": "blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda",
+      "sha256": "e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda",
+      "size": 1216
+    },
+    {
+      "path": "blobs/e6/e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69",
+      "sha256": "e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69",
+      "size": 2030
+    }
+  ],
+  "missingBlobs": [],
+  "counts": {
+    "items": 1,
+    "assets": 14,
+    "releases": 1,
+    "blobs": 11
+  },
+  "notes": [
+    "本备份由 everything-manual backup 在服务停止并取得 data-dir 排他锁后生成",
+    "快照为 VACUUM INTO 产生的事务一致副本（含 WAL 中已提交事务），不是主文件的字节复制",
+    "备份不包含会话（恢复后必须重新登录）；管理员口令哈希保留，用于恢复后登录",
+    "SHA256SUMS 可用标准工具校验整个备份：shasum -a 256 -c SHA256SUMS（在备份目录内执行）",
+    "恢复要求目标目录不存在或为空：everything-manual restore --from <本目录> --data-dir <新目录>",
+    "升级前请先备份；程序回滚不等于数据库回滚（回滚程序不能读取比它新的 schema）"
+  ]
+}
+--- 快照校验（sha256 与 manifest 一致；无 WAL 边车）---
+[通过] 快照 sha256 = manifest：c75ad3366c6f7233e2c2f327c3688ba49d2cb41ef92de10e77a40e99a29d7237
+--- SHA256SUMS 全量校验（标准工具 shasum -c）---
+database/manual.sqlite3: OK
+blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890: OK
+blobs/12/122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586: OK
+blobs/60/6040550076320303894e351b83bb7844d84ea5431ae7a209947026accd79c79b: OK
+blobs/74/74b3edaa5bcc408629228edf8365bd691844025c8135c50cc4892bc1acdbb20b: OK
+blobs/97/972f6c241a5c0bfcec4af02a660218f9cd0689d77840fe5cf49a8ffe97edd010: OK
+blobs/a9/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb: OK
+blobs/c0/c017464ac0b990e826e3d2c527aeac4b351a169a09b10a4f84fb07959f19e4f1: OK
+blobs/c2/c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465: OK
+blobs/da/daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf: OK
+blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda: OK
+blobs/e6/e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69: OK
+manifest.json: OK
+[通过] 快照是单文件（无 -wal/-shm）
+--- 备份内不含会话（打开快照查询 sessions）---
+sessions 行数 = 0
+[通过] 快照会话为空（恢复后必须重新登录）
+
+== 3. 恢复到新空目录 ==
+{"timestamp":"2026-09-12T17:11:27.461286Z","level":"INFO","fields":{"message":"恢复完成","event":"restore_cli_completed","from":"/tmp/em-t20-rehearsal/backup-out","dataDir":"/tmp/em-t20-rehearsal/restored-data","schemaVersion":7},"target":"everything_manual::config::commands"}
+恢复完成：/tmp/em-t20-rehearsal/restored-data
+  来源备份：/tmp/em-t20-rehearsal/backup-out（schema v7；快照 sha256 c75ad3366c6f7233e2c2f327c3688ba49d2cb41ef92de10e77a40e99a29d7237）
+  校验通过：manifest、快照与全部 blob 的 sha256、外键与引用；恢复 blob 11 个
+  数据规模：items 1、assets 14、releases 1、blobs 11
+  下一步：everything-manual serve --data-dir /tmp/em-t20-rehearsal/restored-data（schema 旧于程序时启动会自动迁移；升级前请再次备份，程序回滚不等于数据库回滚）
+[通过] restore 到不存在的新目录（退出码 0 = 期望值）
+--- 非空目标拒绝（exit 4）---
+错误：恢复目标已存在且非空：/tmp/em-t20-rehearsal/nonempty；恢复只允许写入不存在或为空的目录（不合并、不覆盖）
+[通过] 非空目标被拒绝（exit 4）（退出码 4 = 期望值）
+[通过] 现场未被改动
+
+== 4. 启动恢复目录并读取同一 release（PDF 与 GLB 均可打开）==
+登录（管理员口令随备份恢复）：http://127.0.0.1:18099/api/v1/auth/login
+{"data":{"admin":{"id":"01a09677-6630-7469-a8f0-d0a5ed668921"},"csrfToken":"735016dcb9f39289fb802e3399c6c629418d43823c18e7733ecf71e1ce479fb5","expiresAt":"2026-09-19T17:11:27.639Z"}}
+release detail HTTP 200
+[通过] 恢复后 release manifest 哈希一致（c2ec7def5b84a2bd…），知识含部件 2 个
+PDF content HTTP 200
+GLB content HTTP 200
+--- PDF ---
+/tmp/em-t20-rehearsal/recovered-manual.pdf: PDF document, version 1.4, 2 pages
+sha256: e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda（期望 e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda）
+[通过] PDF 字节与发布时一致
+--- GLB ---
+[通过] GLB 可打开：glTF v2，声明长度 2912 字节 = 文件长度，sha256 与发布时一致
+
+== 5. 导出自包含包（GET /releases/{id}/export）+ 标准工具校验 ==
+export HTTP 200
+content-type: application/zip
+content-disposition: attachment; filename="release-01a09677-685a-7542-8e2f-0b866c8a1fbc.zip"
+x-content-type-options: nosniff
+--- unzip -t（系统解压工具全量 CRC 校验）---
+Archive:  /tmp/em-t20-rehearsal/export.zip
+    testing: manifest.json            OK
+    testing: release/manifest.json    OK
+    testing: assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb   OK
+    testing: assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf   OK
+No errors detected in compressed data of /tmp/em-t20-rehearsal/export.zip.
+--- unzip -l ---
+Archive:  /tmp/em-t20-rehearsal/export.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     8122  01-01-1980 00:00   manifest.json
+     5181  01-01-1980 00:00   release/manifest.json
+     2912  01-01-1980 00:00   assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb
+     1216  01-01-1980 00:00   assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf
+---------                     -------
+    17431                     4 files
+--- python3 -m zipfile -t ---
+Done testing
+[通过] python zipfile 校验通过
+--- 包内清单（manifest.json 节选）---
+{
+  "schemaVersion": "manual_release_export_v1",
+  "item": {
+    "brand": null,
+    "id": "01a09677-6737-7665-a84b-335aaf2a4af8",
+    "model": "X100V",
+    "name": "备份测试物品",
+    "variant": null
+  },
+  "release": {
+    "draftId": "01a09677-683e-73c9-bd6a-6b0576f02b69",
+    "draftRevision": 4,
+    "itemId": "01a09677-6737-7665-a84b-335aaf2a4af8",
+    "manifestSha256": "c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465",
+    "modelRevisionId": "01a09677-683c-71cb-a57b-1ad0ccdc5166",
+    "publishedAtMillis": 1789230803015,
+    "releaseId": "01a09677-685a-7542-8e2f-0b866c8a1fbc"
+  },
+  "files": [
+    {
+      "assetId": "01a09677-6839-73f4-af93-ec3acdea7db5",
+      "mime": "model/gltf-binary",
+      "path": "assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb",
+      "role": "model",
+      "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+      "size": 2912,
+      "source": "tripo"
+    },
+    {
+      "assetId": "01a09677-674f-70f2-bb1c-9538edcf75b5",
+      "mime": "application/pdf",
+      "path": "assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf",
+      "role": "document",
+      "sha256": "e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda",
+      "size": 1216,
+      "source": "itemUpload"
+    }
+  ],
+  "notes": [
+    "本包是数据便携与灾备用途：包含该发布版本的原件、模型、清单与哈希",
+    "不包含密钥、会话、绝对路径与临时云端 URL；所有路径都是包内相对路径",
+    "不承诺可直接双击运行网站；当前版本不提供导入接口"
+  ]
+}
+--- 敏感内容扫描（canary 密钥 / 会话 token / 绝对路径 / 临时云端 URL）---
+[通过] 不含 'canary-t20-not-a-real-key'
+[通过] 不含 'cdn.example.invalid'
+[通过] 不含 'openapi.tripo3d.ai'
+[通过] 不含 '/tmp/em-t20-rehearsal'
+[通过] 不含 '/Users/'
+[通过] 不含 'em_session='
+
+== 6. 收尾 ==
+serve 已停止（SIGTERM；pid 26277 已退出，排他锁已释放）
+手工演练全部通过。

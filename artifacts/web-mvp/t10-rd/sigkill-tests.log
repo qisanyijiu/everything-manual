@@ -1,0 +1,12 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/jobs_recovery.rs (target/debug/deps/jobs_recovery-f5ccf40de10752df)
+
+running 2 tests
+test sigkill_during_paid_post_makes_submission_unknown_without_repurchasing ... ok
+test sigkill_during_poll_resumes_with_known_remote_task_and_never_resubmits ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 1.60s
+

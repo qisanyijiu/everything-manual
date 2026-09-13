@@ -1,0 +1,16 @@
+=== init 遇比程序新的 schema -> 期望 4 ===
+init exit=3
+错误：密码文件不是普通文件：/dev/null
+
+=== 备份比程序新的 schema（文档：备份不解释 schema，允许灾备窗口） ===
+备份完成：/tmp/em-t20-qa/newer-backup
+  一致快照：database/manual.sqlite3（sha256 8e5cf261565aaa74b0fcc406e331d8c976390224d407669de1041518a29637fe，360448 字节，schema v99；VACUUM INTO，含 WAL 中已提交事务）
+  被引用 blob：复制 11 个
+manifest.schemaVersion = 99
+（预期 99：备份不解释 schema；restore 才拒绝）
+
+=== 外部请求核对：我的 serve 日志中的主机 ===
+/tmp/em-t20-qa/serve-restored.log:http://127.0.0.1:18081
+/tmp/em-t20-qa/serve.log:http://127.0.0.1:18080
+(只应有本机回环；其余为空 = 0 次外部调用)
+错误：数据库 schema 版本（v99）高于本程序支持的版本（v7）：该 data-dir 由更新版本的程序创建。本程序拒绝打开且不会修改其中数据；请使用创建该 data-dir 的程序版本，或先备份后用旧版本可读的备份恢复

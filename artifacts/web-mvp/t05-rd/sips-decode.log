@@ -1,0 +1,13 @@
+== sips -g format -g pixelWidth -g pixelHeight（ImageIO 真实解码）
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-photo-front.jpg
+  format: jpeg
+  pixelWidth: 32
+  pixelHeight: 32
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-photo-left.png
+  format: png
+  pixelWidth: 64
+  pixelHeight: 64
+
+== sips -s format png <pdf> --out <png>（把 PDF 第 1 页渲染为 PNG）
+-rw-r--r--@ 1 qsyj  wheel  19588  9月 12 03:37 sample-manual-scan.pdf.page1.png
+-rw-r--r--@ 1 qsyj  wheel  21525  9月 12 03:37 sample-manual-text.pdf.page1.png

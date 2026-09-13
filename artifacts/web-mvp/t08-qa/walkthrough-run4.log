@@ -1,0 +1,72 @@
+== 1/4 初始化临时 data-dir ==
+{"timestamp":"2026-09-11T21:48:28.067788Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t08-qa-KrP8P8/data","passwordSource":"受限文件 /tmp/em-t08-qa-KrP8P8/pw.txt","schemaVersion":3,"adminId":"01a09271-8423-7625-ac16-14fbaa2d244d","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t08-qa-KrP8P8/data
+  - 已创建：/tmp/em-t08-qa-KrP8P8/data
+  - 已创建：/tmp/em-t08-qa-KrP8P8/data/tmp
+  - 已创建：/tmp/em-t08-qa-KrP8P8/data/logs
+  - 已创建：/tmp/em-t08-qa-KrP8P8/data/blobs
+  - 已创建：/tmp/em-t08-qa-KrP8P8/data/lock
+数据库：已创建并迁移（/tmp/em-t08-qa-KrP8P8/data/manual.sqlite3，schema v3；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /tmp/em-t08-qa-KrP8P8/pw.txt；明文不落盘、不进入日志与 shell history。
+== 2/4 启动服务（内嵌 UI，127.0.0.1:8099）==
+health/live = 200
+== 3/4 启动无头 Chrome（CDP :9444）==
+== 4/4 浏览器走查 ==
+浏览器：Chrome/152.0.7977.84 · 应用：http://127.0.0.1:8099 · node v26.0.0
+--- 步骤 1：未登录深链 /settings + 会话恢复 ---
+[PASS] UI-002.a 恢复中显示全屏骨架、恢复期间不出现密码框（不闪登录页） · skeleton=true passwordShown=false
+[PASS] UI-002.b 未登录深链 → /login?next=%2Fsettings · /login?next=%2Fsettings
+[PASS] UI-002.c 登录页保留 next 与过期说明 · 万物说明书 /  / 输入管理员密码以继续。 /  / 登录已过期，请重新登录。 登录后将返回 /settings。
+[PASS] AC-003.401 未登录 GET /auth/session 返回 401（UI-002 会话探测） · status=401
+[PASS] UI-001.a 密码框 type=password/autocomplete=current-password、无默认值、空密码禁用提交 · {"type":"password","autocomplete":"current-password","value":"","submitDisabled":true}
+--- 步骤 2：键盘登录与 next 安全 ---
+[PASS] T08-键盘登录.1 键盘完成登录（Tab 到密码框 → 输入 → Tab 到按钮 → Enter 提交） · first=field-password second=登录 enter提交=true
+[PASS] UI-002.e 协议相对 next（//evil.com）登录后回落 / · /
+[PASS] UI-002.f 页面不出现 evil.com
+[PASS] UI-001.b 登录响应体含 csrfToken 与会话信息 · csrf长度=64
+[PASS] UI-002.g 绝对 URL next 登录后回落 / · /
+[PASS] UI-002.h 合法站内 next（/settings）登录后确实返回该路径 · /settings
+--- 步骤 3：错误密码与错误关联 ---
+[PASS] UI-001.c 401 显示「密码不正确」 · 密码不正确
+[PASS] UI-001.d 失败后焦点在错误摘要（role=alert） · focused=true
+[PASS] UI-001.e 字段通过 aria-describedby 关联同一条错误文案 · describedBy=field-password-error invalid=true
+[PASS] UI-001.f 错误摘要含诊断请求 ID
+[PASS] AC-003.401 登录失败 HTTP 状态为 401 · status=401
+--- 步骤 4：登录成功、顶栏与凭据不泄露 ---
+[PASS] §6.1.1.a 顶栏含产品名、主导航与登出 · 万物说明书 | 资料库 | 任务中心 | 设置 | 登出
+[PASS] T08-不泄露.1 CSRF token 不在 DOM/localStorage/sessionStorage/document.cookie，输入框无残留 · dom=false local=false session=false cookie=false
+[PASS] AC-003.1 会话 cookie 为 HttpOnly + SameSite=Strict（JS 不可读） · httpOnly=true sameSite=Strict jsVisible=false
+[PASS] AC-003.2 正确密码登录返回 200 · status=200
+[PASS] UI-002.d 已登录 GET /auth/session 响应 200 + Cache-Control: no-store，且未从缓存读取（AC-003） · status=200 cache-control=no-store fromDiskCache=false
+       未登录 401 响应头（无凭据，仅记录）：cache-control=(无)；前端用 fetch cache:"no-store" 阻断 401 缓存。
+--- 步骤 5：Tab 顺序 ---
+[PASS] §6.1.5.a Tab 顺序为 顶栏（品牌/导航/登出）→ 主栏 · A:万物说明书 → A:资料库 → A:任务中心 → A:设置 → BUTTON:登出 → BUTTON:资料库摘要
+--- 步骤 6：设置页只读状态（UI-003） ---
+[PASS] UI-003.a 页面声明未配置并保持可读说明，与接口一致 · tripo=false manualAi=false
+[PASS] UI-003.b limits 数值按二进制单位展示且与接口一致 · pdf=50 MiB pages=100 photo=20 MiB
+[PASS] UI-003.c 健康检查 live/ready 与逐项状态可见
+[PASS] UI-003.d 无密钥输入/配置入口、无证书或 TLS 配置项、页面不含密钥样式字符串（ADR-017 D-4） · {"inputs":0,"certEntry":true,"keyPattern":false}
+[PASS] AC-012.1 /settings/status 响应不含密钥字段 · 字段：providersConfigured,limits,capabilities
+--- 步骤 7：资料库、物品表单与 CSRF 真实写 ---
+[PASS] UI-005.a 空态显示「还没有物品」与新建入口
+[PASS] UI-006.a 表单字段为 名称/品牌/准确型号/变体配置 四项、无来源链接输入 · field-name,field-model,field-brand,field-variant
+[PASS] UI-006.b 明确说明物品不保存来源链接（ADR-017 D-1）
+[PASS] UI-006.c 必填为空时保存按钮禁用 · disabled=true
+[FAIL] T08-CSRF.1 新建物品 POST 携带 x-csrf-token 且返回 201 · status=201 hasCsrf=false
+[PASS] T08-CSRF.2 GET 请求不注入 x-csrf-token（只对修改请求注入） · get=/api/v1/items/01a09277-a2d8-77a2-9574-b2076395cf8f csrf=(无)
+[PASS] UI-006.d 创建后跳转物品概览并显示名称、型号与 r1
+[PASS] §6.1.1.b 顶栏显示当前物品名·型号
+[DEFECT-P3] BUG-001 成功通知条（.notices 固定顶部条）盖住顶栏，指针点击落在通知条上被吞掉 · {"noticeText":"已创建物品「QA 验收相机」\n\n关闭","noticeHeight":61,"linkTop":28,"linkCenterY":41,"hitTag":"DIV","hitInNotice":true,"hitIsLink":false}
+       点击「资料库」后未导航到 /（现场见 BUG-001 证据）；回退 goto 以继续后续步骤
+       顶栏「资料库」点击导航结果：被成功通知条吞掉（BUG-001 现场）
+[PASS] UI-005.b 列表行显示名称/型号/状态/更新时间（服务端数据，非假数据） · QA 验收相机 |  | QA-X100V-01 |  | 使用中r1 | 更新于 | 2026-09-12 05:55 | 打开
+[FAIL] UI-007.a 归档 PATCH 携带 If-Match 与 CSRF，且状态文本变「已归档」 · if-match="r1" csrf=false
+       点击「资料库」后未导航到 /（现场见 BUG-001 证据）；回退 goto 以继续后续步骤
+[PASS] UI-007.b 归档物品默认不出现在列表
+[FAIL] 走查未捕获异常：未找到可点击元素：button "显示已归档"（第 1 个）
+       当前 URL：/
+       页面文本片段：万物说明书 | 资料库 | 任务中心 | 设置 | 登出 | 资料库摘要 | 资料库 | 新建物品 | 搜索 |  | 在当前已加载的 0 条中按名称/型号筛选（首版无全文检索，A-06）。 |  | 显示已归档 | 还没有物品 |  | 先新建一个物品，再上传说明书原件与多视图照片。 |  | 新建物品
+       console.error 前 5 条：(无)
+       未捕获异常数：0
+== 走查结束（退出码 1）==

@@ -1,0 +1,140 @@
+== 环境 ==
+binary=/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+port=61428 cport=61430 work=/tmp/em-t07qa-n18KwD
+PASS  init exit 0  (0)
+PASS  check(运行前) exit 0  (0)
+INFO  check 输出: 有效配置（脱敏）：   配置文件：内置默认（未找到配置文件）   data_dir = /tmp/em-t07qa-n18KwD/data   listen = 127.0.0.1:8080   public_origin = (未设置)   tls = (未配置)   trusted_proxy_cidrs = (空)   providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）   providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）   limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B   concurrency = remote_generation=2 manual_ai_batches=2   session = ttl=168h login_rate_limit=5/60s cookie_secure=false   price_catalog_path = (未设置) [检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock） [检查] data-dir 可写：通过 [检查] 排他锁：通过（当前空闲，可启动 serve） [检查] 数据库 schema：已就绪（v3；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms） [检查] 监听安全：通过（loopback） [检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读） [检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读） {"timestamp":"2026-09-11T21:10:50.573376Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"} [检查] 外部请求：本命令不发起任何网络请求（0 次） 结果：check 通过 
+PASS  health/live 200  (200)
+PASS  health/ready 200  (200)
+PASS  ready 不含 v3 字样
+PASS  登录 200  (200)
+PASS  拿到 csrfToken
+PASS  S1 创建 201  (201)
+PASS  S1 ETag "r1"  ("r1")
+PASS  S1 revision=1  (1)
+PASS  S1 name 去空白  (相机 QA)
+PASS  S1 brand 去空白  (富士)
+PASS  S1 id 是 UUIDv7  (7)
+PASS  S2 空白/超长 422  (422)
+PASS  S2 错误码  (VALIDATION_FAILED)
+PASS  S2 字段级 name,brand,model  (brand,model,name)
+PASS  S3 空对象 422  (422)
+PASS  S3 name+model 同报  (model,name)
+PASS  S3 失败不落行（仍 1 条）  (1)
+PASS  S4 列表 200  (200)
+PASS  S4 nextCursor=null（1 条）  (null)
+PASS  S4 顶层 {data,nextCursor}
+PASS  S4b 默认页 20 条（共 21）  (20)
+PASS  S4b 游标前缀 v1:items:active
+PASS  S4b 第二页 1 条  (1)
+PASS  S4b 第二页 nextCursor=null  (null)
+PASS  S4b 两页 21 条不重不漏  (ok)
+PASS  S5 {"brand":null} 200  (200)
+PASS  S5 brand=null（清空）  (null)
+PASS  S5 revision=2  (2)
+PASS  S6 缺失字段=保持（brand 仍 null）  (null)
+PASS  S6 variant 已更新  (限量版)
+PASS  S6 revision=3  (3)
+PASS  S7 空体 422  (422)
+PASS  S7 field=body  (body)
+PASS  S8 name:null 422  (422)
+PASS  S8 field=name  (name)
+PASS  S9 archived:null 422  (422)
+PASS  S9 field=archived  (archived)
+PASS  S10 缺 If-Match 428  (428)
+PASS  S10 过期 r1 412  (412)
+PASS  S10 details.currentRevision=3  (3)
+PASS  S10 校验失败不递增（仍 3）  (3)
+PASS  S11 并发恰一 200 一 412  (200 412 )
+PASS  S11 loser currentRevision=4  (4)
+PASS  S11 后到者未覆盖（revision=4）  (4)
+PASS  S11 胜者写入可见  (并发甲)
+PASS  S14 上传 PDF 201  (201)
+PASS  S14 返回 sha256 一致  (e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda)
+PASS  S15 绑定 201  (201)
+PASS  S15 sourceSha256=原件 sha  (e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda)
+PASS  S15 title 去空白  (X100V 说明书)
+PASS  S15 sourceUrl 原样  (http://127.0.0.1:61430/manual.pdf)
+PASS  S16 source_url 0 次外呼  (0)
+artifacts/web-mvp/t07-qa/smoke-manual-qa.sh: line 260: 90788 Terminated: 15          python3 - "$CPORT" "$WORK/count.log"  > "$WORK/listener.out" 2>&1 <<'PY'
+import socket, sys, time
+port, out = int(sys.argv[1]), sys.argv[2]
+s = socket.socket(); s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(("127.0.0.1", port)); s.listen(16); s.settimeout(0.25)
+deadline = time.time() + 25
+with open(out, "w") as f:
+    f.write("ready\n"); f.flush()
+    while time.time() < deadline:
+        try:
+            conn, addr = s.accept()
+            f.write("connection from %s\n" % (addr,)); f.flush(); conn.close()
+        except socket.timeout:
+            continue
+PY
+
+PASS  S17 跨物品资产 404  (404)
+PASS  S17 未知资产 404  (404)
+PASS  S17 两者响应逐字相同  (资产不存在或不属于该物品)
+PASS  S18 front 201  (201)
+PASS  S18 ETag "r1"  ("r1")
+PASS  S18 同视图第二张 422  (422)
+PASS  S18 reason=viewOccupied  (viewOccupied)
+PASS  S18 existingPhotoId 指认  (01a0924f-1f23-7459-8922-d1ddb7c074db)
+PASS  S18 detail 201  (201)
+PASS  S18 列表槽位序 front,detail  (front,detail)
+PASS  S18 非法视图 422  (422)
+PASS  S18 field=view  (view)
+PASS  S18 缺 view 422  (422)
+PASS  S18 field=view（缺失/非法同形态）  (view)
+PASS  S18b 缺 assetId 422（记录形态）  (422)
+INFO  S18b 缺 assetId 响应：{"error":{"code":"VALIDATION_FAILED","message":"请求体不符合接口结构：Failed to deserialize the JSON body into the target type: missing field `assetId` at line 1 column 14","details":null,"requestId":"01a0924f-1ff5-77a1-b5f2-9afc2d73abde"}}
+PASS  S19 PATCH 缺 If-Match 428  (428)
+PASS  S19 改视图 200  (200)
+PASS  S19 revision=2  (2)
+PASS  S19 过期 412  (412)
+PASS  S19 currentRevision=2  (2)
+PASS  S20 跨物品 photoId 404  (404)
+PASS  S12 归档 200  (200)
+PASS  S12 revision=5  (5)
+PASS  S12 archivedAt 就位
+PASS  S12 默认列表不含归档  (no)
+PASS  S12 archived=true 只含归档  (1 True)
+PASS  S21 归档后 documents 可读  (e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda)
+PASS  S21 归档后 photos 可读  (200)
+PASS  S21 归档后资产内容 200  (200)
+PASS  S21 资产字节一致  (e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda)
+PASS  S13 DELETE /items/{id} 405  (405)
+PASS  S13 Allow 头 = GET,HEAD,PATCH
+PASS  S13 DELETE /items 405  (405)
+PASS  S13 DELETE /items/01a0924f-1222-71b8-b062-fc427b4f6a0c/documents 405  (405)
+PASS  S13 DELETE /items/01a0924f-1222-71b8-b062-fc427b4f6a0c/photos 405  (405)
+PASS  S13 DELETE /items/01a0924f-1222-71b8-b062-fc427b4f6a0c/photos/01a0924f-1f23-7459-8922-d1ddb7c074db 405  (405)
+PASS  S13 未知删除路径 404  (404)
+PASS  S13 404 JSON 错误码  (NOT_FOUND)
+PASS  S25 并存记录 A 201  (201)
+PASS  S25 并存记录 B 201（同品牌型号不唯一）  (201)
+PASS  S25 两条 id 不同  (diff)
+PASS  S25 改 A 200  (200)
+PASS  S25 B 未被覆盖（variant 不变）  (增强版)
+PASS  S25 B revision 仍为 1  (1)
+PASS  S22 /items?limit=101 → 422  (422)
+PASS  S22 /items?limit=0 → 422  (422)
+PASS  S22 /items?cursor=bogus → 422  (422)
+PASS  S22 /items?archived=maybe → 422  (422)
+PASS  S22 /items?limit=1&limit=2 → 422  (422)
+PASS  S22 跨过滤条件复用游标 422  (422)
+PASS  S23 响应无磁盘路径  ()
+PASS  S26 无会话 /items/01993000-0000-7000-8000-000000000001/documents → 401  (401)
+PASS  S26 无会话 /items/01993000-0000-7000-8000-000000000001/photos → 401  (401)
+PASS  S26 无会话 /items/01993000-0000-7000-8000-000000000001/photos/01993000-0000-7000-8000-000000000002 → 401  (401)
+PASS  S24 停服后 check exit 0  (0)
+有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /tmp/em-t07qa-n18KwD/data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+PASS  S24 迁移 3 条  (3)
+PASS  S24 唯一索引存在  (1)
+PASS  S24 索引兜底：重复 (item,view) 被 UNIQUE 拒绝
+
+==== 汇总：PASS=111 FAIL=0 ====

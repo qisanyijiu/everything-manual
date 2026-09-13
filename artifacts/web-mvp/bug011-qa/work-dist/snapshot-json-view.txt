@@ -1,0 +1,2 @@
+usage.errorSummary=模型拒答（refusal）：下载参考 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=42630bae6e22daed…） 也失败
+needsInput=[{"code": "download_insecure_scheme", "message": "模型下载必须使用 HTTPS（实际 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=8ec676aba5d72de0…））：拒绝下载"}, {"code": "retry", "message": "下载可安全重试（task-9）"}]

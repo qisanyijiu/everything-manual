@@ -1,0 +1,17 @@
+# QA 回合 21 · T17：临时 data-dir 的 cost_ledger（provider|currency|reserved|actual|state）
+manual_ai|usd_micros|8504|NULL|reserved
+manual_ai|usd_micros|8504|NULL|reserved
+manual_ai|usd_micros|8504|NULL|reserved
+manual_ai|usd_micros|8504|NULL|reserved
+manual_ai|usd_micros|8504|NULL|reserved
+manual_ai|usd_micros|8504|NULL|reserved
+manual_ai|usd_micros|8504|NULL|reserved
+manual_ai|usd_micros|8504|NULL|reserved
+tripo|credit_minor|3000|NULL|released
+tripo|credit_minor|3000|3000|settled
+tripo|credit_minor|3000|3000|settled
+tripo|credit_minor|3000|3000|settled
+tripo|credit_minor|3000|3000|settled
+tripo|credit_minor|3000|3000|settled
+tripo|credit_minor|3000|3000|settled
+tripo|credit_minor|3000|NULL|unknown

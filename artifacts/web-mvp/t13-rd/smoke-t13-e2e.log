@@ -1,0 +1,66 @@
+== 二进制：/Users/qsyj/Code/rust/everything-manual/target/debug/everything-manual
+== 工作目录：/tmp/em-t13-smoke-O3QFHb（结束时删除）
+== 启动本机 fixture（127.0.0.1:18322；只在回环监听）
+listening on 127.0.0.1:18322
+== 价格目录（Tripo 30 credits）
+== init / serve（tripo.base_url 指向本机 fixture；下载允许域 = 127.0.0.1）
+密码来源：受限文件 ./pw.txt；明文不落盘、不进入日志与 shell history。
+"event":"provider_handlers_registered","provider":"tripo","baseUrl":"http://127.0.0.1:18322/v3","stages":"tripo_upload,tripo_submit,tripo_poll,model_download,model_validate"
+== 登录
+== 1) 物品 + 说明书 + 准备（2 页文字页）
+  item=01a093e8-7086-7680-84f5-b9dd3f544dec
+  preparation=01a093e8-711d-73ee-8ad4-d15fd6c92ba2（ready）
+== 2) 照片：front + left
+  front=01a093e8-7247-7508-8eff-130660ef64a8 left=01a093e8-725e-74ec-a8d2-ee9fa9e1d411
+== 3) estimate + confirm + 建单
+  estimate HTTP 201
+  confirm HTTP 200
+  jobs HTTP 202
+  job=01a093e8-72a2-7434-9cc1-163e6ff89d42
+== 4) 等待后台执行器跑完 下载 → 校验（fixture：链接先过期 → 重查 → 成功）
+  model_validate 状态：succeeded
+== 5) fixture 请求记录（付费提交次数、CDN 是否带 Authorization、链接刷新）
+{"method": "POST", "path": "/v3/files", "authorization": true, "note": "upload", "count": 1}
+{"method": "POST", "path": "/v3/files", "authorization": true, "note": "upload", "count": 2}
+{"method": "POST", "path": "/v3/generation/multiview-to-model", "authorization": true, "note": "paid-submit", "count": 1, "body": {"inputs": [{"front": "token-1"}, {"left": "token-2"}], "model": "v3.1-20260211", "texture": true, "pbr": true, "texture_quality": "standard", "geometry_quality": "standard", "face_limit": 100000, "quad": false, "generate_parts": false}}
+{"method": "GET", "path": "/v3/tasks/manual-task-t13-0001", "authorization": true, "note": "task-query", "count": 1, "modelUrl": "http://127.0.0.1:18322/model.glb?sign=expired-old"}
+{"method": "GET", "path": "/model.glb?sign=expired-old", "authorization": false, "note": "model-download-expired"}
+{"method": "GET", "path": "/v3/tasks/manual-task-t13-0001", "authorization": true, "note": "task-query", "count": 2, "modelUrl": "http://127.0.0.1:18322/model-v2.glb?sign=fresh-new"}
+{"method": "GET", "path": "/model-v2.glb?sign=fresh-new", "authorization": false, "note": "model-download-fresh"}
+  付费提交次数（应为 1）：1
+  CDN 请求带 Authorization 的次数（应为 0）：0
+== 6) 库内事实（下载/校验阶段、asset、不可变 revision、临时 URL 不落地）
+  阶段（T13 链）：
+    model_download   status=succeeded    result_asset=01a093e8-72de-7417-b68b-52d1aa76255d
+      sha256 = a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb  sizeBytes = 2912  linkRefreshed = True
+    model_validate   status=succeeded    result_asset=01a093e8-72de-7417-b68b-52d1aa76255d
+      validation = validated  triangles = 12  modelRevisionId = 01a093e8-72e1-7483-868e-48c4890dd01c
+      bounds = {'max': [1.0, 1.0, 1.0], 'min': [-1.0, -1.0, -1.0], 'triangles': 12, 'vertices': 24}
+    tripo_poll       status=succeeded    result_asset=None
+    tripo_submit     status=succeeded    result_asset=None
+    tripo_upload     status=succeeded    result_asset=None
+  assets（purpose=model）：
+    ('01a093e8-72de-7417-b68b-52d1aa76255d', 'a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb', '01a093e8-7086-7680-84f5-b9dd3f544dec', 'model', 'model.glb')
+  model_revisions（不可变版本）：
+    ('01a093e8-72e1-7483-868e-48c4890dd01c', 'a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb', '01a093e8-72de-7417-b68b-52d1aa76255d', 'validated', '{"max":[1.0,1.0,1.0],"min":[-1.0,-1.0,-1.0],"triangles":12,"vertices":24}', 1)
+  blobs（model/gltf-binary）：
+    ('a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb', 2912, 'model/gltf-binary')
+  provider_attempts 总数 = 1 （付费提交只应产生 1 条）
+  jobs.status = running
+  签名 URL/查询串出现在 assets/model_revisions/下载校验 usage 的次数（应为 0）： 0
+== 7) serve 日志中的 T13 事件（脱敏；不含密钥与签名 URL 查询串）
+"event":"model_download_link_expired","remoteTaskId":"manual-task-t13-0001","errorCode":"download_link_expired"
+"event":"model_download_completed","sha256":"a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb","sizeBytes":2912,"elapsedMs":5,"savedAt":"2026-09-12T04:37:59.645Z"
+"event":"model_download_saved","jobId":"01a093e8-72a2-7434-9cc1-163e6ff89d42","stageId":"01a093e8-72a3-7717-b634-ce86561722c9","assetId":"01a093e8-72de-7417-b68b-52d1aa76255d","sha256":"a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb","sizeBytes":2912,"host":"127.0.0.1"
+"event":"model_validated","jobId":"01a093e8-72a2-7434-9cc1-163e6ff89d42","stageId":"01a093e8-72a3-7717-b634-ce876762b8c7","assetId":"01a093e8-72de-7417-b68b-52d1aa76255d","modelRevisionId":"01a093e8-72e1-7483-868e-48c4890dd01c","sha256":"a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb","triangles":12,"vertices":24,"maxTextureDimension":16
+  签名串出现在日志中的次数（应为 0）：0
+== 8) 磁盘产物（blobs / tmp）
+  blob: ./data/blobs/55/556ac82f23f64d2f41b3fb3b9a171791364021aa95c0af6df9e2b5e1d88c8038
+  blob: ./data/blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+  blob: ./data/blobs/a9/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb
+  blob: ./data/blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+  blob: ./data/blobs/12/122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586
+  tmp 残留 .part 文件数（应为 0）：0
+== 9) 服务进程连接采样（lsof；只应有 127.0.0.1）
+  采样行数=      21；非 loopback 连接行数=0（应为 0）
+== 冒烟结束（全部请求目标只可能是 127.0.0.1；见 fixture.jsonl）

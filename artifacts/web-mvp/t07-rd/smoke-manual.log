@@ -1,0 +1,66 @@
+== 工作目录：/tmp/em-t07-smoke-aH3kFy（结束时删除）
+== init
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 ./pw.txt；明文不落盘、不进入日志与 shell history。
+== serve 127.0.0.1:18137
+== 登录
+csrf=524afb5f6120…（截断）
+== 1) 创建物品（201 + UUIDv7 + revision=1 + ETag）
+HTTP/1.1 201 Created
+etag: "r1"
+  201 item= 01a09248-f75d-77bc-9595-913a15d83084 revision= 1 name= 冒烟相机 brand= SmokeBrand
+  详情 GET：
+{"data": {"id": "01a09248-f75d-77bc-9595-913a15d83084", "name": "冒烟相机", "brand": "SmokeBrand", "model": "SK-100", "variant": "标准版", "revision": 1, "archivedAt": null, "createdAt": "2026-09-11T21:04:10.589Z", "updatedAt": "2026-09-11T21:04:10.589Z"}}
+== 2) 字段级 422（空白 name + 超长 model + 未知字段）
+  空白名称 → HTTP 422
+  code= VALIDATION_FAILED fields= [('name', '必填：不能为空白')]
+  超长 model → HTTP 422
+{"error": {"code": "VALIDATION_FAILED", "message": "请求内容未通过校验：请修正标出的字段后重试", "details": {"fields": [{"field": "model", "message": "长度不能超过 200 个字符（当前 201）"}]}, "requestId": "01a09248-f7e5-722c-ae71-41d662f49485"}}
+== 3) 上传资产（PDF=document、PNG/JPEG=photo）
+  PDF asset=01a09248-f81e-72b5-8160-8d31eff7e425 sha256=e18cf61a61c9f983…
+  JPEG asset=01a09248-f869-7044-a396-a040841beccf
+  PNG asset=01a09248-f899-7477-b94b-16d434b82470
+== 4) 绑定说明书（sourceUrl 指向 discard 端口，仅记录不抓取）
+  HTTP 201
+  document= 01a09248-f8bd-7286-a74d-50066b2d7322 sourceSha256= e18cf61a61c9f983 … sourceUrl= http://127.0.0.1:9/never-fetched.pdf
+== 5) 添加 front（PNG）与 detail（JPEG）照片
+  front photo=01a09248-f8e0-720d-99a5-f5ba48cb0252
+  detail photo=01a09248-f901-707d-b6a9-52eef345e0e9
+== 6) 同视图第二张 → 422 viewOccupied（不静默覆盖）
+  HTTP 422
+  reason= viewOccupied view= front existingPhotoId= 01a09248-f8e0-720d-99a5-f5ba48cb0252
+== 7) PATCH 清空 brand（显式 null = 清空，T04 遗留问题）
+  HTTP 200
+  revision= 2 brand= None （应为 None）
+== 8) 必填字段 null → 422 且不改数据；缺 If-Match → 428；过期 → 412
+  name=null（带 r2）→ HTTP 422
+{"error": {"code": "VALIDATION_FAILED", "message": "请求内容未通过校验：请修正标出的字段后重试", "details": {"fields": [{"field": "name", "message": "不能为 null（名称必填；如需停用物品请用 archived 归档）"}]}, "requestId": "01a09248-f963-7380-a78d-ca32794e0754"}}
+  缺 If-Match → HTTP 428
+  过期 r1 → HTTP 412
+  code= REVISION_CONFLICT currentRevision= 2
+== 9) 归档（r2 → r3）
+  HTTP 200
+  revision= 3 archivedAt= 2026-09-11T21:04:11.184Z
+== 10) 归档后列表：默认不出现、archived=true 出现
+  默认列表 ids= [] nextCursor= None
+  归档列表 ids= ['01a09248-f75d-77bc-9595-913a15d83084']
+== 11) 归档后引用仍完整可读（document/photo/资产内容）
+  GET item → HTTP 200
+  GET documents → HTTP 200
+  GET photos → HTTP 200
+  GET asset content → HTTP 200 bytes=1216
+  documents= [('01a09248', 'e18cf61a')]
+  photos= [('front', '01a09248'), ('detail', '01a09248')]
+== 12) 无永久删除（DELETE → 405）与未知删除路径（404）
+  DELETE /items/{id} → HTTP 405
+  DELETE /items/{id}/permanent → HTTP 404
+== 13) 服务端日志（关键事件，无请求体/密钥）
+  26 "message":"http_request"
+   3 "message":"资产已保存"
+   2 "message":"物品已更新"
+   2 "message":"视图照片已添加"
+   2 "message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读"
+   1 "message":"资产残留扫描完成（隔离只移动不删除）"
+   1 "message":"物品已创建"
+   1 "message":"说明书原件已绑定"
+== 冒烟结束（临时目录将在退出时删除）

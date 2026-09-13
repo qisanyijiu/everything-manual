@@ -1,0 +1,29 @@
+=== 2 缺 --out（backup）: exit=2
+
+For more information, try '--help'.
+
+=== 2 未知子命令: exit=2
+
+For more information, try '--help'.
+
+=== 2 restore 缺 --from: exit=2
+
+For more information, try '--help'.
+
+=== 3 未知配置键: exit=3
+  | ^^^^^^^^^
+unknown field `bogus_key`, expected one of `data_dir`, `listen`, `public_origin`, `price_catalog_path`, `tls`, `trusted_proxy_cidrs`, `providers`, `limits`, `concurrency`, `jobs`, `session`, `download`
+
+=== 6 非 loopback 无 TLS: exit=6
+错误：拒绝启动：监听地址 0.0.0.0:18084 不是 loopback，且未配置 tls.cert_file/key_file 或 trusted_proxy_cidrs（可信反向代理）；公网/局域网部署必须使用 TLS 或明确的可信代理模式
+
+=== 1 I/O 失败（--out 父路径不可创建）: exit=1
+错误：创建备份目录失败 /dev/null/backup-x：Not a directory (os error 20)
+
+=== 4 源 data-dir 不存在: exit=4
+错误：data-dir 不存在：/tmp/em-t20-qa/no-such-data；请先运行 everything-manual init --data-dir /tmp/em-t20-qa/no-such-data
+
+=== 4 未知配置键下的 check（对照）: exit=3
+  | ^^^^^^^^^
+unknown field `bogus_key`, expected one of `data_dir`, `listen`, `public_origin`, `price_catalog_path`, `tls`, `trusted_proxy_cidrs`, `providers`, `limits`, `concurrency`, `jobs`, `session`, `download`
+

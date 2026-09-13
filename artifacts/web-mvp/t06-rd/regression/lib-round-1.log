@@ -1,0 +1,100 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.42s
+     Running unittests src/lib.rs (target/debug/deps/everything_manual-51b408f288407587)
+
+running 89 tests
+test assets::blob_store::tests::space_probe_fixed_is_deterministic ... ok
+test assets::maintenance::tests::scan_report_emptiness ... ok
+test assets::blob_store::tests::blob_path_is_derived_from_hash_only ... ok
+test assets::blob_store::tests::statvfs_reports_some_space_for_temp_dir ... ok
+test assets::pdf::tests::last_integer_after_uses_last_startxref ... ok
+test assets::pdf::tests::find_integer_reads_count ... ok
+test assets::pdf::tests::find_ref_requires_full_token_and_reference_shape ... ok
+test assets::maintenance::tests::sha256_shape_predicate ... ok
+test assets::pdf::tests::object_header_is_recognised ... ok
+test assets::range::tests::range_length_is_inclusive ... ok
+test assets::pdf::tests::count_refs_counts_array_entries ... ok
+test assets::blob_store::tests::insufficient_space_message_mentions_both_numbers ... ok
+test assets::range::tests::multi_range_and_broken_syntax_fall_back_to_full ... ok
+test assets::range::tests::single_range_forms_are_satisfiable ... ok
+test assets::range::tests::unsatisfiable_ranges_are_reported ... ok
+test assets::range::tests::conditional_headers_compare_strong_etags ... ok
+test assets::upload::tests::purpose_wire_values_are_camel_case ... ok
+test assets::validate::tests::crc32_matches_known_value ... ok
+test assets::upload::tests::original_name_never_keeps_path_components ... ok
+test assets::validate::tests::purpose_limits_follow_the_purpose ... ok
+test assets::validate::tests::pixel_budget_is_enforced_with_details ... ok
+test assets::pdf::tests::probe_rejects_non_pdf_bytes ... ok
+test assets::validate::tests::photo_purpose_rejects_unknown_magic ... ok
+test config::cli::tests::missing_required_backup_out_fails ... ok
+test assets::validate::tests::non_pdf_for_document_purpose_is_unsupported_type ... ok
+test config::cli::tests::password_is_never_a_command_line_option ... ok
+test config::cli::tests::bad_listen_value_is_reported ... ok
+test config::cli::tests::unknown_subcommand_is_a_usage_error ... ok
+test config::datadir::tests::verify_reports_missing_structure ... ok
+test config::error::tests::exit_codes_are_stable_contract_values ... ok
+test assets::validate::tests::text_purpose_rejects_invalid_utf8 ... ok
+test config::commands::tests::backup_and_restore_report_not_implemented ... ok
+test config::cli::tests::dispatches_all_subcommands ... ok
+test config::error::tests::helpers_set_expected_codes ... ok
+test config::commands::tests::unknown_subcommand_maps_to_usage_error ... ok
+test config::commands::tests::help_exits_zero_without_error ... ok
+test config::file::tests::malformed_toml_is_reported_with_source ... ok
+test config::logging::tests::log_file_path_is_under_data_dir ... ok
+test config::logging::tests::level_from_env_defaults_to_info ... ok
+test config::datadir::tests::ensures_and_verifies_layout ... ok
+test config::file::tests::example_config_file_matches_schema ... ok
+test config::password::tests::validation_boundaries ... ok
+test config::secret::tests::expose_and_char_count_are_explicit ... ok
+test config::file::tests::parses_minimal_and_full_config ... ok
+test config::password::tests::rejects_world_readable_file ... ok
+test config::file::tests::unknown_keys_are_errors_at_every_level ... ok
+test config::secret::tests::redact_text_replaces_known_secrets_only ... ok
+test config::password::tests::accepts_restricted_file_and_trims_trailing_newline ... ok
+test config::secret::tests::redact_url_query_strips_query_and_fragment ... ok
+test config::secret::tests::secret_debug_never_prints_plaintext ... ok
+test config::tests::origin_like_validation ... ok
+test config::tests::provider_status_reports_missing_without_secret ... ok
+test config::datadir::tests::lock_excludes_second_holder_in_process ... ok
+test config::tests::cidr_parse_and_contains ... ok
+test config::tests::settings_debug_does_not_leak_api_key ... ok
+test config::password::tests::rejects_missing_empty_and_short_passwords ... ok
+test http::auth::password::tests::broken_stored_hash_is_an_error_not_a_match ... ok
+test http::auth::limiter::tests::blocks_after_limit_within_window_and_recovers_after_it ... ok
+test http::auth::limiter::tests::success_clears_failures_and_ips_are_isolated ... ok
+test http::auth::limiter::tests::window_restarts_after_expiry_and_zero_limits_are_clamped ... ok
+test http::auth::tests::cookie_parsing_matches_exact_name_only ... ok
+test http::auth::tests::csrf_check_requires_matching_header ... ok
+test http::auth::tests::origin_allowed_uses_public_origin_or_same_host ... ok
+test http::auth::tests::origin_missing_passes_but_bad_origin_fails ... ok
+test http::auth::tests::client_ip_resolution_ignores_untrusted_forwarded_headers ... ok
+test http::auth::tests::tls_config_alone_marks_cookies_secure ... ok
+test http::auth::tests::session_cookie_attributes_include_secure_only_when_requested ... ok
+test http::auth::tokens::tests::constant_time_equality_behaves_like_equality ... ok
+test http::auth::tokens::tests::hashes_are_sha256_hex_and_stable ... ok
+test http::auth::tokens::tests::session_tokens_are_unique_hex_of_expected_length ... ok
+test http::auth::tokens::tests::csrf_is_derived_from_session_token_and_hashed_separately ... ok
+test http::auth::limiter::tests::millisecond_window_is_deterministic_with_injected_clock ... ok
+test http::error::tests::render_uses_supplied_request_id_and_extra_headers ... ok
+test http::error::tests::not_found_response_uses_contract_error_shape ... ok
+test http::error::tests::conflict_error_exposes_current_revision_only_in_details ... ok
+test http::precondition::tests::accepts_quoted_and_bare_revisions ... ok
+test http::precondition::tests::etag_format_matches_contract ... ok
+test http::precondition::tests::missing_header_is_precondition_required_428 ... ok
+test http::precondition::tests::wildcard_weak_list_and_garbage_are_rejected_422 ... ok
+test storage::error::tests::conflict_message_carries_current_revision ... ok
+test storage::error::tests::schema_too_new_message_is_readable_and_actionable ... ok
+test storage::migrations::tests::embedded_migrations_are_ordered_and_versioned ... ok
+test http::openapi::tests::openapi_declares_auth_settings_and_items_routes ... ok
+test http::openapi::tests::openapi_is_3_1_and_declares_health_paths ... ok
+test http::openapi::tests::openapi_declares_asset_upload_and_content_routes ... ok
+test http::openapi::tests::openapi_error_responses_use_contract_shape ... ok
+test http::openapi::tests::openapi_export_is_deterministic ... ok
+test http::auth::password::tests::salt_is_random_per_hash ... ok
+test http::auth::password::tests::hash_is_argon2id_phc_and_verifies ... ok
+
+test result: ok. 89 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+

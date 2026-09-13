@@ -1,0 +1,314 @@
+{
+  "1024": {
+    "row": {
+      "x": 24,
+      "width": 976,
+      "height": 255.34375
+    },
+    "identity": {
+      "x": 36,
+      "width": 34.375,
+      "height": 230.34375
+    },
+    "name": {
+      "x": 36,
+      "width": 32,
+      "height": 94.78125
+    },
+    "status": {
+      "x": 82.375,
+      "width": 31.609375,
+      "height": 94.84375
+    },
+    "time": {
+      "x": 125.984375,
+      "width": 45.5625,
+      "height": 97.25
+    },
+    "actions": {
+      "x": 183.546875,
+      "width": 804.453125,
+      "height": 43.59375
+    },
+    "note": {
+      "x": 483.546875,
+      "width": 504.453125,
+      "height": 15
+    },
+    "styles": {
+      "gridTemplateColumns": "34.375px 31.6094px 45.5625px 804.453px",
+      "identity": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "actions": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "note": {
+        "display": "inline",
+        "flexBasis": "100%"
+      }
+    }
+  },
+  "1280": {
+    "row": {
+      "x": 24,
+      "width": 840,
+      "height": 357.71875
+    },
+    "identity": {
+      "x": 36,
+      "width": 0,
+      "height": 332.71875
+    },
+    "name": {
+      "x": 36,
+      "width": 22.765625,
+      "height": 145.96875
+    },
+    "status": {
+      "x": 48,
+      "width": 31.609375,
+      "height": 94.84375
+    },
+    "time": {
+      "x": 91.609375,
+      "width": 45.5625,
+      "height": 97.25
+    },
+    "actions": {
+      "x": 149.171875,
+      "width": 702.828125,
+      "height": 69.1875
+    },
+    "note": {
+      "x": 149.171875,
+      "width": 702.0625,
+      "height": 49.59375
+    },
+    "styles": {
+      "gridTemplateColumns": "",
+      "identity": {
+        "display": "",
+        "flexBasis": ""
+      },
+      "actions": {
+        "display": "",
+        "flexBasis": ""
+      },
+      "note": {
+        "display": "",
+        "flexBasis": ""
+      }
+    }
+  },
+  "1366": {
+    "row": {
+      "x": 24,
+      "width": 926,
+      "height": 357.71875
+    },
+    "identity": {
+      "x": 36,
+      "width": 0,
+      "height": 332.71875
+    },
+    "name": {
+      "x": 36,
+      "width": 22.765625,
+      "height": 145.96875
+    },
+    "status": {
+      "x": 48,
+      "width": 31.609375,
+      "height": 94.84375
+    },
+    "time": {
+      "x": 91.609375,
+      "width": 45.5625,
+      "height": 97.25
+    },
+    "actions": {
+      "x": 149.171875,
+      "width": 788.828125,
+      "height": 69.1875
+    },
+    "note": {
+      "x": 149.171875,
+      "width": 778.859375,
+      "height": 49.59375
+    },
+    "styles": {
+      "gridTemplateColumns": "0px 31.6094px 45.5625px 788.828px",
+      "identity": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "actions": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "note": {
+        "display": "inline",
+        "flexBasis": "100%"
+      }
+    }
+  },
+  "1440": {
+    "row": {
+      "x": 24,
+      "width": 1000,
+      "height": 178.5625
+    },
+    "identity": {
+      "x": 36,
+      "width": 58.375,
+      "height": 153.5625
+    },
+    "name": {
+      "x": 36,
+      "width": 48,
+      "height": 69.1875
+    },
+    "status": {
+      "x": 106.375,
+      "width": 31.609375,
+      "height": 94.84375
+    },
+    "time": {
+      "x": 149.984375,
+      "width": 45.5625,
+      "height": 97.25
+    },
+    "actions": {
+      "x": 207.546875,
+      "width": 804.453125,
+      "height": 43.59375
+    },
+    "note": {
+      "x": 507.546875,
+      "width": 504.453125,
+      "height": 15
+    },
+    "styles": {
+      "gridTemplateColumns": "58.375px 31.6094px 45.5625px 804.453px",
+      "identity": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "actions": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "note": {
+        "display": "inline",
+        "flexBasis": "100%"
+      }
+    }
+  },
+  "1600": {
+    "row": {
+      "x": 24,
+      "width": 1076,
+      "height": 127.375
+    },
+    "identity": {
+      "x": 36,
+      "width": 105.765625,
+      "height": 102.375
+    },
+    "name": {
+      "x": 36,
+      "width": 90.703125,
+      "height": 43.59375
+    },
+    "status": {
+      "x": 153.765625,
+      "width": 52.890625,
+      "height": 73.09375
+    },
+    "time": {
+      "x": 218.65625,
+      "width": 52.890625,
+      "height": 97.25
+    },
+    "actions": {
+      "x": 283.546875,
+      "width": 804.453125,
+      "height": 43.59375
+    },
+    "note": {
+      "x": 583.546875,
+      "width": 504.453125,
+      "height": 15
+    },
+    "styles": {
+      "gridTemplateColumns": "105.766px 52.8906px 52.8906px 804.453px",
+      "identity": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "actions": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "note": {
+        "display": "inline",
+        "flexBasis": "100%"
+      }
+    }
+  },
+  "1920": {
+    "row": {
+      "x": 24,
+      "width": 1076,
+      "height": 127.375
+    },
+    "identity": {
+      "x": 36,
+      "width": 105.765625,
+      "height": 102.375
+    },
+    "name": {
+      "x": 36,
+      "width": 90.703125,
+      "height": 43.59375
+    },
+    "status": {
+      "x": 153.765625,
+      "width": 52.890625,
+      "height": 73.09375
+    },
+    "time": {
+      "x": 218.65625,
+      "width": 52.890625,
+      "height": 97.25
+    },
+    "actions": {
+      "x": 283.546875,
+      "width": 804.453125,
+      "height": 43.59375
+    },
+    "note": {
+      "x": 583.546875,
+      "width": 504.453125,
+      "height": 15
+    },
+    "styles": {
+      "gridTemplateColumns": "105.766px 52.8906px 52.8906px 804.453px",
+      "identity": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "actions": {
+        "display": "block",
+        "flexBasis": "auto"
+      },
+      "note": {
+        "display": "inline",
+        "flexBasis": "100%"
+      }
+    }
+  }
+}

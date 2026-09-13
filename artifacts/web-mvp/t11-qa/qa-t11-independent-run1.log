@@ -1,0 +1,44 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/qa_t11_independent.rs (target/debug/deps/qa_t11_independent-cf73e901cecbc975)
+
+running 12 tests
+test qa_ac032_expired_quote_and_input_change_are_rejected_without_jobs ... ok
+test qa_ac031_interrupted_transaction_leaves_no_partial_state ... ok
+test qa_ac028_quote_math_expiry_and_no_cost_records ... ok
+test qa_ac030_unconfirmed_rejected_and_confirmation_audited_once ... FAILED
+test qa_ac031_twenty_replays_conflict_and_key_scope ... ok
+test qa_ac031_concurrent_same_key_and_same_quote_race ... ok
+test qa_card_cross_item_references_and_auth_boundaries ... ok
+test qa_card_snapshot_frozen_hashes_match_content_and_no_secrets ... ok
+test qa_ac032_price_version_budget_and_frontend_fees ... ok
+test qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split ... FAILED
+test qa_ac029_provider_missing_and_unsupported_preset ... ok
+test qa_ac029_missing_price_catalog_and_precondition_gaps ... ok
+
+failures:
+
+---- qa_ac030_unconfirmed_rejected_and_confirmation_audited_once stdout ----
+
+thread 'qa_ac030_unconfirmed_rejected_and_confirmation_audited_once' (12467054) panicked at crates/server/tests/qa_t11_independent.rs:968:5:
+assertion `left == right` failed
+  left: Null
+ right: String("2026-09-12T02:25:40.938Z")
+
+---- qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split stdout ----
+
+thread 'qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split' (12467112) panicked at crates/server/tests/qa_t11_independent.rs:1829:5:
+assertion `left == right` failed
+  left: 202
+ right: 422
+
+
+failures:
+    qa_ac030_unconfirmed_rejected_and_confirmation_audited_once
+    qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split
+
+test result: FAILED. 10 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.09s
+
+error: test failed, to rerun pass `-p everything-manual --test qa_t11_independent`

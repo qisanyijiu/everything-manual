@@ -1,0 +1,6 @@
+{"timestamp":"2026-09-12T17:21:05.648914Z","level":"INFO","fields":{"message":"恢复完成","event":"restore_cli_completed","from":"/Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t20-rd/sample-backup","dataDir":"/tmp/em-t20-qa/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+恢复完成：/tmp/em-t20-qa/data
+  来源备份：/Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t20-rd/sample-backup（schema v7；快照 sha256 c75ad3366c6f7233e2c2f327c3688ba49d2cb41ef92de10e77a40e99a29d7237）
+  校验通过：manifest、快照与全部 blob 的 sha256、外键与引用；恢复 blob 11 个
+  数据规模：items 1、assets 14、releases 1、blobs 11
+  下一步：everything-manual serve --data-dir /tmp/em-t20-qa/data（schema 旧于程序时启动会自动迁移；升级前请再次备份，程序回滚不等于数据库回滚）

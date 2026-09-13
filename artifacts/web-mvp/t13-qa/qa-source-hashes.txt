@@ -1,0 +1,4 @@
+e4e0a01f25a49d7712346f6e0a77ac73326e4e2b77a933b9790b73108d31c022  crates/server/tests/qa_t13_independent.rs
+e2ba61e73814d8183021263d75031063f857fa459458e9d8c91f7c7396d2d11e  artifacts/web-mvp/t13-qa/qa-t13-release-gate.py
+1bbc694c7630a537f17cee6e8395fa71bae3e24c75739fa0b1cebc3c69bece39  llmdoc/requirements/web-mvp/qa-report.md
+19cbb8570e3fcebb0fd71d790a07c525cd3d14a63143ce97a918d628aa75ae63  llmdoc/decisions.md

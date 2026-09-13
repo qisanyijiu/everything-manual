@@ -1,0 +1,18 @@
+QA provider/key config edge cases — 2026-09-12 02:20:57 CST (binary: /Users/qsyj/Code/rust/everything-manual/target/debug/everything-manual)
+--- both api_key_env and api_key_file ---
+exit=3
+错误：providers.tripo 的 api_key_env 与 api_key_file 只能设置一个
+--- api_key_file 0644 ---
+exit=3
+错误：providers.tripo.api_key_file 不可用：密钥文件权限过宽（644）：/tmp/em-qa-t02-run3-rLysek/key.location；请执行 chmod 600 /tmp/em-qa-t02-run3-rLysek/key.location 后重试
+--- price_catalog_path missing ---
+exit=3
+错误：price_catalog_path 指向的文件不存在：/tmp/em-qa-t02-run3-rLysek/nope.toml
+--- api_key_file 0600 accepted (key content must not leak) ---
+exit=0
+  providers.tripo = 已配置（密钥来源：受限文件 /tmp/em-qa-t02-run3-rLysek/key.location）
+结果：check 通过
+canary 'secretkey' occurrences in output: 0
+--- half TLS pair ---
+exit=3
+错误：tls.cert_file 与 tls.key_file 必须成对配置

@@ -1,0 +1,35 @@
+== 工作目录：/tmp/em-t10-demo-28826
+== 二进制：/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual（sha256 c7832470b7b5c5d288b9c812c69477844a19b26ab59ea32b47a08656daf92f43）
+
+== [1] init
+  - 已创建：/tmp/em-t10-demo-28826/data/lock
+数据库：已创建并迁移（/tmp/em-t10-demo-28826/data/manual.sqlite3，schema v5；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /tmp/em-t10-demo-28826/pw.txt；明文不落盘、不进入日志与 shell history。
+
+== [2] 写入 job 与阶段（T11 之前没有建单 API，这里用 SQL 直接入队）
+阶段入队：stage-batch status=queued epoch=0
+阶段入队：stage-freeze status=succeeded epoch=0
+
+== [3] 起 serve（真实 release 二进制，监听 127.0.0.1:0）
+"event":"job_executor_start","owner":"28843:01a09326-fa9d-76b6-8fa5-fee04dbdc366","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2
+"event":"job_executor_no_handlers"
+领取后延后：stage-batch status=queued attempt_count=0 lease_epoch=1 last_error=阶段处理器未注册（T12/T14/T15 接入前不执行）
+attempt 数：0
+
+== [4] kill -9（SIGKILL，无优雅退出）PID=28843
+进程状态：已终止
+
+== [5] 造出付费提交结果未知现场（running + 租约过期 + attempt=submitting）
+重启前：stage-batch status=running lease_epoch=2
+
+== [6] 重启 serve（同一 data-dir）
+"event":"job_recovery","owner":"28864:01a09327-0ab6-72df-a5f4-5d0be02738c6","detail":"scanned=1 recovered=1 skipped=0 requeued=0 succeeded=0 unknown=1 needsInput=0 cancelled=0"
+"event":"job_recovery_applied","stageId":"stage-batch","jobId":"job-demo","stageKind":"manual_extract","action":"submission_unknown","detail":"已发出同步请求但没有持久化完整响应：该批进入 submission_unknown，response_id 不假定可轮询，只能由管理员对账"
+重启后：stage-batch status=submission_unknown last_error=已发出同步请求但没有持久化完整响应：该批进入 submission_unknow
+attempt：attempt-demo submit_state=unknown remote_task_id=(空)
+job 数：1
+attempt 数：1
+
+== [7] 收尾：结束本脚本启动的进程
+== 完成（data-dir 保留在 /tmp/em-t10-demo-28826 供人工检查）

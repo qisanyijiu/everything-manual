@@ -1,0 +1,72 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test
+
+(node:82118) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m125[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T08:25:09.667333Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a094b8-6d22-7410-a643-637d7b9c2233","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 34 tests using 1 worker
+
+(node:82181) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓   1 [chromium] › tests/e2e/import-flow.spec.ts:85:3 › 资料库与新建向导（T16） › 正常向导：建物品 → PDF → 照片 → 准备 → 报价 → 确认 → 生成进入等待 (3.8s)
+  ✓   2 [chromium] › tests/e2e/import-flow.spec.ts:213:3 › 资料库与新建向导（T16） › 缺 front：生成入口禁用并说明缺项 (1.4s)
+  ✓   3 [chromium] › tests/e2e/import-flow.spec.ts:238:3 › 资料库与新建向导（T16） › 上传失败重试：超限文件 + 注入一次失败后重试成功 (5.6s)
+  ✓   4 [chromium] › tests/e2e/import-flow.spec.ts:294:3 › 资料库与新建向导（T16） › 预算变动：低于上界被禁用；报价过期后重新获取报价（不自动重报） (1.8s)
+  ✓   5 [chromium] › tests/e2e/import-flow.spec.ts:357:3 › 资料库与新建向导（T16） › 返回上一步与刷新：只改 URL，不丢服务端已保存的资料 (1.7s)
+  ✓   6 [chromium] › tests/e2e/import-flow.spec.ts:398:3 › 资料库与新建向导（T16） › 窄屏（<768px）键盘：Tab/Enter 完成第 1 步，抽屉焦点陷阱与 Esc (1.1s)
+  ✓   7 [chromium] › tests/e2e/pdf-preparation.spec.ts:86:3 › PDF 准备与续传（T09） › 文字 PDF：逐页准备（1-based 页号）、JPEG 页图、封存 ready (2.1s)
+  ✓   8 [chromium] › tests/e2e/pdf-preparation.spec.ts:158:3 › PDF 准备与续传（T09） › 断线续传：重新进入只补缺页，不重传已完成页 (3.6s)
+  ✓   9 [chromium] › tests/e2e/pdf-preparation.spec.ts:214:3 › PDF 准备与续传（T09） › 扫描 PDF：没有文字层时按页图上传 (1.9s)
+  ✓  10 [chromium] › tests/e2e/pdf-preparation.spec.ts:244:3 › PDF 准备与续传（T09） › 旋转页：viewport 记录旋转角与旋转后尺寸 (1.9s)
+  ✓  11 [chromium] › tests/e2e/pdf-preparation.spec.ts:281:3 › PDF 准备与续传（T09） › 非拉丁字体页：CJK 文字提取正确且 CMap 从本地加载 (1.8s)
+  ✓  12 [chromium] › tests/e2e/pdf-preparation.spec.ts:318:3 › PDF 准备与续传（T09） › 加密 PDF：明确拒绝且不创建任何准备/页记录 (2.2s)
+  ✓  13 [chromium] › tests/e2e/pdf-preparation.spec.ts:350:3 › PDF 准备与续传（T09） › 101 页 PDF：明确拒绝并说明实际页数 (2.2s)
+  ✓  14 [chromium] › tests/e2e/pdf-preparation.spec.ts:368:3 › PDF 准备与续传（T09） › 断外网仍可完成准备：worker/CMaps/字体全部本地加载，零外部请求 (2.0s)
+  ✓  15 [chromium] › tests/e2e/pdf-preparation.spec.ts:412:3 › PDF 准备与续传（T09） › 逐页进度、可取消、离开确认与单 canvas 约束 (7.4s)
+  ✓  16 [chromium] › tests/e2e/pdf-preparation.spec.ts:475:3 › BUG-001-r8 回归：通知条不遮挡顶栏指针操作 › 通知条出现期间顶栏入口可点击（宽屏 + 窄屏） (1.4s)
+  ✓  17 [chromium] › tests/e2e/qa-t09-independent.spec.ts:193:1 › 续传：关闭标签页后用新标签页继续，只补缺失页且不替换已完成页资产 (3.5s)
+  ✓  18 [chromium] › tests/e2e/qa-t09-independent.spec.ts:286:1 › 离线：阻断非本机请求仍完成准备；worker/CMaps/字体/WASM/ICC 均本机可用 (2.0s)
+BUG-002 命中样本：[{"width":1280,"firstFrame":{"tag":"A","linkText":"资料库","topBarBottom":63,"noticeTop":63,"noticesTopVar":"63px"},"settled":{"tag":"A","linkText":"资料库","topBarBottom":63,"noticeTop":63,"noticesTopVar":"63px"}},{"width":390,"firstFrame":{"tag":"DIV","linkText":null,"topBarBottom":138,"noticeTop":104,"noticesTopVar":"104px"},"settled":{"tag":"A","linkText":"资料库","topBarBottom":138,"noticeTop":138,"noticesTopVar":"138px"}}]
+  ✓  19 [chromium] › tests/e2e/qa-t09-independent.spec.ts:381:1 › BUG-002 复验：通知可见时顶栏指针/键盘可用（1280/390；并记录定位轮询窗口） (1.9s)
+  ✓  20 [chromium] › tests/e2e/qa-t09-independent.spec.ts:502:1 › 逐页进度（第 n / N 页）、单 canvas、beforeunload 与取消停止上传 (3.4s)
+  ✓  21 [chromium] › tests/e2e/qa-t09-independent.spec.ts:566:1 › 加密与 101 页 PDF：明确拒绝、零 preparation 请求、SQLite 各表零新增 (3.9s)
+  ✓  22 [chromium] › tests/e2e/qa-t09-independent.spec.ts:622:1 › 页图上报 viewport 与实际 JPEG 像素一致（旋转页 /Rotate 90）且四角为白色 (2.0s)
+  ✓  23 [chromium] › tests/e2e/qa-t16-independent.spec.ts:197:3 › T16 独立验收（QA 回合 18） › QA-1 资料库三态与行内禁用入口；新建表单无物品级来源链接（AC-026） (4.2s)
+  ✓  24 [chromium] › tests/e2e/qa-t16-independent.spec.ts:316:3 › T16 独立验收（QA 回合 18） › QA-2 第 2/3/5 步刷新不丢资料、URL 即步骤、零重复上传（AC-026 / REQ-016） (2.8s)
+  ✓  25 [chromium] › tests/e2e/qa-t16-independent.spec.ts:383:3 › T16 独立验收（QA 回合 18） › QA-3 确认页逐项告知、默认不勾选、未确认提交被拒（AC-030 / UI-024） (1.7s)
+  ✓  26 [chromium] › tests/e2e/qa-t16-independent.spec.ts:477:3 › T16 独立验收（QA 回合 18） › QA-4 失败重试复用幂等键，服务端只产生一个 job（AC-026 / UI-020） (3.0s)
+  ✓  27 [chromium] › tests/e2e/qa-t16-independent.spec.ts:604:3 › T16 独立验收（QA 回合 18） › QA-5 受理后不判断远端成功、无自动发布入口、无禁用措辞、准备进度非百分比（AC-048 / §6.3.2） (3.5s)
+  ✓  28 [chromium] › tests/e2e/qa-t16-independent.spec.ts:693:3 › T16 独立验收（QA 回合 18） › QA-6 同视图占用 422 的可行动文案 + 缺项提示（UI-012/UI-013） (1.6s)
+  ✓  29 [chromium] › tests/e2e/qa-t16-independent.spec.ts:726:3 › T16 独立验收（QA 回合 18） › QA-7 缺侧面视图：生成禁用、缺项常驻、不提前请求报价（AC-026 / UI-013） (1.5s)
+  ✓  30 [chromium] › tests/e2e/qa-t16-independent.spec.ts:765:3 › T16 独立验收（QA 回合 18） › QA-11 无准备指针：如实显示缺项、不伪造状态、不请求报价（REQ-016 诚实性） (1.5s)
+  ✓  31 [chromium] › tests/e2e/qa-t16-independent.spec.ts:801:3 › T16 独立验收（QA 回合 18） › QA-8 第 2/5 步失败态可行动（重试后恢复）（AC-026 / UI-019/026） (1.9s)
+  ✓  32 [chromium] › tests/e2e/qa-t16-independent.spec.ts:870:3 › T16 独立验收（QA 回合 18） › QA-9 窄屏抽屉与桌面并排：同一 URL 切换无需刷新（AC-060 前端侧 / UI-062） (1.6s)
+  ✓  33 [chromium] › tests/e2e/qa-t16-independent.spec.ts:923:3 › T16 独立验收（QA 回合 18） › QA-12 磁盘满 413（insufficientStorage）文案：所需/可用字节 + 清理提示（UI-009） (1.2s)
+  -  34 [chromium] › tests/e2e/qa-t16-independent.spec.ts:974:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫）
+
+  1 skipped
+  33 passed (1.4m)

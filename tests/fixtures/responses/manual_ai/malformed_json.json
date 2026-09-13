@@ -1,0 +1,28 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文）：OpenAI Responses 形态的脱敏示例；output[0].content[0].text 内是 manual_extract_v1 的 strict JSON 字符串（T14 schema 以 crates/core/src/knowledge.rs 为准）",
+  "id": "resp_fixture_malformed_0001",
+  "object": "response",
+  "created_at": 1757635200,
+  "status": "completed",
+  "model": "manual-ai-fixture-model",
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_fixture_0001",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "text": "这不是 JSON：说明书第 1 页提到先断电再拆后盖。"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 1234,
+    "output_tokens": 321,
+    "total_tokens": 1555
+  }
+}

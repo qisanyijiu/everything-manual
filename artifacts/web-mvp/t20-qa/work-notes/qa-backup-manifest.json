@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "manual_backup_v1",
+  "createdAtMillis": 1789233689064,
+  "programVersion": "0.1.0",
+  "database": {
+    "path": "database/manual.sqlite3",
+    "sha256": "7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012",
+    "size": 360448,
+    "schemaVersion": 7,
+    "sessionsRemoved": true,
+    "sessionsRemovedCount": 1
+  },
+  "blobs": [
+    {
+      "path": "blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890",
+      "sha256": "0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890",
+      "size": 12420
+    },
+    {
+      "path": "blobs/12/122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586",
+      "sha256": "122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586",
+      "size": 174
+    },
+    {
+      "path": "blobs/60/6040550076320303894e351b83bb7844d84ea5431ae7a209947026accd79c79b",
+      "sha256": "6040550076320303894e351b83bb7844d84ea5431ae7a209947026accd79c79b",
+      "size": 39
+    },
+    {
+      "path": "blobs/74/74b3edaa5bcc408629228edf8365bd691844025c8135c50cc4892bc1acdbb20b",
+      "sha256": "74b3edaa5bcc408629228edf8365bd691844025c8135c50cc4892bc1acdbb20b",
+      "size": 1815
+    },
+    {
+      "path": "blobs/97/972f6c241a5c0bfcec4af02a660218f9cd0689d77840fe5cf49a8ffe97edd010",
+      "sha256": "972f6c241a5c0bfcec4af02a660218f9cd0689d77840fe5cf49a8ffe97edd010",
+      "size": 39
+    },
+    {
+      "path": "blobs/a9/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+      "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+      "size": 2912
+    },
+    {
+      "path": "blobs/c0/c017464ac0b990e826e3d2c527aeac4b351a169a09b10a4f84fb07959f19e4f1",
+      "sha256": "c017464ac0b990e826e3d2c527aeac4b351a169a09b10a4f84fb07959f19e4f1",
+      "size": 1962
+    },
+    {
+      "path": "blobs/c2/c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465",
+      "sha256": "c2ec7def5b84a2bdad698be1bab9c14f0332255779d6a03c00a9c266b3d12465",
+      "size": 5181
+    },
+    {
+      "path": "blobs/da/daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf",
+      "sha256": "daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf",
+      "size": 39
+    },
+    {
+      "path": "blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda",
+      "sha256": "e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda",
+      "size": 1216
+    },
+    {
+      "path": "blobs/e6/e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69",
+      "sha256": "e694fab5444078cb515dd1ac67844a7a6599422116fde2f1e31e984bfc33ea69",
+      "size": 2030
+    }
+  ],
+  "missingBlobs": [],
+  "counts": {
+    "items": 2,
+    "assets": 14,
+    "releases": 1,
+    "blobs": 11
+  },
+  "notes": [
+    "本备份由 everything-manual backup 在服务停止并取得 data-dir 排他锁后生成",
+    "快照为 VACUUM INTO 产生的事务一致副本（含 WAL 中已提交事务），不是主文件的字节复制",
+    "备份不包含会话（恢复后必须重新登录）；管理员口令哈希保留，用于恢复后登录",
+    "SHA256SUMS 可用标准工具校验整个备份：shasum -a 256 -c SHA256SUMS（在备份目录内执行）",
+    "恢复要求目标目录不存在或为空：everything-manual restore --from <本目录> --data-dir <新目录>",
+    "升级前请先备份；程序回滚不等于数据库回滚（回滚程序不能读取比它新的 schema）"
+  ]
+}

@@ -1,0 +1,15 @@
+date: 2026-09-12 02:19:30 CST
+root: /tmp/em-qa-t02-run3-rLysek
+init exit=0
+---- [port-busy] exit=1 expected=1
+stdout: 
+stderr: 错误：无法监听 127.0.0.1:18555：Address already in use (os error 48)（端口可能已被占用）
+serve3 exit=0
+canary key in log? 0
+canary query in log? 0
+canary key in stdout? 0
+request log sample:
+{"timestamp":"2026-09-11T18:19:30.602473Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091b2-35aa-7051-8427-b0268cd95547","method":"GET","path":"/api/v1/health/live","status":200,"errorCode":"-","durationMs":0.031875},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T18:19:30.611554Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091b2-35b3-70b3-ac2c-47ea64f22664","method":"GET","path":"/api/unknown","status":404,"errorCode":"NOT_FOUND","durationMs":0.031917},"target":"everything_manual::http::logging"}
+=== leftover processes ===
+none

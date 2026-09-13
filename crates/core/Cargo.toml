@@ -1,0 +1,19 @@
+[package]
+name = "manual-core"
+description = "万物说明书领域类型与合同不变量（不依赖 Axum/SQLx/浏览器）"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+# serde_json：聚合 JSON 字段（知识草稿、快照 budgets 等）的类型载体；
+# 其内部结构由后续卡定义，存储层用 json_valid 兜底。
+serde_json.workspace = true
+# time：时间戳类型的 RFC3339 格式化／解析与 UTC 历法运算（纯计算，不引入 IO）。
+time.workspace = true
+# uuid：服务器生成 UUIDv7 实体 ID（contracts.md §1）。core 不使用 SQLx 的 uuid 类型映射。
+uuid.workspace = true
+# sha2：输入指纹 / 幂等 body_hash / 阶段 input_hash 的单一实现（T11；纯计算，不引入 IO）。
+sha2.workspace = true

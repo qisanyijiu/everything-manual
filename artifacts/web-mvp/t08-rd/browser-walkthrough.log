@@ -1,0 +1,59 @@
+== 1/6 初始化临时 data-dir ==
+{"timestamp":"2026-09-11T21:39:16.424126Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t08-browser-V4n0iH/data","passwordSource":"受限文件 /tmp/em-t08-browser-V4n0iH/pw.txt","schemaVersion":3,"adminId":"01a09269-1947-71aa-b83d-af1d9aee1ff4","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t08-browser-V4n0iH/data
+  - 已创建：/tmp/em-t08-browser-V4n0iH/data
+  - 已创建：/tmp/em-t08-browser-V4n0iH/data/tmp
+  - 已创建：/tmp/em-t08-browser-V4n0iH/data/logs
+  - 已创建：/tmp/em-t08-browser-V4n0iH/data/blobs
+  - 已创建：/tmp/em-t08-browser-V4n0iH/data/lock
+数据库：已创建并迁移（/tmp/em-t08-browser-V4n0iH/data/manual.sqlite3，schema v3；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /tmp/em-t08-browser-V4n0iH/pw.txt；明文不落盘、不进入日志与 shell history。
+== 2/6 启动后端（127.0.0.1:8080）==
+后端 health/live = 200
+== 3/6 启动 Vite dev（127.0.0.1:5173）==
+Vite = 200 (pid 97244)
+== 4/6 启动无头 Chrome（CDP :9333）==
+== 5/6 浏览器走查 ==
+目标应用：http://127.0.0.1:5173
+[PASS] 未登录访问 /settings 跳转 /login 且保留 next — /login?next=%2Fsettings
+[PASS] 登录页显示会话过期提示
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/01-redirect-login.png
+[PASS] 密码框属性 type=password / autocomplete=current-password
+[PASS] Tab 第一次聚焦密码框 — field-password
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/02-tab-focus-password.png
+[PASS] Tab 第二次聚焦登录按钮 — BUTTON:登录
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/03-tab-focus-login-button.png
+[PASS] 错误密码显示「密码不正确」 — 密码不正确  诊断请求 ID：01a09269-23c7-74b0-a653-6fe3d1542ece
+[PASS] 焦点移到错误摘要
+[PASS] 字段与错误关联（aria-describedby）
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/04-login-error.png
+[PASS] 清空后可重新输入（退格清空） — ""
+[PASS] 登录后回到 next 指定的页面 — /settings
+[PASS] 设置页显示 provider 配置状态、限制与健康检查（真实 /settings/status + health）
+[PASS] 设置页不含密钥输入框与 TLS/证书配置入口
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/05-settings-page.png
+[PASS] 登录成功进入资料库并显示空态
+[PASS] 顶栏出现登出
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/06-library-empty.png
+[PASS] 创建走通真实 API 并跳转物品概览 — /items/01a09269-2a5a-712c-b8bd-eb05175f8b0e / T08 联调相机
+[PASS] 物品概览显示新物品型号与版本
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/07-item-overview.png
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/08-library-with-item.png
+[PASS] 清 cookie 后请求 401 → 跳登录页并保留 next — /login?next=%2Fsettings
+[PASS] 登录页显示「登录已过期」提示
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/09-session-expired.png
+[PASS] 重新登录后仍能看到之前创建的物品（数据持久化）
+[PASS] 登出回到登录页
+[PASS] 会话 cookie 为 HttpOnly（JS 不可见） — 无 JS 可见 cookie
+[PASS] 窄屏不并排显示侧栏（无 complementary 区域）
+[PASS] 抽屉打开后焦点进入抽屉
+[截图] /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-rd/10-narrow-drawer.png
+[PASS] Esc 关闭抽屉并把焦点归还触发按钮
+[PASS] prefers-reduced-motion 下骨架动画被关闭 — animation-duration=0.000001s
+[PASS] 未开启减少动效时骨架动画仍存在（对照） — animation-duration=1.4s
+[PASS] 浏览器无未捕获异常
+[PASS] 无 console.error（React/网络错误）
+
+浏览器联调结果：28/28 项通过
+== 6/6 结束（退出码 0）==

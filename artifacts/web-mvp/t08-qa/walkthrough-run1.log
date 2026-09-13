@@ -1,0 +1,34 @@
+== 1/4 初始化临时 data-dir ==
+{"timestamp":"2026-09-11T21:44:23.479561Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/tmp/em-t08-qa-58Q76N/data","passwordSource":"受限文件 /tmp/em-t08-qa-58Q76N/pw.txt","schemaVersion":3,"adminId":"01a0926d-c8b7-75a5-9acb-932cae90ee2b","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/tmp/em-t08-qa-58Q76N/data
+  - 已创建：/tmp/em-t08-qa-58Q76N/data
+  - 已创建：/tmp/em-t08-qa-58Q76N/data/tmp
+  - 已创建：/tmp/em-t08-qa-58Q76N/data/logs
+  - 已创建：/tmp/em-t08-qa-58Q76N/data/blobs
+  - 已创建：/tmp/em-t08-qa-58Q76N/data/lock
+数据库：已创建并迁移（/tmp/em-t08-qa-58Q76N/data/manual.sqlite3，schema v3；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /tmp/em-t08-qa-58Q76N/pw.txt；明文不落盘、不进入日志与 shell history。
+== 2/4 启动服务（内嵌 UI，127.0.0.1:8099）==
+health/live = 200
+== 3/4 启动无头 Chrome（CDP :9444）==
+== 4/4 浏览器走查 ==
+浏览器：Chrome/152.0.7977.84 · 应用：http://127.0.0.1:8099 · node v26.0.0
+--- 步骤 1：未登录深链 /settings + 会话恢复 ---
+[PASS] UI-002.a 恢复中显示全屏骨架、恢复期间不出现密码框（不闪登录页） · skeleton=true passwordShown=false
+[PASS] UI-002.b 未登录深链 → /login?next=%2Fsettings · /login?next=%2Fsettings
+[PASS] UI-002.c 登录页保留 next 与过期说明 · 万物说明书 /  / 输入管理员密码以继续。 /  / 登录已过期，请重新登录。 登录后将返回 /settings。
+[FAIL] UI-002.d GET /auth/session 请求与响应均为 no-store（AC-003） · req=(无) resp=(无)
+[PASS] UI-001.a 密码框 type=password/autocomplete=current-password、无默认值、空密码禁用提交 · {"type":"password","autocomplete":"current-password","value":"","submitDisabled":true}
+--- 步骤 2：键盘登录与 next 安全 ---
+[PASS] T08-键盘登录.1 第一次 Tab 落在密码框、输入后 Tab 落在登录按钮 · first={"tag":"INPUT","id":"field-password","role":null,"text":"","inDialog":false} second={"tag":"BUTTON","id":null,"role":null,"text":"登录","inDialog":false}
+file:///Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-qa/walkthrough-qa.mjs:168
+    if (Date.now() > deadline) throw new Error(`waitFor 超时：${desc || body}`);
+                                     ^
+
+Error: waitFor 超时：登录后外壳
+    at waitFor (file:///Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-qa/walkthrough-qa.mjs:168:38)
+    at async file:///Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t08-qa/walkthrough-qa.mjs:376:1
+
+Node.js v26.0.0
+artifacts/web-mvp/t08-qa/run-walkthrough-qa.sh: line 72: EXIT�: unbound variable

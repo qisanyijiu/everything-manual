@@ -1,0 +1,329 @@
+QA smoke start: 2026-09-11T19:21:27Z (UTC)
+binary: /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual  sha256=b8aa9172f452593a4a676e364ac99dbd794eb79712c47e25c42abefcb7a38cb4
+work:   /tmp/em-t04-qa.BKkiD6
+everything-manual 0.1.0
+Darwin LZdeMac-mini.local 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:17:12 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8103 arm64
+
+===== 0) init 前 data-dir（应不存在） =====
+total 8
+drwx------@  3 qsyj  wheel    96  9月 12 03:21 .
+drwxrwxrwt  41 root  wheel  1312  9月 12 03:21 ..
+-rw-------@  1 qsyj  wheel    22  9月 12 03:21 pw.txt
+
+===== 1) init（受限文件）→ 库/管理员凭据落库 =====
+{"timestamp":"2026-09-11T19:21:27.891515Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t04-qa.BKkiD6/data","passwordSource":"受限文件 pw.txt","schemaVersion":2,"adminId":"01a091ea-ee53-72d9-92b3-0ac3c5742630","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t04-qa.BKkiD6/data
+  - 已创建：/private/tmp/em-t04-qa.BKkiD6/data
+  - 已创建：/private/tmp/em-t04-qa.BKkiD6/data/tmp
+  - 已创建：/private/tmp/em-t04-qa.BKkiD6/data/logs
+  - 已创建：/private/tmp/em-t04-qa.BKkiD6/data/blobs
+  - 已创建：/private/tmp/em-t04-qa.BKkiD6/data/lock
+数据库：已创建并迁移（/private/tmp/em-t04-qa.BKkiD6/data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 pw.txt；明文不落盘、不进入日志与 shell history。
+init 退出码=0
+
+===== 1a) admins 表内容（哈希，非明文） =====
+01a091ea-ee53-72d9-92b3-0ac3c5742630|97|$argon2id$v=19$m=19456,t=2,p=1$tYeL8siOn
+1
+
+===== 1b) 明文是否出现在整个 data-dir（预期 0 命中） =====
+       0
+
+===== 1c) init 输出/日志中是否含明文（预期 0 命中） =====
+0
+0（无命中）
+
+===== 2) 插入一个物品（T04 无创建端点，AC-016 属 T07） =====
+01993000-0000-7000-8000-0000000000aa|QA示例扳手|1
+
+===== 3) check 摘要（session 行） =====
+有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-t04-qa.BKkiD6/data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  session = ttl=168h login_rate_limit=5/60s cookie_secure=false
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T19:21:27.922789Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+check 退出码=0
+
+===== 4) serve（后台，127.0.0.1:18095） =====
+listening on http://127.0.0.1:18095
+serve pid=11956
+
+===== 5) 未登录 GET /api/v1/items → 401（四键 + requestId 与响应头一致） =====
+HTTP/1.1 401 Unauthorized
+content-type: application/json
+x-request-id: 01a091ea-eefd-77bd-8c8a-787d6a6ba39d
+content-length: 157
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"UNAUTHORIZED","message":"未登录或会话已失效：请重新登录","details":null,"requestId":"01a091ea-eefd-77bd-8c8a-787d6a6ba39d"}}--- 未登录 401 的 requestId 关联（从响应头取，核对日志）---
+
+===== 6) 登录（正确密码）→ cookie 属性 + csrfToken =====
+HTTP/1.1 200 OK
+content-type: application/json
+cache-control: no-store
+set-cookie: em_session=9dfd8252505b19559f7f97a3c256f7fac09b4f5f2a0ef0c2130ad660a6ff0c9e; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800
+x-request-id: 01a091ea-ef09-7743-9e1e-f26c527e4225
+content-length: 182
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"data":{"admin":{"id":"01a091ea-ee53-72d9-92b3-0ac3c5742630"},"csrfToken":"8e44b1636f101df3b4ac692f3f9db5a0058b4bc19692f79f10214edba60a1c0a","expiresAt":"2026-09-18T19:21:28.092Z"}}
+csrf 长度=64  session token 长度=0
+
+===== 6a) 库内会话 token 是否只存哈希（预期 sha256(token) 命中） =====
+sha256(cookie token) = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+51920ddb6ea72ec36b932ba282ff298bca07b5062bd7b9224ce9624217d40d19|6b67f0630d09d4c490f3753a46296d6dea0194f4550fd16e6a2dcc04f5e24132|64|1789154488092|1789759288092|
+sha256(csrf)        = 6b67f0630d09d4c490f3753a46296d6dea0194f4550fd16e6a2dcc04f5e24132
+
+===== 6b) 明文 token / csrf 是否出现在库文件与日志（预期 0） =====
+361
+446
+0
+0（日志无 csrf）
+
+===== 7) GET /auth/session → 200 + no-store + 同一 CSRF =====
+HTTP/1.1 200 OK
+content-type: application/json
+cache-control: no-store
+x-request-id: 01a091ea-ef87-76cf-b503-4a8b565721dc
+content-length: 182
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"data":{"admin":{"id":"01a091ea-ee53-72d9-92b3-0ac3c5742630"},"csrfToken":"8e44b1636f101df3b4ac692f3f9db5a0058b4bc19692f79f10214edba60a1c0a","expiresAt":"2026-09-18T19:21:28.092Z"}}
+===== 8) Secure 判定不相信 X-Forwarded-*：伪造 XFP/XFProto 登录不应带 Secure =====
+set-cookie: em_session=5c4f6a95397c8b394f9a69363a6253dfe0d7c5ff7ed15282ba5cc934ff52a20d; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800
+结论：XFP 伪造未影响 Secure（符合 T04-3）
+
+===== 9) PATCH 缺 CSRF → 403 CSRF_REJECTED =====
+HTTP/1.1 403 Forbidden
+content-type: application/json
+x-request-id: 01a091ea-efac-7488-b7d1-de482dc7e4fe
+content-length: 221
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"CSRF_REJECTED","message":"缺少或无效的 CSRF token：修改请求必须携带 X-CSRF-Token（取自登录或 GET /auth/session）","details":null,"requestId":"01a091ea-efac-7488-b7d1-de482dc7e4fe"}}
+===== 10) PATCH 带 CSRF 但跨站 Origin → 403 ORIGIN_REJECTED =====
+HTTP/1.1 403 Forbidden
+content-type: application/json
+x-request-id: 01a091ea-efb4-7067-a9a5-92a350b7dfae
+content-length: 217
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"ORIGIN_REJECTED","message":"请求来源（Origin）不被允许：请从本站页面发起请求","details":{"origin":"https://attacker.example"},"requestId":"01a091ea-efb4-7067-a9a5-92a350b7dfae"}}
+===== 11) PATCH 跨会话 CSRF（用另一会话的 CSRF）→ 403 =====
+sessionA cookie + sessionB csrf → HTTP 403
+
+===== 12) PATCH 缺 If-Match → 428 =====
+HTTP/1.1 428 Precondition Required
+content-type: application/json
+x-request-id: 01a091ea-eff3-71c3-84a4-b07a4f1aed79
+content-length: 204
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"PRECONDITION_REQUIRED","message":"缺少 If-Match：请先 GET 资源并用其 ETag（形如 \"r7\"）再发起修改","details":null,"requestId":"01a091ea-eff3-71c3-84a4-b07a4f1aed79"}}
+===== 13) PATCH If-Match: * → 422（严格解析） =====
+If-Match:* → HTTP 422
+
+===== 14) GET item → ETag；PATCH If-Match "r1" → 200 + 新 ETag =====
+HTTP/1.1 200 OK
+content-type: application/json
+etag: "r1"
+{"data":{"id":"01993000-0000-7000-8000-0000000000aa","name":"QA示例扳手","brand":"QA品牌","model":"QA-M100","variant":null,"revision":1,"archivedAt":null,"createdAt":"2026-09-10T00:26:40Z","updatedAt":"2026-09-10T00:26:40Z"}}
+HTTP/1.1 200 OK
+content-type: application/json
+etag: "r2"
+x-request-id: 01a091ea-f00c-77b5-b3be-32643be11411
+content-length: 233
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"data":{"id":"01993000-0000-7000-8000-0000000000aa","name":"改名成功","brand":"QA品牌","model":"QA-M100","variant":null,"revision":2,"archivedAt":null,"createdAt":"2026-09-10T00:26:40Z","updatedAt":"2026-09-11T19:21:28.332Z"}}
+===== 15) 过期 revision（再用 r1）→ 412 + details.currentRevision =====
+HTTP/1.1 412 Precondition Failed
+content-type: application/json
+x-request-id: 01a091ea-f015-7429-8003-ee823930abc8
+content-length: 188
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"REVISION_CONFLICT","message":"该资源已被其他操作更新：请刷新后重试","details":{"currentRevision":2},"requestId":"01a091ea-f015-7429-8003-ee823930abc8"}}
+===== 16) 列表 {data,nextCursor}；非法 limit → 422 =====
+{"data":[{"id":"01993000-0000-7000-8000-0000000000aa","name":"改名成功","brand":"QA品牌","model":"QA-M100","variant":null,"revision":2,"archivedAt":null,"createdAt":"2026-09-10T00:26:40Z","updatedAt":"2026-09-11T19:21:28.332Z"}],"nextCursor":null}
+limit=0 → HTTP 422
+
+===== 17) /api/unknown → JSON 404；DELETE /api/v1/items → 405 语义；/api/v1/items/xxx DELETE =====
+HTTP/1.1 404 Not Found
+content-type: application/json
+x-request-id: 01a091ea-f02d-7045-a94c-f5b1732c4ee3
+content-length: 124
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"NOT_FOUND","message":"接口不存在","details":null,"requestId":"01a091ea-f02d-7045-a94c-f5b1732c4ee3"}}HTTP/1.1 403 Forbidden
+content-type: application/json
+x-request-id: 01a091ea-f035-76f2-86dd-88623465a73b
+allow: GET,HEAD
+content-length: 221
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"CSRF_REJECTED","message":"缺少或无效的 CSRF token：修改请求必须携带 X-CSRF-Token（取自登录或 GET /auth/session）","details":null,"requestId":"01a091ea-f035-76f2-86dd-88623465a73b"}}HTTP/1.1 403 Forbidden
+content-type: application/json
+x-request-id: 01a091ea-f03d-7492-96a3-4de5a3ed6887
+allow: GET,HEAD,PATCH
+content-length: 221
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"CSRF_REJECTED","message":"缺少或无效的 CSRF token：修改请求必须携带 X-CSRF-Token（取自登录或 GET /auth/session）","details":null,"requestId":"01a091ea-f03d-7492-96a3-4de5a3ed6887"}}GET 不存在物品 → HTTP 404
+
+===== 18) /settings/status（未配置 Provider，无密钥） =====
+HTTP/1.1 200 OK
+content-type: application/json
+x-request-id: 01a091ea-f04e-70e8-b66e-e7b78e3eefca
+content-length: 262
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"data":{"providersConfigured":{"tripo":false,"manualAi":false},"limits":{"maxJsonRequestBytes":1048576,"maxPdfBytes":52428800,"maxPdfPages":100,"maxPhotoBytes":20971520,"maxGlbBytes":157286400,"maxItemTotalBytes":524288000},"capabilities":{"generation":false}}}--- 相关字面量命中检查（预期 0）---
+api_key: 0
+apiKey: 0
+base_url: 0
+baseUrl: 0
+data_dir: 0
+dataDir: 0
+listen: 0
+openapi.tripo3d: 0
+api.openai: 0
+secret: 0
+
+===== 19) /health/ready（正常）→ 200 四项 =====
+HTTP/1.1 200 OK
+content-type: application/json
+x-request-id: 01a091ea-f075-766c-acc8-22cce530d763
+content-length: 181
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"data":{"status":"ready","checks":[{"name":"process","status":"ok"},{"name":"data_directory","status":"ok"},{"name":"database","status":"ok"},{"name":"migrations","status":"ok"}]}}
+===== 20) ready 负例：把数据库文件移走 → 503 not_ready data_directory =====
+HTTP 503
+{"data":{"status":"not_ready","checks":[{"name":"process","status":"ok"},{"name":"data_directory","status":"fail"},{"name":"database","status":"ok"},{"name":"migrations","status":"ok"}]}}
+恢复后 ready → HTTP 200
+-rw-------@ 1 qsyj  wheel  307200  9月 12 03:21 data/manual.sqlite3
+-rw-------@ 1 qsyj  wheel   32768  9月 12 03:21 data/manual.sqlite3-shm
+-rw-------@ 1 qsyj  wheel   65952  9月 12 03:21 data/manual.sqlite3-wal
+
+===== 21) 伪造/过期 cookie → 401 =====
+伪造 cookie → HTTP 401
+过期会话 cookie → HTTP 401
+
+===== 22) 注销（带 CSRF）→ 204 + 清 cookie；旧 cookie → 401 =====
+HTTP/1.1 204 No Content
+set-cookie: em_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0
+x-request-id: 01a091ea-f0c7-753b-8685-15ad2df026d6
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+注销后旧 cookie → HTTP 401
+
+===== 23) 限速：5 次错误密码 → 401；第 6 次（正确密码）→ 429 + Retry-After =====
+第 1 次错误密码 → HTTP 401
+第 2 次错误密码 → HTTP 401
+第 3 次错误密码 → HTTP 401
+第 4 次错误密码 → HTTP 401
+第 5 次错误密码 → HTTP 401
+HTTP/1.1 429 Too Many Requests
+content-type: application/json
+x-request-id: 01a091ea-f15c-74d7-add7-7fe31714b478
+retry-after: 60
+content-length: 154
+date: Fri, 11 Sep 2026 19:21:28 GMT
+
+{"error":{"code":"RATE_LIMITED","message":"登录尝试过于频繁：请稍后重试","details":null,"requestId":"01a091ea-f15c-74d7-add7-7fe31714b478"}}
+===== 24) 日志核对：requestId 关联、无请求体、无查询串、无密码 =====
+--- http_request 行（节选）---
+{"timestamp":"2026-09-11T19:21:28.520299Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f0c7-753b-8685-15ad2df026d6","method":"POST","path":"/api/v1/auth/logout","status":204,"errorCode":"-","durationMs":0.630834},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:21:28.528388Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f0d0-75e2-8d42-cf4a6b7f2e96","method":"GET","path":"/api/v1/items","status":401,"errorCode":"UNAUTHORIZED","durationMs":0.06612499999999999},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:21:28.567075Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f0e8-70f0-8a3d-59ce44a66fd6","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.538625},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:21:28.590300Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f0ff-73c6-b294-ecb42b9ecb93","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.37975},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:21:28.613212Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f117-7588-99d1-79ddb3e54c2d","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":13.950042},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:21:28.636456Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f12d-72c8-be59-cf8be378d765","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.492625},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:21:28.659643Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f145-7372-ac1b-b2f52f6c6870","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.613209},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:21:28.668499Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091ea-f15c-74d7-add7-7fe31714b478","method":"POST","path":"/api/v1/auth/login","status":429,"errorCode":"RATE_LIMITED","durationMs":0.043708000000000004},"target":"everything_manual::http::logging"}
+--- 401 响应体 requestId 与日志同值核对 ---
+response requestId=01a091ea-f167-73b2-877f-c56f0c02df70
+1
+--- 日志中是否出现密码/查询串 canary（预期 0 命中）---
+0
+0（日志无密码）
+0
+0（日志无查询串）
+--- 日志是否记录请求体（登录行不应出现 body 字段）---
+0
+0（无 body 字段）
+
+===== 25) 停服后重跑 init（重置密码）→ 已更新 + 撤销全部会话；旧 cookie 失效 =====
+{"timestamp":"2026-09-11T19:21:28.734108Z","level":"INFO","fields":{"message":"管理员密码已更新，既有会话已撤销","event":"admin_password_reset","adminId":"01a091ea-ee53-72d9-92b3-0ac3c5742630","revokedSessions":3},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T19:21:28.734154Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t04-qa.BKkiD6/data","passwordSource":"受限文件 pw2.txt","schemaVersion":2,"adminId":"01a091ea-ee53-72d9-92b3-0ac3c5742630","adminStatus":"已更新"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t04-qa.BKkiD6/data
+  - 目录已存在：/private/tmp/em-t04-qa.BKkiD6/data
+  - 目录已存在：/private/tmp/em-t04-qa.BKkiD6/data/tmp
+  - 目录已存在：/private/tmp/em-t04-qa.BKkiD6/data/logs
+  - 目录已存在：/private/tmp/em-t04-qa.BKkiD6/data/blobs
+  - 锁文件已存在：/private/tmp/em-t04-qa.BKkiD6/data/lock
+数据库：已就绪（/private/tmp/em-t04-qa.BKkiD6/data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已更新（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+  既有会话已全部撤销（重置密码后需重新登录）。
+密码来源：受限文件 pw2.txt；明文不落盘、不进入日志与 shell history。
+init(重跑) 退出码=0
+4|4
+$argon2id$v=19$m=19456,t=2,p=1$Yk5ZHnP80
+--- 明文 PASSWORD2 是否落盘（预期 0）---
+0
+0
+
+===== 26) 新密码登录成功；旧密码失败 =====
+旧密码 → HTTP 401
+新密码 → HTTP 200
+
+===== 27) 停服并检查残留 =====
+total 136
+drwx------@ 16 qsyj  wheel    512  9月 12 03:21 .
+drwxrwxrwt  41 root  wheel   1312  9月 12 03:21 ..
+-rw-r--r--@  1 qsyj  wheel    252  9月 12 03:21 cookies.txt
+-rw-r--r--@  1 qsyj  wheel    252  9月 12 03:21 cookies2.txt
+drwx------@  7 qsyj  wheel    224  9月 12 03:21 data
+-rw-r--r--@  1 qsyj  wheel    182  9月 12 03:21 login-xf.body
+-rw-r--r--@  1 qsyj  wheel    326  9月 12 03:21 login-xf.headers
+-rw-r--r--@  1 qsyj  wheel    182  9月 12 03:21 login.body
+-rw-r--r--@  1 qsyj  wheel    326  9月 12 03:21 login.headers
+-rw-r--r--@  1 qsyj  wheel    182  9月 12 03:21 login2.body
+-rw-------@  1 qsyj  wheel     22  9月 12 03:21 pw.txt
+-rw-------@  1 qsyj  wheel     29  9月 12 03:21 pw2.txt
+-rw-r--r--@  1 qsyj  wheel    187  9月 12 03:21 ready-neg.json
+-rw-r--r--@  1 qsyj  wheel  16547  9月 12 03:21 serve.log
+-rw-r--r--@  1 qsyj  wheel   2635  9月 12 03:21 serve2.log
+-rw-r--r--@  1 qsyj  wheel    262  9月 12 03:21 settings.json
+total 608
+drwx------@  7 qsyj  wheel     224  9月 12 03:21 .
+drwx------@ 16 qsyj  wheel     512  9月 12 03:21 ..
+drwx------@  2 qsyj  wheel      64  9月 12 03:21 blobs
+-rw-------@  1 qsyj  wheel      37  9月 12 03:21 lock
+drwx------@  3 qsyj  wheel      96  9月 12 03:21 logs
+-rw-------@  1 qsyj  wheel  307200  9月 12 03:21 manual.sqlite3
+drwx------@  2 qsyj  wheel      64  9月 12 03:21 tmp
+--- 残留进程检查 ---
+无残留 serve 进程
+QA smoke end: 2026-09-11T19:21:28Z (UTC)
+已清理：/tmp/em-t04-qa.BKkiD6；残留检查 已删除

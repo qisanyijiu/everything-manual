@@ -1,0 +1,18 @@
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-manual-text.pdf: pageCount=2 isEncrypted=false isLocked=false
+  第 1 页文字前 60 字符: Sample Manual - Synthetic Fixture (Page 1 of 2)
+Model X100: 
+  第 2 页文字前 60 字符: Sample Manual - Synthetic Fixture (Page 2 of 2)
+Step 2: Rout
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-manual-scan.pdf: pageCount=2 isEncrypted=false isLocked=false
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-manual-rotated.pdf: pageCount=2 isEncrypted=false isLocked=false
+  第 1 页文字前 60 字符: Rotated fixture (page 1 of 2): upright page.
+Marker: ROTATE-
+  第 2 页文字前 60 字符: Rotated fixture (page 2 of 2): this page is /Rotate 90.
+Mark
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-manual-nonlatin.pdf: pageCount=1 isEncrypted=false isLocked=false
+  第 1 页文字前 60 字符: 
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-manual-encrypted.pdf: pageCount=1 isEncrypted=true isLocked=true
+  用 fixture-secret 解锁: true；解锁后 pageCount=1
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-manual-many-pages.pdf: pageCount=101 isEncrypted=false isLocked=false
+  第 1 页文字前 60 字符: Many pages fixture: page 1 of 101.
+  第 2 页文字前 60 字符: Many pages fixture: page 2 of 101.

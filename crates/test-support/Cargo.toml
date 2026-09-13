@@ -1,0 +1,20 @@
+[package]
+name = "test-support"
+description = "仅测试依赖：本机 HTTP fixture 服务器、场景脚本与原创样例资产校验（不进入生产依赖树）"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+# 依赖只有已锁定序列化/哈希库：本 crate 是 dev-dependency，release 构建不编译
+# （见 implementation.md §T05 的 cargo tree 证据与 fixture_harness 的清单断言）。
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+# libc：仅 Unix 使用（fixture 的 `reset` 场景用 SO_LINGER=0 产生 RST）。
+libc.workspace = true
+
+[[bin]]
+name = "generate-fixtures"
+path = "src/bin/generate_fixtures.rs"

@@ -1,0 +1,5 @@
+-- release 二进制内的字符串证据（负例：fixture 代码不得出现；正例：官方默认地址应在）
+fixture script missing       -> 0
+fixture-accept               -> 0
+test.support                 -> 0
+openapi.tripo3d.ai           -> 1

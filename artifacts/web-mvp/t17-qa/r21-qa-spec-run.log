@@ -1,0 +1,112 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t17-independent.spec.ts
+
+(node:22977) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m125[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:46:07.083444Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a09539-79eb-7527-a5b8-1eef001bbd97","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 8 tests using 1 worker
+
+(node:23144) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:46:09.452857Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/password.txt","schemaVersion":6,"adminId":"01a09539-832c-7343-95b2-bd13c3cdea51","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-QCEdJ2/password.txt；明文不落盘、不进入日志与 shell history。
+  ✓  1 [chromium] › tests/e2e/qa-t17-independent.spec.ts:200:1 › QA-T17-1 列表/详情：分列金额与服务端逐字段一致、终态停止轮询、无虚假总进度 (14.6s)
+  ✓  2 [chromium] › tests/e2e/qa-t17-independent.spec.ts:278:1 › QA-T17-2 进行中状态区分 + 浏览器关闭后服务器继续推进 (11.8s)
+  ✓  3 [chromium] › tests/e2e/qa-t17-independent.spec.ts:337:1 › QA-T17-3 断网显示网络问题（不误报业务失败），恢复后显示服务端新状态 (6.2s)
+  ✓  4 [chromium] › tests/e2e/qa-t17-independent.spec.ts:381:1 › QA-T17-4 unknown：无重试按钮、对账入口、未决预留=服务端金额（非 0）、recordNoTask 需证据 (1.8s)
+  ✓  5 [chromium] › tests/e2e/qa-t17-independent.spec.ts:443:1 › QA-T17-5 T15 P3①：详情拒绝态与端点 422 同源；允许的重试真的生效；草稿文案不承诺重试 (2.6s)
+  ✘  6 [chromium] › tests/e2e/qa-t17-independent.spec.ts:539:1 › QA-T17-6 轮询频率：可见约 2 秒 / 后台约 15 秒；重启后仍从数据库恢复 (4.0m)
+(node:41867) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T10:50:49.198770Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/password.txt","schemaVersion":6,"adminId":"01a0953d-c7ee-7533-a953-419e1be96593","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-qa-t17-YsCxPR/password.txt；明文不落盘、不进入日志与 shell history。
+  ✓  7 [chromium] › tests/e2e/qa-t17-independent.spec.ts:633:1 › QA-T17-7 412 走统一刷新组件（UI-008）：陈旧 ETag 不覆盖、刷新后见服务端状态 (2.5s)
+  ✓  8 [chromium] › tests/e2e/qa-t17-independent.spec.ts:676:1 › QA-T17-8 失败状态：与 unknown 明确分开、错误摘要可读、不可重试原因如实 (1.9s)
+
+
+  1) [chromium] › tests/e2e/qa-t17-independent.spec.ts:539:1 › QA-T17-6 轮询频率：可见约 2 秒 / 后台约 15 秒；重启后仍从数据库恢复 
+
+    [31mTest timeout of 240000ms exceeded.[39m
+
+    Error: locator.fill: Test timeout of 240000ms exceeded.
+    Call log:
+    [2m  - waiting for getByLabel('密码')[22m
+
+
+      110 |
+      111 | async function login(page: Page): Promise<void> {
+    > 112 |   await page.getByLabel("密码").fill(BACKEND_PASSWORD);
+          |                               ^
+      113 |   await page.getByRole("button", { name: "登录" }).click();
+      114 |   await expect(page.getByRole("navigation", { name: "主导航" })).toBeVisible();
+      115 | }
+        at login (/Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t17-independent.spec.ts:112:31)
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t17-independent.spec.ts:621:9
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17-6-轮询频率：可见约-2-秒-后台约-15-秒；重启后仍从数据库恢复-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17-6-轮询频率：可见约-2-秒-后台约-15-秒；重启后仍从数据库恢复-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17-6-轮询频率：可见约-2-秒-后台约-15-秒；重启后仍从数据库恢复-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17-6-轮询频率：可见约-2-秒-后台约-15-秒；重启后仍从数据库恢复-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t17-independent-QA-T17-6-轮询频率：可见约-2-秒-后台约-15-秒；重启后仍从数据库恢复-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/qa-t17-independent.spec.ts:539:1 › QA-T17-6 轮询频率：可见约 2 秒 / 后台约 15 秒；重启后仍从数据库恢复 
+  7 passed (4.8m)

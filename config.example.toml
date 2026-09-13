@@ -1,0 +1,89 @@
+# 万物说明书 · 配置示例（T02）
+#
+# 使用方法（优先级：CLI 非密钥项 > 环境变量 > 本文件 > 内置默认）：
+#   1. 复制为 <data-dir>/config.toml（自动加载）或任意路径后用 --config 指定；
+#   2. 本文件**不得包含任何真实密钥**：密钥只经环境变量（api_key_env 指向变量名）
+#      或受限文件（api_key_file，权限 0600）注入；
+#   3. 未知配置键会导致启动/检查失败（不静默忽略），键名以本示例与
+#      crates/server/src/config/file.rs 的 schema 为准。
+
+# data-dir 路径（也可用 --data-dir 或环境变量 EM_DATA_DIR 提供）
+data_dir = "./manual-data"
+
+# 监听地址；默认 127.0.0.1:8080。非 loopback 必须配置可信反向代理（见下），
+# 否则 serve/check 拒绝启动（内置 TLS 监听尚未实现）。
+listen = "127.0.0.1:8080"
+
+# 浏览器访问本站的公开来源（用于 T04 的 Origin 校验；不带路径与查询串）
+# public_origin = "http://127.0.0.1:8080"
+
+# 价格目录文件（T11 报价使用）；设置后必须是存在的文件
+# price_catalog_path = "./prices.toml"
+
+# 可信反向代理网段（非 loopback 部署的唯一放行方式，直到内置 TLS 实现）：
+# 仅当反向代理来源地址落在这些 CIDR 内时，才允许信任其转发头（T04 起实现）。
+# trusted_proxy_cidrs = ["10.0.0.0/8", "192.168.0.0/16"]
+
+# 内置 TLS（rustls）监听尚未实现：配置了 tls 段的部署会被 serve/check 明确拒绝，
+# 不会静默降级为明文。保留键位以固定配置形态。
+# [tls]
+# cert_file = "/etc/everything-manual/cert.pem"
+# key_file = "/etc/everything-manual/key.pem"
+
+[providers.tripo]
+# base_url = "https://openapi.tripo3d.ai/v3"   # 默认值；区域地址按账号区域配置
+# model = "v3.1-20260211"                       # 默认值（H 系列多视图带纹理）
+# 密钥（二选一；均不写入本文件）：
+api_key_env = "TRIPO_API_KEY"
+# api_key_file = "/etc/everything-manual/tripo.key"   # 受限文件，chmod 600
+
+[providers.manual_ai]
+# base_url = "https://api.openai.com/v1"        # 默认值（OpenAI Responses 参考适配器）
+# model 无默认值：按供应商文档填写支持图像与结构化输出的型号；缺失时该 Provider
+# 视为“未配置”，生成能力返回未配置（不回落 mock）。
+# model = "<按供应商文档填写>"
+api_key_env = "MANUAL_AI_API_KEY"
+# api_key_file = "/etc/everything-manual/manual-ai.key"
+
+# 输入限制（默认值即 PRD §5.3；单位：字节）
+[limits]
+# max_json_request_bytes = 1048576    # 1 MiB
+# max_pdf_bytes = 52428800            # 50 MiB
+# max_pdf_pages = 100
+# max_photo_bytes = 20971520          # 20 MiB
+# max_glb_bytes = 157286400           # 150 MiB
+# max_item_total_bytes = 524288000    # 500 MiB
+
+# 并发上限（默认 2/2；只能降低，不可未经确认提高）
+[concurrency]
+# remote_generation = 2
+# manual_ai_batches = 2
+
+# 模型产物下载的允许域（T13 / REQ-028；architecture §7 的 SSRF 防护）
+#
+# 只允许列表内的**精确主机名**（小写、不含端口与通配）；空列表 = 拒绝一切模型下载
+# （不猜测供应商 CDN 域名）。模型下载使用独立、**不带 API 凭据**的 HTTP client：
+# 只允许 HTTPS，逐跳校验重定向与实际连接 IP（拒绝私网/回环/链路本地），并把连接
+# pin 到已验证的 IP（保留原 hostname/SNI）。生产部署请按供应商文档填写模型 CDN 域名。
+[download]
+# allowed_hosts = ["cdn.example.com"]
+# 仅测试：允许明文 http + 回环地址（本机 fixture）。即使设为 true，也只在测试构建
+# （feature `job-failpoints`）中生效；发布构建忽略该键（不放行本机地址）。
+# allow_local_fixture = false
+
+# 任务执行器租约（T10；默认 120s 租约、20s 续约，架构 §6）
+# 可以调小（低配/测试环境），但必须满足 1 <= renew_seconds < lease_seconds：
+# 否则租约会在续约前过期，运行中的阶段会被恢复扫描接管。
+[jobs]
+# lease_seconds = 120
+# renew_seconds = 20
+
+# 会话与登录限速（T04；默认即 PRD A-05：7 天绝对有效期、5 次/分钟）
+[session]
+# ttl_hours = 168                       # 会话绝对有效期（无滑动续期）
+# login_rate_limit_per_minute = 5       # 窗口内允许的登录失败次数，超出 → 429
+# login_rate_limit_window_seconds = 60  # 限速窗口长度
+# cookie_secure = "auto"                # auto | always | never
+#   auto：public_origin 为 https:// 或配置了内置 TLS 时给会话 cookie 加 Secure；
+#   不读取任何 X-Forwarded-*（未验证的转发头不得决定 cookie 安全属性）；
+#   在反向代理终止 TLS 的部署可用 "always" 显式声明。

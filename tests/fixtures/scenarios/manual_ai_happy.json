@@ -1,0 +1,17 @@
+{
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/v1/responses",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": {
+            "status": 200,
+            "body": { "file": "responses/manual_ai_extract_success.json" }
+          }
+        }
+      ]
+    }
+  ]
+}

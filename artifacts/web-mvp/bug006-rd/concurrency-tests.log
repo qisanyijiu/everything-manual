@@ -1,0 +1,15 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/photos_concurrency.rs (target/debug/deps/photos_concurrency-a92dfc5b506f0d21)
+
+running 5 tests
+test patch_photo_view_conflict_under_resident_writer ... ok
+test same_view_concurrent_posts_return_contract_status_codes ... ok
+test cross_item_concurrent_writes_survive_resident_writer ... ok
+test photos_crud_survives_real_executor_writer ... ok
+test post_photos_waits_for_active_writer_and_returns_201 ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.36s
+

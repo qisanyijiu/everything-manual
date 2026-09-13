@@ -1,0 +1,25 @@
+# QA T03 check: missing DB + zero external HTTP 2026-09-11T18:54:08Z
+== D: data-dir structure without DB
+blobs
+lock
+logs
+tmp
+[检查] 数据库 schema：尚未建立（init 或首次 serve 时自动创建并迁移到 v2）
+结果：check 通过
+check_missing exit=0
+blobs
+lock
+logs
+tmp
+CHECK_DID_NOT_CREATE_DB=yes
+
+== E: zero external HTTP with providers configured
+[检查] Provider tripo：已配置（密钥来源：环境变量 TRIPO_API_KEY）
+[检查] Provider manual_ai：已配置（密钥来源：环境变量 MANUAL_AI_API_KEY）
+{"timestamp":"2026-09-11T18:54:10.003194Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+check_configured exit=0
+Connection to 127.0.0.1 port 18099 [tcp/*] succeeded!
+positive_control_connection_sent
+connections_total: 1

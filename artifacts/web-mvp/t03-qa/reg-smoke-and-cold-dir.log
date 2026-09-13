@@ -1,0 +1,61 @@
+# QA T03 smoke-bootstrap + cold-dir migration 2026-09-11T18:56:24Z
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running `target/debug/xtask smoke-bootstrap --binary /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual`
+冒烟目录：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-4212-1789152984630645000（仅含二进制与其 data-dir，工作目录即该目录）
+  [准备] init --data-dir data 成功
+  (服务输出) {"timestamp":"2026-09-11T18:56:25.150431Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-4212-1789152984630645000/data","schemaVersion":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-11T18:56:25.150502Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-11T18:56:25.150512Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-11T18:56:25.150520Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:52056","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-4212-1789152984630645000/data","securityMode":"loopback"},"target":"everything_manual::config::commands"}
+服务地址：http://127.0.0.1:52056
+  [检查] GET / -> 200 text/html; charset=utf-8
+  [检查] GET /assets/index-7mFZcJzB.js -> 200 text/javascript; charset=utf-8
+  [检查] GET /api/v1/health/live -> 200
+  [检查] GET /api/v1/health/ready -> 200
+  [检查] GET /api/unknown -> 404 application/json
+  [检查] GET /library/some-item -> 200 text/html; charset=utf-8
+  [检查] GET /assets/definitely-missing.js -> 404 text/plain; charset=utf-8
+
+冒烟通过：内嵌页面、静态资源与 health 均可用（T01 最小检查）。
+smoke exit=0
+
+== cold dir (release binary only, no source tree)
+.:
+total 8
+drwxr-xr-x@ 3 qsyj  wheel   96  9月 12 02:56 .
+drwxr-xr-x@ 4 qsyj  wheel  128  9月 12 02:56 ..
+-rw-------@ 1 qsyj  wheel   20  9月 12 02:56 pw.txt
+
+../bin:
+total 13368
+drwxr-xr-x@ 3 qsyj  wheel       96  9月 12 02:56 .
+drwxr-xr-x@ 4 qsyj  wheel      128  9月 12 02:56 ..
+-rwxr-xr-x@ 1 qsyj  wheel  6843376  9月 12 02:56 everything-manual
+{"timestamp":"2026-09-11T18:56:25.457116Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t03-qa-cold/work/manual-data","passwordSource":"受限文件 ./pw.txt","schemaVersion":2},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t03-qa-cold/work/manual-data
+  - 已创建：/private/tmp/em-t03-qa-cold/work/manual-data
+  - 已创建：/private/tmp/em-t03-qa-cold/work/manual-data/tmp
+  - 已创建：/private/tmp/em-t03-qa-cold/work/manual-data/logs
+  - 已创建：/private/tmp/em-t03-qa-cold/work/manual-data/blobs
+  - 已创建：/private/tmp/em-t03-qa-cold/work/manual-data/lock
+数据库：已创建并迁移（/private/tmp/em-t03-qa-cold/work/manual-data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员密码：已从 受限文件 ./pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码。
+cold_init exit=0
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+结果：check 通过
+cold_check exit=0
+total 608
+drwx------@ 7 qsyj  wheel     224  9月 12 02:56 .
+drwxr-xr-x@ 4 qsyj  wheel     128  9月 12 02:56 ..
+drwx------@ 2 qsyj  wheel      64  9月 12 02:56 blobs
+-rw-------@ 1 qsyj  wheel      36  9月 12 02:56 lock
+drwx------@ 3 qsyj  wheel      96  9月 12 02:56 logs
+-rw-------@ 1 qsyj  wheel  307200  9月 12 02:56 manual.sqlite3
+drwx------@ 2 qsyj  wheel      64  9月 12 02:56 tmp
+1|core schema
+2|invariants
+4

@@ -1,0 +1,1 @@
+samples=171 loopback_lines=490 nonloopback_lines=0

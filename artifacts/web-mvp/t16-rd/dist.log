@@ -1,0 +1,128 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/xtask dist --target aarch64-apple-darwin`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm ci)
+
+added 272 packages, and audited 273 packages in 3s
+
+66 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  8 passed (8)
+      Tests  58 passed (58)
+   Start at  15:42:38
+   Duration  1.85s (environment 63%, tests 16%, transform 9%, setup 8%, import 3%, worker 1%)
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 112 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.31 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-BKDtdniY.css              12.48 kB │ gzip:   2.99 kB
+dist/assets/index-vv38I2z4.js              383.94 kB │ gzip: 117.53 kB
+dist/assets/PreparePage-CGbgaWea.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 438ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo build --release --locked --features embedded-ui --target aarch64-apple-darwin --package everything-manual)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 29.73s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : da9c4a037e7247b83cd920a4d010771c0f746fd5925cf0a71174d0cb0012f00d
+  size   : 22544432 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json
+dist-1 exit=0
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running `target/debug/xtask dist --target aarch64-apple-darwin`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm ci)
+
+added 272 packages, and audited 273 packages in 2s
+
+66 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  15:43:21
+   Duration  1.92s (environment 63%, tests 14%, transform 11%, setup 7%, import 3%, worker 1%)
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 112 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.31 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-BKDtdniY.css              12.48 kB │ gzip:   2.99 kB
+dist/assets/index-vv38I2z4.js              383.94 kB │ gzip: 117.53 kB
+dist/assets/PreparePage-CGbgaWea.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 441ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo build --release --locked --features embedded-ui --target aarch64-apple-darwin --package everything-manual)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 25.99s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : da9c4a037e7247b83cd920a4d010771c0f746fd5925cf0a71174d0cb0012f00d
+  size   : 22544432 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json
+dist-2 exit=0

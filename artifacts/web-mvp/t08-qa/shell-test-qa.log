@@ -1,0 +1,13 @@
+
+> everything-manual-web@0.1.0 test
+> vitest run --run src/features/shell/shell.test.tsx
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  07:09:09
+   Duration  1.47s (environment 47%, tests 29%, transform 11%, setup 6%, import 5%)
+

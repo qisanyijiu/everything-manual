@@ -1,0 +1,11 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running `target/debug/xtask contracts --check`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && /Users/qsyj/Code/rust/everything-manual/apps/web/node_modules/.bin/openapi-typescript /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85804/openapi.json -o /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85804/generated.ts)
+✨ openapi-typescript 7.13.0
+🚀 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85804/openapi.json → /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85804/generated.ts [47.3ms]
+  [一致] contracts/openapi.json
+  [一致] apps/web/src/api/generated.ts
+合同检查通过：openapi.json 与 generated.ts 均与 Rust DTO 一致。

@@ -1,0 +1,38 @@
+== QA r13 工作目录：/tmp/em-r13-bug004-DLVY0x（退出时删除）；二进制：/tmp/em-r13-binary-copy
+324b2fbed9e2f415991bf39555790e09af54c4040d805ef61f16c4c89903c181  /tmp/em-r13-binary-copy
+== 0) init + 正常启动（假凭据，只连 loopback）
+  check 退出码 = 0（期望 0）
+== 1) 物品 / PDF / 2 页准备 / front+left 照片
+== 2) 报价 201（S1 起点）
+  HTTP 201（期望 201）
+== S1｜未确认未消费：GET 三字段 null 且 = DB 三列 null
+  GET HTTP 200（期望 200）
+  S1 OK：GET 三字段 null、与 DB 三列一致；金额/expiresAt/priceVersion/sendScope 与创建响应逐值一致
+== S2｜已确认未消费：GET confirmedAt = 确认响应 = DB converted(RFC3339)
+  确认 HTTP 200（期望 200）confirmedAt=2026-09-12T02:50:19.959Z
+  GET HTTP 200（期望 200）
+  S2 OK：GET confirmedAt == 确认响应 == DB(1789181419959 ms → 2026-09-12T02:50:19.959Z)；消费字段仍 null；冻结部分不变
+== S3｜已消费：GET consumedAt/consumedJobId = DB = 真实 job；quote_json 未被回写
+  建单 HTTP 202（期望 202）job=01a09385-e1fa-76a3-8532-158ecdb7753d
+  GET HTTP 200（期望 200）
+  S3 OK：GET consumedAt == DB(1789181420025 ms → 2026-09-12T02:50:20.025Z)；consumedJobId == DB == 真实 job；confirmedAt 保持；冻结部分不变
+  quote_json sha256：S1=6980bca771260aa1a85089af0a946202419989830b1618ebf93a414bee477d13  S3=6980bca771260aa1a85089af0a946202419989830b1618ebf93a414bee477d13
+  OK：DB quote_json 仍为创建时冻结载荷（三字段 null），未被回读/消费回写
+  已消费报价新键重提 HTTP 422 reason=quoteAlreadyUsed（期望 422 quoteAlreadyUsed）
+  jobs = 1（期望 1）
+== S4｜已过期（DB 合成：HTTP 造不出过期报价，expires_at 被触发器冻结）
+  合成过期报价（未确认未消费）：8ed265d8-df63-4bdd-8455-f227d2c54a4a（源报价 01a09385-e137-776d-8add-28d14f4eed63），expires_at=1789181300000 → 2026-09-12T02:48:20Z
+  GET HTTP 200（期望 200：可读）
+  S4a OK：过期报价 200 可读；expiresAt == DB(2026-09-12T02:48:20Z)；三字段 null（不把过期当已确认/已消费）；无派生可用性字段
+  过期报价 confirm HTTP 422 reason=quoteExpired（期望 422 quoteExpired）
+  过期报价 submit  HTTP 422 reason=quoteExpired（期望 422 quoteExpired）
+  S4a OK：confirm/提交均被拒（可用性由服务端动作判定）；DB 三列仍 NULL；jobs = 1
+== S4b｜已确认但已过期（合成：克隆 S2 已确认行 + expires_at 过去）：事实不因过期消失
+  合成已确认+已过期报价：96baeefc-f0e0-4b74-b341-26b070d29140（沿用真实确认列 1789181419959，expires_at=2026-09-12T02:48:20Z）
+  GET HTTP 200（期望 200）
+  S4b OK：过期但已确认的报价回读仍给出 confirmedAt == DB == 首次确认(2026-09-12T02:50:19.959Z)；消费字段 null；冻结部分不变
+== 5) 收口：岗位不变量 + 无外连
+  jobs = 1  quotes = 3 （1 源 + 1 已确认源 + 2 合成过期）
+  provider_attempts = 0 （期望 0：无付费提交）
+  无非 loopback 连接：OK
+== QA r13 BUG-004 四状态复验完成

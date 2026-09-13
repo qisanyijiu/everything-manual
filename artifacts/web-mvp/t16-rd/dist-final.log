@@ -1,0 +1,154 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/xtask dist --target aarch64-apple-darwin`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm ci)
+
+added 272 packages, and audited 273 packages in 2s
+
+66 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  15:48:34
+   Duration  1.92s (environment 63%, tests 15%, transform 11%, setup 7%, import 4%, worker 1%)
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 113 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.30 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-ihyKy8TG.css              12.74 kB │ gzip:   3.02 kB
+dist/assets/index-hnvlwwcg.js              385.20 kB │ gzip: 117.91 kB
+dist/assets/PreparePage-s5pIGHrv.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 447ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo build --release --locked --features embedded-ui --target aarch64-apple-darwin --package everything-manual)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 25.79s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : 404488c8792b8fa610c52eb1462ae8f007c48f59c04ef5d74b5786fb48b7da36
+  size   : 22544432 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json
+dist-1 exit=0
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running `target/debug/xtask dist --target aarch64-apple-darwin`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm ci)
+
+added 272 packages, and audited 273 packages in 3s
+
+66 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  15:49:13
+   Duration  1.92s (environment 63%, tests 15%, transform 11%, setup 7%, import 3%, worker 1%)
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 113 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.30 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-ihyKy8TG.css              12.74 kB │ gzip:   3.02 kB
+dist/assets/index-hnvlwwcg.js              385.20 kB │ gzip: 117.91 kB
+dist/assets/PreparePage-s5pIGHrv.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 441ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo build --release --locked --features embedded-ui --target aarch64-apple-darwin --package everything-manual)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 25.61s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : 404488c8792b8fa610c52eb1462ae8f007c48f59c04ef5d74b5786fb48b7da36
+  size   : 22544432 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json
+dist-2 exit=0
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running `target/debug/xtask smoke-bootstrap --binary /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual`
+冒烟目录：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-71389-1789199385987317000（仅含二进制与其 data-dir，工作目录即该目录）
+  [准备] init --data-dir data 成功
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.806599Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-71389-1789199385987317000/data","schemaVersion":6},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.806767Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":0,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.806865Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.806876Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.806920Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"71391:01a09498-08b6-76cd-8464-6c7c753a9e52","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.807035Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.807046Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-12T07:49:46.807053Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:63482","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-71389-1789199385987317000/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+服务地址：http://127.0.0.1:63482
+  [检查] GET / -> 200 text/html; charset=utf-8
+  [检查] GET /assets/index-hnvlwwcg.js -> 200 text/javascript; charset=utf-8
+  [检查] GET /api/v1/health/live -> 200
+  [检查] GET /api/v1/health/ready -> 200
+  [检查] GET /api/unknown -> 404 application/json
+  [检查] GET /library/some-item -> 200 text/html; charset=utf-8
+  [检查] GET /assets/definitely-missing.js -> 404 text/plain; charset=utf-8
+
+冒烟通过：内嵌页面、静态资源与 health 均可用（T01 最小检查）。
+smoke exit=0

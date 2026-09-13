@@ -1,0 +1,90 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test viewer.spec.ts -g OrbitControls --repeat-each=8
+
+(node:77371) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m125[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T12:22:15.202440Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a09591-7da2-747e-81e1-828a73e280ca","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 8 tests using 1 worker
+
+(node:77443) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:18[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":19,"hasModel":true,"hasPose":true,"canvasMark":0.5269800697626982,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":24,"hasModel":true,"hasPose":true,"canvasMark":0.5269800697626982,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":28,"hasModel":true,"hasPose":true,"canvasMark":0.5269800697626982,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  1 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+(node:77449) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:22[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":19,"hasModel":true,"hasPose":true,"canvasMark":0.48589507176995694,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":23,"hasModel":true,"hasPose":true,"canvasMark":0.48589507176995694,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":26,"hasModel":true,"hasPose":true,"canvasMark":0.48589507176995694,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  2 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+(node:77456) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":20,"hasModel":true,"hasPose":true,"canvasMark":0.23742081511305468,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":25,"hasModel":true,"hasPose":true,"canvasMark":0.23742081511305468,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":28,"hasModel":true,"hasPose":true,"canvasMark":0.23742081511305468,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  3 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+(node:77461) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:30[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":20,"hasModel":true,"hasPose":true,"canvasMark":0.9726704622402643,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":25,"hasModel":true,"hasPose":true,"canvasMark":0.9726704622402643,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":28,"hasModel":true,"hasPose":true,"canvasMark":0.9726704622402643,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  4 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+(node:77466) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:34[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":20,"hasModel":true,"hasPose":true,"canvasMark":0.6700200099893396,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":25,"hasModel":true,"hasPose":true,"canvasMark":0.6700200099893396,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":28,"hasModel":true,"hasPose":true,"canvasMark":0.6700200099893396,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  5 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+(node:77472) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:38[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":19,"hasModel":true,"hasPose":true,"canvasMark":0.931555938017414,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":24,"hasModel":true,"hasPose":true,"canvasMark":0.931555938017414,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":27,"hasModel":true,"hasPose":true,"canvasMark":0.931555938017414,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  6 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+(node:77477) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:42[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":20,"hasModel":true,"hasPose":true,"canvasMark":0.6123256640638939,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":24,"hasModel":true,"hasPose":true,"canvasMark":0.6123256640638939,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":27,"hasModel":true,"hasPose":true,"canvasMark":0.6123256640638939,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  7 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+(node:77488) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:22:46[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+DIAG after-drag {"frames":18,"hasModel":true,"hasPose":true,"canvasMark":0.8519109001095961,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-capture {"frames":23,"hasModel":true,"hasPose":true,"canvasMark":0.8519109001095961,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+DIAG after-wheel {"frames":26,"hasModel":true,"hasPose":true,"canvasMark":0.8519109001095961,"canvases":1,"modelsLoaded":1,"modelsAlive":1,"wide":true,"innerWidth":1280,"clientWidth":1280,"pageClass":"page-layout page-layout--wide","scrollable":true}
+  ✓  8 [chromium] › tests/e2e/viewer.spec.ts:234:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.5s)
+
+  8 passed (34.3s)

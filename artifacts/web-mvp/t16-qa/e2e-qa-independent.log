@@ -1,0 +1,49 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t16-independent.spec.ts
+
+(node:82009) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m125[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T08:24:38.452282Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a094b7-f333-73f3-80dd-8c918be4f9aa","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 12 tests using 1 worker
+
+(node:82072) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓   1 [chromium] › tests/e2e/qa-t16-independent.spec.ts:197:3 › T16 独立验收（QA 回合 18） › QA-1 资料库三态与行内禁用入口；新建表单无物品级来源链接（AC-026） (4.0s)
+  ✓   2 [chromium] › tests/e2e/qa-t16-independent.spec.ts:316:3 › T16 独立验收（QA 回合 18） › QA-2 第 2/3/5 步刷新不丢资料、URL 即步骤、零重复上传（AC-026 / REQ-016） (2.8s)
+  ✓   3 [chromium] › tests/e2e/qa-t16-independent.spec.ts:383:3 › T16 独立验收（QA 回合 18） › QA-3 确认页逐项告知、默认不勾选、未确认提交被拒（AC-030 / UI-024） (1.7s)
+  ✓   4 [chromium] › tests/e2e/qa-t16-independent.spec.ts:477:3 › T16 独立验收（QA 回合 18） › QA-4 失败重试复用幂等键，服务端只产生一个 job（AC-026 / UI-020） (3.0s)
+  ✓   5 [chromium] › tests/e2e/qa-t16-independent.spec.ts:604:3 › T16 独立验收（QA 回合 18） › QA-5 受理后不判断远端成功、无自动发布入口、无禁用措辞、准备进度非百分比（AC-048 / §6.3.2） (3.4s)
+  ✓   6 [chromium] › tests/e2e/qa-t16-independent.spec.ts:693:3 › T16 独立验收（QA 回合 18） › QA-6 同视图占用 422 的可行动文案 + 缺项提示（UI-012/UI-013） (1.6s)
+  ✓   7 [chromium] › tests/e2e/qa-t16-independent.spec.ts:726:3 › T16 独立验收（QA 回合 18） › QA-7 缺侧面视图：生成禁用、缺项常驻、不提前请求报价（AC-026 / UI-013） (1.4s)
+  ✓   8 [chromium] › tests/e2e/qa-t16-independent.spec.ts:765:3 › T16 独立验收（QA 回合 18） › QA-11 无准备指针：如实显示缺项、不伪造状态、不请求报价（REQ-016 诚实性） (1.4s)
+  ✓   9 [chromium] › tests/e2e/qa-t16-independent.spec.ts:801:3 › T16 独立验收（QA 回合 18） › QA-8 第 2/5 步失败态可行动（重试后恢复）（AC-026 / UI-019/026） (1.9s)
+  ✓  10 [chromium] › tests/e2e/qa-t16-independent.spec.ts:870:3 › T16 独立验收（QA 回合 18） › QA-9 窄屏抽屉与桌面并排：同一 URL 切换无需刷新（AC-060 前端侧 / UI-062） (1.7s)
+  ✓  11 [chromium] › tests/e2e/qa-t16-independent.spec.ts:923:3 › T16 独立验收（QA 回合 18） › QA-12 磁盘满 413（insufficientStorage）文案：所需/可用字节 + 清理提示（UI-009） (1.2s)
+  -  12 [chromium] › tests/e2e/qa-t16-independent.spec.ts:974:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫）
+
+  1 skipped
+  11 passed (27.3s)

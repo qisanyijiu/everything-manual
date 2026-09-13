@@ -1,0 +1,193 @@
+== 环境 ==
+binary: /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+work:   /tmp/em-t04-manual.IEUIjT
+Darwin LZdeMac-mini.local 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:17:12 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8103 arm64
+everything-manual 0.1.0
+
+== 1) init（受限文件提供密码；Argon2id 入 admins 表）==
+{"timestamp":"2026-09-11T19:18:41.820228Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t04-manual.IEUIjT/data","passwordSource":"受限文件 pw.txt","schemaVersion":2,"adminId":"01a091e8-659b-72bc-9f41-79883af46aa4","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t04-manual.IEUIjT/data
+  - 已创建：/private/tmp/em-t04-manual.IEUIjT/data
+  - 已创建：/private/tmp/em-t04-manual.IEUIjT/data/tmp
+  - 已创建：/private/tmp/em-t04-manual.IEUIjT/data/logs
+  - 已创建：/private/tmp/em-t04-manual.IEUIjT/data/blobs
+  - 已创建：/private/tmp/em-t04-manual.IEUIjT/data/lock
+数据库：已创建并迁移（/private/tmp/em-t04-manual.IEUIjT/data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 pw.txt；明文不落盘、不进入日志与 shell history。
+init 退出码=0
+
+== 2) 直接插入一个物品（T04 没有创建端点；AC-016 属 T07）==
+insert ok
+01993000-0000-7000-8000-000000000001|示例扳手|1
+
+== 3) serve（后台）==
+listening on http://127.0.0.1:18081
+
+== 4) 未登录 GET /api/v1/items → 401（含 requestId）==
+HTTP/1.1 401 Unauthorized
+content-type: application/json
+x-request-id: 01a091e8-65bf-7227-ba5a-f31abeaaa499
+content-length: 157
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"error":{"code":"UNAUTHORIZED","message":"未登录或会话已失效：请重新登录","details":null,"requestId":"01a091e8-65bf-7227-ba5a-f31abeaaa499"}}
+== 5) 正确密码登录 → 200 + Set-Cookie（HttpOnly/SameSite=Strict，HTTP 下无 Secure）+ csrfToken ==
+HTTP/1.1 200 OK
+content-type: application/json
+cache-control: no-store
+set-cookie: em_session=ad5f06e06da187d6d92ccceebf01957416cdbf3e940aae6d3a8a9457c8a17d31; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800
+x-request-id: 01a091e8-65c8-767e-9fca-8371cf6da630
+content-length: 182
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"data":{"admin":{"id":"01a091e8-659b-72bc-9f41-79883af46aa4"},"csrfToken":"787668708b03f5d90ba5227d131f3f4276bdd0b6d7a9543db36ba128c24afe75","expiresAt":"2026-09-18T19:18:41.881Z"}}
+csrfToken=787668708b03f5d9…（长度 64）
+
+== 6) GET /auth/session → 200 + Cache-Control: no-store（同一 CSRF）==
+HTTP/1.1 200 OK
+content-type: application/json
+cache-control: no-store
+x-request-id: 01a091e8-6605-7720-9dd3-2956a4789d2d
+content-length: 182
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"data":{"admin":{"id":"01a091e8-659b-72bc-9f41-79883af46aa4"},"csrfToken":"787668708b03f5d90ba5227d131f3f4276bdd0b6d7a9543db36ba128c24afe75","expiresAt":"2026-09-18T19:18:41.881Z"}}
+== 7) PATCH 缺 CSRF → 403 CSRF_REJECTED ==
+HTTP/1.1 403 Forbidden
+content-type: application/json
+x-request-id: 01a091e8-660d-75ae-9310-e0505a286768
+content-length: 221
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"error":{"code":"CSRF_REJECTED","message":"缺少或无效的 CSRF token：修改请求必须携带 X-CSRF-Token（取自登录或 GET /auth/session）","details":null,"requestId":"01a091e8-660d-75ae-9310-e0505a286768"}}
+== 8) PATCH 带 CSRF 但跨站 Origin → 403 ORIGIN_REJECTED ==
+HTTP/1.1 403 Forbidden
+content-type: application/json
+x-request-id: 01a091e8-6616-71b0-aa10-843575f84b90
+content-length: 217
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"error":{"code":"ORIGIN_REJECTED","message":"请求来源（Origin）不被允许：请从本站页面发起请求","details":{"origin":"https://attacker.example"},"requestId":"01a091e8-6616-71b0-aa10-843575f84b90"}}
+== 9) PATCH 带 CSRF、缺 If-Match → 428 PRECONDITION_REQUIRED ==
+HTTP/1.1 428 Precondition Required
+content-type: application/json
+x-request-id: 01a091e8-661f-7396-a64d-511d237d98e1
+content-length: 204
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"error":{"code":"PRECONDITION_REQUIRED","message":"缺少 If-Match：请先 GET 资源并用其 ETag（形如 \"r7\"）再发起修改","details":null,"requestId":"01a091e8-661f-7396-a64d-511d237d98e1"}}
+== 10) 同源 Origin + CSRF + If-Match "r1" → 200 新 ETag ==
+HTTP/1.1 200 OK
+content-type: application/json
+etag: "r2"
+x-request-id: 01a091e8-6628-73d0-9fbe-570eca11b122
+content-length: 234
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"data":{"id":"01993000-0000-7000-8000-000000000001","name":"改名成功","brand":"示例品牌","model":"W-100","variant":null,"revision":2,"archivedAt":null,"createdAt":"2026-09-10T00:26:40Z","updatedAt":"2026-09-11T19:18:41.96Z"}}
+== 11) 再次用旧 If-Match "r1" → 412 + details.currentRevision ==
+HTTP/1.1 412 Precondition Failed
+content-type: application/json
+x-request-id: 01a091e8-6631-76e2-8bde-d3b43a3b3a5d
+content-length: 188
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"error":{"code":"REVISION_CONFLICT","message":"该资源已被其他操作更新：请刷新后重试","details":{"currentRevision":2},"requestId":"01a091e8-6631-76e2-8bde-d3b43a3b3a5d"}}
+== 12) GET /settings/status → 200（未配置 Provider，不含密钥）==
+HTTP/1.1 200 OK
+content-type: application/json
+x-request-id: 01a091e8-663a-73d5-ae71-53abc0130b5a
+content-length: 262
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"data":{"providersConfigured":{"tripo":false,"manualAi":false},"limits":{"maxJsonRequestBytes":1048576,"maxPdfBytes":52428800,"maxPdfPages":100,"maxPhotoBytes":20971520,"maxGlbBytes":157286400,"maxItemTotalBytes":524288000},"capabilities":{"generation":false}}}
+== 13) GET /health/ready → 200（process/data_directory/database/migrations）==
+HTTP/1.1 200 OK
+content-type: application/json
+x-request-id: 01a091e8-6642-7349-bb5e-476d69ebd7b8
+content-length: 181
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"data":{"status":"ready","checks":[{"name":"process","status":"ok"},{"name":"data_directory","status":"ok"},{"name":"database","status":"ok"},{"name":"migrations","status":"ok"}]}}
+== 14) GET /api/unknown → JSON 404（非 HTML）==
+HTTP/1.1 404 Not Found
+content-type: application/json
+x-request-id: 01a091e8-664b-70d1-ad77-a0c052782a1d
+content-length: 124
+date: Fri, 11 Sep 2026 19:18:41 GMT
+
+{"error":{"code":"NOT_FOUND","message":"接口不存在","details":null,"requestId":"01a091e8-664b-70d1-ad77-a0c052782a1d"}}
+== 15) POST /auth/logout（带 CSRF）→ 204；旧 cookie 再用 → 401 ==
+HTTP/1.1 204 No Content
+set-cookie: em_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0
+x-request-id: 01a091e8-6654-71a3-8364-f78bbac7c6c1
+date: Fri, 11 Sep 2026 19:18:42 GMT
+
+
+HTTP/1.1 401 Unauthorized
+content-type: application/json
+x-request-id: 01a091e8-665c-7269-a26f-9a5c9b12f397
+content-length: 157
+date: Fri, 11 Sep 2026 19:18:42 GMT
+
+{"error":{"code":"UNAUTHORIZED","message":"未登录或会话已失效：请重新登录","details":null,"requestId":"01a091e8-665c-7269-a26f-9a5c9b12f397"}}
+== 16) 连续 5 次错误密码 → 401（通用提示）；第 6 次（密码正确）→ 429 + Retry-After ==
+（第 1 次失败的完整响应：提示不区分“未初始化/密码错误”，也不回显密码）
+HTTP/1.1 401 Unauthorized
+content-type: application/json
+x-request-id: 01a091e8-6665-7185-8937-ce2ff23d837f
+content-length: 139
+date: Fri, 11 Sep 2026 19:18:42 GMT
+
+{"error":{"code":"UNAUTHORIZED","message":"登录失败：凭据无效","details":null,"requestId":"01a091e8-6665-7185-8937-ce2ff23d837f"}}第 2 次错误密码 → HTTP 401
+第 3 次错误密码 → HTTP 401
+第 4 次错误密码 → HTTP 401
+第 5 次错误密码 → HTTP 401
+HTTP/1.1 429 Too Many Requests
+content-type: application/json
+x-request-id: 01a091e8-66db-73dc-b564-448d3b92286c
+retry-after: 60
+content-length: 154
+date: Fri, 11 Sep 2026 19:18:42 GMT
+
+{"error":{"code":"RATE_LIMITED","message":"登录尝试过于频繁：请稍后重试","details":null,"requestId":"01a091e8-66db-73dc-b564-448d3b92286c"}}
+== 17) data-dir 文件权限 ==
+-rw-------@ 1 qsyj  wheel  307200  9月 12 03:18 data/manual.sqlite3
+
+data:
+total 736
+drwx------@ 9 qsyj  wheel     288  9月 12 03:18 .
+drwx------@ 8 qsyj  wheel     256  9月 12 03:18 ..
+drwx------@ 2 qsyj  wheel      64  9月 12 03:18 blobs
+-rw-------@ 1 qsyj  wheel      37  9月 12 03:18 lock
+drwx------@ 3 qsyj  wheel      96  9月 12 03:18 logs
+-rw-------@ 1 qsyj  wheel  307200  9月 12 03:18 manual.sqlite3
+-rw-------@ 1 qsyj  wheel   32768  9月 12 03:18 manual.sqlite3-shm
+-rw-------@ 1 qsyj  wheel   28872  9月 12 03:18 manual.sqlite3-wal
+drwx------@ 2 qsyj  wheel      64  9月 12 03:18 tmp
+
+== 18) 服务端日志（节选：登录/401/403/412 的 requestId 关联）==
+{"timestamp":"2026-09-11T19:18:41.843504Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:18081","dataDir":"/private/tmp/em-t04-manual.IEUIjT/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T19:18:41.855855Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-65bf-7227-ba5a-f31abeaaa499","method":"GET","path":"/api/v1/items","status":401,"errorCode":"UNAUTHORIZED","durationMs":0.046334},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.881773Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-65c8-767e-9fca-8371cf6da630","method":"POST","path":"/api/v1/auth/login","status":200,"errorCode":"-","durationMs":17.00175},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.925185Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6605-7720-9dd3-2956a4789d2d","method":"GET","path":"/api/v1/auth/session","status":200,"errorCode":"-","durationMs":0.130875},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.934017Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-660d-75ae-9310-e0505a286768","method":"PATCH","path":"/api/v1/items/01993000-0000-7000-8000-000000000001","status":403,"errorCode":"CSRF_REJECTED","durationMs":0.169042},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.942985Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6616-71b0-aa10-843575f84b90","method":"PATCH","path":"/api/v1/items/01993000-0000-7000-8000-000000000001","status":403,"errorCode":"ORIGIN_REJECTED","durationMs":0.12670800000000002},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.951707Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-661f-7396-a64d-511d237d98e1","method":"PATCH","path":"/api/v1/items/01993000-0000-7000-8000-000000000001","status":428,"errorCode":"PRECONDITION_REQUIRED","durationMs":0.129},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.960853Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6628-73d0-9fbe-570eca11b122","method":"PATCH","path":"/api/v1/items/01993000-0000-7000-8000-000000000001","status":200,"errorCode":"-","durationMs":0.376917},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.969575Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6631-76e2-8bde-d3b43a3b3a5d","method":"PATCH","path":"/api/v1/items/01993000-0000-7000-8000-000000000001","status":412,"errorCode":"REVISION_CONFLICT","durationMs":0.18875},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.978599Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-663a-73d5-ae71-53abc0130b5a","method":"GET","path":"/api/v1/settings/status","status":200,"errorCode":"-","durationMs":0.093},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.987153Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6642-7349-bb5e-476d69ebd7b8","method":"GET","path":"/api/v1/health/ready","status":200,"errorCode":"-","durationMs":0.2695},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:41.995815Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-664b-70d1-ad77-a0c052782a1d","method":"GET","path":"/api/unknown","status":404,"errorCode":"NOT_FOUND","durationMs":0.010667},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.004753Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6654-71a3-8364-f78bbac7c6c1","method":"POST","path":"/api/v1/auth/logout","status":204,"errorCode":"-","durationMs":0.328709},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.012883Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-665c-7269-a26f-9a5c9b12f397","method":"GET","path":"/api/v1/items","status":401,"errorCode":"UNAUTHORIZED","durationMs":0.07162500000000001},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.035814Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6665-7185-8937-ce2ff23d837f","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.485625},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.059779Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-667c-751b-969f-f705ecf6a701","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.801042},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.083207Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-6694-75c1-b44d-98db9cb2f72a","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.548250000000001},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.106770Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-66ac-70ac-8054-593fa1dbf264","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.715583},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.130656Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-66c4-7474-bd07-4a9fdc4f4fb6","method":"POST","path":"/api/v1/auth/login","status":401,"errorCode":"UNAUTHORIZED","durationMs":14.414833},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:18:42.139754Z","level":"INFO","fields":{"message":"http_request","requestId":"01a091e8-66db-73dc-b564-448d3b92286c","method":"POST","path":"/api/v1/auth/login","status":429,"errorCode":"RATE_LIMITED","durationMs":0.053625},"target":"everything_manual::http::logging"}
+
+== 冒烟结束（退出码 0）==
+清理：/tmp/em-t04-manual.IEUIjT

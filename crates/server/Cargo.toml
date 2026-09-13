@@ -1,0 +1,61 @@
+[package]
+name = "everything-manual"
+description = "万物说明书服务：二进制 + 可测试 library"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+name = "everything_manual"
+path = "src/lib.rs"
+
+[[bin]]
+name = "everything-manual"
+path = "src/main.rs"
+
+[dependencies]
+argon2.workspace = true
+axum.workspace = true
+clap.workspace = true
+getrandom.workspace = true
+libc.workspace = true
+manual-core = { path = "../core" }
+# T12 起：Provider HTTP 客户端（架构 §3 的 reqwest 0.13 + rustls；生产依赖，
+# 与 T05 fixture 无关）。仅由已注册的 Tripo 阶段处理器使用；未配置 Provider 时
+# 不发起任何请求。features 由 workspace 定义（json/multipart/stream/rustls）。
+reqwest.workspace = true
+rust-embed = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+toml.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+utoipa.workspace = true
+uuid.workspace = true
+
+[features]
+default = []
+# 仅发布/dist 路径要求 apps/web/dist（缺 dist 时 build.rs 明确报错，不产出空壳）。
+# 普通 cargo test / cargo build 不启用该 feature，不要求 dist。
+embedded-ui = ["dep:rust-embed"]
+# T10：崩溃断点注入。**只由下面的 [dev-dependencies] 自引用开启**（测试目标），
+# 生产构建（cargo build / xtask dist）不启用：job_failpoint! 展开为空语句，
+# 断点分支与断点名都不会进入发布二进制（证据见 implementation.md §T10）。
+job-failpoints = []
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }
+# T05：本机 HTTP fixture 与样例资产校验。只允许出现在 [dev-dependencies]，
+# 由 tests/fixture_harness.rs::test_support_stays_out_of_the_release_dependency_tree
+# 与 `cargo tree -p everything-manual --edges normal` 证据共同守护。
+test-support = { path = "../test-support" }
+# T10：自引用 dev-dependency，**仅为测试目标**开启 job-failpoints（崩溃断点）。
+# Cargo 对 dev-dependency 的 feature 只作用于测试构建；cargo build / xtask dist
+# 不经过这条边，发布二进制里没有断点分支。
+everything-manual = { path = ".", features = ["job-failpoints"] }

@@ -1,0 +1,14 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.81s
+     Running tests/qa_t20_bug008_independent.rs (target/debug/deps/qa_t20_bug008_independent-22cdb6c4a6fa82ee)
+
+running 3 tests
+test qa26_connect_refused_message_must_not_leak_signed_url ... ok
+test qa26_transport_failure_message_must_not_leak_signed_url ... ok
+test qa26_timeout_message_must_not_leak_signed_url ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.02s
+

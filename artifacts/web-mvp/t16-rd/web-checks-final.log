@@ -1,0 +1,43 @@
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+typecheck exit=0
+
+> everything-manual-web@0.1.0 lint
+> eslint . --max-warnings=0
+
+lint exit=0
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  15:45:59
+   Duration  1.93s (environment 62%, tests 15%, transform 12%, setup 7%, import 4%, worker 1%)
+
+vitest exit=0
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 113 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.30 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-ihyKy8TG.css              12.74 kB │ gzip:   3.02 kB
+dist/assets/index-hnvlwwcg.js              385.20 kB │ gzip: 117.91 kB
+dist/assets/PreparePage-s5pIGHrv.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 152ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+build exit=0

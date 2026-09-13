@@ -1,0 +1,18 @@
+== 二进制（发布构建）：/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+listening on 127.0.0.1:18332
+密码来源：受限文件 ./pw.txt；明文不落盘、不进入日志与 shell history。
+== 0) 编译期开关语义（发布构建必须忽略 allow_local_fixture）
+"event":"download_local_fixture_ignored"
+== job=01a093e8-7abe-7333-94fb-14205b313e66（等待 model_download 结论）
+  model_download 状态：needs_input（期望 needs_input；发布构建不放行本机 fixture）
+== 阶段缺项与 fixture 记录
+  needs_input = [{"code":"download_insecure_scheme","message":"模型下载必须使用 HTTPS（实际 http://127.0.0.1）：拒绝下载"}]
+  last_error  = 模型下载必须使用 HTTPS（实际 http://127.0.0.1）：拒绝下载
+  model 资产数（应为 0）= 0
+  model_revisions 数（应为 0）= 0
+  provider_attempts（付费提交只应 1 条）= 1
+  fixture 记录中的模型 CDN 请求次数（应为 0）：0
+{"method": "POST", "path": "/v3/files", "authorization": true, "note": "upload", "count": 1}
+{"method": "POST", "path": "/v3/files", "authorization": true, "note": "upload", "count": 2}
+{"method": "POST", "path": "/v3/generation/multiview-to-model", "authorization": true, "note": "paid-submit", "count": 1, "body": {"inputs": [{"front": "token-1"}, {"left": "token-2"}], "model": "v3.1-20260211", "texture": true, "pbr": true, "texture_quality": "standard", "geometry_quality": "standard", "face_limit": 100000, "quad": false, "generate_parts": false}}
+{"method": "GET", "path": "/v3/tasks/manual-task-t13-0001", "authorization": true, "note": "task-query", "count": 1, "modelUrl": "http://127.0.0.1:18332/model.glb?sign=expired-old"}

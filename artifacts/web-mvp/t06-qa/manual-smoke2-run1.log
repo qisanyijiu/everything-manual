@@ -1,0 +1,27 @@
+QA 手工冒烟（二段） 2026-09-12 04:27:34 CST
+  itemA=7c868ee0-516a-4145-b2c1-87f15cf5c3bc
+
+== 13) 加密 PDF 与对象流 PDF：上传接受（权威拒绝在 T09）
+  PASS  加密 PDF（trailer /Encrypt）→ 201（REQ-012 拒绝在 T09） = 201
+  FAIL  页树不可定位（模拟对象流）→ 201（页数权威判定在 T09）: expected [201] got [422]
+  "stage":"pdf_probe"
+
+== 14) pageText 边界：正常 / 超 2 MiB / 空文件 Range
+  PASS  正常 pageText → 201 = 201
+  PASS    mime = text/plain; charset=utf-8
+  PASS  2 MiB+1 的 pageText → 413 = 413
+  PASS    code = PAYLOAD_TOO_LARGE
+  PASS  空 pageText → 201 = 201
+  PASS    size = 0
+  PASS  空资产任何区间 → 416 = 416
+  PASS    content-range = bytes */0
+  PASS  空资产完整 GET → 200 = 200
+  PASS    content-length = 0
+
+== 15) 元数据 ↔ 磁盘一致性：每条 asset 的 blob 文件存在且 sha256 相符
+  assets=10 files_ok=10 bad=[]
+  PASS  全部 asset 都有对应文件且 sha256 相符（先文件后元数据的可观察结论）
+  PASS    PRAGMA integrity_check = ok
+  PASS    tmp 目录为空 = 0
+
+===== 二段小结：PASS=14 FAIL=1 =====

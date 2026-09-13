@@ -1,0 +1,117 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/fixture/success",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": { "status": 200, "body": { "json": { "ok": true, "route": "success" } } }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/delay",
+      "steps": [
+        {
+          "kind": "delay",
+          "delayMs": 250,
+          "response": { "status": 200, "body": { "json": { "ok": true, "route": "delay" } } }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/disconnect",
+      "steps": [{ "kind": "disconnect" }]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/reset",
+      "steps": [{ "kind": "reset" }]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/half-close",
+      "steps": [
+        {
+          "kind": "halfClose",
+          "truncateAt": 8,
+          "response": {
+            "status": 200,
+            "body": { "text": "0123456789abcdefghij" }
+          }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/rate-limited",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": {
+            "status": 429,
+            "headers": { "retry-after": "2" },
+            "body": {
+              "json": {
+                "error": { "code": "RATE_LIMITED", "message": "too many requests" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/server-error",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": { "status": 503, "body": { "text": "upstream unavailable" } }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/malformed-json",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": {
+            "status": 200,
+            "headers": { "content-type": "application/json" },
+            "body": { "text": "{\"code\": 0, \"data\": {" }
+          }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/timeout",
+      "steps": [{ "kind": "timeout", "holdMs": 60000 }]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/once",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": { "status": 200, "body": { "json": { "ok": true, "route": "once" } } }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/fixture/repeats",
+      "repeatLast": true,
+      "steps": [
+        {
+          "kind": "respond",
+          "response": { "status": 200, "body": { "json": { "ok": true, "route": "repeats" } } }
+        }
+      ]
+    }
+  ]
+}

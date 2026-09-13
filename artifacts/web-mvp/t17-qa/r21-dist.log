@@ -1,0 +1,67 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/xtask dist --target aarch64-apple-darwin`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm ci)
+
+added 272 packages, and audited 273 packages in 4s
+
+66 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  11 passed (11)
+      Tests  79 passed (79)
+   Start at  18:59:13
+   Duration  2.30s (environment 59%, tests 17%, transform 11%, setup 8%, import 4%, worker 1%)
+
+Environment  jsdom was created 11 times · 6.47s total, 59% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 119 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.31 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-CWB0ANYl.css              16.16 kB │ gzip:   3.51 kB
+dist/assets/index-BpQwd_fv.js              416.03 kB │ gzip: 126.19 kB
+dist/assets/PreparePage-BZEwphqJ.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 693ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo build --release --locked --features embedded-ui --target aarch64-apple-darwin --package everything-manual)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 27.70s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : f08444b9e4af82ef26c0de4435eb434d266cbe79b1760deed0d0640f4229c924
+  size   : 22627728 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json

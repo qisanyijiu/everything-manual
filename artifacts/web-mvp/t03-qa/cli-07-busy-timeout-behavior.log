@@ -1,0 +1,17 @@
+# QA T03 busy_timeout behavioural probe 2026-09-11T18:54:26Z
+0|0|0
+v1 state ready (migrations: 1)
+--- serve while write lock held (expect ~5s busy_timeout then error)
+{"timestamp":"2026-09-11T18:54:33.031693Z","level":"WARN","fields":{"message":"slow statement: execution time exceeded alert threshold","summary":"-- 0002_invariants —— contracts.md …","db.statement":"\n\n-- 0002_invariants —— contracts.md §2/§4/§5 中必须以 SQL 层强制、无法由普通\n-- 唯一键/外键表达的不变量。\n--\n-- 为什么用触发器（RD 取舍，见 decisions.md ADR-012）：\n--   * 「输入不可变」「发布不可变」「远端 ID 只允许 null→值或同值」是合同里的\n--     \"必须保证\"，应用层校验会被后来的代码路径绕过；触发器把不变量钉在 schema 上，\n--     且可以像唯一键一样被测试直接验证。\n--   * 触发器只禁止明确的错误写入，不替应用做业务规则（业务校验仍属各服务层）。\n-- 迁移只追加，不修改 0001（ADR-009）。\n\n-- 1) generation_snapshots 输入不可变：编辑原物品/资料不改变已开始任务\n--    （contracts.md §2「输入不可变」、§4、REQ-017/AC-027）。\nCREATE TRIGGER generation_snapshots_immutable\nBEFORE UPDATE ON generation_snapshots\nBEGIN\n    SELECT RAISE(ABORT, 'generation_snapshots 是冻结输入，不允许修改');\nEND;\n\n-- 2) manual_releases 是不可变完整快照（contracts.md §2/§7、REQ-035/AC-055）：\n--    发布后内容（含 manifest 引用与 draft_revision）不允许改写或删除。\nCREATE TRIGGER manual_releases_immutable\nBEFORE UPDATE ON manual_releases\nBEGIN\n    SELECT RAISE(ABORT, 'manual_releases 是已发布快照，不允许修改');\nEND;\n\nCREATE TRIGGER manual_releases_no_delete\nBEFORE DELETE ON manual_releases\nBEGIN\n    SELECT RAISE(ABORT, 'manual_releases 是已发布快照，不允许删除（归档用 draft/物品字段）');\nEND;\n\n-- 3) provider_attempts.remote_task_id 只允许 null→值或同值，不覆盖不同值、\n--    也不允许把已知远端 ID 清空（contracts.md §2/§5：冲突记录并停机告警，\n--    过期租约也允许把空 ID 补成返回值）。\nCREATE TRIGGER provider_attempts_remote_task_id_monotonic\nBEFORE UPDATE OF remote_task_id ON provider_attempts\nWHEN OLD.remote_task_id IS NOT NULL\n     AND (NEW.remote_task_id IS NULL OR NEW.remote_task_id <> OLD.remote_task_id)\nBEGIN\n    SELECT RAISE(ABORT, 'provider_attempts.remote_task_id 已存在：只允许 null→值或同值，不允许覆盖或清空');\nEND;\n\n-- 4) 同一阶段只允许一个未对账 attempt（contracts.md §5 提交窗口第 1 条）：\n--    intent/submitting/unknown 都是\"未对账\"；accepted/failed 已定性，允许后续重试\n--    再建新 attempt。部分唯一索引把该约束钉在 SQL 上，而不是靠调用顺序。\nCREATE UNIQUE INDEX provider_attempts_unresolved_stage\n    ON provider_attempts (stage_id)\n    WHERE submit_state IN ('intent', 'submitting', 'unknown');\n\n","rows_affected":0,"rows_returned":0,"elapsed":"5.417424917s","elapsed_secs":5.417424917,"slow_threshold":"1s"},"target":"sqlx::query"}
+错误：数据库迁移失败：while executing migration 2: error returned from database: (code: 5) database is locked
+real 5.43
+user 0.01
+sys 0.00
+serve_locked exit=4
+state after failed migrate: migrations=1 triggers=0
+locker released
+--- serve after lock released (expect success v2)
+serve_ok exit=0
+"event":"database_ready","dataDir":"/tmp/em-t03-qa/data6","schemaVersion":2
+"schemaVersion":2
+final: migrations=1,2 triggers=4

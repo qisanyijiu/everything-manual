@@ -1,0 +1,8 @@
+{"timestamp":"2026-09-12T20:27:34.236297Z","level":"WARN","fields":{"message":"快照内有历史供应商临时 URL：已替换为 sha256 摘要 + host（源 data-dir 未修改）","event":"backup_temp_urls_redacted","count":9},"target":"everything_manual::backup::create"}
+{"timestamp":"2026-09-12T20:27:34.318310Z","level":"INFO","fields":{"message":"备份完成（一致快照 + 被引用 blob + manifest；不含会话与供应商临时 URL）","event":"backup_created","outDir":"/private/tmp/em-r28-bug011-MJzerb/./backup2","schemaVersion":7,"databaseSha256":"e6a93c4a97c42e33f72f2d7f6d4229d978f323e660a91bf5adf2c1715e5021ab","blobsCopied":11,"missingBlobs":0,"totalBytes":393592,"sessionsRemoved":0,"tempUrlsRedacted":9},"target":"everything_manual::backup::create"}
+备份完成：/private/tmp/em-r28-bug011-MJzerb/./backup2
+  一致快照：database/manual.sqlite3（sha256 e6a93c4a97c42e33f72f2d7f6d4229d978f323e660a91bf5adf2c1715e5021ab，360448 字节，schema v7；VACUUM INTO，含 WAL 中已提交事务）
+  被引用 blob：复制 11 个
+  manifest 与 sha256：manifest.json；会话已从快照中清空（恢复后需重新登录，共清空 0 条）
+  供应商临时 URL 脱敏：快照内 9 处临时/签名地址已替换为 sha256 摘要 + host（AC-010；恢复后按 task_id 重新查询链接）
+  恢复方式：everything-manual restore --from /private/tmp/em-r28-bug011-MJzerb/./backup2 --data-dir <不存在或为空的新目录>

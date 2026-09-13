@@ -1,0 +1,61 @@
+== QA 工作目录：/tmp/em-t11-qa-784mIE（退出时删除）；二进制：/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+== 1) 非法价格目录：check 必须非零（不静默用猜测价格）
+  check 退出码 = 3（期望非 0）
+unknown field `credits`, expected one of `input_usd_per_million_tokens`, `output_usd_per_million_tokens`, `image_usd_per_image`
+
+  serve 退出码 = 3（期望 3=配置错误）
+== 2) 正常启动（假凭据，只连 loopback）
+  check 退出码 = 0（期望 0）；版本行：[检查] 数据库 schema：已就绪（v6；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+== 3) 物品 / PDF / 2 页准备（1 文字页 + 1 扫描页）/ front+left 照片
+  第 1 页写入 HTTP 200
+  第 2 页写入 HTTP 200
+  准备封存 HTTP 200
+== 4) estimate：QA 用 python 独立复算上界并对照响应
+  HTTP 201（期望 201）
+  QA 手算 ManualAI 上界=19742（输入 1550 + 输出 8192 + 页图 10000）；响应=19742
+  DB：cost_ledger = 0  jobs = 0  attempts = 0  quotes = 1
+== 5) 未确认提交 → 422；确认 → 200（audit）
+  未确认 HTTP 422 reason=confirmationRequired
+  确认 HTTP 200 at=2026-09-12T02:32:18.189Z
+== 6) 未知字段（前端费用/质量）→ 422（结构性拒绝）
+  未知字段 HTTP 422 code=VALIDATION_FAILED
+== 7) 20 次同键重放（HTTP）
+  第 1 次 HTTP HTTP/1.1 202 Accepted
+content-type: application/json
+x-request-id: 01a09375-604d-770b-bbae-7681adfe0634
+content-length: 696
+date: Sat, 12 Sep 2026 02:32:18 GMT
+
+202 job=01a09375-604e-77fb-a192-8623cfac26df（无重放头：7）
+  第 2 次 HTTP HTTP/1.1 202 Accepted
+content-type: application/json
+x-idempotent-replay: true
+x-request-id: 01a09375-6072-70c7-a786-4950f5a395f6
+content-length: 696
+date: Sat, 12 Sep 2026 02:32:18 GMT
+
+202 重放头=HTTP/1.1 202 Accepted
+  20 次全部返回同一 job id：01a09375-604e-77fb-a192-8623cfac26df
+  同键不同 body HTTP 409 code=IDEMPOTENCY_CONFLICT
+== 8) 库内不变量
+  jobs = 1  snapshots = 1  cost_ledger = 2  幂等记录 = 1
+  quotes = 1  已消费 = 1
+   ledger： ('manual_ai', 'usd_micros', 19742, None, 'reserved')
+   ledger： ('tripo', 'credit_minor', 3000, None, 'reserved')
+  审计： ['generation_send_scope_confirmed', 'generation_job_created']
+  provider_attempts = 0 （无付费提交）
+  快照 photo_ids = ["01a09375-5f86-725c-ba86-99c36bbfd1b7","01a09375-5f9d-714d-88d7-36b5d6910983"]
+  快照 photo_hashes = ["122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586","0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890"]
+  QA 独立算出的 front 内容 sha256 = 122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586
+  快照 provider_config 不含密钥：OK
+== 8b) 服务重启后同键重放 → 仍返回同一 job（不产生第二份生成单）
+  重启后重放 HTTP 202 job=01a09375-604e-77fb-a192-8623cfac26df（期望 202 且 = 01a09375-604e-77fb-a192-8623cfac26df）
+  重启后 jobs = 1  cost_ledger = 2
+== 8c) 价格版本变化（改文件 + 改 version + 重启）→ 旧报价提交被拒，不创建 job
+version = "2026-10-01"
+  HTTP 422 reason=priceVersionChanged
+  jobs = 1 （必须仍为 1）
+== 9) 服务进程外连检查（不应有非 loopback 连接）
+  无非 loopback 连接：OK
+== QA 冒烟完成
+SMOKE_EXIT=0

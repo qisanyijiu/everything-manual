@@ -1,0 +1,23 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+sample-model.glb
+  sha256 = a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb
+  大小 = 2912 字节
+  自检 = GlbInfo { version: 2, json_len: 1192, bin_len: 1692, triangles: 12, meshes: 1, nodes: 1, image_count: 1, max_texture_dimension: 16 }
+sample-manual-text.pdf
+  sha256 = e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+  大小 = 1216 字节
+  自检 = PdfInfo { version: "1.4", page_count: 2, declared_count: 2, xref_entries_checked: 7, has_text_operators: true, image_xobjects: 0, max_image_dimension: 0 }
+sample-manual-scan.pdf
+  sha256 = 4080019bb8f1d0b9db446add474721734d7dbf8f18e0f62bfa5c59c661db2ce7
+  大小 = 3135 字节
+  自检 = PdfInfo { version: "1.4", page_count: 2, declared_count: 2, xref_entries_checked: 8, has_text_operators: false, image_xobjects: 2, max_image_dimension: 32 }
+sample-photo-front.jpg
+  sha256 = 122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586
+  大小 = 174 字节
+  自检 = JpegInfo { width: 32, height: 32, components: 1, progressive: false, has_huffman_tables: true, has_quantization_tables: true }
+sample-photo-left.png
+  sha256 = 0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+  大小 = 12420 字节
+  自检 = PngInfo { width: 64, height: 64, bit_depth: 8, color_type: 2, chunk_count: 3 }

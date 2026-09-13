@@ -1,0 +1,31 @@
+=== cargo xtask check ===
+合同检查通过：openapi.json 与 generated.ts 均与 Rust DTO 一致。
+[通过] cargo xtask contracts --check
+
+全部检查通过。
+=== cargo xtask contracts --check ===
+  [一致] contracts/openapi.json
+  [一致] apps/web/src/api/generated.ts
+合同检查通过：openapi.json 与 generated.ts 均与 Rust DTO 一致。
+=== cargo xtask dist --target aarch64-apple-darwin ===
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 15.83s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : a9e41f145703067f1f37b095b42839fd77d5390a7b4d5d380a0fbc7d1ada6b44
+  size   : 14617632 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json
+=== cargo xtask smoke-bootstrap --binary dist/aarch64-apple-darwin/everything-manual ===
+  (服务输出) {"timestamp":"2026-09-11T23:50:38.521651Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-11T23:50:38.521661Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:52757","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-13377-1789170638066766000/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+服务地址：http://127.0.0.1:52757
+  [检查] GET / -> 200 text/html; charset=utf-8
+  [检查] GET /assets/index-BGmBqSvU.js -> 200 text/javascript; charset=utf-8
+  [检查] GET /api/v1/health/live -> 200
+  [检查] GET /api/v1/health/ready -> 200
+  [检查] GET /api/unknown -> 404 application/json
+  [检查] GET /library/some-item -> 200 text/html; charset=utf-8
+  [检查] GET /assets/definitely-missing.js -> 404 text/plain; charset=utf-8
+
+冒烟通过：内嵌页面、静态资源与 health 均可用（T01 最小检查）。

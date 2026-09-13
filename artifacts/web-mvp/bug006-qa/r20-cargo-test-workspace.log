@@ -1,0 +1,62 @@
+### cargo test --workspace
+test knowledge::tests::merge_deduplicates_and_keeps_all_provenance ... ok
+test knowledge::tests::pages_outside_the_batch_input_are_rejected ... ok
+test timestamps::tests::arithmetic_is_checked ... ok
+test knowledge::tests::schema_is_strict_with_all_required_and_nullable_optionals ... ok
+test tests::error_code_wire_format_is_screaming_snake_case ... ok
+test timestamps::tests::plain_and_fractional_seconds_both_parse ... ok
+test validation::tests::create_requires_name_and_model_and_trims ... ok
+test validation::tests::create_reports_too_long_fields_by_char_count ... ok
+test timestamps::tests::rfc3339_round_trip_and_serde ... ok
+test knowledge::tests::unknown_fields_and_missing_required_are_schema_violations ... ok
+test validation::tests::page_number_is_one_based_and_bounded ... ok
+test validation::tests::patch_empty_body_is_rejected ... ok
+test validation::tests::patch_null_clears_optional_fields ... ok
+test validation::tests::document_title_and_url_rules ... ok
+test validation::tests::photo_view_field_lists_allowed_values ... ok
+test validation::tests::patch_null_on_required_fields_is_an_error ... ok
+test validation::tests::viewport_rejects_zero_size_oversize_and_bad_rotation ... ok
+test knowledge::tests::valid_output_is_normalized_with_server_side_provenance_and_mapping ... ok
+test knowledge::tests::length_limits_and_entity_limits_are_enforced ... ok
+
+test result: ok. 51 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/test_support-e82de81faf58326d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/generate_fixtures.rs (target/debug/deps/generate_fixtures-1df1049b9db44c5c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/xtask-0bf38d2cb975f8d8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests everything_manual
+
+running 1 test
+test crates/server/src/storage/repo/items.rs - storage::repo::items (line 16) ... ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.74s; merged doctests compilation took 0.24s
+   Doc-tests manual_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests test_support
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+EXIT=0

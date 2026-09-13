@@ -1,0 +1,8 @@
+== DTO model_download.lastError = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=1ad284853e658cec…）)
+== DTO model_download.needsInput[0].message = 模型文件超过上限：请更换资料（原始链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=29abf32bde7f6184…））
+== DTO attempts[].lastError = ["链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=d7baeacc4365aace…）已过期，请重试 | 见 '（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=cd38bfde1e241f90…）' 后重试 | 下一行 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=33d5d06af12fa061…）：以及结束 | 结尾 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=036dabd5e67ac817…），结束", "链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=d7baeacc4365aace…）已过期，请重试 | 见 '（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=cd38bfde1e241f90…）' 后重试 | 下一行 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=33d5d06af12fa061…）：以及结束 | 结尾 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=036dabd5e67ac817…），结束"]
+== 尾部文本缺失 = []
+== 摘要标签命中 = 10
+== host 摘要 = 10
+== 远端任务事实（attempts[].remoteTaskId 非空数） = 1
+== stage id 仍在 = True

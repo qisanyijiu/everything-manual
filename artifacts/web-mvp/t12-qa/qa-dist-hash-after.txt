@@ -1,0 +1,1 @@
+2ec8a45be0f63ef257d886e9b341762d0e8b21f7c6a81907657f763c15067f5d  /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual

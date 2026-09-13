@@ -1,0 +1,23 @@
+== 断点门控（dist，应全为 0）
+EM_TEST_FAILPOINT                             0
+paid_after_intent_before_submitting           0
+paid_after_submitting_before_request          0
+paid_after_response_before_receipt            0
+paid_after_receipt_before_advance             0
+result_fact_before_checkpoint                 0
+manual_after_request_before_response          0
+generation_after_reserve_before_commit        0
+== nm 断点符号（应为 0）：0
+== 正对照（测试二进制 EM_TEST_FAILPOINT，应 ≥1）：2
+== 正对照：生产字符串（应 ≥1）
+openapi.tripo3d.ai                       1
+generation/multiview-to-model            1
+credits_consumed                         1
+== 测试/夹具字符串（应为 0）
+fixture                                  0
+responses/tripo                          0
+test-support                             0
+canary                                   0
+smoke-task                               0
+== dist 哈希
+2ec8a45be0f63ef257d886e9b341762d0e8b21f7c6a81907657f763c15067f5d  everything-manual

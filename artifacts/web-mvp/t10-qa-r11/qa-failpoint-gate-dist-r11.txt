@@ -1,0 +1,13 @@
+=== dist binary: /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual ===
+cf754cf0eedfbc0805733a819804e91607e1fe90ac9d2e1874d0adb13f84b9e2  /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+--- strings hits in DIST (expect 0) ---
+paid_after_intent_before_submitting = 0
+paid_after_submitting_before_request = 0
+paid_after_response_before_receipt = 0
+paid_after_receipt_before_advance = 0
+manual_after_request_before_response = 0
+result_fact_before_checkpoint = 0
+EM_TEST_FAILPOINT = 0
+--- failpoint symbol count in DIST via nm (expect 0) ---
+0
+0

@@ -1,0 +1,12 @@
+# QA T16 零外网观测（lsof 采样）：仅统计本套件相关进程（node/vite/everything-manual/chromium/como）
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+node       1417 qsyj   17u  IPv4 0x11c73b9c3eace074      0t0  TCP 10.0.0.9:50871->104.16.4.34:443 (ESTABLISHED)
+# 采样结束：以上为空即无任何本机测试进程的非回环活动连接

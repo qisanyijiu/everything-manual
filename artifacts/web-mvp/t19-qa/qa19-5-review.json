@@ -1,0 +1,19 @@
+{
+  "itemId": "01a0977c-06bd-7710-9928-25ce6c8913cb",
+  "draftId": "01a0977c-08e0-77df-bd5e-b6dc7c4afa57",
+  "model": {
+    "revisionId": "01a0977c-08d7-7276-b453-0c17dfdea32c",
+    "sha256": "3917a92d577062484ab02a9d5e1e6c91a44c5e0048a5e48b43c8212a83f376f8"
+  },
+  "snapshotName": "后盖",
+  "editedAt": 1789247883692,
+  "modelReview": {
+    "checkedAt": 1789247883704,
+    "loaded": true,
+    "loadedAt": 1789247883700,
+    "modelRevisionId": "01a0977c-08d7-7276-b453-0c17dfdea32c",
+    "modelSha256": "3917a92d577062484ab02a9d5e1e6c91a44c5e0048a5e48b43c8212a83f376f8",
+    "userConfirmed": true,
+    "userConfirmedAt": 1789247883704
+  }
+}

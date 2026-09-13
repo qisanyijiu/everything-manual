@@ -1,0 +1,9 @@
+# QA T03 FK definitions probe (sqlite3, foreign_keys=ON) 2026-09-11T18:56:19Z
+-- orphan FK insert (expect error):
+Error: stepping, FOREIGN KEY constraint failed (19)
+-- RESTRICT delete of referenced item (expect error):
+Error: stepping, FOREIGN KEY constraint failed (19)
+-- item still present:
+1
+-- CASCADE check session->admin:
+0

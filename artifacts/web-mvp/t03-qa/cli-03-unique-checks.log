@@ -1,0 +1,58 @@
+# QA T03 unique/index probes on copy 2026-09-11T18:53:38Z
+== unique indexes (PRAGMA index_list, origin 'u'/'pk')
+-- blobs
+0|sqlite_autoindex_blobs_1|1|pk|0
+-- sessions
+0|sessions_expires|0|c|0
+1|sessions_admin|0|c|0
+2|sqlite_autoindex_sessions_2|1|u|0
+3|sqlite_autoindex_sessions_1|1|pk|0
+-- pages
+0|sqlite_autoindex_pages_1|1|pk|0
+-- job_stages
+0|job_stages_due|0|c|0
+1|job_stages_job|0|c|0
+2|sqlite_autoindex_job_stages_2|1|u|0
+3|sqlite_autoindex_job_stages_1|1|pk|0
+-- idempotency_records
+0|idempotency_records_resource|0|c|0
+1|sqlite_autoindex_idempotency_records_2|1|u|0
+2|sqlite_autoindex_idempotency_records_1|1|pk|0
+-- manual_drafts
+0|manual_drafts_item|0|c|0
+1|sqlite_autoindex_manual_drafts_2|1|u|0
+2|sqlite_autoindex_manual_drafts_1|1|pk|0
+== sqlite_autoindex members
+_sqlx_migrations|sqlite_autoindex__sqlx_migrations_1|
+admins|sqlite_autoindex_admins_1|
+assets|sqlite_autoindex_assets_1|
+audit_events|sqlite_autoindex_audit_events_1|
+blobs|sqlite_autoindex_blobs_1|
+cost_ledger|sqlite_autoindex_cost_ledger_1|
+documents|sqlite_autoindex_documents_1|
+generation_snapshots|sqlite_autoindex_generation_snapshots_1|
+idempotency_records|sqlite_autoindex_idempotency_records_1|
+idempotency_records|sqlite_autoindex_idempotency_records_2|
+items|sqlite_autoindex_items_1|
+job_stages|sqlite_autoindex_job_stages_1|
+job_stages|sqlite_autoindex_job_stages_2|
+jobs|sqlite_autoindex_jobs_1|
+manual_drafts|sqlite_autoindex_manual_drafts_1|
+manual_drafts|sqlite_autoindex_manual_drafts_2|
+manual_releases|sqlite_autoindex_manual_releases_1|
+model_revisions|sqlite_autoindex_model_revisions_1|
+pages|sqlite_autoindex_pages_1|
+photos|sqlite_autoindex_photos_1|
+preparations|sqlite_autoindex_preparations_1|
+provider_attempts|sqlite_autoindex_provider_attempts_1|
+sessions|sqlite_autoindex_sessions_1|
+sessions|sqlite_autoindex_sessions_2|
+== constraint probes (expect errors)
+-- duplicate blob sha
+Error: stepping, UNIQUE constraint failed: blobs.sha256 (19)
+-- page_number=0
+Error: stepping, CHECK constraint failed: page_number >= 1 (19)
+-- items blank name
+Error: stepping, CHECK constraint failed: length(trim(name)) > 0 (19)
+-- sessions expires<=created
+Error: stepping, CHECK constraint failed: expires_at > created_at (19)

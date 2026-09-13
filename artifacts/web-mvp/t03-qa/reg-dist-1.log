@@ -1,0 +1,72 @@
+# QA T03 xtask dist run 1 2026-09-11T18:55:59Z
+1aaeb2dff5ce8e286333d0233a487db9a02b1359f32947d96396e0732de5b889  dist/aarch64-apple-darwin/everything-manual
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+   Compiling xtask v0.1.0 (/Users/qsyj/Code/rust/everything-manual/xtask)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.68s
+     Running `target/debug/xtask dist --target aarch64-apple-darwin`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm ci)
+
+added 258 packages, and audited 259 packages in 2s
+
+61 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+   Start at  02:56:06
+   Duration  632ms (environment 72%, setup 11%, tests 9%, transform 5%, import 2%, worker 1%)
+
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 17 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:  0.31 kB
+dist/assets/index-D4ecdHrA.css    0.88 kB │ gzip:  0.48 kB
+dist/assets/index-7mFZcJzB.js   222.14 kB │ gzip: 70.02 kB
+
+✓ built in 363ms
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo build --release --locked --features embedded-ui --target aarch64-apple-darwin --package everything-manual)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 8.15s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : 1aaeb2dff5ce8e286333d0233a487db9a02b1359f32947d96396e0732de5b889
+  size   : 6843376 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json
+exit=0
+1aaeb2dff5ce8e286333d0233a487db9a02b1359f32947d96396e0732de5b889  dist/aarch64-apple-darwin/everything-manual
+total 13472
+drwxr-xr-x@ 6 qsyj  staff      192  9月 12 01:07 .
+drwxr-xr-x@ 3 qsyj  staff       96  9月 12 01:05 ..
+-rw-r--r--@ 1 qsyj  staff      612  9月 12 02:56 build-info.json
+-rwxr-xr-x@ 1 qsyj  staff  6843376  9月 12 02:56 everything-manual
+-rw-r--r--@ 1 qsyj  staff    44655  9月 12 02:56 licenses.json
+-rw-r--r--@ 1 qsyj  staff       84  9月 12 02:56 SHA256SUMS

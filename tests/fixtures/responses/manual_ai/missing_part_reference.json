@@ -1,0 +1,28 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文）：OpenAI Responses 形态的脱敏示例；output[0].content[0].text 内是 manual_extract_v1 的 strict JSON 字符串（T14 schema 以 crates/core/src/knowledge.rs 为准）",
+  "id": "resp_fixture_missingpart_0001",
+  "object": "response",
+  "created_at": 1757635200,
+  "status": "completed",
+  "model": "manual-ai-fixture-model",
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_fixture_0001",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "text": "{\"schemaVersion\": \"manual_extract_v1\", \"parts\": [{\"id\": \"part-1\", \"name\": \"后盖\", \"description\": \"机身背部可拆盖板，由四颗不脱落螺钉固定。\", \"evidence\": [{\"pageNumber\": 1, \"quote\": \"Loosen the four captive screws on the rear cover.\"}]}, {\"id\": \"part-2\", \"name\": \"电池仓\", \"description\": \"后盖内侧的电池安放区域。\", \"evidence\": [{\"pageNumber\": 1, \"quote\": null}]}], \"steps\": [{\"id\": \"step-1\", \"title\": \"取下后盖\", \"orderedActions\": [\"松开四颗不脱落螺钉\", \"沿边缘取下后盖\"], \"partIds\": [\"part-1\", \"part-9\"], \"evidence\": [{\"pageNumber\": 1, \"quote\": \"Loosen the four captive screws on the rear cover.\"}], \"safetyNotes\": [\"操作前断开电源。\"]}], \"specs\": [{\"id\": \"spec-1\", \"label\": \"供电\", \"value\": \"DC 12 V / 2.5 A\", \"evidence\": [{\"pageNumber\": 2, \"quote\": null}]}], \"uncertainties\": [{\"id\": \"uncertainty-1\", \"topic\": \"螺钉扭矩\", \"detail\": \"资料未给出拧紧扭矩数值。\"}]}"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 1234,
+    "output_tokens": 321,
+    "total_tokens": 1555
+  }
+}

@@ -1,0 +1,26 @@
+=== cargo xtask dist --target aarch64-apple-darwin（含最后代码状态） ===
+    Finished `release` profile [optimized] target(s) in 16.21s
+
+dist 完成：
+  binary : /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+  sha256 : 44ab49e509a16a2dc4942b32fe6ed8481f216ae096e0903aca876448c8a97d74
+  size   : 14617632 bytes
+  files  : SHA256SUMS, licenses.json, build-info.json
+
+=== cargo xtask smoke-bootstrap --binary <dist> ===
+冒烟目录：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-smoke-18369-1789171212542639000（仅含二进制与其 data-dir，工作目录即该目录）
+  [检查] GET / -> 200 text/html; charset=utf-8
+  [检查] GET /assets/index-0Jbg67eh.js -> 200 text/javascript; charset=utf-8
+  [检查] GET /api/v1/health/live -> 200
+  [检查] GET /api/v1/health/ready -> 200
+  [检查] GET /api/unknown -> 404 application/json
+  [检查] GET /library/some-item -> 200 text/html; charset=utf-8
+  [检查] GET /assets/definitely-missing.js -> 404 text/plain; charset=utf-8
+冒烟通过：内嵌页面、静态资源与 health 均可用（T01 最小检查）。
+/vendor/pdfjs/cmaps/UniGB-UCS2-H.bcmap                  HTTP 200 43366 bytes
+/vendor/pdfjs/standard_fonts/LiberationSans-Regular.ttf HTTP 200 139512 bytes
+/vendor/pdfjs/wasm/openjpeg.wasm                        HTTP 200 252032 bytes
+/vendor/pdfjs/wasm/qcms_bg.wasm                         HTTP 200 96589 bytes
+/vendor/pdfjs/iccs/CGATS001Compat-v2-micro.icc          HTTP 200 8464 bytes
+/vendor/pdfjs/cmaps/UniGB-UCS2-H.bcmap 的 sha256（应与 node_modules 一致）9201569b402e81ad8860650bd86350c4fa28e5dd5971f05fcacaf40f51de18ed  -
+两次哈希一致（确定性构建保持）

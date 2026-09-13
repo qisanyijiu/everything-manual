@@ -1,0 +1,23 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Blocking waiting for file lock on package cache
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10m 43s
+     Running tests/config_cli.rs (target/debug/deps/config_cli-b985e20a87c6505c)
+
+running 12 tests
+test example_config_is_accepted_and_no_key_material_inside ... ok
+test init_creates_structure_and_never_leaks_password ... ok
+test logs_never_contain_secrets_or_query_strings ... ok
+test backup_and_restore_report_not_implemented_without_side_effects ... ok
+test init_requires_password_source_and_rejects_argv_password ... ok
+test unknown_config_keys_are_rejected_at_any_level ... ok
+test config_precedence_cli_env_toml_default ... ok
+test usage_errors_are_readable_and_nonzero ... ok
+test non_loopback_listen_requires_tls_or_trusted_proxy ... ok
+test second_process_on_same_data_dir_fails_fast ... ok
+test missing_provider_keys_start_without_mock_fallback ... ok
+test check_and_serve_startup_make_no_external_http_requests ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+

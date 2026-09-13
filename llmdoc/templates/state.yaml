@@ -1,0 +1,17 @@
+work_id: replace-me
+phase: pm_pending
+request_revision: 1
+prd_revision: 0
+ui_revision: 0
+current_tasks: []
+accepted_tasks: []
+qa_history: []
+qa_round: 0
+qa_scope: null
+qa_result: null
+open_defects: []
+blocked_reason: null
+resume_phase: null
+blocked_on: null
+unblock_condition: null
+next_action: "主协调会话调用 pm，根据 request 生成明细 PRD"

@@ -1,0 +1,20 @@
+== 未知路径上的修改方法（无会话）→ 404 还是 401？==
+HTTP/1.1 404 Not Found
+content-type: application/json
+x-request-id: 01a091ec-ba1c-75ae-a0a6-b096cdc378a7
+content-length: 124
+date: Fri, 11 Sep 2026 19:23:25 GMT
+
+{"error":{"code":"NOT_FOUND","message":"接口不存在","details":null,"requestId":"01a091ec-ba1c-75ae-a0a6-b096cdc378a7"}}== 未知路径 GET（无会话）==
+HTTP/1.1 404 Not Found
+content-type: application/json
+x-request-id: 01a091ec-ba27-70b1-afa0-e547322b6001
+content-length: 124
+== 已知受保护路由 HEAD（无会话）==
+HEAD /api/v1/items → 401
+== POST /api/v1/auth/login 的 Origin 检查（无 public_origin，Host=127.0.0.1:PORT，Origin 同源）==
+同源 Origin 登录 → 401
+== OPTIONS /api/v1/items（预检，无会话）==
+OPTIONS → 401
+无残留 serve 进程
+已清理 /tmp/em-t04-qa5.XUhQhR

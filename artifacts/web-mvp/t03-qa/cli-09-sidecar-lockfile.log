@@ -1,0 +1,29 @@
+# QA T03 lock file + WAL sidecar observations 2026-09-11T18:54:58Z
+== lock file content (after check rewrote it)
+pid=3341 started_at_unix=1789152888
+
+== data2 (future schema, refused) sidecars before check:
+blobs
+lock
+logs
+manual.sqlite3
+tmp
+check exit=4
+== data2 files after check:
+blobs
+lock
+logs
+manual.sqlite3
+tmp
+== data1 sidecars after check:
+blobs
+lock
+logs
+manual.sqlite3
+tmp
+== grep: SQL string construction in storage/config (injection surface)
+(no format! near SQL)
+-- AssertSqlSafe usages (expected: tests only):
+crates/server/tests/storage.rs:112:    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
+-- dynamic SQL markers:
+crates/server/src/storage/mod.rs:13://! - 所有 SQL 使用静态文本 + bind；需要动态条件时用 `QueryBuilder`，不拼接用户字符串。

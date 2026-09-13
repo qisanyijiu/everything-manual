@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/v3/files",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": {
+            "status": 200,
+            "body": { "file": "responses/tripo_upload_success.json" }
+          }
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/v3/generation/multiview-to-model",
+      "steps": [
+        {
+          "kind": "respond",
+          "response": {
+            "status": 200,
+            "body": { "file": "responses/tripo_submit_success.json" }
+          }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/v3/tasks/",
+      "match": "prefix",
+      "repeatLast": true,
+      "steps": [
+        {
+          "kind": "respond",
+          "response": {
+            "status": 200,
+            "body": { "file": "responses/tripo_task_running.json" }
+          }
+        },
+        {
+          "kind": "respond",
+          "response": {
+            "status": 200,
+            "body": { "file": "responses/tripo_task_success.json" }
+          }
+        }
+      ]
+    }
+  ]
+}

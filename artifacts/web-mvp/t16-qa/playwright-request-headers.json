@@ -1,0 +1,20 @@
+{
+  "url": "http://127.0.0.1:15173/api/v1/items/01a09779-5360-718a-9357-28d686ac2297/jobs",
+  "method": "POST",
+  "headerNames": [
+    "accept",
+    "accept-language",
+    "content-type",
+    "cookie",
+    "idempotency-key",
+    "origin",
+    "referer",
+    "sec-ch-ua",
+    "sec-ch-ua-mobile",
+    "sec-ch-ua-platform",
+    "user-agent",
+    "x-csrf-token"
+  ],
+  "hasCsrfHeader": true,
+  "hasIfMatch": false
+}

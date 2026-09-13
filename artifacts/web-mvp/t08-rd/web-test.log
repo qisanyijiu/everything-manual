@@ -1,0 +1,13 @@
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  3 passed (3)
+      Tests  30 passed (30)
+   Start at  05:39:31
+   Duration  1.12s (environment 48%, tests 28%, transform 12%, setup 7%, import 5%, worker 1%)
+

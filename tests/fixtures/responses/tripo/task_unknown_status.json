@@ -1,0 +1,10 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）：未知状态枚举。适配器必须保留原值（rawStatus）并进入可诊断的等待/待处理，不得猜测语义、不得当作成功或失败。",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "queued_for_human_review",
+    "progress": 90,
+    "output": {}
+  }
+}

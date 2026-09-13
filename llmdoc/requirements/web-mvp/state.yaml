@@ -1,0 +1,86 @@
+work_id: web-mvp
+phase: blocked
+request_revision: 1
+prd_revision: 2
+ui_revision: 2
+current_tasks: [T22]
+accepted_tasks:
+  - {task_id: T01, prd_revision: 1, qa_round: 1, accepted_ac_ids: [AC-001, AC-011], status: accepted}
+  - {task_id: T02, prd_revision: 1, qa_round: 2, accepted_ac_ids: [AC-005, AC-006], status: accepted}
+  - {task_id: T03, prd_revision: 1, qa_round: 3, accepted_ac_ids: [AC-007, AC-008], status: accepted}
+  - {task_id: T04, prd_revision: 1, qa_round: 4, accepted_ac_ids: [AC-003, AC-004], status: accepted}
+  - {task_id: T05, prd_revision: 1, qa_round: 5, accepted_ac_ids: [AC-014, AC-013, "AC-015（默认测试入口侧）"], status: accepted}
+  - {task_id: T06, prd_revision: 1, qa_round: 6, accepted_ac_ids: [AC-018, AC-019], status: accepted}
+  - {task_id: T07, prd_revision: 1, qa_round: 7, accepted_ac_ids: [AC-016, AC-017, AC-020, AC-021], status: accepted}
+  - {task_id: T08, prd_revision: 2, qa_round: 8, accepted_ac_ids: ["AC-003/004 前端侧", "AC-016/017 前端消费侧", "AC-060 前端侧"], status: accepted}
+  - {task_id: T09, prd_revision: 2, qa_round: 9, accepted_ac_ids: [AC-022, AC-023, AC-024, AC-025], status: accepted}
+  - {task_id: T10, prd_revision: 2, qa_round: 11, accepted_ac_ids: [AC-035, AC-036, "AC-037/038 执行器侧"], status: accepted}
+  - {task_id: T11, prd_revision: 2, qa_round: 13, accepted_ac_ids: [AC-028, AC-029, AC-030, AC-031, AC-032, AC-033, AC-034], status: accepted}
+  - {task_id: T12, prd_revision: 2, qa_round: 14, accepted_ac_ids: ["AC-041 协议侧"], status: accepted}
+  - {task_id: T13, prd_revision: 2, qa_round: 15, accepted_ac_ids: [AC-043, AC-044], status: accepted}
+  - {task_id: T14, prd_revision: 2, qa_round: 16, accepted_ac_ids: [AC-045, AC-046], status: accepted}
+  - {task_id: T15, prd_revision: 2, qa_round: 17, accepted_ac_ids: [AC-047, AC-048, "AC-037/039/040 端点侧"], status: accepted}
+  - {task_id: T16, prd_revision: 2, qa_round: 19, accepted_ac_ids: ["AC-026", "AC-030 Playwright 侧", "AC-048 UI 侧", "UI-005/006/009-026"], status: accepted}
+  - {task_id: T17, prd_revision: 2, qa_round: 21, accepted_ac_ids: ["AC-049", "AC-033/034 UI 侧", "UI-027-039（UI-032 见观察）"], status: accepted}
+  - {task_id: T18, prd_revision: 2, qa_round: 23, accepted_ac_ids: [AC-050, AC-051, "AC-062/AC-057/AC-060 前端侧"], status: accepted}
+  - {task_id: T19, prd_revision: 2, qa_round: 24, accepted_ac_ids: [AC-052, AC-053, AC-054, AC-055, AC-056, AC-057], status: accepted}
+  - {task_id: T20, prd_revision: 2, qa_round: 25, accepted_ac_ids: [AC-009, AC-010, AC-058, "卡内项"], status: accepted}
+  - {task_id: T21, prd_revision: 2, qa_round: 29, accepted_ac_ids: ["§3 矩阵全行", "五个崩溃断点", "批次中断场景"], status: accepted}
+qa_history:
+  - {round: 1, scope: slice, task_ids: [T01], prd_revision: 1, result: PASS}
+  - {round: 2, scope: slice, task_ids: [T02], prd_revision: 1, result: PASS}
+  - {round: 3, scope: slice, task_ids: [T03], prd_revision: 1, result: PASS}
+  - {round: 4, scope: slice, task_ids: [T04], prd_revision: 1, result: PASS}
+  - {round: 5, scope: slice, task_ids: [T05], prd_revision: 1, result: PASS}
+  - {round: 6, scope: slice, task_ids: [T06], prd_revision: 1, result: PASS}
+  - {round: 7, scope: slice, task_ids: [T07], prd_revision: 1, result: PASS}
+  - {round: 8, scope: slice, task_ids: [T08], prd_revision: 2, result: PASS}
+  - {round: 9, scope: slice, task_ids: [T09], prd_revision: 2, result: PASS}
+  - {round: 10, scope: slice, task_ids: [T10], prd_revision: 2, result: FAIL}
+  - {round: 11, scope: slice, task_ids: [T10], prd_revision: 2, result: PASS}
+  - {round: 12, scope: slice, task_ids: [T11], prd_revision: 2, result: FAIL}
+  - {round: 13, scope: slice, task_ids: [T11], prd_revision: 2, result: PASS}
+  - {round: 14, scope: slice, task_ids: [T12], prd_revision: 2, result: PASS}
+  - {round: 15, scope: slice, task_ids: [T13], prd_revision: 2, result: PASS}
+  - {round: 16, scope: slice, task_ids: [T14], prd_revision: 2, result: PASS}
+  - {round: 17, scope: slice, task_ids: [T15], prd_revision: 2, result: PASS}
+  - {round: 18, scope: slice, task_ids: [T16], prd_revision: 2, result: FAIL}
+  - {round: 19, scope: slice, task_ids: [T16], prd_revision: 2, result: PASS}
+  - {round: 20, scope: slice, task_ids: [BUG-006], prd_revision: 2, result: PASS}
+  - {round: 21, scope: slice, task_ids: [T17], prd_revision: 2, result: PASS}
+  - {round: 22, scope: slice, task_ids: [T18], prd_revision: 2, result: FAIL}
+  - {round: 23, scope: slice, task_ids: [T18], prd_revision: 2, result: PASS}
+  - {round: 24, scope: slice, task_ids: [T19], prd_revision: 2, result: PASS}
+  - {round: 25, scope: slice, task_ids: [T20], prd_revision: 2, result: PASS}
+  - {round: 26, scope: slice, task_ids: [BUG-008], prd_revision: 2, result: FAIL}
+  - {round: 27, scope: slice, task_ids: [BUG-009, BUG-010], prd_revision: 2, result: PASS}
+  - {round: 28, scope: slice, task_ids: [BUG-011, BUG-012], prd_revision: 2, result: PASS}
+  - {round: 29, scope: slice, task_ids: [T21], prd_revision: 2, result: PASS}
+qa_round: 28
+qa_scope: slice
+qa_result: null
+open_defects: []
+closed_defects: [BUG-001, BUG-002, BUG-003, BUG-004, BUG-005, BUG-006, BUG-007, BUG-008, BUG-009, BUG-010, BUG-011, BUG-012]
+blocked_reason: "T22 Linux 平台验证：Docker 引擎在磁盘满事件后无法启动（环境阻塞），macOS 平台已完成"
+resume_phase: rd_running
+blocked_on: environment
+unblock_condition: "Docker 引擎可用（或外部 Linux 机器）→ 执行 Linux 构建+容器内 smoke+离线验证 → QA 补 T22 结论；随后 T23（用户凭据与预算）"
+report: llmdoc/requirements/web-mvp/qa-report.md
+carry_over:
+  - "T12/T13 T23 收敛项（upload token/计费字段候选、下载允许域）"
+  - "T17 观察：UI-032 字面倒计时未实现（交 PM 裁决）；顶栏任务计数徽标未做"
+  - "T19 cameraPose：热点级字段未实现（视角落在步骤级），建议 PM 合同留痕"
+  - "T20：UI-060 网页导出按钮缺失 → T21/T22 要求"
+  - "OB-13/OB-14（P4）：新字符串契约列需登记形态、新增事实表需加备份表清单"
+user_decisions:
+  - "2026-09-13 用户授权：启动 Docker Desktop，在 Linux 容器内构建并运行验证（取得 Linux x86_64-musl 的真实运行证据）"
+  - "2026-09-13 用户授权：补一个最小 CI（.github/workflows/ci.yml），不推送不触发"
+blocked_episode:
+  - reason: "T22 首次尝试：macOS 数据卷 100% 满（ENOSPC）"
+    blocked_on: environment
+    resolution: "2026-09-13 用户授权 cargo clean（释放 38.2 GiB）"
+  - reason: "T22 第二次尝试：Docker Desktop 引擎在 ENOSPC 后无法启动；Linux x86_64-musl 平台证据缺失（macOS 平台已完成并自证）"
+    blocked_on: environment
+    attempted: ["重启应用", "docker desktop stop/start", "POST /engine/start", "diagnose", "docker desktop start（CLI）", "完整退出后重启"]
+    unblock_condition: "Docker 引擎恢复（可能需用户执行 Troubleshoot → Clean/Purge data，属破坏性需用户授权），或改在外部 Linux 机器执行 scripts/linux-musl.sh；恢复后由 rd 补 Linux 构建+容器内 smoke+离线验证，再交 QA 补 T22 结论"
+next_action: "已按用户要求暂停（2026-09-13）：进度与实现总结已写入 llmdoc/requirements/web-mvp/progress-summary.md 并从 llmdoc/README.md 索引指向。恢复入口：Docker 可用后派 rd 执行 Linux 平台验证（T22 收尾），随后 T23（需用户凭据与预算授权）"

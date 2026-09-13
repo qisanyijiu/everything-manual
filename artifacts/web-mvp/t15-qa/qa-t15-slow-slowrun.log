@@ -1,0 +1,16 @@
+
+running 11 tests
+test qa_t15_assembly_revision_follows_content_change_only ... ok
+test qa_t15_attach_remote_task_verifies_queries_and_does_not_repurchase ... ok
+test qa_t15_blocked_model_branch_yields_partial_draft_and_gates_retry ... ok
+test qa_t15_cancel_keeps_submitted_state_and_adds_no_paid_steps ... ok
+test qa_t15_crash_replay_does_not_create_a_second_draft ... ok
+test qa_t15_draft_patch_contract_and_no_publish_side_effects ... ok
+test qa_t15_full_chain_assembles_needs_review_draft_and_never_publishes ... ok
+test qa_t15_record_no_task_requires_evidence_and_keeps_reservation ... ok
+test qa_t15_refused_batch_recovery_never_reports_success ... ok
+test qa_t15_retry_only_knowledge_branch_preserves_model_artifacts ... ok
+test qa_t15_upstream_unknown_blocks_assembly_until_reconciled ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 68.86s
+

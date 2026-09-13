@@ -1,0 +1,10 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）。status=banned 属任务生命周期页列出的终态（架构 §5.3 明确要求适配器处理 banned/expired），不得与其它状态混同、不得当作成功。",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "banned",
+    "progress": 0,
+    "output": {}
+  }
+}

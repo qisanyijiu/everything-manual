@@ -1,0 +1,15 @@
+== 空白 model（用当前 revision）==
+r1 blank model → 422
+空白 model 后库中 model=QA-M1
+== 归档（用 r1）==
+{"data":{"id":"01993000-0000-7000-8000-0000000000dd","name":"QA扳手","brand":"QA品牌","model":"QA-M1","variant":null,"revision":2,"archivedAt":"2026-09-11T19:22:25.202Z","createdAt":"2026-09-10T00:26:40Z","updatedAt":"2026-09-11T19:22:25.202Z"}}
+归档后列表条数: 1
+归档后 GET 单条 → 200
+archived 字段可否置 null（合同 T07 注）→ 200
+取消归档 archived=false → 412
+QA扳手|QA品牌|QA-M1|3|1789154545202
+归档撤销后列表条数: 1
+== 不可修改字段尝试（id/revision）==
+PATCH revision → 422
+无残留 serve 进程
+已清理 /tmp/em-t04-qa4.7gA4sy

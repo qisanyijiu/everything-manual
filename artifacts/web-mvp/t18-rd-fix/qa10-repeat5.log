@@ -1,0 +1,213 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t16-independent.spec.ts -g QA-10 --repeat-each=5
+
+(node:78973) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m145[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.43s
+{"timestamp":"2026-09-12T12:31:59.626110Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a0959a-6889-73c6-9b2d-aa63c0f0fb7c","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 5 tests using 1 worker
+
+(node:79045) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） (1.4s)
+(node:79052) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✘  2 [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） (1.1s)
+(node:79059) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✘  3 [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） (1.1s)
+(node:79065) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✘  4 [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） (1.1s)
+(node:79070) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✘  5 [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） (1.1s)
+
+
+  1) [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.item-row').filter({ hasText: 'QA 行布局测量' })
+    Expected: visible
+    Error: strict mode violation: locator('.item-row').filter({ hasText: 'QA 行布局测量' }) resolved to 2 elements:
+        1) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').first()
+        2) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(1)
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.item-row').filter({ hasText: 'QA 行布局测量' })[22m
+
+
+       998 |       await page.setViewportSize({ width, height: 900 });
+       999 |       const row = page.locator(".item-row").filter({ hasText: "QA 行布局测量" });
+    > 1000 |       await expect(row).toBeVisible();
+           |                         ^
+      1001 |       const measure = async (selector: string) => {
+      1002 |         const box = await row.locator(selector).boundingBox();
+      1003 |         return box === null ? null : { x: box.x, width: box.width, height: box.height };
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t16-independent.spec.ts:1000:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat1/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat1/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat1/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.item-row').filter({ hasText: 'QA 行布局测量' })
+    Expected: visible
+    Error: strict mode violation: locator('.item-row').filter({ hasText: 'QA 行布局测量' }) resolved to 3 elements:
+        1) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').first()
+        2) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(1)
+        3) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(2)
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.item-row').filter({ hasText: 'QA 行布局测量' })[22m
+
+
+       998 |       await page.setViewportSize({ width, height: 900 });
+       999 |       const row = page.locator(".item-row").filter({ hasText: "QA 行布局测量" });
+    > 1000 |       await expect(row).toBeVisible();
+           |                         ^
+      1001 |       const measure = async (selector: string) => {
+      1002 |         const box = await row.locator(selector).boundingBox();
+      1003 |         return box === null ? null : { x: box.x, width: box.width, height: box.height };
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t16-independent.spec.ts:1000:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat2/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat2/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat2/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat2/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.item-row').filter({ hasText: 'QA 行布局测量' })
+    Expected: visible
+    Error: strict mode violation: locator('.item-row').filter({ hasText: 'QA 行布局测量' }) resolved to 4 elements:
+        1) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').first()
+        2) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(1)
+        3) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(2)
+        4) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(3)
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.item-row').filter({ hasText: 'QA 行布局测量' })[22m
+
+
+       998 |       await page.setViewportSize({ width, height: 900 });
+       999 |       const row = page.locator(".item-row").filter({ hasText: "QA 行布局测量" });
+    > 1000 |       await expect(row).toBeVisible();
+           |                         ^
+      1001 |       const measure = async (selector: string) => {
+      1002 |         const box = await row.locator(selector).boundingBox();
+      1003 |         return box === null ? null : { x: box.x, width: box.width, height: box.height };
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t16-independent.spec.ts:1000:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat3/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat3/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat3/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat3/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('.item-row').filter({ hasText: 'QA 行布局测量' })
+    Expected: visible
+    Error: strict mode violation: locator('.item-row').filter({ hasText: 'QA 行布局测量' }) resolved to 5 elements:
+        1) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').first()
+        2) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(1)
+        3) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(2)
+        4) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(3)
+        5) <li class="item-row">…</li> aka getByText('QA 行布局测量T16-QA 行布局测量使用中r1更新于').nth(4)
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('.item-row').filter({ hasText: 'QA 行布局测量' })[22m
+
+
+       998 |       await page.setViewportSize({ width, height: 900 });
+       999 |       const row = page.locator(".item-row").filter({ hasText: "QA 行布局测量" });
+    > 1000 |       await expect(row).toBeVisible();
+           |                         ^
+      1001 |       const measure = async (selector: string) => {
+      1002 |         const box = await row.locator(selector).boundingBox();
+      1003 |         return box === null ? null : { x: box.x, width: box.width, height: box.height };
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t16-independent.spec.ts:1000:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat4/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat4/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat4/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t16-independent-T16-独立验-839ff-号列在-1280px-下可读（UI-005-回归守卫）-chromium-repeat4/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+    [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+    [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+    [chromium] › tests/e2e/qa-t16-independent.spec.ts:984:3 › T16 独立验收（QA 回合 18） › QA-10 资料库行布局：名称/型号列在 1280px 下可读（UI-005 回归守卫） 
+  1 passed (10.9s)

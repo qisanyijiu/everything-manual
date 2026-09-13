@@ -1,0 +1,21 @@
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+
+> everything-manual-web@0.1.0 lint
+> eslint . --max-warnings=0
+
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  17:00:13
+   Duration  2.08s (environment 62%, tests 13%, transform 11%, setup 10%, import 3%, worker 1%)
+

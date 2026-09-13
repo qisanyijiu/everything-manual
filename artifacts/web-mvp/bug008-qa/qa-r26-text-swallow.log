@@ -1,0 +1,11 @@
+== QA 回合 26 · 文本兜底脱敏的右向吞字复现（BUG-010）
+  已注入 3 个样例（原文见下）
+  原文 = 链接 https://cdn.example.invalid/x.glb已过期，请重试 || 见（https://cdn.example.invalid/y.glb）后重试 || 参考 https://cdn.example.invalid/z.glb；以及 https://cdn.example.invalid/w.glb。
+临时 URL 脱敏：快照内 6 处临时/签名地址已替换为 sha256 摘要 + host
+  快照 = 链接 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=57ee88723ecd5200…），请重试 || 见（（临时供应商地址已脱敏：host=cdn.example.invalid；sha256=b24bdcf6ff99fa6b…））后重试 || 参考 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=f91622d43f8dbb05…）；以及 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=419beb6c6dc42341…）。
+== 逐片段核对（原文片段是否保留）
+  '已过期' 保留 = False
+  '请重试' 保留 = True
+  '）后重试' 保留 = True
+  '；以及' 保留 = True
+== 结论：发现静默丢字（BUG-010 复现）

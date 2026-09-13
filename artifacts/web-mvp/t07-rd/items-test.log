@@ -1,0 +1,22 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.07s
+     Running tests/items.rs (target/debug/deps/items-e072306a756f1442)
+
+running 11 tests
+test patch_clears_optional_fields_and_rejects_null_on_required_fields ... ok
+test patch_requires_if_match_and_concurrent_patch_has_single_winner ... ok
+test create_item_returns_201_uuidv7_revision_one_and_field_level_422 ... ok
+test archive_keeps_references_readable_and_delete_routes_are_absent ... ok
+test detail_photo_is_listed_but_outside_the_multiview_set ... ok
+test document_binding_validates_pdf_ownership_and_stores_sha256 ... ok
+test list_items_paginates_with_cursor_and_hides_archived_by_default ... ok
+test document_source_url_is_never_fetched_by_the_server ... ok
+test photo_patch_requires_if_match_and_revalidates_views_and_assets ... ok
+test same_brand_model_with_different_variants_coexist_and_do_not_overwrite ... ok
+test photo_views_are_validated_and_second_photo_for_same_view_is_rejected ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.68s
+

@@ -1,0 +1,12 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+   Compiling xtask v0.1.0 (/Users/qsyj/Code/rust/everything-manual/xtask)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.85s
+     Running `target/debug/xtask contracts`
+已写入 /Users/qsyj/Code/rust/everything-manual/contracts/openapi.json
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && /Users/qsyj/Code/rust/everything-manual/apps/web/node_modules/.bin/openapi-typescript /Users/qsyj/Code/rust/everything-manual/contracts/openapi.json -o /Users/qsyj/Code/rust/everything-manual/apps/web/src/api/generated.ts)
+✨ openapi-typescript 7.13.0
+🚀 /Users/qsyj/Code/rust/everything-manual/contracts/openapi.json → /Users/qsyj/Code/rust/everything-manual/apps/web/src/api/generated.ts [71.2ms]
+已生成 /Users/qsyj/Code/rust/everything-manual/apps/web/src/api/generated.ts

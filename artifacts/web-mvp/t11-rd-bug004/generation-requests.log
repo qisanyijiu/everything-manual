@@ -1,0 +1,37 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.29s
+     Running tests/generation_requests.rs (target/debug/deps/generation_requests-db189d43cb9b2323)
+
+running 25 tests
+test decimal_boundary_prices_round_up_never_down ... ok
+test estimate_returns_itemized_amounts_and_writes_no_cost_or_attempt_records ... ok
+test estimate_without_price_catalog_returns_409_price_catalog_missing ... ok
+test budget_below_server_upper_bound_is_rejected_and_frontend_fees_are_not_accepted ... ok
+test estimate_lists_specific_precondition_gaps ... ok
+test cross_item_references_and_unknown_ids_are_rejected_as_404 ... ok
+test concurrent_submissions_never_create_duplicate_jobs_or_reservations ... ok
+test estimate_without_provider_configuration_returns_409 ... ok
+test estimate_rejects_unsupported_preset_and_catalog_without_model_price ... ok
+test expired_quote_is_rejected_and_requires_a_new_estimate ... ok
+test generation_routes_require_authentication_and_csrf ... ok
+test interrupted_creation_transaction_leaves_no_half_reservation ... ok
+test get_estimate_reflects_confirmation_and_consumption_from_database ... ok
+test get_expired_quote_reports_status_facts_but_stays_unusable ... ok
+test input_changes_after_estimate_are_rejected_without_creating_jobs ... ok
+test missing_idempotency_key_is_rejected ... ok
+test price_version_change_invalidates_the_quote ... ok
+test same_key_with_different_body_returns_409_and_keeps_single_job ... ok
+test job_creation_builds_the_stage_dag_with_batches ... ok
+test same_key_same_body_replayed_twenty_times_creates_single_job_and_reservation ... ok
+test multi_batch_estimate_and_stage_dependencies_cover_all_batches ... ok
+test ledger_settlement_release_and_unknown_keep_reservations_intact ... ok
+test settings_status_reports_price_catalog_and_generation_capability ... ok
+test snapshot_freezes_photo_ids_hashes_and_provider_config_without_secrets ... ok
+test unconfirmed_submission_is_rejected_and_confirmation_is_audited_once ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.87s
+
+EXIT=0

@@ -1,0 +1,12 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）。status=expired 是「任务产物过期」（生命周期终态，不可找回，需重新生成）；与「下载链接过期」（可重新查询获取新链接，T13 处理）是不同错误。",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "expired",
+    "progress": 100,
+    "output": {
+      "model_url": "https://cdn.example.invalid/fixture/expired-model.glb?sign=expired-fixture-signature"
+    }
+  }
+}

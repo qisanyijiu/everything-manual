@@ -1,0 +1,38 @@
+# 操作系统与编辑器
+.DS_Store
+*.swp
+*.swo
+.idea/
+.claude/settings.local.json
+
+# Rust（构建缓存与产物）
+target/
+**/*.rs.bk
+
+# 前端（依赖与构建产物；apps/web/dist 由 Vite 生成、cargo xtask dist 会重建）
+node_modules/
+apps/web/dist/
+apps/web/coverage/
+apps/web/playwright-report/
+apps/web/test-results/
+*.tsbuildinfo
+
+# 发布产物（cargo xtask dist 输出；需要时重建，哈希可复现）
+dist/
+.build/
+
+# 本地运行数据：data-dir、备份、恢复目标
+var/
+data/
+backups/
+restored-data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# 本地配置与密钥（密钥只应来自环境注入或 0600 受限文件，不进入版本控制）
+.env
+.env.*
+*.local
+*.pem
+*.key

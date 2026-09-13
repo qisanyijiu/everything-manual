@@ -1,0 +1,33 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.97s
+     Running tests/model_assets.rs (target/debug/deps/model_assets-902f71700fe25139)
+
+running 22 tests
+test chunk_length_mismatch_and_json_errors_are_rejected ... ok
+test download_rejects_disallowed_hosts_and_insecure_schemes ... ok
+test accessor_out_of_range_and_bad_asset_version_are_rejected ... ok
+test empty_geometry_and_missing_position_are_rejected ... ok
+test face_and_texture_budgets_are_enforced_when_over ... ok
+test external_uris_and_unsupported_features_are_rejected ... ok
+test dns_rebinding_to_private_address_is_rejected ... ok
+test download_streams_to_blob_without_forwarding_credentials ... ok
+test non_finite_positions_and_out_of_range_indices_are_rejected ... ok
+test interrupted_download_is_safely_retryable_without_partial_files ... ok
+test size_limit_and_disk_full_leave_no_partial_artifact ... ok
+test redirects_are_validated_hop_by_hop ... ok
+test disk_full_enters_needs_input_without_partial_artifact ... ok
+test valid_sample_glb_passes_all_structural_checks ... ok
+test unconfigured_allowlist_blocks_download_in_needs_input ... ok
+test end_to_end_downloads_validates_and_creates_immutable_revision ... ok
+test wrong_magic_and_truncated_container_are_rejected ... ok
+test expired_artifact_is_unrecoverable_without_a_new_purchase ... ok
+test truncated_glb_enters_needs_input_and_keeps_the_original ... ok
+test over_budget_model_keeps_the_original_and_enters_needs_input ... ok
+test expired_link_is_refreshed_by_requerying_the_known_task ... ok
+test local_copy_is_reused_when_the_stage_is_retried ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+

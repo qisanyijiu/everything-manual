@@ -1,0 +1,66 @@
+== RD R29 自查 · 脱敏全链路（dist）
+   二进制 /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+   sha256 f68d14874936b74f70aaa99b0eb8462396e933344a4495653ed239ba8838ac02
+   工作目录 /tmp/em-r29-rdverify-bkIFqj
+
+-- 1) restore 归档样例 → ./data，注入 canary（产品可达形态）
+  [通过] restore 退出码（=0）
+  注入 job=01a09677-67e3-741e-826a-3d6af9f52523
+  stage.last_error = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (https://cdn.rd29.invalid/m.glb?sign=RD29-STAGE-…
+  attempt.last_error = 链接 https://cdn.rd29.invalid/x.glb?sign=RD29-ATTEMPT-CANARY-6f38 已过期，请重试
+  usage.errorSummary = 模型拒答（refusal）：下载参考 https://cdn.rd29.invalid/p.png?sign=RD29-USAGE-CANARY-4e71 也失败
+  needs_input_json = [{"code": "download_insecure_scheme", "message": "模型下载必须使用 HTTPS（实际 http://cdn.rd29.invalid/m.glb?sign=RD29-NEEDS-CANARY-8c02）：拒绝下载"}, {"code": "retry", "message": "下载可安全重试（task-9）"}]
+  [通过] 注入完成（last_error / needs_input_json / usage_json / attempt.last_error 四处）
+
+-- 2) 源库指纹（供备份不改写源库对比）
+
+-- 3) backup → 快照扫描（0 命中 + JSON 结构感知）
+  [通过] backup 退出码（=0）
+== 快照逐表逐列扫描（job_stages / provider_attempts 全部列 × 判据）
+== 判据命中合计 = 0
+== usage.errorSummary 类型 = str | 内容 = 模型拒答（refusal）：下载参考 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=42630bae6e22daed…） 也失败
+== usage.remoteTaskId = task-rd29-usage | billing = {'creditMinor': 3000}
+== needsInput 条数 = 2
+   - download_insecure_scheme | 模型下载必须使用 HTTPS（实际 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=8ec676aba5d72de0…））：拒绝下载
+   - retry | 下载可安全重试（task-9）
+  [通过] 快照判据命中合计（=0）
+  [通过] 快照 JSON 列：句子保留、字符串类型保持（BUG-011/BUG-012）
+
+-- 4) 快照完整性与源库不变
+  [通过] 快照 db sha256 == manifest.database.sha256（=7eff7b35d2f5ac20c5ed7a519c9096d2df0fef52333d8b49c58625be5cd66c26）
+  [通过] SHA256SUMS 全部 OK
+  [通过] 源库未被备份改写（dump 前后 sha256）（=3187e4a082263d5031e43bc293ccebb054c643ceca1e265f823b41a0fea47205）
+  [通过] 源库仍保留注入的 canary（未就地迁移；5 处：stage 行 3 + 两条 attempt 行各 1）（=5）
+
+-- 5) restore → serve → 任务详情 DTO（needsInput 不得为空）
+  [通过] restore（快照）退出码（=0）
+  [通过] 任务详情 HTTP 状态（=200）
+  [通过] 恢复库详情不含 '://'（=0）
+  [通过] 恢复库详情不含 'sign='（=0）
+  [通过] 恢复库详情不含 'RD29-STAGE-CANARY-1d55'（=0）
+  [通过] 恢复库详情不含 'RD29-ATTEMPT-CANARY-6f38'（=0）
+  [通过] 恢复库详情不含 'RD29-USAGE-CANARY-4e71'（=0）
+  [通过] 恢复库详情不含 'RD29-NEEDS-CANARY-8c02'（=0）
+== DTO stage.status = needs_input
+== DTO needsInput 条数 = 2
+== DTO needsInput = [{"code": "download_insecure_scheme", "message": "模型下载必须使用 HTTPS（实际 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=8ec676aba5d72de0…））：拒绝下载"}, {"code": "retry", "message": "下载可安全重试（task-9）"}]
+== DTO usage.errorSummary = 模型拒答（refusal）：下载参考 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=42630bae6e22daed…） 也失败
+== DTO attempts.lastError = ['链接 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=1eaa21e61c98a65b…） 已过期，请重试', '链接 （临时供应商地址已脱敏：host=cdn.rd29.invalid；sha256=1eaa21e61c98a65b…） 已过期，请重试']
+  [通过] 恢复库 DTO：缺项完整、errorSummary 是字符串、尾部文本保留
+
+-- 5b) 导出兜底（发布包 0 命中）
+  [通过] 导出 HTTP 状态（=200）
+  [通过] 导出产物是 ZIP（PK magic）
+  [通过] 导出包 canary 0 命中
+
+-- 6) serve 日志核查
+  [通过] serve 日志不含 'RD29-STAGE-CANARY-1d55'（=0）
+  [通过] serve 日志不含 'RD29-ATTEMPT-CANARY-6f38'（=0）
+  [通过] serve 日志不含 'RD29-USAGE-CANARY-4e71'（=0）
+  [通过] serve 日志不含 'RD29-NEEDS-CANARY-8c02'（=0）
+  [通过] serve 日志不含 'sign='（=0）
+  [通过] serve 日志不含 'cdn.rd29.invalid'（=0）
+  [通过] serve 日志 '://' 只来自监听横幅/baseUrl 回显（=1）
+  [通过] serve 日志里非回环主机数（零外网门禁）（=0）
+
+== RD R29 dist 自查结果：PASS

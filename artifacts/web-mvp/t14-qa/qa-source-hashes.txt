@@ -1,0 +1,38 @@
+== QA 回合 16 · T14 源码/测试哈希（无 Git 提交，按文件哈希记录） ==
+date: 2026-09-12T06:04:03Z
+
+4deae2d78985aec22a047eca56289c33c4956aa076fb8d38764c018c0a39ffe6  crates/core/src/knowledge.rs
+d375114098f1c11a7316c9d96b12281b700fa02cde790b2e3f55ed176d37b0cc  crates/core/src/generation.rs
+4d1e13abcf43c3b29f9757770d9b7476f6f4f7cf69e797aa97e5c837a97635a2  crates/server/src/providers/manual_ai/mod.rs
+e87ebe9335ee2cecd36b2e9df61d7f59244b8d26881af57f138dde0e38bea3d6  crates/server/src/providers/manual_ai/client.rs
+3724b8ffcdc84538b5947ee93a32d02b2f577f35a3a5bee05012196e1b05e2c0  crates/server/src/providers/manual_ai/dto.rs
+5859d40b03718016d3fdc9ed33653e754cae579abd6c31ddad5eacc844e1c348  crates/server/src/providers/manual_ai/prompt.rs
+9d40a17020db42d06ecec5145a3f5d902937255b86b457d31092c1a9066aac82  crates/server/src/providers/manual_ai/store.rs
+adf20fc8dec3c8d4e996d27ff5bdce58b6356e9a8aa0dce23f01b7431453d6e4  crates/server/src/providers/manual_ai/handlers.rs
+7cfec5c2c038b46c0d22ca4c36551c8799bafb875fa0ddbc4cd3d9e2db838013  crates/server/src/jobs/submission.rs
+ee0d11e05843dc404a3e7bf56d859508a4760223586c4546416e0712e5dd9502  crates/server/src/jobs/executor.rs
+499fe587a9fcd050a08da02a7d86960325569db8e94657c3ca8f2663b16aa9a5  crates/server/src/storage/repo/job_stages.rs
+8c7e4e72b78dfbcdfbdc33ff7874a0f4f93d8175c5ea39c90bae30051167c80f  crates/server/tests/manual_ai_contract.rs
+a5d821df343f1be9c3e0b974fb21084a08fcb688f93c36e3423a4601f88b6282  crates/server/tests/qa_t14_independent.rs
+
+== 工作树未提交改动（git status --short） ==
+ M .gitignore
+ M llmdoc/contracts.md
+ M llmdoc/decisions.md
+ M llmdoc/requirements/web-mvp/state.yaml
+?? .cargo/
+?? Cargo.lock
+?? Cargo.toml
+?? apps/
+?? artifacts/
+?? config.example.toml
+?? contracts/
+?? crates/
+?? llmdoc/requirements/web-mvp/implementation.md
+?? llmdoc/requirements/web-mvp/prd.md
+?? llmdoc/requirements/web-mvp/qa-report.md
+?? migrations/
+?? price-catalog.example.toml
+?? rust-toolchain.toml
+?? tests/
+?? xtask/

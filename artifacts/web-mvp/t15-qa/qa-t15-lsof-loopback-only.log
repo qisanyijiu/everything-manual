@@ -1,0 +1,15 @@
+== T15 零外网观测：binary=/Users/qsyj/Code/rust/everything-manual/target/debug/deps/qa_t15_independent-70cc2c283ddbe651 slow_ms=0 date=2026-09-12T07:14:21Z
+test pid=61680
+test exit=0 samples=67
+采样行总数=130（LISTEN=64 / ESTABLISHED=2 / ESTABLISHED 非回环=0）
+-- ESTABLISHED 对端（去重，最多 20 条）
+   1 SAMPLE qa_t15_in 61680 qsyj   15u  IPv4 0x54e19ba42e8fab3a      0t0  TCP 127.0.0.1:53456->127.0.0.1:53449 (ESTABLISHED)
+   1 SAMPLE qa_t15_in 61680 qsyj   14u  IPv4 0xafaf67bfcc956502      0t0  TCP 127.0.0.1:53464->127.0.0.1:53461 (ESTABLISHED)
+-- LISTEN（去重，最多 20 条）
+  64 (LISTEN)
+-- 测试结果摘要
+test qa_t15_retry_only_knowledge_branch_preserves_model_artifacts ... ok
+test qa_t15_upstream_unknown_blocks_assembly_until_reconciled ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.78s
+

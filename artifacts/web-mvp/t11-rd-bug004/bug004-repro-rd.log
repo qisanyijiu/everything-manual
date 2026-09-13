@@ -1,0 +1,26 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/qa_t11_independent.rs (target/debug/deps/qa_t11_independent-cf73e901cecbc975)
+
+running 1 test
+AFTER_CONFIRM: GET confirmedAt=null （确认响应="2026-09-12T02:36:55.717Z"）
+AFTER_JOB: GET consumedAt=null consumedJobId=null （真实 job=01a09379-9c28-77b9-8ba7-4d526052b0bc）
+
+thread 'qa_defect_get_estimate_reflects_confirmation_and_consumption' (12491329) panicked at crates/server/tests/qa_t11_independent.rs:1089:5:
+assertion `left == right` failed: 确认后 GET 必须反映已确认（合同声明：含确认/消费状态）
+  left: Null
+ right: String("2026-09-12T02:36:55.717Z")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test qa_defect_get_estimate_reflects_confirmation_and_consumption ... FAILED
+
+failures:
+
+failures:
+    qa_defect_get_estimate_reflects_confirmation_and_consumption
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.66s
+
+error: test failed, to rerun pass `-p everything-manual --test qa_t11_independent`
+EXIT=101

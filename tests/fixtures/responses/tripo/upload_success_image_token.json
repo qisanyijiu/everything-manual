@@ -1,0 +1,7 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）：token 字段名的第二个候选形态（image_token，T05 构造样例使用）。T12 适配器按 file_token → image_token 顺序容错解析并记录实际来源字段；T23 实测后收敛。",
+  "code": 0,
+  "data": {
+    "image_token": "fixture-image-token-left-0002"
+  }
+}

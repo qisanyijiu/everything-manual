@@ -1,0 +1,14 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）。model_url/rendered_image_url 使用 .invalid 域（绝不指向可访问主机）；credits_consumed 为供应商十进制字面量示例（架构 §5.3 价格快照：标准带纹理多视图 30 credits），适配器按精确 decimal 换算为 creditMinor（1/100 credit）。下载属 T13，本卡只保存 URL 事实。",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "success",
+    "progress": 100,
+    "credits_consumed": 30,
+    "output": {
+      "model_url": "https://cdn.example.invalid/fixture/sample-model.glb?sign=fixture-signature-not-a-real-token",
+      "rendered_image_url": "https://cdn.example.invalid/fixture/preview.png"
+    }
+  }
+}

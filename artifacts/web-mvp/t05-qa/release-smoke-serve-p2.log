@@ -1,0 +1,8 @@
+{"timestamp":"2026-09-11T19:50:30.379026Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/em-t05-qa-release-smoke/data","schemaVersion":2},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T19:50:30.379195Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T19:50:30.379223Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T19:50:30.379257Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:54907","dataDir":"/tmp/em-t05-qa-release-smoke/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+listening on http://127.0.0.1:54907
+{"timestamp":"2026-09-11T19:50:30.407860Z","level":"INFO","fields":{"message":"http_request","requestId":"01a09205-8507-77c0-93e7-2fea58338cf3","method":"GET","path":"/api/v1/health/ready","status":200,"errorCode":"-","durationMs":0.385542},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-11T19:50:30.462390Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+已停止：data-dir 排他锁已释放。

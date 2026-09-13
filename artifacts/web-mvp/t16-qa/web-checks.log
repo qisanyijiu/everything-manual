@@ -1,0 +1,27 @@
+### npm --prefix apps/web run test -- --run
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  9 passed (9)
+      Tests  62 passed (62)
+   Start at  16:16:13
+   Duration  1.93s (environment 61%, tests 15%, transform 11%, setup 8%, import 4%, worker 1%)
+
+### npm --prefix apps/web run build
+transforming...
+✓ 113 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.45 kB │ gzip:   0.31 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs  1,265.41 kB
+dist/assets/index-ihyKy8TG.css              12.74 kB │ gzip:   3.02 kB
+dist/assets/index-RBZqRvKh.js              384.52 kB │ gzip: 117.68 kB
+dist/assets/PreparePage-CyhHv_04.js        442.69 kB │ gzip: 133.39 kB
+
+✓ built in 142ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）

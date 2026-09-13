@@ -1,0 +1,20 @@
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 19472 qsyj   16u  IPv4 0xe9ce387ddbce3c41      0t0  TCP 127.0.0.1:19209 (LISTEN)
+everythin 19472 qsyj   17u  IPv4 0x54e19ba42e8fab3a      0t0  TCP 127.0.0.1:19209->127.0.0.1:52350 (ESTABLISHED)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 19472 qsyj   16u  IPv4 0xe9ce387ddbce3c41      0t0  TCP 127.0.0.1:19209 (LISTEN)
+everythin 19472 qsyj   17u  IPv4 0x2cb60a9433a829ba      0t0  TCP 127.0.0.1:19209->127.0.0.1:52358 (ESTABLISHED)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 19472 qsyj   16u  IPv4 0xe9ce387ddbce3c41      0t0  TCP 127.0.0.1:19209 (LISTEN)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 19472 qsyj   16u  IPv4 0xe9ce387ddbce3c41      0t0  TCP 127.0.0.1:19209 (LISTEN)
+everythin 19472 qsyj   21u  IPv4 0xc96a2511529ca0ac      0t0  TCP 127.0.0.1:52370->127.0.0.1:19210 (ESTABLISHED)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 19472 qsyj   16u  IPv4 0xe9ce387ddbce3c41      0t0  TCP 127.0.0.1:19209 (LISTEN)
+everythin 19472 qsyj   21u  IPv4 0xc96a2511529ca0ac      0t0  TCP 127.0.0.1:52370->127.0.0.1:19210 (ESTABLISHED)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 19472 qsyj   16u  IPv4 0xe9ce387ddbce3c41      0t0  TCP 127.0.0.1:19209 (LISTEN)
+everythin 19472 qsyj   21u  IPv4 0xc96a2511529ca0ac      0t0  TCP 127.0.0.1:52370->127.0.0.1:19210 (ESTABLISHED)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 19472 qsyj   16u  IPv4 0xe9ce387ddbce3c41      0t0  TCP 127.0.0.1:19209 (LISTEN)
+everythin 19472 qsyj   21u  IPv4 0xc96a2511529ca0ac      0t0  TCP 127.0.0.1:52370->127.0.0.1:19210 (ESTABLISHED)

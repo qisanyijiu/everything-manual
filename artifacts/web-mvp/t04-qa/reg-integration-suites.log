@@ -1,0 +1,21 @@
+===== --test bootstrap =====
+test unknown_api_path_returns_json_404_not_html ... ok
+test unknown_versioned_api_path_also_returns_json_404 ... ok
+test health_ready_reports_declared_checks_only ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+===== --test config_cli =====
+test unknown_config_keys_are_rejected_at_any_level ... ok
+test second_process_on_same_data_dir_fails_fast ... ok
+test config_precedence_cli_env_toml_default ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.63s
+
+===== --test storage =====
+test future_schema_is_rejected_without_modifying_database_bytes ... ok
+test check_reports_migration_state_without_creating_or_modifying_database ... ok
+test init_creates_database_and_check_reports_ready_twice ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.23s
+

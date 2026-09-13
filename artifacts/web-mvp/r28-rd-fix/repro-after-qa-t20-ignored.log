@@ -1,0 +1,15 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.67s
+     Running tests/qa_t20_bug008_independent.rs (target/debug/deps/qa_t20_bug008_independent-22cdb6c4a6fa82ee)
+
+running 2 tests
+QA-R26 transport message = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request
+test qa26_connect_refused_message_must_not_leak_signed_url ... ok
+QA-R26 transport message = 模型下载传输失败（下载可安全重试；不产生供应商费用）：超时：error sending request
+test qa26_timeout_message_must_not_leak_signed_url ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 30.01s
+

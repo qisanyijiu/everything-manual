@@ -1,0 +1,94 @@
+[17:08:34] == 准备：临时 data-dir /tmp/em-r19-conc-B.1x17FK（真实二进制，端口 18092）==
+[17:08:35] 服务端就绪 pid=92436
+[17:08:35] == 自然并发：40 轮 × 4 个并发 POST /photos（同一 item 同一 view=front；期望 1×201 + 3×422）==
+[17:08:39] == 结果直方图（HTTP 状态 × 次数）==
+ 236 500
+ 162 201
+   2 422
+[17:08:39] == 服务端日志中的 database is locked / 500 ==
+database is locked 命中次数: 236
+18:{"timestamp":"2026-09-12T09:08:35.805487Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+24:{"timestamp":"2026-09-12T09:08:35.819684Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+28:{"timestamp":"2026-09-12T09:08:35.819910Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 517) database is locked"},"target":"everything_manual::http::error"}
+29:{"timestamp":"2026-09-12T09:08:35.819930Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 517) database is locked"},"target":"everything_manual::http::error"}
+40:{"timestamp":"2026-09-12T09:08:35.893149Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+41:{"timestamp":"2026-09-12T09:08:35.893149Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+44:{"timestamp":"2026-09-12T09:08:35.893280Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+48:{"timestamp":"2026-09-12T09:08:35.905825Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+49:{"timestamp":"2026-09-12T09:08:35.905851Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+50:{"timestamp":"2026-09-12T09:08:35.905879Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+64:{"timestamp":"2026-09-12T09:08:35.979150Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+65:{"timestamp":"2026-09-12T09:08:35.979176Z","level":"ERROR","fields":{"message":"存储错误（细节只进服务端日志）","error":"数据库错误：error returned from database: (code: 5) database is locked"},"target":"everything_manual::http::error"}
+19:{"timestamp":"2026-09-12T09:08:35.805582Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-315c-7509-8461-d5dd24a28d29","method":"POST","path":"/api/v1/items/01a094e0-3127-7795-a271-461774592372/photos","status":500,"errorCode":"INTERNAL","durationMs":1.389834},"target":"everything_manual::http::logging"}
+25:{"timestamp":"2026-09-12T09:08:35.819791Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-316a-7186-89e8-660339728d46","method":"POST","path":"/api/v1/items/01a094e0-3127-7795-a271-461774592372/photos","status":500,"errorCode":"INTERNAL","durationMs":0.904083},"target":"everything_manual::http::logging"}
+30:{"timestamp":"2026-09-12T09:08:35.819967Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-316a-7186-89e8-6604e5c55861","method":"POST","path":"/api/v1/items/01a094e0-3127-7795-a271-461774592372/photos","status":500,"errorCode":"INTERNAL","durationMs":1.0816249999999998},"target":"everything_manual::http::logging"}
+31:{"timestamp":"2026-09-12T09:08:35.819984Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-316a-7186-89e8-66024003785f","method":"POST","path":"/api/v1/items/01a094e0-3127-7795-a271-461774592372/photos","status":500,"errorCode":"INTERNAL","durationMs":1.1409580000000001},"target":"everything_manual::http::logging"}
+42:{"timestamp":"2026-09-12T09:08:35.893254Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-31b4-749c-9228-578e6825288b","method":"POST","path":"/api/v1/items/01a094e0-3180-7572-a406-ac92999de57b/photos","status":500,"errorCode":"INTERNAL","durationMs":0.816041},"target":"everything_manual::http::logging"}
+43:{"timestamp":"2026-09-12T09:08:35.893267Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-31b4-749c-9228-578c2575e570","method":"POST","path":"/api/v1/items/01a094e0-3180-7572-a406-ac92999de57b/photos","status":500,"errorCode":"INTERNAL","durationMs":0.874417},"target":"everything_manual::http::logging"}
+45:{"timestamp":"2026-09-12T09:08:35.893336Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-31b4-749c-9228-578d7cb17369","method":"POST","path":"/api/v1/items/01a094e0-3180-7572-a406-ac92999de57b/photos","status":500,"errorCode":"INTERNAL","durationMs":0.940917},"target":"everything_manual::http::logging"}
+51:{"timestamp":"2026-09-12T09:08:35.905924Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-31c1-75b4-98e1-0418c894547a","method":"POST","path":"/api/v1/items/01a094e0-3180-7572-a406-ac92999de57b/photos","status":500,"errorCode":"INTERNAL","durationMs":0.823667},"target":"everything_manual::http::logging"}
+52:{"timestamp":"2026-09-12T09:08:35.905977Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-31c1-75b4-98e1-0417feed4655","method":"POST","path":"/api/v1/items/01a094e0-3180-7572-a406-ac92999de57b/photos","status":500,"errorCode":"INTERNAL","durationMs":0.878125},"target":"everything_manual::http::logging"}
+53:{"timestamp":"2026-09-12T09:08:35.905969Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-31c1-75b4-98e1-04163a42ddd6","method":"POST","path":"/api/v1/items/01a094e0-3180-7572-a406-ac92999de57b/photos","status":500,"errorCode":"INTERNAL","durationMs":0.9139579999999999},"target":"everything_manual::http::logging"}
+67:{"timestamp":"2026-09-12T09:08:35.979242Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-320a-7102-b6b8-e155de18346f","method":"POST","path":"/api/v1/items/01a094e0-31d6-7017-9059-8fc9effe94a3/photos","status":500,"errorCode":"INTERNAL","durationMs":0.916333},"target":"everything_manual::http::logging"}
+68:{"timestamp":"2026-09-12T09:08:35.979252Z","level":"INFO","fields":{"message":"http_request","requestId":"01a094e0-320a-7102-b6b8-e156b16b2b58","method":"POST","path":"/api/v1/items/01a094e0-31d6-7017-9059-8fc9effe94a3/photos","status":500,"errorCode":"INTERNAL","durationMs":0.924542},"target":"everything_manual::http::logging"}
+[17:08:39] == 每个 500 响应的 requestId 与请求体（前 6 条）==
+--- /tmp/em-r19-conc-B.1x17FK/r1-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-315c-7509-8461-d5dd24a28d29"}}
+--- /tmp/em-r19-conc-B.1x17FK/r1-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-316a-7186-89e8-6604e5c55861"}}
+--- /tmp/em-r19-conc-B.1x17FK/r1-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-316a-7186-89e8-660339728d46"}}
+--- /tmp/em-r19-conc-B.1x17FK/r1-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-316a-7186-89e8-66024003785f"}}
+--- /tmp/em-r19-conc-B.1x17FK/r10-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-347a-701f-bd7f-612aa6c0b6ce"}}
+--- /tmp/em-r19-conc-B.1x17FK/r10-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-347a-701f-bd7f-612b5abd511d"}}
+--- /tmp/em-r19-conc-B.1x17FK/r10-4.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-347a-701f-bd7f-612c3614de25"}}
+--- /tmp/em-r19-conc-B.1x17FK/r10-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3487-754d-8368-54e153046e66"}}
+--- /tmp/em-r19-conc-B.1x17FK/r10-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3487-754d-8368-54e2b7d2ab0b"}}
+--- /tmp/em-r19-conc-B.1x17FK/r10-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3487-754d-8368-54e0c02efb2f"}}
+--- /tmp/em-r19-conc-B.1x17FK/r11-1.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-34d1-7213-bcae-fa2a5818cd43"}}
+--- /tmp/em-r19-conc-B.1x17FK/r11-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-34d1-7213-bcae-fa2996d86008"}}
+--- /tmp/em-r19-conc-B.1x17FK/r11-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-34d1-7213-bcae-fa28a5e4b15f"}}
+--- /tmp/em-r19-conc-B.1x17FK/r11-back.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-34de-71f4-8769-180922577c91"}}
+--- /tmp/em-r19-conc-B.1x17FK/r11-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-34de-71f4-8769-18070e8149c1"}}
+--- /tmp/em-r19-conc-B.1x17FK/r11-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-34de-71f4-8769-1808d7ebe921"}}
+--- /tmp/em-r19-conc-B.1x17FK/r12-1.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3525-72cb-8345-456504a12911"}}
+--- /tmp/em-r19-conc-B.1x17FK/r12-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3525-72cb-8345-4564ba174665"}}
+--- /tmp/em-r19-conc-B.1x17FK/r12-4.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3525-72cb-8345-45675332cfd2"}}
+--- /tmp/em-r19-conc-B.1x17FK/r12-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3532-7247-9325-08ba396f99a5"}}
+--- /tmp/em-r19-conc-B.1x17FK/r12-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3532-7247-9325-08b877e8ecdb"}}
+--- /tmp/em-r19-conc-B.1x17FK/r12-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3532-7247-9325-08bb228ef806"}}
+--- /tmp/em-r19-conc-B.1x17FK/r13-1.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-357a-767b-96d0-742ca3620930"}}
+--- /tmp/em-r19-conc-B.1x17FK/r13-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-357a-767b-96d0-742b7da5c2cf"}}
+--- /tmp/em-r19-conc-B.1x17FK/r13-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-357a-767b-96d0-742ed0ce7fbd"}}
+--- /tmp/em-r19-conc-B.1x17FK/r13-back.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3587-75b1-903a-d3b85dda8acc"}}
+--- /tmp/em-r19-conc-B.1x17FK/r13-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3587-75b1-903a-d3b9c25eeeea"}}
+--- /tmp/em-r19-conc-B.1x17FK/r13-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3587-75b1-903a-d3baf87d2ffb"}}
+--- /tmp/em-r19-conc-B.1x17FK/r14-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-35d0-745a-9590-71389ba10103"}}
+--- /tmp/em-r19-conc-B.1x17FK/r14-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-35d0-745a-9590-713a2c65f5fe"}}
+--- /tmp/em-r19-conc-B.1x17FK/r14-4.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-35d0-745a-9590-7139ab1a4d83"}}
+--- /tmp/em-r19-conc-B.1x17FK/r14-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-35dd-7434-a4ab-08c1e873804b"}}
+--- /tmp/em-r19-conc-B.1x17FK/r14-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-35dd-7434-a4ab-08c3d21d115c"}}
+--- /tmp/em-r19-conc-B.1x17FK/r14-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-35dd-7434-a4ab-08c471cfe136"}}
+--- /tmp/em-r19-conc-B.1x17FK/r15-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3626-722f-a446-596197a8f2c3"}}
+--- /tmp/em-r19-conc-B.1x17FK/r15-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3626-722f-a446-596066684d33"}}
+--- /tmp/em-r19-conc-B.1x17FK/r15-4.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3626-722f-a446-595fcee80887"}}
+--- /tmp/em-r19-conc-B.1x17FK/r15-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3632-772b-912d-f6beb4fa25af"}}
+--- /tmp/em-r19-conc-B.1x17FK/r15-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3632-772b-912d-f6bcd1044953"}}
+--- /tmp/em-r19-conc-B.1x17FK/r15-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3632-772b-912d-f6bf0d8fc3ab"}}
+--- /tmp/em-r19-conc-B.1x17FK/r16-1.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-367c-74c2-9214-b6de95632ae1"}}
+--- /tmp/em-r19-conc-B.1x17FK/r16-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-367c-74c2-9214-b6dced3360be"}}
+--- /tmp/em-r19-conc-B.1x17FK/r16-4.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-367c-74c2-9214-b6db9f4ed8c2"}}
+--- /tmp/em-r19-conc-B.1x17FK/r16-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-368a-72d3-bfe2-3ce9e05a97bd"}}
+--- /tmp/em-r19-conc-B.1x17FK/r16-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-368a-72d3-bfe2-3ce788d6a6e2"}}
+--- /tmp/em-r19-conc-B.1x17FK/r16-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-368a-72d3-bfe2-3ce8a2d2ab17"}}
+--- /tmp/em-r19-conc-B.1x17FK/r17-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-36d2-77f7-80f4-6f316941cbbe"}}
+--- /tmp/em-r19-conc-B.1x17FK/r17-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-36d2-77f7-80f4-6f2e60a9ef39"}}
+--- /tmp/em-r19-conc-B.1x17FK/r17-4.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-36d2-77f7-80f4-6f30ed44b572"}}
+--- /tmp/em-r19-conc-B.1x17FK/r17-back.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-36df-757f-8969-362f220280f9"}}
+--- /tmp/em-r19-conc-B.1x17FK/r17-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-36df-757f-8969-36315a18e782"}}
+--- /tmp/em-r19-conc-B.1x17FK/r17-right.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-36df-757f-8969-36306f4ccfe4"}}
+--- /tmp/em-r19-conc-B.1x17FK/r18-1.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3728-723d-8530-edbe1c90f8ff"}}
+--- /tmp/em-r19-conc-B.1x17FK/r18-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3727-754b-806b-44e878990dfb"}}
+--- /tmp/em-r19-conc-B.1x17FK/r18-3.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3728-723d-8530-edbffdd4e256"}}
+--- /tmp/em-r19-conc-B.1x17FK/r18-back.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3734-72f0-971e-d4faef809e84"}}
+--- /tmp/em-r19-conc-B.1x17FK/r18-detail.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3734-72f0-971e-d4f851d87d3f"}}
+--- /tmp/em-r19-conc-B.1x17FK/r18-left.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-3734-72f0-971e-d4f7e1e52b79"}}
+--- /tmp/em-r19-conc-B.1x17FK/r19-1.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-377d-768c-9da7-9c2847d11700"}}
+--- /tmp/em-r19-conc-B.1x17FK/r19-2.json: {"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a094e0-377d-768c-9da7-9c26f792d859"}}

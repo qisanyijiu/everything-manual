@@ -1,0 +1,7 @@
+=== 观察（任务详情 API 响应）
+  last_error 原样包含签名 URL ？ True
+  last_error 是否含 '://'      ： True
+  同一响应里 usage 是否已脱敏   ： usage 含 '://' = False
+  响应体整体 '://' 出现次数（HTTP 200 的 JSON 文本）= 1
+  last_error = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (https://cdn.example.invalid/qa-r26/model.glb?sign=qa26-canary-transport-signature-7d31)
+  usage      = {"host": "cdn.example.invalid", "redactedTest": {"host": "cdn.example.invalid", "redacted": true, "sha256": "6c06b14e650eb582"}, "sha256": "aa", "sizeBytes": 1}

@@ -1,0 +1,63 @@
+== 工作目录：/tmp/em-t10-qa-32206
+== 二进制：/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+== sha256：c7832470b7b5c5d288b9c812c69477844a19b26ab59ea32b47a08656daf92f43
+
+== [A] 全新 data-dir：init + check
+init_exit=0
+schema v5
+check_exit=0
+[检查] 数据库 schema：已就绪（v5；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+
+-- schema 结构抽查（v5 追加物 + 既有表不变量）
+迁移行数：5
+job_stage_deps 列：stage_id,depends_on_stage_id,created_at
+job_stages 新列：poll_count,last_error,needs_input_json
+job_stages 唯一键：sqlite_autoindex_job_stages_2+sqlite_autoindex_job_stages_1
+0
+wal
+ok
+
+== [B] 合成 v4 库 → check 报待迁移 → serve 升级到 v5
+合成 v4 库完成（0001–0004 + 校验和）
+迁移行数：4，最新 v4
+check_v4_exit=4
+serve_v4_exit=4
+升级后迁移行数：4，最新 v4
+job_stage_deps 存在：0
+job_stages 新列数：0
+ok
+check_v4_after_exit=4
+
+== [C] serve 启停 + 执行器（已在队列的阶段被延后）
+入队：stage-qa-batch status=queued
+入队：stage-qa-freeze status=succeeded
+serve1_pid=32247
+"event":"job_executor_start","owner":"32247:01a0932f-9de1-77b6-b3ef-b94c437d5a4e","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2
+"event":"job_executor_no_handlers"
+"event":"job_stage_handler_missing","stageId":"stage-qa-batch","stageKind":"manual_extract","registered":""
+延后后：id=stage-qa-batch status=queued attempt_count=0 lease_owner=(空) next_run_at_set=yes
+last_error：阶段处理器未注册（T12/T14/T15 接入前不执行）
+provider_attempts 行数：0
+job 状态：running
+
+-- SIGTERM 优雅停止
+serve1_exit=0
+"event":"job_executor_stopped","owner":"32247:01a0932f-9de1-77b6-b3ef-b94c437d5a4e"
+"event":"serve_stop"
+已停止：data-dir 排他锁已释放。
+
+== [D] 重启恢复：造 'running + 租约过期 + attempt=submitting' 现场
+重启前：stage-qa-batch status=running epoch=2
+serve2_pid=32264
+"event":"job_recovery","owner":"32264:01a0932f-adc9-74b9-8f82-8c09171cedad","detail":"scanned=1 recovered=1 skipped=0 requeued=0 succeeded=0 unknown=1 needsInput=0 cancelled=0"
+"event":"job_recovery_applied","stageId":"stage-qa-batch","jobId":"job-qa","stageKind":"manual_extract","action":"submission_unknown","detail":"已发出同步请求但没有持久化完整响应：该批进入 submission_unknown，response_id 不假定可轮询，只能由管理员对账"
+重启后：stage-qa-batch status=submission_unknown last_error=已发出同步请求但没有持久化完整响应：该批进入 submission_unknown，response
+attempt：attempt-qa submit_state=unknown remote_task_id=(空)
+job 数：1
+attempt 数：1
+job 状态：submission_unknown
+
+== [E] 收尾（只结束本脚本启动的进程；临时目录删除）
+serve2_exit=0
+残留进程：无
+== 完成（临时目录已清理）

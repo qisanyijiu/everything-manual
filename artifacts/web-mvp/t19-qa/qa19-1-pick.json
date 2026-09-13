@@ -1,0 +1,37 @@
+{
+  "itemId": "01a0977b-be01-771f-a210-2132276358b6",
+  "draftId": "01a0977b-c027-7788-9158-c7f7f4c97ce9",
+  "model": {
+    "revisionId": "01a0977b-c01f-72bf-900b-1b7a008c68aa",
+    "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb"
+  },
+  "picked": [
+    -1.340329308903385e-7,
+    1,
+    -9.909768771765149e-7
+  ],
+  "secondPick": [
+    -0.01752366394892991,
+    1,
+    0.002369124562605592
+  ],
+  "markerRadius": 77.19240509144689,
+  "markerOffsetPx": 39,
+  "hotspots": [
+    {
+      "id": "01a0977b-cc92-7257-bc60-712b082fc275",
+      "partId": "part-2e063fda1795",
+      "status": "confirmed"
+    },
+    {
+      "id": "01a0977b-d7c8-707b-8436-09be7fef666e",
+      "partId": "part-e504cdc101ad",
+      "status": "confirmed"
+    }
+  ],
+  "routing": {
+    "fulfilledOk": 0,
+    "external": [],
+    "publishRequests": []
+  }
+}

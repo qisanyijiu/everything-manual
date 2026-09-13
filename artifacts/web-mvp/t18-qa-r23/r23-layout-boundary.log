@@ -1,0 +1,84 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test qa-t18-r23-layout-boundary.spec.ts
+
+(node:85026) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m138[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T12:59:18.191302Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":6,"adminId":"01a095b3-692f-74b4-a032-ee85cc9dc5d7","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v6；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 1 test using 1 worker
+
+(node:85098) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m[2m20:59:21[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✘  1 [chromium] › tests/e2e/qa-t18-r23-layout-boundary.spec.ts:137:1 › QA-R23-LB 1280px 断点边界：观察抖动与整页重挂载的触发条件 (5.3s)
+
+
+  1) [chromium] › tests/e2e/qa-t18-r23-layout-boundary.spec.ts:137:1 › QA-R23-LB 1280px 断点边界：观察抖动与整页重挂载的触发条件 
+
+    Error: 1280×720 稳定视口下不应发生断点抖动（记录：{"mqEvents":[{"t":3349.399999856949,"matches":true,"iw":1280,"cw":1280,"vv":1280}],"resizeEvents":[{"t":166,"iw":1280,"cw":1280,"sh":720,"ch":720},{"t":166.29999995231628,"iw":1280,"cw":1280,"sh":720,"ch":720},{"t":184.70000004768372,"iw":1280,"cw":1280,"sh":720,"ch":720},{"t":504.7999999523163,"iw":1280,"cw":1280,"sh":891,"ch":720},{"t":1382.7999999523163,"iw":1280,"cw":1280,"sh":1247,"ch":720},{"t":1416.3999998569489,"iw":1280,"cw":1280,"sh":1273,"ch":720}],"nodeEvents":[{"t":1145.7999999523163,"present":true}],"marks":[{"label":"idle-start","t":1147.7999999523163},{"label":"idle-end","t":3158.5999999046326},{"label":"drag-1-start","t":3177.5999999046326},{"label":"drag-1-end","t":3325.2999999523163},{"label":"screenshot-start","t":3326.5999999046326},{"label":"screenshot-end","t":3408},{"label":"drag-2-start","t":3409.2999999523163},{"label":"drag-2-end","t":3557.7000000476837},{"label":"end","t":3559.5999999046326}]}）
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 9[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   Object {[39m
+    [31m+     "cw": 1280,[39m
+    [31m+     "iw": 1280,[39m
+    [31m+     "matches": true,[39m
+    [31m+     "t": 3349.399999856949,[39m
+    [31m+     "vv": 1280,[39m
+    [31m+   },[39m
+    [31m+ ][39m
+
+      182 |   // 观察性结论（本用例只固定"稳定视口 + 常规交互不得重挂载面板"这一产品级不变量；
+      183 |   // 抖动细节见 JSON，报告里逐条分析）。
+    > 184 |   expect(log.mqEvents, `1280×720 稳定视口下不应发生断点抖动（记录：${JSON.stringify(log)}）`).toEqual([]);
+          |                                                                             ^
+      185 |   expect(log.nodeEvents.length, "阅读器面板不得被重挂载").toBe(1);
+      186 |   await expect(page.getByTestId("viewer-status")).toContainText("模型已加载");
+      187 | });
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/qa-t18-r23-layout-boundary.spec.ts:184:77
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-r23-layout-boundary-59628-1280px-断点边界：观察抖动与整页重挂载的触发条件-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-r23-layout-boundary-59628-1280px-断点边界：观察抖动与整页重挂载的触发条件-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-r23-layout-boundary-59628-1280px-断点边界：观察抖动与整页重挂载的触发条件-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/qa-t18-r23-layout-boundary-59628-1280px-断点边界：观察抖动与整页重挂载的触发条件-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/qa-t18-r23-layout-boundary.spec.ts:137:1 › QA-R23-LB 1280px 断点边界：观察抖动与整页重挂载的触发条件 
+EXIT=1

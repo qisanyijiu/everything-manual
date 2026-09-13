@@ -1,0 +1,7 @@
+# 构建用工具链固定为具体版本（不是 "stable" 浮动），保证本地与 QA 复现一致。
+# 选择 1.98.1：2026-09-01 发布的 stable；满足 SQLx 0.9 要求的 Rust ≥ 1.94（architecture.md §3）。
+# MSRV 下限记录在各 crate 的 rust-version（当前为 1.94），升级本文件时必须重新验证。
+[toolchain]
+channel = "1.98.1"
+profile = "minimal"
+components = ["rustfmt", "clippy"]

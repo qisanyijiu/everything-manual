@@ -1,0 +1,388 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test manual-review.spec.ts
+
+(node:92106) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m[1mVITE[22m v8.3.0[39m  [2mready in [0m[1m137[22m[2m[0m ms[22m
+[2m[WebServer] [22m
+[2m[WebServer] [22m  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m15173[22m/[39m
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.77s
+{"timestamp":"2026-09-12T13:48:43.924075Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt","schemaVersion":7,"adminId":"01a095e0-aa13-76a5-8880-abb6c6538589","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 8 tests using 1 worker
+
+(node:92215) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T13:48:46.592989Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/password.txt","schemaVersion":7,"adminId":"01a095e0-b480-729e-be67-520d3cfb5e4c","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-flWsla/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m21:48:50[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m21:48:52[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✘  1 [chromium] › tests/e2e/manual-review.spec.ts:404:1 › T19-1 拾取绑定：旋转/缩放后点击位置正确；拖动旋转不建点（真实链路） (5.7s)
+(node:92252) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T13:48:54.918042Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/password.txt","schemaVersion":7,"adminId":"01a095e0-d505-7312-a47c-28cdd0c9faef","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-PnxKuV/password.txt；明文不落盘、不进入日志与 shell history。
+  ✘  2 [chromium] › tests/e2e/manual-review.spec.ts:482:1 › T19-2 部件列表 ↔ 3D 热点双向联动；步骤前进/后退不累积错误状态 (1.4s)
+(node:92289) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+{"timestamp":"2026-09-12T13:48:58.707559Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/password.txt","schemaVersion":7,"adminId":"01a095e0-e3d3-7729-9039-22f3adc9269b","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-7OdusV/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m21:49:02[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  3 [chromium] › tests/e2e/manual-review.spec.ts:548:1 › T19-3 引用跳到正确 1-based 页（页图与页文字一致） (3.7s)
+[2m[WebServer] [22m[2m21:49:05[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✘  4 [chromium] › tests/e2e/manual-review.spec.ts:590:1 › T19-4 并发冲突 412：提示当前 revision 且刷新后恢复（真实链路） (19.1s)
+(node:92328) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+{"timestamp":"2026-09-12T13:49:24.096558Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/password.txt","schemaVersion":7,"adminId":"01a095e1-4700-72e6-a9fd-eca6f8ca9e4c","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-n15ZRL/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m21:49:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✘  5 [chromium] › tests/e2e/manual-review.spec.ts:634:1 › T19-5 不完整发布不可用（原因常驻）；服务端 422 明细可见 (5.0m)
+(node:92460) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.39s
+{"timestamp":"2026-09-12T13:54:30.131836Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/password.txt","schemaVersion":7,"adminId":"01a095e5-f273-775b-be2f-66a6ad38b050","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-hJX2LI/password.txt；明文不落盘、不进入日志与 shell history。
+  ✘  6 [chromium] › tests/e2e/manual-review.spec.ts:691:1 › T19-6 发布（真实链路）→ 阅读器可读；修改草稿不改变已发布版本 (1.4s)
+(node:92505) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+{"timestamp":"2026-09-12T13:54:33.882536Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/password.txt","schemaVersion":7,"adminId":"01a095e6-011a-7312-9c3c-a26c30752163","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-pxtQTT/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m21:54:37[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✘  7 [chromium] › tests/e2e/manual-review.spec.ts:753:1 › T19-7 窄屏：几何校准禁用并解释；文字确认与发布仍可用 (5.0m)
+(node:92674) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.68s
+{"timestamp":"2026-09-12T13:59:45.787859Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data","passwordSource":"受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/password.txt","schemaVersion":7,"adminId":"01a095ea-c37b-7780-bb28-d4278970be2a","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data/tmp
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data/logs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data/blobs
+  - 已创建：/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data/lock
+数据库：已创建并迁移（/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-t17-t19-UPATNX/password.txt；明文不落盘、不进入日志与 shell history。
+[2m[WebServer] [22m[2m21:59:49[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m21:59:50[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m21:59:50[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.WebGLRenderer: WEBGL_lose_context extension not supported.
+  ✓  8 [chromium] › tests/e2e/manual-review.spec.ts:802:1 › T19-8 键盘路径与减少动效；上下文丢失 → 重建状态机（回归断言集） (12.9s)
+
+
+  1) [chromium] › tests/e2e/manual-review.spec.ts:404:1 › T19-1 拾取绑定：旋转/缩放后点击位置正确；拖动旋转不建点（真实链路） ────
+
+    Error: 命中点应在靶点附近（轴 0；旋转/缩放后仍正确）
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m0.25[39m
+    Received:   [31mNaN[39m
+
+      451 |       Math.abs((picked ?? [])[axis] ?? Number.NaN),
+      452 |       `命中点应在靶点附近（轴 ${axis}；旋转/缩放后仍正确）`,
+    > 453 |     ).toBeLessThan(0.25);
+          |       ^
+      454 |   }
+      455 |
+      456 |   // 落库：confirmed + 有限数值 + anchor 与拾取点逐轴一致。
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:453:7
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-1-拾取绑定：旋转-缩放后点击位置正确；拖动旋转不建点（真实链路）-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-1-拾取绑定：旋转-缩放后点击位置正确；拖动旋转不建点（真实链路）-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-1-拾取绑定：旋转-缩放后点击位置正确；拖动旋转不建点（真实链路）-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-1-拾取绑定：旋转-缩放后点击位置正确；拖动旋转不建点（真实链路）-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-1-拾取绑定：旋转-缩放后点击位置正确；拖动旋转不建点（真实链路）-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › tests/e2e/manual-review.spec.ts:482:1 › T19-2 部件列表 ↔ 3D 热点双向联动；步骤前进/后退不累积错误状态 ────
+
+    Error: {"error":{"code":"CSRF_REJECTED","message":"缺少或无效的 CSRF token：修改请求必须携带 X-CSRF-Token（取自登录或 GET /auth/session）","details":null,"requestId":"01a095e0-db83-71b4-934c-f778b582fcb4"}}
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m200[39m
+    Received: [31m403[39m
+
+      237 |     },
+      238 |   );
+    > 239 |   expect(response.status(), await response.text()).toBe(200);
+          |                                                    ^
+      240 | }
+      241 |
+      242 | /** 把草稿推到"可发布"（全部实体确认 + 每个部件一个 confirmed 热点 + modelReview 双声明）。 */
+        at patchDraftApi (/Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:239:52)
+        at makePublishable (/Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:259:3)
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:486:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-2-部件列表-↔-3D-热点双向联动；步骤前进-后退不累积错误状态-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-2-部件列表-↔-3D-热点双向联动；步骤前进-后退不累积错误状态-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-2-部件列表-↔-3D-热点双向联动；步骤前进-后退不累积错误状态-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-2-部件列表-↔-3D-热点双向联动；步骤前进-后退不累积错误状态-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-2-部件列表-↔-3D-热点双向联动；步骤前进-后退不累积错误状态-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › tests/e2e/manual-review.spec.ts:590:1 › T19-4 并发冲突 412：提示当前 revision 且刷新后恢复（真实链路） 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeHidden[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('conflict-panel')
+    Expected: hidden
+    Received: visible
+    Timeout:  15000ms
+
+    Call log:
+    [2m  - Expect "toBeHidden" with timeout 15000ms[22m
+    [2m  - waiting for getByTestId('conflict-panel')[22m
+    [2m    34 × locator resolved to <div role="alert" class="page-error" data-testid="conflict-panel">…</div>[22m
+    [2m       - unexpected value "visible"[22m
+
+
+      620 |   // 刷新后按最新 revision 重新载入（外部修改可见），可继续操作。
+      621 |   await page.getByRole("button", { name: "刷新草稿" }).click();
+    > 622 |   await expect(page.getByTestId("conflict-panel")).toBeHidden();
+          |                                                    ^
+      623 |   await expect(page.getByTestId(`knowledge-status-${draft.parts[0]?.id ?? ""}`)).toContainText(
+      624 |     "已确认",
+      625 |   );
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:622:52
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-4-并发冲突-412：提示当前-revision-且刷新后恢复（真实链路）-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-4-并发冲突-412：提示当前-revision-且刷新后恢复（真实链路）-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-4-并发冲突-412：提示当前-revision-且刷新后恢复（真实链路）-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-4-并发冲突-412：提示当前-revision-且刷新后恢复（真实链路）-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-4-并发冲突-412：提示当前-revision-且刷新后恢复（真实链路）-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › tests/e2e/manual-review.spec.ts:634:1 › T19-5 不完整发布不可用（原因常驻）；服务端 422 明细可见 ────────
+
+    [31mTest timeout of 300000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 300000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: '刷新草稿' })[22m
+
+
+      654 |   await makePublishable(prepare.context, prepare.csrf, draft);
+      655 |   await prepare.context.dispose();
+    > 656 |   await page.getByRole("button", { name: "刷新草稿" }).click();
+          |                                                    ^
+      657 |   await expect(publishButton).toBeEnabled({ timeout: 20_000 });
+      658 |
+      659 |   const { DatabaseSync } = await import("node:sqlite");
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:656:52
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-5-不完整发布不可用（原因常驻）；服务端-422-明细可见-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-5-不完整发布不可用（原因常驻）；服务端-422-明细可见-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-5-不完整发布不可用（原因常驻）；服务端-422-明细可见-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-5-不完整发布不可用（原因常驻）；服务端-422-明细可见-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-5-不完整发布不可用（原因常驻）；服务端-422-明细可见-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › tests/e2e/manual-review.spec.ts:691:1 › T19-6 发布（真实链路）→ 阅读器可读；修改草稿不改变已发布版本 ───────
+
+    Error: {"error":{"code":"CSRF_REJECTED","message":"缺少或无效的 CSRF token：修改请求必须携带 X-CSRF-Token（取自登录或 GET /auth/session）","details":null,"requestId":"01a095e5-f900-75fd-8773-3ba8a0ff1bf2"}}
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m200[39m
+    Received: [31m403[39m
+
+      237 |     },
+      238 |   );
+    > 239 |   expect(response.status(), await response.text()).toBe(200);
+          |                                                    ^
+      240 | }
+      241 |
+      242 | /** 把草稿推到"可发布"（全部实体确认 + 每个部件一个 confirmed 热点 + modelReview 双声明）。 */
+        at patchDraftApi (/Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:239:52)
+        at makePublishable (/Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:259:3)
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:695:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-6-发布（真实链路）→-阅读器可读；修改草稿不改变已发布版本-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-6-发布（真实链路）→-阅读器可读；修改草稿不改变已发布版本-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-6-发布（真实链路）→-阅读器可读；修改草稿不改变已发布版本-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-6-发布（真实链路）→-阅读器可读；修改草稿不改变已发布版本-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-6-发布（真实链路）→-阅读器可读；修改草稿不改变已发布版本-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium] › tests/e2e/manual-review.spec.ts:753:1 › T19-7 窄屏：几何校准禁用并解释；文字确认与发布仍可用 ────────────
+
+    [31mTest timeout of 300000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 300000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('parts-panel')[22m
+
+
+      767 |   // 部件列表是热点的文字替代路径：窄屏仍可读、可选。
+      768 |   const partId = draft.parts[0]?.id ?? "";
+    > 769 |   await page.getByTestId("parts-panel").click();
+          |                                         ^
+      770 |   const partButton = page.getByTestId(`part-row-${partId}`).getByRole("button").first();
+      771 |   await expect(partButton).toContainText(draft.parts[0]?.name ?? "");
+      772 |   await partButton.click();
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/manual-review.spec.ts:769:41
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-7-窄屏：几何校准禁用并解释；文字确认与发布仍可用-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-7-窄屏：几何校准禁用并解释；文字确认与发布仍可用-chromium/error-context.md
+
+    Error Context: ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-7-窄屏：几何校准禁用并解释；文字确认与发布仍可用-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-7-窄屏：几何校准禁用并解释；文字确认与发布仍可用-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/web-mvp/t09-rd/playwright-output/manual-review-T19-7-窄屏：几何校准禁用并解释；文字确认与发布仍可用-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6 failed
+    [chromium] › tests/e2e/manual-review.spec.ts:404:1 › T19-1 拾取绑定：旋转/缩放后点击位置正确；拖动旋转不建点（真实链路） ─────
+    [chromium] › tests/e2e/manual-review.spec.ts:482:1 › T19-2 部件列表 ↔ 3D 热点双向联动；步骤前进/后退不累积错误状态 ─────
+    [chromium] › tests/e2e/manual-review.spec.ts:590:1 › T19-4 并发冲突 412：提示当前 revision 且刷新后恢复（真实链路） ─
+    [chromium] › tests/e2e/manual-review.spec.ts:634:1 › T19-5 不完整发布不可用（原因常驻）；服务端 422 明细可见 ─────────
+    [chromium] › tests/e2e/manual-review.spec.ts:691:1 › T19-6 发布（真实链路）→ 阅读器可读；修改草稿不改变已发布版本 ────────
+    [chromium] › tests/e2e/manual-review.spec.ts:753:1 › T19-7 窄屏：几何校准禁用并解释；文字确认与发布仍可用 ─────────────
+  2 passed (11.4m)

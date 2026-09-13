@@ -1,0 +1,85 @@
+== 工作目录：/tmp/em-t06-smoke-iLOcaP
+== init
+数据库：已创建并迁移（/private/tmp/em-t06-smoke-iLOcaP/data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 ./pw.txt；明文不落盘、不进入日志与 shell history。
+== serve（127.0.0.1:18123）
+-- serve 启动日志（asset_scan 行）
+"event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":0,"blobsRestored":0,"blobsMarkedMissing":0
+== 登录
+csrf=3588ca33a94d…
+set-cookie: em_session=d694686de259…（截断）
+== 建物品行（T07 之前用 sqlite3 直接插入；服务以 WAL 打开，不冲突）
+item=8c8ce53c-4cca-432b-8789-33ac56c6bc0f
+== 1) 上传 PNG（purpose=photo）
+  201 asset= 01a09219-19bc-7631-b688-eb51d7ae26a7 sha256= 0a74e5a5b542aa62 size= 12420 mime= image/png state= stored
+== 2) 上传 PDF（purpose=document）
+  201 asset= 01a09219-19ef-71f8-83ed-2db8d3d154a7 sha256= e18cf61a61c9f983 size= 1216 mime= application/pdf
+== 3) 重复上传同一 PNG → 去重（同 sha256、不同 asset id）
+  asset= 01a09219-1a1c-7010-add9-fddec9d8b9bb sha256= 0a74e5a5b542aa62 （与原 asset 不同 id、同内容）
+== 4) 伪造类型（.pdf 扩展名 + 假 Content-Type）→ 415
+  HTTP 415 UNSUPPORTED_MEDIA_TYPE
+== 5) GET 完整内容（200 / ETag / Accept-Ranges / Content-Length）
+  HTTP/1.1 200 OK
+  content-type: image/png
+  content-length: 12420
+  etag: "0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890"
+  accept-ranges: bytes
+  body bytes=   12420 / 源文件    12420
+== 6) HEAD（同头无 body）
+  HTTP/1.1 200 OK
+  content-length: 12420
+  etag: "0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890"
+== 7) Range: bytes=0-9 → 206 + Content-Range
+  HTTP/1.1 206 Partial Content
+  content-length: 10
+  content-range: bytes 0-9/12420
+  区间字节数=      10
+== 8) Range 不可满足 bytes=999999- → 416
+  HTTP/1.1 416 Range Not Satisfiable
+  content-range: bytes */12420
+== 9) If-None-Match 命中 → 304
+  HTTP/1.1 304 Not Modified
+  etag: "0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890"
+== 10) If-Range 不匹配 + Range → 完整 200
+  HTTP/1.1 200 OK
+  content-length: 12420
+== 11) 跨物品/不存在资产 → 404；无会话 → 401
+  不存在资产 HTTP 404
+  无会话 HTTP 401
+== 12) 磁盘布局与去重（blobs 目录 / DB 计数）
+  ./data/blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890
+  ./data/blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+  blobs=2
+  assets=3
+  distinct blob 文件=2
+== 13) 崩溃残留隔离：手工放一个 tmp 残留，重启服务后观察 asset_scan
+  "event":"asset_scan","tmpQuarantined":1,"blobsQuarantined":0,"blobsKept":2,"blobsRestored":0,"blobsMarkedMissing":0
+  quarantine: tmp-crashed.part
+== 全部输出保存在 /tmp/em-t06-smoke-iLOcaP（仅列出关键文件）
+body-full.bin
+cookies.txt
+data
+everything-manual
+fake-resp.json
+fake.pdf
+get-headers.txt
+inm-headers.txt
+ir-headers.txt
+ir.bin
+login-headers.txt
+login.json
+na.json
+nu.json
+png-asset.txt
+png-sha.txt
+pw.txt
+r416-headers.txt
+r416.json
+range-headers.txt
+range.bin
+serve.log
+serve2.log
+upload-pdf.json
+upload-png-2.json
+upload-png.json

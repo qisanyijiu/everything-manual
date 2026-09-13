@@ -1,0 +1,29 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.42s
+     Running tests/redaction_surface.rs (target/debug/deps/redaction_surface-862baed7f5d81817)
+
+running 2 tests
+
+thread 'write_functions_either_redact_or_are_exempt' (14628377) panicked at crates/server/tests/redaction_surface.rs:154:5:
+以下仓储写入函数既未调用统一脱敏入口、也不在豁免清单（新增字段/函数时请二选一）：
+/Users/qsyj/Code/rust/everything-manual/crates/server/src/storage/repo/qa_r28_probe_repo.rs::qa_r28_probe_repo_write
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test write_functions_either_redact_or_are_exempt ... FAILED
+
+thread 'supplier_fact_table_writes_live_only_in_repo_layer' (14628376) panicked at crates/server/tests/redaction_surface.rs:81:5:
+供应商事实表的写语句必须只出现在 src/storage/repo/（统一脱敏入口所在层）：
+src/qa_r28_probe_outside.rs:3：let _ = "UPDATE provider_attempts SET last_error = ?";
+test supplier_fact_table_writes_live_only_in_repo_layer ... FAILED
+
+failures:
+
+failures:
+    supplier_fact_table_writes_live_only_in_repo_layer
+    write_functions_either_redact_or_are_exempt
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+error: test failed, to rerun pass `-p everything-manual --test redaction_surface`

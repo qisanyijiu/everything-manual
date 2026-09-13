@@ -1,0 +1,51 @@
+== 工作目录：/tmp/em-t12-smoke-5s11lZ（结束时删除）
+== 启动本机 Tripo fixture（127.0.0.1:18222；只在回环监听）
+fixture listening on 127.0.0.1:18222
+== 价格目录（version=2026-09-11；Tripo 30 credits）
+== init / serve（tripo.base_url 指向本机 fixture；凭据为测试专用假值）
+密码来源：受限文件 ./pw.txt；明文不落盘、不进入日志与 shell history。
+"event":"provider_handlers_registered","provider":"tripo","baseUrl":"http://127.0.0.1:18222/v3","stages":"tripo_upload,tripo_submit,tripo_poll"
+== 登录
+== 1) 物品 + 说明书 + 准备（2 页文字页）
+  item=01a093b9-8253-7025-bc9c-2003e8dfd5ce
+  preparation=01a093b9-82d5-76ee-8421-a227fb87cb82（ready）
+== 2) 照片：front + left
+  front=01a093b9-83ea-727f-b334-c1b7cc1519d9 left=01a093b9-8402-7493-aa12-d93a0bb9768e
+== 3) estimate + confirm + 建单
+  estimate HTTP 201
+  confirm HTTP 200
+  jobs HTTP 202
+  job=01a093b9-8442-739d-ba2f-ec007f143259
+== 4) 等待后台执行器跑完 Tripo 链（fixture 第 1 次查询 running、之后 success）
+  tripo_poll 状态：succeeded
+== 5) fixture 请求记录（核对目标、体与次数）
+POST /v3/files filename=front.jpg bytes=415 → token=fixture-token-1-front.jpg
+POST /v3/files filename=left.png bytes=12659 → token=fixture-token-2-left.png
+POST /v3/generation/multiview-to-model inputs=[{"front": "fixture-token-1-front.jpg"}, {"left": "fixture-token-2-left.png"}] params={"model": "v3.1-20260211", "texture": true, "pbr": true, "texture_quality": "standard", "geometry_quality": "standard", "face_limit": 100000, "quad": false, "generate_parts": false}
+GET /v3/tasks/smoke-task-0001 → running
+GET /v3/tasks/smoke-task-0001 → success（credits_consumed=30）
+== 6) 库内事实（原始状态 + 归一化状态 + 计费 + 阶段与账本）
+  阶段（tripo 链）：
+    tripo_upload   status=succeeded        attempt_count=0 poll_count=0
+      uploads   = [('front', 'fixture-token-1-front.jpg', 'file_token'), ('left', 'fixture-token-2-left.png', 'file_token')]
+    tripo_submit   status=succeeded        attempt_count=0 poll_count=0
+      remoteTaskId = smoke-task-0001
+    tripo_poll     status=succeeded        attempt_count=0 poll_count=1
+      rawStatus = success / normalizedStatus = success
+      modelUrl  = https://cdn.example.invalid/fixture/smoke-model.glb?sign=smoke-signature
+      billing   = {'creditMinor': 3000, 'currency': 'credit_minor', 'literal': '30', 'sourceField': 'credits_consumed'}
+  provider_attempts：
+    ('01a093b9-8442-739d-ba2f-ec053747da93', 'accepted', 'smoke-task-0001', '')
+  cost_ledger：
+    ('manual_ai', 'usd_micros', 9992, None, 'reserved')
+    ('tripo', 'credit_minor', 3000, 3000, 'settled')
+  jobs.status = running
+  provider_attempts 总数 = 1 （付费提交只应产生 1 条）
+== 7) serve 日志中的 Tripo 事件（脱敏；不含密钥/签名 URL 查询串）
+"event":"tripo_submit_sent","jobId":"01a093b9-8442-739d-ba2f-ec007f143259","stageId":"01a093b9-8442-739d-ba2f-ec053747da93","views":2,"model":"v3.1-20260211","endpoint":"/generation/multiview-to-model"
+"event":"tripo_submit_accepted","jobId":"01a093b9-8442-739d-ba2f-ec007f143259","stageId":"01a093b9-8442-739d-ba2f-ec053747da93","remoteTaskId":"smoke-task-0001"
+"event":"tripo_task_success","jobId":"01a093b9-8442-739d-ba2f-ec007f143259","stageId":"01a093b9-8443-74cd-80c8-c59b03615236","remoteTaskId":"smoke-task-0001","modelUrl":"https://cdn.example.invalid/fixture/smoke-model.glb?[redacted]","ledger":"按供应商实际 credits（30 → 3000 creditMinor）结算：已生效"
+  签名串出现在日志中的次数（应为 0）：0
+== 8) 服务进程连接采样（lsof；只应有 127.0.0.1）
+  采样行数=      41；非 loopback 连接行数=0（应为 0）
+== 冒烟结束（全部请求目标只可能是 127.0.0.1；见上面 fixture 记录）

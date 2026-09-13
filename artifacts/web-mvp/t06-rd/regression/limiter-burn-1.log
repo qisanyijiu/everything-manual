@@ -1,0 +1,14 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running unittests src/lib.rs (target/debug/deps/everything_manual-51b408f288407587)
+
+running 4 tests
+test http::auth::limiter::tests::success_clears_failures_and_ips_are_isolated ... ok
+test http::auth::limiter::tests::blocks_after_limit_within_window_and_recovers_after_it ... ok
+test http::auth::limiter::tests::window_restarts_after_expiry_and_zero_limits_are_clamped ... ok
+test http::auth::limiter::tests::millisecond_window_is_deterministic_with_injected_clock ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 85 filtered out; finished in 0.00s
+

@@ -1,0 +1,27 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+     Running tests/qa_t13_independent.rs (target/debug/deps/qa_t13_independent-6fefcc67a5ae0bf2)
+
+running 15 tests
+QA13 P3: 合法 JPEG 的 SOF 偏移 66541 > 64 KiB 读窗口 → 被判尺寸不可判定
+test qa_jpeg_with_sof_beyond_the_64kib_window_is_rejected ... ok
+test qa_dns_rebinding_mixed_answers_and_address_classes_are_refused ... ok
+test qa_layout_negatives_reject_out_of_range_and_alignment ... ok
+test qa_geometry_negatives_reject_bad_data ... ok
+test qa_budget_negatives_and_original_file_is_untouched ... ok
+test qa_resource_and_extension_negatives ... ok
+test qa_container_negatives_reject_handcrafted_bytes ... ok
+test qa_pin_ip_keeps_hostname_and_sends_no_credentials ... ok
+test qa_size_gates_truncation_retry_and_disk_full ... ok
+test qa_redirect_negatives_never_reach_the_next_hop ... ok
+test qa_refreshed_link_is_revalidated_and_never_repurchases ... ok
+test qa_rebinding_at_executor_level_blocks_download ... ok
+test qa_truncated_glb_at_handler_level_keeps_original ... ok
+QA13 canary_hits=[("job_stages", "usage_json", 1)] usage_hit_stages=["tripo_poll"]
+test qa_over_budget_preserves_original_bytes_and_never_repurchases ... ok
+test qa_valid_model_creates_immutable_validated_revision ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.24s
+

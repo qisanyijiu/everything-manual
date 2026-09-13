@@ -1,0 +1,32 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/jobs_recovery.rs (target/debug/deps/jobs_recovery-f5ccf40de10752df)
+
+running 22 tests
+test child_worker_entry ... ok
+test executor_config_defaults_and_validation ... ok
+test failpoints_are_available_only_in_test_builds ... ok
+test insufficient_inputs_go_to_needs_input_with_actionable_items ... ok
+test concurrent_claims_yield_exactly_one_winner_with_new_epoch ... ok
+test cancel_marks_only_unsubmitted_stages_and_keeps_submitted_or_unknown ... ok
+test expired_worker_receipt_is_saved_but_cannot_advance_or_unlock ... ok
+test dag_persists_batches_and_only_unlocks_satisfied_dependencies ... ok
+test failed_branch_does_not_block_independent_branch_and_job_status_is_aggregated ... ok
+test manual_batch_without_persisted_response_becomes_unknown_and_sync_branch_has_no_attach ... ok
+test paid_post_without_response_becomes_submission_unknown_and_never_repurchases ... ok
+test persisted_result_without_checkpoint_is_advanced_on_recovery_without_repaying ... ok
+test remote_task_id_conflict_is_recorded_never_overwrites_and_pauses_branch ... ok
+test poll_pace_ramps_from_three_to_fifteen_seconds ... ok
+test remote_wait_budget_turns_poll_into_needs_input_and_keeps_task_id ... ok
+test retry_after_is_respected_and_capped ... ok
+test failpoint_breakpoints_recover_without_duplicate_remote_requests ... ok
+test transient_failures_back_off_2_4_8_16_32_then_fail_and_respect_retry_after ... ok
+test concurrency_limits_allow_two_manual_batches_and_two_remote_stages ... ok
+test lease_renewal_keeps_stage_alive_and_unregistered_handler_defers_without_retries ... ok
+test sigkill_during_paid_post_makes_submission_unknown_without_repurchasing ... ok
+test sigkill_during_poll_resumes_with_known_remote_task_and_never_resubmits ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.01s
+

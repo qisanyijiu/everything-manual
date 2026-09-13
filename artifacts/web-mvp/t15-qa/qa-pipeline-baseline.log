@@ -1,0 +1,22 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.31s
+     Running tests/pipeline.rs (target/debug/deps/pipeline-3c652efd601b1292)
+
+running 11 tests
+test job_list_supports_cursor_pagination_and_item_filter ... ok
+test cancel_stops_unsubmitted_stages_and_keeps_submitted_records ... ok
+test draft_patch_requires_if_match_and_rejects_unknown_fields ... ok
+test blocked_model_branch_still_produces_a_partial_draft_with_missing_items ... ok
+test model_failure_retries_only_the_model_branch ... ok
+test full_chain_assembles_needs_review_draft_and_never_publishes ... ok
+test attach_remote_task_resumes_without_repurchase ... ok
+test knowledge_failure_retries_only_the_knowledge_branch ... ok
+test refused_batch_recovery_never_reports_success ... ok
+test submission_unknown_rejects_retry_and_reconcile_actions_follow_the_contract ... ok
+test replayed_assembly_does_not_create_a_second_draft ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.02s
+

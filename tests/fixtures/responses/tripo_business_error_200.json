@@ -1,0 +1,5 @@
+{
+  "_fixtureNote": "自建构造样例（非供应商官方响应原文）：HTTP 200 但 code 非 0 的业务失败（T12 必须按 code 判定，不能只判断 HTTP 状态）",
+  "code": 1201,
+  "message": "invalid image token"
+}

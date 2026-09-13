@@ -1,0 +1,22 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running tests/qa_t13_independent.rs (target/debug/deps/qa_t13_independent-6fefcc67a5ae0bf2)
+
+running 1 test
+QA27 manual needs_input = [{"code":"manual_ai_refusal","message":"模型拒答（refusal）：无法从页图可靠识别；下载参考 （临时供应商地址已脱敏：host=cdn.qa27.invalid；sha256=98628d5988274611…） 也失败；该批不产生正式知识（不自动重试、不重复付费），请人工复核后对该批重新授权重算"}]
+
+thread 'qa_bug012_provider_text_signed_url_must_not_be_persisted_into_usage_json' (14504856) panicked at crates/server/tests/qa_t13_independent.rs:3037:5:
+提供方文本里的签名落库：[("job_stages", "usage_json", 1)]（ADR-032：临时 URL 永不落库）
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test qa_bug012_provider_text_signed_url_must_not_be_persisted_into_usage_json ... FAILED
+
+failures:
+
+failures:
+    qa_bug012_provider_text_signed_url_must_not_be_persisted_into_usage_json
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.72s
+
+error: test failed, to rerun pass `-p everything-manual --test qa_t13_independent`

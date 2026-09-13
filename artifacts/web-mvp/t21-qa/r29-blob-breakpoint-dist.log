@@ -1,0 +1,24 @@
+== QA R29 断点四（blob rename 后 DB 事务前）· dist 二进制真实重启 ==
+binary:    /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+sha256:    f68d14874936b74f70aaa99b0eb8462396e933344a4495653ed239ba8838ac02
+time:      2026-09-13 05:19:39 CST
+data-dir:  /tmp/em-r29-blobfp-V1RHPZ/data
+已上传资产：asset=01a0977d-7ff4-75a7-8065-b2ee6e9eca19 sha256=e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+崩溃前：jobs=0 cost_ledger=0 provider_attempts=0 model_revisions=0
+已 kill -9 服务（pid 参见日志）
+已注入孤儿 blob：blobs/4a/4a8821d3bf058c24f0378b958ccc98f20feedfbc32bd1f216a1e1a8b83a400fd（无元数据行）与 tmp 残留
+服务已重启
+  [OK]   被引用资产逐字节可读（sha256）：e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+  [OK]   任务数不变（jobs）：0
+  [OK]   远端请求不变（provider_attempts）：0
+  [OK]   费用预留不变（cost_ledger）：0
+  [OK]   不可变版本不变（model_revisions）：0
+  [OK]   孤儿 blob 已被隔离（离开内容寻址位置）：0
+  [OK]   tmp 残留已清空：0
+  [OK]   隔离区含 2 个文件（孤儿 blob + tmp 残留）：2
+重传孤儿内容 HTTP=201（415/422 属预期外，201 才通过）
+  [OK]   重传成功
+  [OK]   blob 行数只 +1（旧的被隔离文件不重复计数）：2
+
+结论：断点四在 dist 二进制真实重启下全部核对通过
+日志：serve-1=/tmp/em-r29-blobfp-V1RHPZ/serve-1.log serve-2=/tmp/em-r29-blobfp-V1RHPZ/serve-2.log（随临时目录清理，现场摘要在 stdout）

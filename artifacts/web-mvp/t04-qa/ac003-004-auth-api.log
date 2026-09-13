@@ -1,0 +1,23 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/auth_api.rs (target/debug/deps/auth_api-2e294fa1641b4d10)
+
+running 13 tests
+test ready_reflects_data_layer_and_reports_not_ready_when_db_unavailable ... ok
+test json_body_errors_use_unified_envelope ... ok
+test if_match_missing_is_428_and_stale_revision_is_412_with_current_revision ... ok
+test logout_revokes_session_and_expired_session_is_401 ... ok
+test https_declared_origin_marks_cookie_secure ... ok
+test mutating_requests_require_csrf_and_same_site_origin ... ok
+test login_sets_httponly_strict_cookie_and_session_has_no_store ... ok
+test unauthenticated_protected_routes_return_401_with_request_id ... ok
+test unknown_api_paths_are_json_404_without_session ... ok
+test trusted_proxy_source_ip_is_used_for_rate_limiting ... ok
+test settings_status_reports_configuration_without_secrets ... ok
+test wrong_password_is_401_and_repeated_failures_are_429 ... ok
+test rate_limit_window_expires_and_success_resets_counter ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.97s
+

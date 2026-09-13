@@ -1,0 +1,2 @@
+== cargo fmt --all -- --check（exit=0；无 Diff 输出 = 格式一致）
+  |

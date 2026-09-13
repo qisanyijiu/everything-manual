@@ -1,0 +1,10 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）。status 取自任务生命周期页记录的已知集合（queued/running/success/failed/cancelled，另有 banned/expired）；progress 为原始数值，适配器只作为诊断事实保留、不参与判定。",
+  "code": 0,
+  "data": {
+    "task_id": "fixture-task-0001",
+    "status": "running",
+    "progress": 42,
+    "output": null
+  }
+}

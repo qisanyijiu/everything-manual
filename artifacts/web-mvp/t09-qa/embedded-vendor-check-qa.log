@@ -1,0 +1,16 @@
+QA 内嵌 vendor 复核（二进制：/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual）
+/vendor/pdfjs/cmaps/UniGB-UCS2-H.bcmap                     HTTP 200  43366 bytes
+/vendor/pdfjs/cmaps/UniJIS-UCS2-H.bcmap                    HTTP 200  25439 bytes
+/vendor/pdfjs/standard_fonts/LiberationSans-Regular.ttf    HTTP 200  139512 bytes
+/vendor/pdfjs/standard_fonts/FoxitSerif.pfb                HTTP 200  19469 bytes
+/vendor/pdfjs/wasm/openjpeg.wasm                           HTTP 200  252032 bytes
+/vendor/pdfjs/wasm/qcms_bg.wasm                            HTTP 200  96589 bytes
+/vendor/pdfjs/wasm/jbig2.wasm                              HTTP 200  104852 bytes
+/vendor/pdfjs/iccs/CGATS001Compat-v2-micro.icc             HTTP 200  8464 bytes
+served sha256 = 9201569b402e81ad8860650bd86350c4fa28e5dd5971f05fcacaf40f51de18ed
+source sha256 = 9201569b402e81ad8860650bd86350c4fa28e5dd5971f05fcacaf40f51de18ed
+内嵌 CSS: /assets/index-DNj-MCMM.css
+CSS 含 pointer-events:none
+CSS 含 --notices-top
+未知 API 状态码：404（期望 404）
+QA 内嵌 vendor 复核：全部通过

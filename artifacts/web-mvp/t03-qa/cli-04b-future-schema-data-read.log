@@ -1,0 +1,14 @@
+# QA T03 future-schema data retention read 2026-09-11T18:53:50Z
+total 608
+drwx------@ 7 qsyj  wheel     224  9月 12 02:53 .
+drwxr-xr-x@ 8 qsyj  wheel     256  9月 12 02:53 ..
+drwx------@ 2 qsyj  wheel      64  9月 12 02:53 blobs
+-rw-------@ 1 qsyj  wheel      36  9月 12 02:53 lock
+drwx------@ 3 qsyj  wheel      96  9月 12 02:53 logs
+-rw-------@ 1 qsyj  wheel  307200  9月 12 02:53 manual.sqlite3
+drwx------@ 2 qsyj  wheel      64  9月 12 02:53 tmp
+-- read copy (main file after checkpoint)
+保留数据|4
+1
+-- main file sha after copy-read (copy is separate, main must be untouched by us)
+c1f41cc7aee3a397aec612c86990b9e53831ac630c510ce243809c9e63bf9eb8  /tmp/em-t03-qa/data2/manual.sqlite3

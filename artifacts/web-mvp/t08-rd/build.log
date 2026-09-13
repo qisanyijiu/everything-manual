@@ -1,0 +1,14 @@
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 92 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:   0.31 kB
+dist/assets/index-QoC9xBFM.css    7.55 kB │ gzip:   2.14 kB
+dist/assets/index-B6p0J4kW.js   343.00 kB │ gzip: 106.01 kB
+
+✓ built in 97ms

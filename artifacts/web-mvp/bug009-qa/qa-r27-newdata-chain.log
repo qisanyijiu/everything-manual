@@ -1,0 +1,20 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running tests/qa_t13_independent.rs (target/debug/deps/qa_t13_independent-6fefcc67a5ae0bf2)
+
+running 4 tests
+test qa_bug012_provider_text_signed_url_must_not_be_persisted_into_usage_json ... ignored, BUG-012 未修复（QA 回合 27）：提供方文本里的签名 URL 落库到 job_stages.usage_json；修复后去掉 ignore
+QA27 manual needs_input = [{"code":"manual_ai_refusal","message":"模型拒答（refusal）：无法从页图可靠识别；下载参考 （临时供应商地址已脱敏：host=cdn.qa27.invalid；sha256=98628d5988274611…） 也失败；该批不产生正式知识（不自动重试、不重复付费），请人工复核后对该批重新授权重算"}]
+QA27 transport last_error = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request
+test qa_bug009_provider_text_url_never_shows_in_job_detail ... ok
+QA27 exhausted last_error = 安全重试已用尽（5 次）：模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request
+QA27 http last_error = 模型 CDN 返回服务器错误（HTTP 500）：下载可安全重试（不产生费用）
+QA27 dto lastError = 安全重试已用尽（5 次）：模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request
+test qa_bug009_transport_failure_never_persists_signed_url ... ok
+QA27 dto lastError = 模型 CDN 返回服务器错误（HTTP 500）：下载可安全重试（不产生费用）
+test qa_bug009_http_error_path_after_refresh_never_persists_signed_url ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 15 filtered out; finished in 1.14s
+

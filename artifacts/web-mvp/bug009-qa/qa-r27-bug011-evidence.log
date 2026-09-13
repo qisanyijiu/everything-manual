@@ -1,0 +1,7 @@
+== QA 回合 27 · BUG-011 现场（dist 15f4f4d33d8aa7de11d56675d6b3ee8c0a897de8602af0897f2541bae8e20edc ）
+  源库 needs_input_json = [{"code": "download_insecure_scheme", "message": "模型下载必须使用 HTTPS（实际 http://cdn.qa27.invalid/m.glb）：拒绝下载"}]
+  快照 needs_input_json = [{"code":"download_insecure_scheme","message":{"redacted":true,"sha256":"d551df489e5b4f1d"}}]
+  恢复库 stage.status   = needs_input
+  恢复库 needsInput     = []
+  恢复库 needsInput 条数 = 0
+== 结论：若'恢复库 needsInput 条数 = 0'而源库/快照行不可解析 → BUG-011（备份快照把整条 message 替换为摘要对象，恢复后缺项静默消失）

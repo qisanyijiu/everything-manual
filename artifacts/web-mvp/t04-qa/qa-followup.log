@@ -1,0 +1,70 @@
+== A) 登录并把 token/csrf 精确取出（cookie jar 是 tab 分隔）==
+token=5fa03f345009925a… len=64; csrf=93c2d7f3f6d567f0… len=64
+sha256(token)=4518e69fd94d031f605599cf871f2935f4183f5ae1964198ad49e70fced5be21
+sha256(csrf) =b45837cac0c2633e4cc1637955a7c694a9174888d0932efb45859a19f3fc4627
+-- 库中 sessions 行（session_token_hash|csrf_hash|revoked_at）--
+4518e69fd94d031f605599cf871f2935f4183f5ae1964198ad49e70fced5be21|b45837cac0c2633e4cc1637955a7c694a9174888d0932efb45859a19f3fc4627|
+-- 明文 token / csrf 在库文件中出现次数（预期 0）--
+token hits: 0 csrf hits: 0
+-- 明文 token / csrf 在日志中出现次数（预期 0）--
+0
+0 token
+0
+0 csrf
+
+== B) 405 语义（带合法 CSRF 的 DELETE）==
+-- DELETE /api/v1/items --
+HTTP/1.1 405 Method Not Allowed
+x-request-id: 01a091eb-4a1b-777f-a4bb-c07e0d13a9c5
+allow: GET,HEAD
+content-length: 0
+date: Fri, 11 Sep 2026 19:21:51 GMT
+
+-- DELETE /api/v1/items/{id} --
+HTTP/1.1 405 Method Not Allowed
+x-request-id: 01a091eb-4a23-7443-ba7d-fc45392c61ec
+allow: GET,HEAD,PATCH
+content-length: 0
+date: Fri, 11 Sep 2026 19:21:51 GMT
+
+-- PUT /api/v1/settings/status --
+HTTP/1.1 405 Method Not Allowed
+x-request-id: 01a091eb-4a2b-752b-837d-a84f9ae86247
+allow: GET,HEAD
+content-length: 0
+date: Fri, 11 Sep 2026 19:21:51 GMT
+
+-- PATCH /api/v1/health/live（未知路径方法）--
+HTTP/1.1 405 Method Not Allowed
+x-request-id: 01a091eb-4a33-74c8-bb5a-754f7e8129e2
+allow: GET,HEAD
+content-length: 0
+date: Fri, 11 Sep 2026 19:21:51 GMT
+
+
+== C) 注销后 revoked_at 标记 ==
+logout HTTP 204
+01a091eb-49bc-74d6-b559-a5a7c5fe5d17|1
+session_id=01a091eb-49bc-74d6-b559-a5a7c5fe5d17
+注销后旧 cookie → HTTP 401
+
+== D) 登录限速 + 转发头（不可信 peer 下 XFF 不改变限速键）==
+wrong#1 (XFF=203.0.113.1) → 401
+wrong#2 (XFF=203.0.113.2) → 401
+wrong#3 (XFF=203.0.113.3) → 401
+wrong#4 (XFF=203.0.113.4) → 401
+wrong#5 (XFF=203.0.113.5) → 401
+HTTP/1.1 429 Too Many Requests
+content-type: application/json
+x-request-id: 01a091eb-4ad4-725a-9422-231b4fc1ce60
+retry-after: 60
+content-length: 154
+date: Fri, 11 Sep 2026 19:21:51 GMT
+
+{"error":{"code":"RATE_LIMITED","message":"登录尝试过于频繁：请稍后重试","details":null,"requestId":"01a091eb-4ad4-725a-9422-231b4fc1ce60"}}
+== E) JSON 体积/类型错误（415/413/422）==
+text/plain 体 → 415
+坏 JSON → 422
+1.1MB 体 → 413
+无残留 serve 进程
+已清理 /tmp/em-t04-qa2.3nJ7rZ

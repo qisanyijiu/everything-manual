@@ -1,0 +1,7 @@
+{
+  "apiBase": "http://127.0.0.1:18080",
+  "password": "e2e-t09-password-6b31",
+  "dataDir": "/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-web-mvp-e2e/data",
+  "serverPid": 22024,
+  "serverLog": "/Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t09-rd/e2e-server.log"
+}

@@ -1,0 +1,26 @@
+{
+  "说明": "QA 回合 23 独立复验：手动「立即重建」→ 8.6 秒后的现场（真实链路 + 独立 draw 计数）",
+  "statusAtRebuild": "模型已加载，可旋转/缩放。",
+  "statusAfter8s": "模型已加载，可旋转/缩放。",
+  "rebuildButtonVisible": false,
+  "resetButtonDisabled": false,
+  "drawsBeforeLoss": 21,
+  "drawsAfter8s": 562,
+  "poseRotated": [
+    -4.7805908344296615,
+    2.691260723043421,
+    3.3429348462248245
+  ],
+  "poseAfterRebuild": [
+    -4.78059083442966,
+    2.69126072304342,
+    3.342934846224823
+  ],
+  "poseDefault": [
+    0,
+    3.9337738020396593e-16,
+    6.424340152243905
+  ],
+  "routingFulfilledOk": 0,
+  "externalRequests": []
+}

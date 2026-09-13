@@ -1,0 +1,10 @@
+### RD 交接前最终状态确认（2026-09-12 08:0x）
+
+e2e:   10 passed (29.7s)
+preparations 集成测试: test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.63s
+web 单测:       Tests  46 passed (46)
+xtask check: 全部检查通过。
+dist: /vendor/pdfjs/cmaps/UniGB-UCS2-H.bcmap 的 sha256（应与 node_modules 一致）9201569b402e81ad8860650bd86350c4fa28e5dd5971f05fcacaf40f51de18ed  - 两次哈希一致（确定性构建保持） 
+smoke-bootstrap: 7 项检查通过
+内嵌 vendor: 5 项 200
+截图: 01-prepare-before.png 02-pages-uploaded.png 03-preparation-ready.png 

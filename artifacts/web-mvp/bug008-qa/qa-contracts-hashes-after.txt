@@ -1,0 +1,2 @@
+e39c4c302cd9af80928f0c2cb4f86c69935b55b67162a01c00f5b970c839cf09  contracts/openapi.json
+600cb7dfcbf704d1d2aff06fff45716f7bd8fafdbea4622f721ea652e47cbe17  apps/web/src/api/generated.ts

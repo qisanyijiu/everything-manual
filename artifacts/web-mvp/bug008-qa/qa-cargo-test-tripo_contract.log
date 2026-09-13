@@ -1,0 +1,28 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running tests/tripo_contract.rs (target/debug/deps/tripo_contract-b220651bbb87f24a)
+
+running 18 tests
+test default_base_url_is_official_https_and_paths_are_frozen ... ok
+test client_guards_against_non_fixture_targets ... ok
+test submit_body_matches_frozen_parameters_without_v2_fields ... ok
+test http_200_with_nonzero_code_is_business_failure ... ok
+test credits_are_parsed_exactly_and_raw_literal_is_kept ... ok
+test submit_without_task_id_is_unexpected_and_not_provable_success ... ok
+test http_statuses_are_classified_for_retry_policy ... ok
+test task_query_encodes_opaque_task_id_as_single_path_segment ... ok
+test task_query_keeps_raw_status_and_requires_model_for_success ... ok
+test unconfigured_provider_registers_no_handlers_and_never_calls_the_fixture ... ok
+test upload_sends_multipart_with_file_field_and_keeps_token_verbatim ... ok
+test upload_reuses_content_hash_cache_on_rerun ... ok
+test stale_lease_cannot_overwrite_remote_observation ... ok
+test unknown_remote_status_is_kept_verbatim_and_waits ... ok
+test fixture_end_to_end_reaches_poll_success_with_billing_settled ... ok
+test poll_transient_failures_retry_without_changing_the_purchase_fact ... ok
+test paid_post_disconnect_is_never_resent ... ok
+test success_without_model_is_not_success_and_does_not_repurchase ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.58s
+

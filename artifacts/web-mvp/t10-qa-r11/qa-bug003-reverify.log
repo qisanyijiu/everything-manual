@@ -1,0 +1,17 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/qa_t10_independent.rs (target/debug/deps/qa_t10_independent-9a9d3e89b9947fd1)
+
+running 1 test
+[qa probe] 观察 1（轮询阶段自带 attempt）status=needs_input
+[qa probe] 观察 2（submit 级 attempt 才老化）status=needs_input
+[qa probe] 观察 2（submit 级 attempt 才老化）status=needs_input
+[qa probe] 观察 2（submit 级 attempt 才老化）status=needs_input
+[qa probe] 观察 2（submit 级 attempt 才老化）status=needs_input
+test qa_total_wait_budget_must_trigger_on_real_poll_shape ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.02s
+
+EXIT=0

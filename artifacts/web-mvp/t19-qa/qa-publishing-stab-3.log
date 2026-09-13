@@ -1,0 +1,17 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running tests/publishing.rs (target/debug/deps/publishing-cf5efe1166d2f78d)
+
+running 7 tests
+test partial_draft_without_model_rejects_hotspots_and_model_review ... ok
+test hotspot_state_machine_and_anchor_rules_follow_the_contract ... ok
+test review_layer_keeps_supplier_snapshot_and_model_review_is_declared_by_user ... ok
+test publish_reports_each_invariant_violation_and_allows_text_only_parts ... ok
+test publish_rejects_tampered_references_and_mismatched_hotspots ... ok
+test publish_is_transactional_idempotent_and_immutable ... ok
+test regenerated_model_marks_previous_bindings_stale_and_rejects_old_sha ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.48s
+

@@ -1,0 +1,89 @@
+
+=== [0] 恢复目录与备份 manifest 的一致性（快照 sha256）
+manifest=7d61a87ea42cbd4335be35d15eb485bec7300e24c137ce738969f95d50593012
+restored=6c46293e0a5143a84ecbd6fcd873e527d968dc9d8c693cd5030c91e739753a14
+FAIL
+
+=== [1] 备份来源（RD 样例备份）中参考字节的独立指纹（用于 4. 的比对）
+e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda  /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t20-rd/sample-backup/blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb  /Users/qsyj/Code/rust/everything-manual/artifacts/web-mvp/t20-rd/sample-backup/blobs/a9/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb
+
+=== [2] 起服务（恢复目录）并登录（口令哈希保留 → 能登录）
+serve pid=27974
+login: {"data":{"admin":{"id":"01a09677-6630-7469-a8f0-d0a5ed668921"},"csrfToken":"a4495cc133b78f77f43141e4e50ab837e7d046769334
+
+=== [3] 旧会话 cookie（备份前的会话）必须失效（备份不含会话）
+旧会话 GET /items -> HTTP 401 (expect 401)
+{"error":{"code":"UNAUTHORIZED","message":"未登录或会话已失效：请重新登录","details":null,"requestId":"01a096a5-05f2-76d1-bdb6-4c48d2d27dd3"}}
+
+=== [4] 同一 release 可读（manifest 哈希 / PDF / GLB 字节）
+releaseId: 01a09677-685a-7542-8e2f-0b866c8a1fbc
+manifestSha256 与发布时一致: True c2ec7def5b84a2bd
+PDF:  e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda  /tmp/em-t20-qa/exported/doc.pdf  期望 e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda
+GLB:  a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb  /tmp/em-t20-qa/exported/model.glb  期望 a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb
+PDF 头: PDF document, version 1.4, 2 pages
+GLB 头: magic b'glTF' declared 2912 actual 2912
+PDF content-type: content-type: application/pdf
+
+=== [5] 恢复后的库里含 kill -9 前写入的 WAL-only 物品
+id: 01a096a3-6f21-7431-a983-5b5198552aef | name: QA 独立验收物品 | model: WAL-ONLY-2026
+
+=== [6] 导出（GET /api/v1/releases/{id}/export）
+HTTP/1.1 200 OK
+content-type: application/zip
+content-length: 18155
+content-disposition: attachment; filename="release-01a09677-685a-7542-8e2f-0b866c8a1fbc.zip"
+-rw-r--r--@ 1 qsyj  wheel  18155  9月 13 01:23 /tmp/em-t20-qa/exported/export.zip
+
+=== [7] ZIP 独立校验：系统 unzip 与 python zipfile
+    testing: assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb   OK
+    testing: assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf   OK
+No errors detected in compressed data of /tmp/em-t20-qa/exported/export.zip.
+testzip: None
+entries:
+   manifest.json 8122 (1980, 1, 1, 0, 0, 0)
+   release/manifest.json 5181 (1980, 1, 1, 0, 0, 0)
+   assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb 2912 (1980, 1, 1, 0, 0, 0)
+   assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf 1216 (1980, 1, 1, 0, 0, 0)
+
+=== [8] 包内容断言（条目、哈希、冻结 manifest 字节原样、来源、相对清单）
+条目与期望一致: True ['manifest.json', 'release/manifest.json', 'assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb', 'assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf']
+冻结 manifest sha256 一致: True
+schemaVersion: manual_release_export_v1
+release.releaseId: 01a09677-685a-7542-8e2f-0b866c8a1fbc | item.model: X100V
+releaseManifest.sha256 一致: True
+files[] 条数: 2
+    model assets/model/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb.glb sha256 len 64 size 2912 source tripo
+    document assets/document/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda.pdf sha256 len 64 size 1216 source itemUpload
+knowledge 为对象: True
+notes: ["本包是数据便携与灾备用途：包含该发布版本的原件、模型、清单与哈希", "不包含密钥、会话、绝对路径与临时云端 URL；所有路径都是包内相对路径", "不承诺可直接双击运行网站；当前版本不提供导入接口"]
+
+=== [9] 整包扫描：不得含会话 token / 密钥 / 绝对路径 / 临时云端 URL / 口令哈希 / 其它资产字节
+含 会话 token: False
+含 口令哈希: False
+含 canary 假密钥: False
+含 fixture 临时云端 URL: False
+含 fixture 本机 URL: False
+含 Bearer: False
+含 em_session cookie 名: False
+含 data-dir 绝对路径: False
+含 构建机路径 /Users/: False
+含 QA 工作路径 /tmp/em-t20-qa: False
+未授权 blob 字节命中数: 0
+
+=== [10] 未登录 401 / 未知 release 404
+无 cookie: HTTP 401
+未知 release: HTTP 404
+
+=== [11] 导出后 tmp/ 无残留
+tmp entries=       0
+
+=== [12] 停服
+OK: serve 已停止
+{"timestamp":"2026-09-12T17:23:12.928172Z","level":"INFO","fields":{"message":"http_request","requestId":"01a096a5-07a0-766d-a40a-74c90ca43c17","method":"GET","path":"/api/v1/releases/01a09677-685a-7542-8e2f-0b866c8a1fbc/export","status":401,"errorCode":"UNAUTHORIZED","durationMs":0.016833},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-12T17:23:12.944196Z","level":"INFO","fields":{"message":"http_request","requestId":"01a096a5-07b0-7171-b4a2-5f1b6cdfb6d2","method":"GET","path":"/api/v1/releases/01930000-0000-7000-8000-000000000000/export","status":404,"errorCode":"NOT_FOUND","durationMs":0.10595900000000001},"target":"everything_manual::http::logging"}
+{"timestamp":"2026-09-12T17:23:12.969020Z","level":"INFO","fields":{"message":"任务执行器已停止领取","event":"job_executor_stopped","owner":"27974:01a096a5-0585-754f-966e-a1b0b35a2670"},"target":"everything_manual::jobs::executor"}
+{"timestamp":"2026-09-12T17:23:12.992203Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+已停止：data-dir 排他锁已释放。
+
+phase3 完成

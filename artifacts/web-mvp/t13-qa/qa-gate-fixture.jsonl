@@ -1,0 +1,4 @@
+{"method": "POST", "path": "/v3/files", "note": "upload", "authorization": true, "token": "qa-gate-token-1"}
+{"method": "POST", "path": "/v3/files", "note": "upload", "authorization": true, "token": "qa-gate-token-2"}
+{"method": "POST", "path": "/v3/generation/multiview-to-model", "note": "paid-submit", "authorization": true, "count": 1, "bodyBytes": 232}
+{"method": "GET", "path": "/v3/tasks/qa-gate-task-1", "note": "task-query", "authorization": true, "count": 1, "modelUrl": "http://127.0.0.1:57832/model.glb?sign=qa-gate-canary-signature"}

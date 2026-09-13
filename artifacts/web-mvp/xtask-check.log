@@ -1,0 +1,116 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running `target/debug/xtask check`
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo fmt --check)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+[通过] cargo fmt --check
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo clippy --workspace --all-targets -- -D warnings)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.11s
+[通过] cargo clippy --workspace --all-targets -- -D warnings
+$ (cd /Users/qsyj/Code/rust/everything-manual && cargo test --workspace)
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running unittests src/lib.rs (target/debug/deps/everything_manual-c83753e0e62f00e1)
+
+running 3 tests
+test http::error::tests::not_found_response_uses_contract_error_shape ... ok
+test http::openapi::tests::openapi_is_3_1_and_declares_health_paths ... ok
+test http::openapi::tests::openapi_export_is_deterministic ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/everything_manual-11cfcecb4a8c49dc)
+
+running 3 tests
+test tests::accepts_explicit_listen ... ok
+test tests::defaults_to_loopback_8080 ... ok
+test tests::rejects_unknown_and_malformed_arguments ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/bootstrap.rs (target/debug/deps/bootstrap-fb5b1990b3478f38)
+
+running 5 tests
+test non_api_unknown_path_is_not_html_200_without_embedded_ui ... ok
+test health_live_returns_exact_minimal_json ... ok
+test unknown_api_path_returns_json_404_not_html ... ok
+test health_ready_reports_declared_checks_only ... ok
+test unknown_versioned_api_path_also_returns_json_404 ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/manual_core-b787522b299c2116)
+
+running 2 tests
+test tests::api_prefix_is_versioned ... ok
+test tests::error_code_wire_format_is_screaming_snake_case ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/xtask-8ceb558535786fad)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests everything_manual
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests manual_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+[通过] cargo test --workspace
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run lint)
+
+> everything-manual-web@0.1.0 lint
+> eslint . --max-warnings=0
+
+[通过] npm --prefix apps/web run lint
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+[通过] npm --prefix apps/web run typecheck
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+   Start at  01:15:27
+   Duration  643ms (environment 73%, setup 10%, tests 9%, transform 5%, import 2%, worker 1%)
+
+[通过] npm --prefix apps/web run test -- --run
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && /Users/qsyj/Code/rust/everything-manual/apps/web/node_modules/.bin/openapi-typescript /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85505/openapi.json -o /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85505/generated.ts)
+✨ openapi-typescript 7.13.0
+🚀 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85505/openapi.json → /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-85505/generated.ts [20.1ms]
+  [一致] contracts/openapi.json
+  [一致] apps/web/src/api/generated.ts
+合同检查通过：openapi.json 与 generated.ts 均与 Rust DTO 一致。
+[通过] cargo xtask contracts --check
+
+全部检查通过。

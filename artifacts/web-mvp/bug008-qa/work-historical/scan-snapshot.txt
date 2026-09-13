@@ -1,0 +1,10 @@
+== 供应商事实表全部文本列 × 判据
+  （无命中行 = 全部为 0）
+== 快照内 tripo_poll.usage_json（应只含摘要 + task id/计费）
+  {"billing":{"creditMinor":3000,"currency":"credit_minor","literal":"30","sourceField":"credits_consumed"},"dataKeys":["credits_consumed","output","progress","status","task_id"],"modelUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"ad3e27fd80a23163"},"normalizedStatus":"success","progress":"100","rawStatus":"success","remoteTaskId":"t20-fixture-task-0001","renderedImageUrl":{"host":"cdn.example.invalid","redacted":true,"sha256":"4e76c6db7f43f548"}}
+== 摘要（redacted/host/sha256）+ task id + 计费保留 ✔
+== 非 JSON 文本列 last_error 的兜底结果
+  job_stages[6] = 模型下载失败：链接过期 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=96ca7850b18182df…） 请重试
+  provider_attempts[1] = 查询远端任务失败 （临时供应商地址已脱敏：host=cdn.example.invalid；sha256=4e76c6db7f43f548…）（已过期）
+== 用户出处链接（documents.source_url）必须原样保留（并不过度清洗）
+  https://user.example.invalid/spec?sig=qa-r26-user-link-3ad9

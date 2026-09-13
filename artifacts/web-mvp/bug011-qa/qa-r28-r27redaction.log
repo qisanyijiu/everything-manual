@@ -1,0 +1,74 @@
+== QA 回合 27 · 脱敏复验（dist）
+   二进制 /Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual
+   sha256 f68d14874936b74f70aaa99b0eb8462396e933344a4495653ed239ba8838ac02
+   工作目录 /tmp/em-r27-redaction-l6F7rc
+
+-- 1) restore 归档样例 → ./data，并注入修复前形态的签名 URL（QA 自造历史行现场）
+  [通过] restore 退出码（=0）
+  注入 job=01a09677-67e3-741e-826a-3d6af9f52523
+  stage.last_error = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (https://cdn.qa-r27.invalid/model.glb?sign=QA27-STAGE-CANA…
+  attempt.last_error（4 个边界样例）= 链接 https://cdn.qa-r27.invalid/x.glb?sign=QA27-ATTEMPT-CANARY-7c2d已过期，请重试 | 见 'https://cdn.qa-r27.invalid/y.glb?sign=QA27-QUOTE-CANARY-2e18' 后重试 | 下一行 https://cdn.qa-r27.invalid/z.glb?sign=QA27-NL-CANARY-5a4f：以及结束 | 结尾 https://cdn.qa-r27.invalid/w.glb?sign=QA27-PUNCT-CANARY-8b0e，结束
+  [通过] 注入完成（3 处：stage.last_error / needs_input_json / attempt.last_error）
+
+-- 2) 源库指纹（供备份不改写源库对比）
+
+-- 3) backup → 快照扫描（写侧兜底 + BUG-010 尾部保留）
+  [通过] backup 退出码（=0）
+== 快照逐表逐列扫描（job_stages / provider_attempts 全部文本列 × 全部判据）
+  （无 !! 行 = 0 命中）
+== URL 形态命中合计 = 0
+== 快照内文本（stage）=  模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=1ad284853e658cec…）)
+== 快照内文本（attempt）=  链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=d7baeacc4365aace…）已过期，请重试 | 见 '（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=cd38bfde1e241f90…）' 后重试 | 下一行 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=33d5d06af12fa061…）：以及结束 | 结尾 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=036dabd5e67ac817…），结束
+== 快照内 needs_input_json（非 JSON 列扫描口径；JSON 列走对象替换，见 BUG-011）=  (该列已无 '://')
+  [通过] 快照 job_stages/provider_attempts 全部文本列 0 命中
+  [通过] 快照 URL 形态命中合计（=0）
+  [通过] 快照摘要标签出现（3 处注入 → 3 行）
+
+-- 4) BUG-010 逐片段核对（URL 之后紧邻的文本不得被吞）
+  [通过] 尾部文本保留：已过期，请重试
+  [通过] 尾部文本保留：' 后重试
+  [通过] 尾部文本保留：：以及结束
+  [通过] 尾部文本保留：，结束
+
+-- 5) 快照完整性与源库不变
+  [通过] 快照 db sha256 == manifest.database.sha256（=fb9950d77951d90ea7bf30f0ef9822b43f01bbacfd068e6b50812a633334f3af）
+  [通过] SHA256SUMS 全部 OK
+  [通过] 源库未被备份改写（dump 前后 sha256）（=5fa184ac2dbbfef2cc998f1934995a32f93594144905e0d8800d1763d11e56ab）
+  [通过] 源库仍保留注入的签名（未就地迁移；3 行）（=3）
+
+-- 6) serve（源库现场）→ 任务详情 DTO 读取侧兜底
+  [通过] 任务详情 HTTP 状态（=200）
+  [通过] 任务详情不含 '://'（=0）
+  [通过] 任务详情不含 'sign='（=0）
+  [通过] 任务详情不含 'QA27-STAGE-CANARY-3f9a'（=0）
+  [通过] 任务详情不含 'QA27-NEEDS-CANARY-6d21'（=0）
+  [通过] 任务详情不含 'QA27-ATTEMPT-CANARY-7c2d'（=0）
+  [通过] 任务详情不含 'QA27-QUOTE-CANARY-2e18'（=0）
+  [通过] 任务详情不含 'QA27-NL-CANARY-5a4f'（=0）
+  [通过] 任务详情不含 'QA27-PUNCT-CANARY-8b0e'（=0）
+== DTO model_download.lastError = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=1ad284853e658cec…）)
+== DTO model_download.needsInput[0].message = 模型文件超过上限：请更换资料（原始链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=29abf32bde7f6184…））
+== DTO attempts[].lastError = ["链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=d7baeacc4365aace…）已过期，请重试 | 见 '（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=cd38bfde1e241f90…）' 后重试 | 下一行 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=33d5d06af12fa061…）：以及结束 | 结尾 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=036dabd5e67ac817…），结束", "链接 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=d7baeacc4365aace…）已过期，请重试 | 见 '（临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=cd38bfde1e241f90…）' 后重试 | 下一行 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=33d5d06af12fa061…）：以及结束 | 结尾 （临时供应商地址已脱敏：host=cdn.qa-r27.invalid；sha256=036dabd5e67ac817…），结束"]
+== 尾部文本缺失 = []
+== 摘要标签命中 = 10
+== host 摘要 = 10
+== 远端任务事实（attempts[].remoteTaskId 非空数） = 1
+== stage id 仍在 = True
+  [通过] DTO 尾部文本全部保留
+  [通过] DTO 保留诊断（host 摘要 + 结论）
+
+-- 6b) 导出兜底（发布包仍可导出、包内 0 命中）
+  [通过] 导出 HTTP 状态（=200）
+  [通过] 导出产物是 ZIP（PK magic）
+  [通过] 导出包 6 个判据 0 命中（导出白名单不含供应商事实表）
+
+-- 7) serve 日志核查
+  [通过] serve 日志不含 'QA27-STAGE-CANARY-3f9a'（=0）
+  [通过] serve 日志不含 'QA27-NEEDS-CANARY-6d21'（=0）
+  [通过] serve 日志不含 'QA27-ATTEMPT-CANARY-7c2d'（=0）
+  [通过] serve 日志不含 'sign='（=0）
+  [通过] serve 日志不含 'cdn.qa-r27.invalid'（=0）
+  [通过] serve 日志 '://' 只来自监听横幅/baseUrl 回显（=1）
+  [通过] serve 日志里非回环主机数（零外网门禁）（=0）
+
+== dist 复验结果：PASS

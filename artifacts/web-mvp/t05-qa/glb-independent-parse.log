@@ -1,0 +1,11 @@
+magic=b'glTF' version=2 declared_len=2912 file_len=2912 match=True
+chunks: [('JSON', 1192), ('BIN\x00', 1692)]
+asset: {'generator': 'everything-manual test fixtures (self-built, T05)', 'version': '2.0'}
+index_count=36 triangles=12 componentType=5123
+vertex_count=24 min=[-1.0, -1.0, -1.0] max=[1.0, 1.0, 1.0]
+bin_chunk_len=1692 buffer_declared=1692 match=True
+image mime=image/png len=852 png_sig=89504e470d0a1a0a crc_ok=True
+  png chunk IHDR len=13 crc_ok=True
+  png chunk IDAT len=795 crc_ok=True
+  png chunk IEND len=0 crc_ok=True
+all bufferViews within bounds: True

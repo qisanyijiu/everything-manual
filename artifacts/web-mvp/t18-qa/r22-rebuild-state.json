@@ -1,0 +1,9 @@
+{
+  "说明": "手动「立即重建」后 5 秒的现场（QA 独立 GL draw 计数证明渲染已恢复）",
+  "modelsAlive": 1,
+  "drawsBeforeRebuild": 34,
+  "drawsAfterRebuild": 43,
+  "statusText": "模型已加载，可旋转/缩放。",
+  "resetButtonDisabled": false,
+  "rebuildButtonVisible": false
+}

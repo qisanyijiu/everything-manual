@@ -1,0 +1,14 @@
+== cargo tree -p everything-manual --edges dev -i test-support（反向确认它是 dev 依赖）
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+test-support v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/test-support)
+[dev-dependencies]
+└── everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+== cargo tree -p everything-manual --edges normal -i test-support（应报告未匹配）
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+warning: nothing to print.
+
+To find dependencies that require specific target platforms, try to use option `--target all` first, and then narrow your search scope accordingly.

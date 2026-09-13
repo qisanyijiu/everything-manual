@@ -1,0 +1,5 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）：5xx 含糊服务器错误。付费 POST 出现 5xx 时不能证明请求未被接受 → 结果未知（submission_unknown，保留预留、不自动重发）；查询/上传出现 5xx 按退避重试。",
+  "code": 5000,
+  "message": "service temporarily unavailable"
+}

@@ -1,0 +1,42 @@
+{
+  "itemId": "01a0977c-0c0c-719b-8eaf-6c0f56185f07",
+  "draftId": "01a0977c-0e1e-7703-8dd6-8f9e61c8d4b6",
+  "steps": [
+    "step-5e23481ed267",
+    "step-96945ff38683"
+  ],
+  "savedPose": {
+    "positionLocal": [
+      -4.783513479603139,
+      4.244399153047534,
+      0.6125528644923106
+    ],
+    "targetLocal": [
+      0,
+      0,
+      0
+    ]
+  },
+  "storedPose": {
+    "fov": 40,
+    "positionLocal": [
+      -4.783513479603139,
+      4.244399153047534,
+      0.6125528644923106
+    ],
+    "targetLocal": [
+      0,
+      0,
+      0
+    ],
+    "upLocal": [
+      0,
+      1.732050807568877,
+      0
+    ]
+  },
+  "routing": {
+    "fulfilledOk": 0,
+    "external": []
+  }
+}

@@ -1,0 +1,30 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling test-support v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/test-support)
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 4.72s
+     Running tests/fixture_harness.rs (target/release/deps/fixture_harness-8e140a239a97fc22)
+
+running 18 tests
+test all_committed_scenarios_parse_and_resolve ... ok
+test malformed_json_is_served_verbatim ... ok
+test half_close_truncates_the_body ... ok
+test disconnect_scenario_yields_connection_error_and_is_still_recorded ... ok
+test guarded_client_refuses_non_loopback_targets ... ok
+test missing_route_returns_501_instead_of_generic_success ... ok
+test manual_ai_happy_flow_serves_responses_payload ... ok
+test rate_limit_429_carries_retry_after ... ok
+test reset_scenario_yields_io_error ... ok
+test exhausted_script_returns_501_unless_repeat_last ... ok
+test server_error_5xx_is_served_as_is ... ok
+test success_route_records_method_path_headers_and_body ... ok
+test sample_assets_are_generated_deterministically_and_validate ... ok
+test tripo_happy_flow_records_a_single_paid_post ... ok
+test test_support_stays_out_of_the_release_dependency_tree ... ok
+test app_without_provider_keys_never_contacts_the_fixture ... ok
+test delay_scenario_is_observed_by_the_client ... ok
+test timeout_scenario_times_out_the_client ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+

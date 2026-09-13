@@ -1,0 +1,31 @@
+== Docker 引擎 BLOCKED 现场（T22，2026-09-13）==
+
+--- docker ps ---
+Error response from daemon: Docker Desktop is unable to start
+
+--- engine/state（backend.sock，最近 3 条）---
+{"source":"engine","status":"stopping","id":"42168999","timestamp":1789272945446100000,"content":""}
+{"source":"engine","status":"stopped","id":"6ddd52f9","timestamp":1789272945784636000,"content":"","error":"{\"type\":\"services.ErrServiceFailed\",\"description\":\"service command exited with code 1: command exited with code 1: io: read/write on closed pipe\"}"}
+{"source":"ipc","status":"ready","id":"217d1b50","timestamp":1789273364233724000,"content":null}
+
+--- 宿主 backend 日志（引擎失败关键行）---
+[2026-09-13T04:15:43.775413000Z][com.docker.backend.engines.vz] Rosetta already installed or installation succeeded
+[2026-09-13T04:15:43.775973000Z][com.docker.backend.engines.unix] VM will connect to host using connect://2/1999
+[2026-09-13T04:15:44.788189000Z][com.docker.backend.engines] setting engine linux/virtualization-framework state starting -> running
+[2026-09-13T04:15:44.797791000Z][com.docker.backend.engines] engine linux/virtualization-framework is running
+[2026-09-13T04:15:45.445796000Z][com.docker.backend.engines] engine linux/virtualization-framework shutdown requested
+[2026-09-13T04:15:45.446024000Z][com.docker.backend.engines] setting engine linux/virtualization-framework state running -> stopping
+[2026-09-13T04:15:45.781188000Z][com.docker.backend.engines] engine linux/virtualization-framework stopping hypervisor process
+[2026-09-13T04:15:45.784433000Z][com.docker.backend.engines] setting engine linux/virtualization-framework state stopping -> stopped
+[2026-09-13T04:15:45.785989000Z][com.docker.backend.engines][E] engine linux/virtualization-framework run error: service command exited with code 1: command exited with code 1: io: read/write on closed pipe
+[2026-09-13T04:15:45.786410000Z][com.docker.backend.engines] received error status from engine service command exited with code 1: command exited with code 1: io: read/write on closed pipe
+[2026-09-13T04:15:45.786660000Z][com.docker.backend.engines][W] attempting recovery from engine failure: service command exited with code 1: command exited with code 1: io: read/write on closed pipe
+[2026-09-13T04:15:45.787291000Z][com.docker.backend.engines][E] attempting to recover from error: service command exited with code 1: command exited with code 1: io: read/write on closed pipe
+
+--- VM console（宿主 engines 发 shutdown 的现场）---
+[2026-09-13T04:15:45.504577333Z][initd.ipcstream] b36a391a-procd /pause/events --> 2026-09-13T04:15:45.504166375Z (e49d6c49) pause resumed: Docker Desktop is running
+[2026-09-13T04:15:45.505490041Z][initd.ipc] (ffb8ce2f-0) d655d6ff-control S<-C 6244b2ff-engines POST /shutdown
+[2026-09-13T04:15:45.506311541Z][initd.ipc] shutting down b36a391a-procd for component procd on /run/guest-services/procd.sock on context done
+[2026-09-13T04:15:45.507544708Z][initd.ipcstream] b36a391a-procd /pause/events --> 2026-09-13T04:15:45.507473125Z (2ace1ccb) pause resuming: Docker Desktop is resuming...
+[2026-09-13T04:15:45.508038291Z][initd.ipcstream] b36a391a-procd /pause/events --> 2026-09-13T04:15:45.507519416Z (30fb299e) pause resumed: Docker Desktop is running
+[2026-09-13T04:15:45.632560000Z][initd.ipc] (ffb8ce2f-0) d655d6ff-control S->C 6244b2ff-engines POST /shutdown (127.064001ms): {"message":"shutdown complete"}

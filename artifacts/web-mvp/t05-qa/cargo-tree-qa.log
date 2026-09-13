@@ -1,0 +1,23 @@
+--- --edges normal | test-support 命中数:
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+0
+--- --edges normal -i test-support:
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+warning: nothing to print.
+
+--- --edges dev -i test-support:
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+test-support v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/test-support)
+[dev-dependencies]
+└── everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+--- --edges normal | reqwest 命中数:
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+0

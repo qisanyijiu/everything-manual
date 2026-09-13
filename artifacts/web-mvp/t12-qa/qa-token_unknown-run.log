@@ -1,0 +1,23 @@
+== 场景 token_unknown（工作目录 /tmp/qa-t12-token_unknown）
+fixture listening on 127.0.0.1:19212 scenario=token_unknown
+"event":"provider_handlers_registered","provider":"tripo","baseUrl":"http://127.0.0.1:19212/v3","stages":"tripo_upload,tripo_submit,tripo_poll"
+== job=01a093c8-c0b3-709b-bc4b-5b08c578891e
+== lsof 采样：19 行；非 loopback 连接行 0（应为 0）
+=== 场景 token_unknown：fixture 记录（uploads=1 submits=0 polls=0）
+    阶段：upload=retry_wait submit=queued poll=queued；job=running
+    attempts=[]
+    ledger：tripo={'currency': 'credit_minor', 'reserved': 3000, 'actual': None, 'state': 'reserved'}；manual_ai={'currency': 'usd_micros', 'reserved': 9992, 'actual': None, 'state': 'reserved'}
+  [ok]   上传携带 Authorization: Bearer <配置的测试键>（实际 'Bearer qa-fake-tripo-key-9931'）
+  [ok]   上传是合法 multipart
+  [ok]   上传 body 恰好 1 个 part（实际 1）
+  [ok]   multipart 字段名必须是 file（实际 'file'）
+  [ok]   文件名带正确扩展名（实际 'front.jpg'）
+  [ok]   part Content-Type 合法（实际 'image/jpeg'）
+  [ok]   上传被尝试
+  [ok]   上传失败时绝不发付费 POST（实际 0）
+  [ok]   没有进入查询阶段
+  [ok]   上传阶段未成功（实际 retry_wait）
+  [ok]   last_error 说明 token 字段问题（'响应不符合协议假设：响应缺少上传 token 字段（候选 file_token/image_token）：dataKeys=["token_value"]：可安全重试（上传不产生费用）'）
+  [ok]   预留未被触碰
+=== 断言 12 项，失败 0 项
+== 场景 token_unknown 结果：PASS

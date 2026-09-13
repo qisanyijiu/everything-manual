@@ -1,0 +1,53 @@
+== 工作目录：/tmp/em-t11-smoke-t2yOWb（结束时删除）
+== 价格目录（version=2026-09-11；Tripo 30 credits；说明书 AI 示例单价）
+== init / serve（Provider 用假凭据；不会被调用）
+密码来源：受限文件 ./pw.txt；明文不落盘、不进入日志与 shell history。
+== 登录
+== 1) 物品 + 说明书 + 准备（2 页：第 1 页文字，第 2 页扫描）
+  item=01a0936b-75d0-7169-92ae-aa11854d2e02
+  document=01a0936b-763c-7295-885d-e22c0cd2fed6 sourceSha256=e18cf61a61c9…
+  preparation=01a0936b-7653-76a5-a920-ef7f35db1aad
+  准备状态： ready 页数： 2
+== 2) 照片：front + left
+  front=01a0936b-7748-76f5-b0ec-d892a86ffd57 left=01a0936b-775f-7393-9c64-abc1b601b930
+== 3) 缺侧视图 → 422 明细
+  HTTP 422
+  code= VALIDATION_FAILED reason= preconditionsFailed items= ['missingSideView']
+== 4) estimate（只计算计划；无费用记录）
+HTTP/1.1 201 Created
+  quote = 01a0936b-7795-7248-9f04-3e3631a06ff2
+  分列：Tripo 30.00 credits = 3000 creditMinor
+        ManualAI 0.019992 USD = 19992 usdMicros
+  expiresAt = 2026-09-12T02:31:28.853Z  priceVersion = 2026-09-11  快照日期 = 2026-09-11  maxOutputTokens = 4096
+  发送范围：views = ['front', 'left']  页 = (1, 2)  文字页 = [1]  页图页 = [2]
+  预算说明： 预算上限只表示本应用不会主动发起超出本次授权估算的请求，不是供应商账户级硬封顶；供应商实际计费以账单为准
+  DB：cost_ledger = 0  jobs = 0  provider_attempts = 0  quotes = 1
+== 5) 未确认提交 → 422（不创建 job）
+  HTTP 422
+  reason= confirmationRequired
+== 7) 确认发送范围（audit_events）
+  HTTP 200
+  confirmedAt= 2026-09-12T02:21:28.945Z  summary= 已确认发送范围（2026-09-12T02:21:28.945Z）
+== 7b) 预算低于服务端上界 → 422（已确认后单独校验预算）
+  HTTP 422
+  code= VALIDATION_FAILED reason= budgetBelowPlannedUpperBound
+== 8) 建单（首次 202）→ 同键重放（同一 job）→ 同键不同 body（409）
+  HTTP 202
+HTTP/1.1 202 Accepted
+  job= 01a0936b-782f-7746-a729-c705259135df  status= queued  snapshot= 01a0936b-782e-7555-9db4-310848bc78aa
+  预留： [('tripo', 'creditMinor', 3000, 'reserved'), ('manual_ai', 'usdMicros', 19992, 'reserved')]
+  HTTP 202
+x-idempotent-replay: true
+  重放返回同一 job：OK
+  HTTP 409
+  同键不同 body：code= IDEMPOTENCY_CONFLICT reason= idempotencyKeyReused
+== 9) 库内不变量（重放 20 次后仍只有 1 job / 每供应商 1 笔预留）
+  quotes = 1  已消费 = 1
+  jobs = 1  snapshots = 1  cost_ledger = 2
+   ledger 行： ('manual_ai', 'usd_micros', 19992, None, 'reserved')
+   ledger 行： ('tripo', 'credit_minor', 3000, None, 'reserved')
+  audit_events = ['generation_send_scope_confirmed', 'generation_job_created']
+  幂等记录 = 1
+  快照冻结（photo_ids, photo_hashes）= ('["01a0936b-7748-76f5-b0ec-d892a86ffd57","01a0936b-775f-7393-9c64-abc1b601b930"]', '["122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586","0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890"]')
+  provider_attempts = 0 （无付费提交）
+== 冒烟完成（临时目录将在退出时删除）

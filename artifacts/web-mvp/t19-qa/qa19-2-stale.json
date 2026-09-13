@@ -1,0 +1,44 @@
+{
+  "itemId": "01a0977b-dcb8-745c-8693-7afa33888774",
+  "draft1Id": "01a0977b-df1b-7434-b5cd-0005b638c534",
+  "draft2Id": "01a0977b-e067-724b-8f1b-88fd83e84b04",
+  "release1Id": "01a0977b-dfa1-7695-aac6-1fcdde1d0a5a",
+  "modelA": {
+    "revisionId": "01a0977b-df0b-7099-ae89-e087df4b78c1",
+    "sha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb"
+  },
+  "modelB": {
+    "revisionId": "01a0977b-e05a-715f-a5ab-7850fe129d3e",
+    "sha256": "3917a92d577062484ab02a9d5e1e6c91a44c5e0048a5e48b43c8212a83f376f8"
+  },
+  "carried": {
+    "id": "01a0977b-df89-7067-91a2-92381bbb08b5",
+    "status": "stale",
+    "anchor": {
+      "modelRevisionId": "01a0977b-df0b-7099-ae89-e087df4b78c1",
+      "modelSha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+      "positionLocal": [
+        0.4,
+        0.3,
+        1
+      ]
+    }
+  },
+  "rebound": {
+    "status": "confirmed",
+    "anchor": {
+      "modelRevisionId": "01a0977b-e05a-715f-a5ab-7850fe129d3e",
+      "modelSha256": "3917a92d577062484ab02a9d5e1e6c91a44c5e0048a5e48b43c8212a83f376f8",
+      "positionLocal": [
+        0,
+        6.123233995736835e-17,
+        1
+      ]
+    }
+  },
+  "manifestSha256": "63cedd34bd6bd3871ddea1412b96a5e6f830c6a7793a2e4eca23c518ec0c513a",
+  "routing": {
+    "fulfilledOk": 0,
+    "external": []
+  }
+}

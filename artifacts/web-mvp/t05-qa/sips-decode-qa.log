@@ -1,0 +1,8 @@
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-photo-front.jpg
+  format: jpeg
+  pixelWidth: 32
+  pixelHeight: 32
+/Users/qsyj/Code/rust/everything-manual/tests/fixtures/assets/sample-photo-left.png
+  format: png
+  pixelWidth: 64
+  pixelHeight: 64

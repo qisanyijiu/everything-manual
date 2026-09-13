@@ -1,0 +1,42 @@
+### 最终验证（冻结状态）
+$ cargo test --workspace
+running 37 tests
+test result: ok. 37 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 5 tests
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 12 tests
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+running 15 tests
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+running 8 tests
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 1 test
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+exit=0
+
+$ cargo clippy -p everything-manual --features embedded-ui --all-targets -- -D warnings
+    Checking sqlx v0.9.0
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.29s
+exit=0
+
+$ cargo test -p everything-manual --features embedded-ui --test bootstrap
+running 8 tests
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+exit=0
+
+$ cargo xtask check
+[通过] cargo fmt --check
+[通过] cargo clippy --workspace --all-targets -- -D warnings
+[通过] cargo test --workspace
+[通过] npm --prefix apps/web run lint
+[通过] npm --prefix apps/web run typecheck
+[通过] npm --prefix apps/web run test -- --run
+[通过] cargo xtask contracts --check
+全部检查通过。
+exit=0

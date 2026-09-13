@@ -1,0 +1,209 @@
+== QA 回合 28 · BUG-011 复验（句子保真 / 多条目 / 不静默 / 新列兜底）
+   sha256 f68d14874936b74f70aaa99b0eb8462396e933344a4495653ed239ba8838ac02
+   工作目录 /tmp/em-r28-bug011-MJzerb
+
+-- 1) restore 归档样例 → ./data，注入 QA 句子（4 条）与 usage 句子
+  注入 job = 01a09677-67e3-741e-826a-3d6af9f52523
+  源库 needs_input_json = [{"code": "download_insecure_scheme", "message": "模型下载必须使用 HTTPS（实际 http://cdn.qa28.invalid/m.glb?sign=QA28-SENT-CANARY-5a1c）：拒绝下载，请检查来源后重试"}, {"code": "retry", "message": "下载可安全重试（task-9），无需重新付费"}, {"code": "download_transport", "message": "https://cdn.qa28.invalid/a.glb?sign=QA28-SENT-CANARY-5a1c 已过期，请按 task_id 重查（不重新购买）"}, {"code": "download_url_access", "message": "https://cdn.qa28.invalid/m.glb?sign=QA28-SENT-CANARY-5a1c"}]
+
+-- 2) 源库指纹（备份不得改写源库）
+
+-- 3) backup → 快照：JSON 合法 / 句子逐字 / 类型保持 / 全列 0 命中
+  [通过] backup 退出码（=0）
+  [通过] 快照 job_stages.id 不含 '://'
+  [通过] 快照 job_stages.id 不含 'sign='
+  [通过] 快照 job_stages.id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.id 不含 '/qa-r28/'
+  [通过] 快照 job_stages.job_id 不含 '://'
+  [通过] 快照 job_stages.job_id 不含 'sign='
+  [通过] 快照 job_stages.job_id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.job_id 不含 '/qa-r28/'
+  [通过] 快照 job_stages.stage_kind 不含 '://'
+  [通过] 快照 job_stages.stage_kind 不含 'sign='
+  [通过] 快照 job_stages.stage_kind 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.stage_kind 不含 '/qa-r28/'
+  [通过] 快照 job_stages.batch_index 不含 '://'
+  [通过] 快照 job_stages.batch_index 不含 'sign='
+  [通过] 快照 job_stages.batch_index 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.batch_index 不含 '/qa-r28/'
+  [通过] 快照 job_stages.page_set 不含 '://'
+  [通过] 快照 job_stages.page_set 不含 'sign='
+  [通过] 快照 job_stages.page_set 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.page_set 不含 '/qa-r28/'
+  [通过] 快照 job_stages.input_hash 不含 '://'
+  [通过] 快照 job_stages.input_hash 不含 'sign='
+  [通过] 快照 job_stages.input_hash 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.input_hash 不含 '/qa-r28/'
+  [通过] 快照 job_stages.result_asset_id 不含 '://'
+  [通过] 快照 job_stages.result_asset_id 不含 'sign='
+  [通过] 快照 job_stages.result_asset_id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.result_asset_id 不含 '/qa-r28/'
+  [通过] 快照 job_stages.usage_json 不含 '://'
+  [通过] 快照 job_stages.usage_json 不含 'sign='
+  [通过] 快照 job_stages.usage_json 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.usage_json 不含 '/qa-r28/'
+  [通过] 快照 job_stages.status 不含 '://'
+  [通过] 快照 job_stages.status 不含 'sign='
+  [通过] 快照 job_stages.status 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.status 不含 '/qa-r28/'
+  [通过] 快照 job_stages.lease_owner 不含 '://'
+  [通过] 快照 job_stages.lease_owner 不含 'sign='
+  [通过] 快照 job_stages.lease_owner 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.lease_owner 不含 '/qa-r28/'
+  [通过] 快照 job_stages.lease_epoch 不含 '://'
+  [通过] 快照 job_stages.lease_epoch 不含 'sign='
+  [通过] 快照 job_stages.lease_epoch 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.lease_epoch 不含 '/qa-r28/'
+  [通过] 快照 job_stages.lease_until 不含 '://'
+  [通过] 快照 job_stages.lease_until 不含 'sign='
+  [通过] 快照 job_stages.lease_until 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.lease_until 不含 '/qa-r28/'
+  [通过] 快照 job_stages.next_run_at 不含 '://'
+  [通过] 快照 job_stages.next_run_at 不含 'sign='
+  [通过] 快照 job_stages.next_run_at 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.next_run_at 不含 '/qa-r28/'
+  [通过] 快照 job_stages.attempt_count 不含 '://'
+  [通过] 快照 job_stages.attempt_count 不含 'sign='
+  [通过] 快照 job_stages.attempt_count 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.attempt_count 不含 '/qa-r28/'
+  [通过] 快照 job_stages.created_at 不含 '://'
+  [通过] 快照 job_stages.created_at 不含 'sign='
+  [通过] 快照 job_stages.created_at 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.created_at 不含 '/qa-r28/'
+  [通过] 快照 job_stages.updated_at 不含 '://'
+  [通过] 快照 job_stages.updated_at 不含 'sign='
+  [通过] 快照 job_stages.updated_at 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.updated_at 不含 '/qa-r28/'
+  [通过] 快照 job_stages.poll_count 不含 '://'
+  [通过] 快照 job_stages.poll_count 不含 'sign='
+  [通过] 快照 job_stages.poll_count 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.poll_count 不含 '/qa-r28/'
+  [通过] 快照 job_stages.last_error 不含 '://'
+  [通过] 快照 job_stages.last_error 不含 'sign='
+  [通过] 快照 job_stages.last_error 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.last_error 不含 '/qa-r28/'
+  [通过] 快照 job_stages.needs_input_json 不含 '://'
+  [通过] 快照 job_stages.needs_input_json 不含 'sign='
+  [通过] 快照 job_stages.needs_input_json 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 job_stages.needs_input_json 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.id 不含 '://'
+  [通过] 快照 provider_attempts.id 不含 'sign='
+  [通过] 快照 provider_attempts.id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.id 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.job_id 不含 '://'
+  [通过] 快照 provider_attempts.job_id 不含 'sign='
+  [通过] 快照 provider_attempts.job_id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.job_id 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.stage_id 不含 '://'
+  [通过] 快照 provider_attempts.stage_id 不含 'sign='
+  [通过] 快照 provider_attempts.stage_id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.stage_id 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.request_hash 不含 '://'
+  [通过] 快照 provider_attempts.request_hash 不含 'sign='
+  [通过] 快照 provider_attempts.request_hash 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.request_hash 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.submit_state 不含 '://'
+  [通过] 快照 provider_attempts.submit_state 不含 'sign='
+  [通过] 快照 provider_attempts.submit_state 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.submit_state 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.remote_task_id 不含 '://'
+  [通过] 快照 provider_attempts.remote_task_id 不含 'sign='
+  [通过] 快照 provider_attempts.remote_task_id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.remote_task_id 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.response_id 不含 '://'
+  [通过] 快照 provider_attempts.response_id 不含 'sign='
+  [通过] 快照 provider_attempts.response_id 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.response_id 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.started_at 不含 '://'
+  [通过] 快照 provider_attempts.started_at 不含 'sign='
+  [通过] 快照 provider_attempts.started_at 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.started_at 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.last_error 不含 '://'
+  [通过] 快照 provider_attempts.last_error 不含 'sign='
+  [通过] 快照 provider_attempts.last_error 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.last_error 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.created_at 不含 '://'
+  [通过] 快照 provider_attempts.created_at 不含 'sign='
+  [通过] 快照 provider_attempts.created_at 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.created_at 不含 '/qa-r28/'
+  [通过] 快照 provider_attempts.updated_at 不含 '://'
+  [通过] 快照 provider_attempts.updated_at 不含 'sign='
+  [通过] 快照 provider_attempts.updated_at 不含 'QA28-SENT-CANARY-5a1c'
+  [通过] 快照 provider_attempts.updated_at 不含 '/qa-r28/'
+  [通过] 快照 needs_input_json 是合法 JSON 数组
+  [通过] 全部 message 仍是字符串（KeepString 契约）
+  [通过] 句中夹 URL：句子逐字保留（只 URL 片段变标签）
+  [通过] 无 URL 条目逐字未动
+  [通过] 句首 URL：尾部文本保留
+  [通过] 整串 URL（KeepString）：只留标签、类型仍是字符串
+  [通过] usage.errorSummary 是字符串且句子尾部保留
+  [通过] usage 事实字段保留（id/计费）
+  [通过] 快照 sha256 == manifest
+  [通过] 快照检查全部通过
+  [通过] 源库未被备份改写（dump 前后 sha256）（=b73adc2568fce5dfd960e98d06afb9d14bca5c60250feea533c7a17fb94194e5）
+  [通过] 源库仍保留 canary（未就地迁移；3 条 needs_input + 1 处 usage = 4）（=4）
+
+-- 4) restore 快照 → 新目录 → serve → 任务详情逐字核对
+  [通过] 任务详情 HTTP 状态（=200）
+  [通过] 恢复库详情不含 '://'（=0）
+  [通过] 恢复库详情不含 'sign='（=0）
+  [通过] 恢复库详情不含 'QA28-SENT-CANARY-5a1c'（=0）
+  [通过] 恢复库详情不含 '/qa-r28/'（=0）
+  DTO needsInput = [{"code": "download_insecure_scheme", "message": "模型下载必须使用 HTTPS（实际 （临时供应商地址已脱敏：host=cdn.qa28.invalid；sha256=d529cb2ec88cd9a9…））：拒绝下载，请检查来源后重试"}, {"code": "retry", "message": "下载可安全重试（task-9），无需重新付费"}, {"code": "download …
+  [通过] 恢复库 DTO：needsInput 4 条且与快照逐字一致、status=needs_input
+  [通过] serve 日志无解析失败告警（正常路径不告警）（=0）
+  全库扫描 0 命中
+  [通过] 恢复库 DB 无 canary 残留
+
+-- 5) 诊断：损坏的 needs_input_json 必须如实告警（不静默空列表）
+  [通过] 损坏行的任务详情 HTTP 状态（=200）
+  损坏行 needsInput = [] （按空列表展示）
+  [通过] 损坏行按空列表展示且仍可打开
+  [通过] 日志出现 job_detail_needs_input_parse_failed（不静默）
+
+-- 6) 新列兜底真实性：临时 ALTER TABLE 新增 3 个 TEXT 列（不改任何生产代码）
+      · qa_r28_probe_text：**非 JSON** 的裸 URL（模拟未来新的纯文本错误列）
+      · qa_r28_probe_sentence：JSON 列，句子含 URL（模拟未来新的说明列）
+      · qa_r28_probe_whole：JSON 列，值是整串 URL（观察默认形态 = 按列名的 mode 选择）
+  源库新列三值已注入
+  [通过] backup（含新列）退出码（=0）
+  [通过] 快照保留新列（VACUUM INTO 复制 schema）
+  [通过] 新非 JSON 文本列被文本级兜底（无 :// / canary）
+  [通过] 新 JSON 句子列：片段替换、句子与类型保持
+  观察（非断言失败）：新 JSON 整串 URL 列的默认形态 = {"url":{"host":"cdn.qa28.invalid","redacted":true,"sha256":" （按列名 mode 选择；新字符串契约列需在 json_string_mode_for_column 登记——残余缺口，见报告）
+  [通过] 快照 job_stages.id 不含新 canary
+  [通过] 快照 job_stages.job_id 不含新 canary
+  [通过] 快照 job_stages.stage_kind 不含新 canary
+  [通过] 快照 job_stages.batch_index 不含新 canary
+  [通过] 快照 job_stages.page_set 不含新 canary
+  [通过] 快照 job_stages.input_hash 不含新 canary
+  [通过] 快照 job_stages.result_asset_id 不含新 canary
+  [通过] 快照 job_stages.usage_json 不含新 canary
+  [通过] 快照 job_stages.status 不含新 canary
+  [通过] 快照 job_stages.lease_owner 不含新 canary
+  [通过] 快照 job_stages.lease_epoch 不含新 canary
+  [通过] 快照 job_stages.lease_until 不含新 canary
+  [通过] 快照 job_stages.next_run_at 不含新 canary
+  [通过] 快照 job_stages.attempt_count 不含新 canary
+  [通过] 快照 job_stages.created_at 不含新 canary
+  [通过] 快照 job_stages.updated_at 不含新 canary
+  [通过] 快照 job_stages.poll_count 不含新 canary
+  [通过] 快照 job_stages.last_error 不含新 canary
+  [通过] 快照 job_stages.needs_input_json 不含新 canary
+  [通过] 快照 job_stages.qa_r28_probe_text 不含新 canary
+  [通过] 快照 job_stages.qa_r28_probe_sentence 不含新 canary
+  [通过] 快照 job_stages.qa_r28_probe_whole 不含新 canary
+  [通过] 快照 provider_attempts.id 不含新 canary
+  [通过] 快照 provider_attempts.job_id 不含新 canary
+  [通过] 快照 provider_attempts.stage_id 不含新 canary
+  [通过] 快照 provider_attempts.request_hash 不含新 canary
+  [通过] 快照 provider_attempts.submit_state 不含新 canary
+  [通过] 快照 provider_attempts.remote_task_id 不含新 canary
+  [通过] 快照 provider_attempts.response_id 不含新 canary
+  [通过] 快照 provider_attempts.started_at 不含新 canary
+  [通过] 快照 provider_attempts.last_error 不含新 canary
+  [通过] 快照 provider_attempts.created_at 不含新 canary
+  [通过] 快照 provider_attempts.updated_at 不含新 canary
+  [通过] 新列兜底检查全部通过
+
+== QA 回合 28 · BUG-011 复验结果：PASS

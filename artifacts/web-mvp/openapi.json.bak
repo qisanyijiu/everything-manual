@@ -1,0 +1,198 @@
+{
+  "components": {
+    "schemas": {
+      "ApiErrorBody": {
+        "description": "错误体。不输出堆栈、SQL、密钥或完整供应商签名 URL（contracts.md §1）。",
+        "properties": {
+          "code": {
+            "description": "机器可读错误码（SCREAMING_SNAKE_CASE，来自 `manual_core::ApiErrorCode`）。",
+            "example": "NOT_FOUND",
+            "type": "string"
+          },
+          "details": {
+            "description": "结构化细节；无细节时为 null。"
+          },
+          "message": {
+            "description": "面向用户的中文信息，不含内部细节。",
+            "example": "接口不存在",
+            "type": "string"
+          },
+          "requestId": {
+            "description": "本次响应的诊断 ID（T04 起与请求日志关联）。",
+            "example": "01993000-0000-7000-8000-000000000001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ],
+        "type": "object"
+      },
+      "ApiErrorResponse": {
+        "description": "统一错误响应包。任何非 2xx 的应用错误都使用该结构。",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "CheckStatus": {
+        "description": "单项自检结果。T01 只产生 `ok`；`fail` 是 T03 扩展数据库／迁移／数据目录检查后的取值。",
+        "enum": [
+          "ok",
+          "fail"
+        ],
+        "type": "string"
+      },
+      "HealthLiveResponse": {
+        "description": "`GET /api/v1/health/live` 响应包。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LivenessData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "HealthReadyResponse": {
+        "description": "`GET /api/v1/health/ready` 响应包。",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReadinessData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "LivenessData": {
+        "description": "存活载荷：进程能响应请求即为 ok。",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/LivenessStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "LivenessStatus": {
+        "enum": [
+          "ok"
+        ],
+        "type": "string"
+      },
+      "ReadinessCheck": {
+        "description": "单个自检项。",
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/ReadinessCheckName"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          }
+        },
+        "required": [
+          "name",
+          "status"
+        ],
+        "type": "object"
+      },
+      "ReadinessCheckName": {
+        "description": "自检项名称。T01 只有进程；T03 起扩展 database/migrations/data_directory。",
+        "enum": [
+          "process"
+        ],
+        "type": "string"
+      },
+      "ReadinessData": {
+        "description": "就绪载荷。\n\nT01 语义：只做进程自检（`checks = [process]`），不检查数据库／迁移／数据目录，\n也不依赖云端可达。T03 起向 `checks` 增加 database/migrations/data_directory；\n任一项失败时 `status = not_ready` 并返回 503。在检查项接入前，\n本响应不得被解读为已验证数据层就绪。",
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ReadinessCheck"
+            },
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReadinessStatus"
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ],
+        "type": "object"
+      },
+      "ReadinessStatus": {
+        "enum": [
+          "ready",
+          "not_ready"
+        ],
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "description": "自托管交互说明书的本地 HTTP API。T01 只包含健康探针；后续任务按 llmdoc/contracts.md 在同一文档上扩展。",
+    "title": "万物说明书 API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/health/live": {
+      "get": {
+        "description": "进程可响应请求即返回 200。不检查数据层，也不依赖云端可达。",
+        "operationId": "health_live",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthLiveResponse"
+                }
+              }
+            },
+            "description": "进程存活"
+          }
+        },
+        "summary": "存活探针",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "description": "T01 仅进程自检；T03 起扩展到数据库/迁移/数据目录。云端不可达不影响本探针。",
+        "operationId": "health_ready",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReadyResponse"
+                }
+              }
+            },
+            "description": "当前自检项均通过"
+          }
+        },
+        "summary": "就绪探针",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

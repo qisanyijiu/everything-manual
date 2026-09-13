@@ -1,0 +1,16 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.76s
+     Running tests/qa_t10_r11_verify.rs (target/debug/deps/qa_t10_r11_verify-8cb66281cdd65efe)
+
+running 4 tests
+test qa_r11_anchor_is_accepted_submit_fact_not_row_timestamps ... ok
+test qa_r11_threshold_boundary_and_cross_job_isolation ... ok
+test qa_r11_real_shape_crosses_budget_keeps_task_and_never_repurchases ... ok
+test qa_r11_only_accepted_remote_facts_start_the_budget ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+EXIT=0

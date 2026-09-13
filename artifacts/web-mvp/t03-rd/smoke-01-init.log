@@ -1,0 +1,15 @@
++(eval):6> echo '### init（新临时 data-dir）'
+### init（新临时 data-dir）
++(eval):6> /Users/qsyj/Code/rust/everything-manual/target/debug/everything-manual init --data-dir ./manual-data --password-file ./pw.txt
+{"timestamp":"2026-09-11T18:45:07.569475Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-t03-manual/manual-data","passwordSource":"受限文件 ./pw.txt","schemaVersion":2},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-t03-manual/manual-data
+  - 已创建：/private/tmp/em-t03-manual/manual-data
+  - 已创建：/private/tmp/em-t03-manual/manual-data/tmp
+  - 已创建：/private/tmp/em-t03-manual/manual-data/logs
+  - 已创建：/private/tmp/em-t03-manual/manual-data/blobs
+  - 已创建：/private/tmp/em-t03-manual/manual-data/lock
+数据库：已创建并迁移（/private/tmp/em-t03-manual/manual-data/manual.sqlite3，schema v2；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员密码：已从 受限文件 ./pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码。
++(eval):6> echo 'exit=0'
+exit=0

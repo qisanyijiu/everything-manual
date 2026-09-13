@@ -1,0 +1,23 @@
+{
+  "itemId": "01a0977c-1d43-776c-ab78-5d263a627a64",
+  "draftId": "01a0977c-1f32-7758-a625-8e57a3f9ca96",
+  "releaseId": "01a0977c-2029-731e-96aa-8a37db24591c",
+  "anchors": [
+    {
+      "id": "01a0977c-200f-71e9-84e8-2d1303c62608",
+      "partId": "part-2e063fda1795"
+    },
+    {
+      "id": "01a0977c-200f-71e9-84e8-2d1431af1623",
+      "partId": "part-e504cdc101ad"
+    }
+  ],
+  "evidencePage": 1,
+  "forbiddenHits": [],
+  "routing": {
+    "fulfilledOk": 0,
+    "external": [],
+    "publishRequests": [],
+    "assetContent": 4
+  }
+}

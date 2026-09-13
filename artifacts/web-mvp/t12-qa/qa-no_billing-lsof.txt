@@ -1,0 +1,6 @@
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 20166 qsyj   16u  IPv4 0x49c0e61dc38d8e7f      0t0  TCP 127.0.0.1:19217 (LISTEN)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 20166 qsyj   16u  IPv4 0x49c0e61dc38d8e7f      0t0  TCP 127.0.0.1:19217 (LISTEN)
+COMMAND     PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+everythin 20166 qsyj   16u  IPv4 0x49c0e61dc38d8e7f      0t0  TCP 127.0.0.1:19217 (LISTEN)

@@ -1,0 +1,50 @@
+== 场景 no_billing（工作目录 /tmp/qa-t12-no_billing）
+fixture listening on 127.0.0.1:19218 scenario=no_billing
+"event":"provider_handlers_registered","provider":"tripo","baseUrl":"http://127.0.0.1:19218/v3","stages":"tripo_upload,tripo_submit,tripo_poll"
+== job=01a093c8-e685-7311-ad87-af9595af0c67
+== lsof 采样：6 行；非 loopback 连接行 0（应为 0）
+=== 场景 no_billing：fixture 记录（uploads=2 submits=1 polls=1）
+    阶段：upload=succeeded submit=succeeded poll=succeeded；job=running
+    attempts=[('accepted', 'qa-task-0001')]
+    ledger：tripo={'currency': 'credit_minor', 'reserved': 3000, 'actual': None, 'state': 'reserved'}；manual_ai={'currency': 'usd_micros', 'reserved': 9992, 'actual': None, 'state': 'reserved'}
+  [ok]   上传携带 Authorization: Bearer <配置的测试键>（实际 'Bearer qa-fake-tripo-key-9931'）
+  [ok]   上传是合法 multipart
+  [ok]   上传 body 恰好 1 个 part（实际 1）
+  [ok]   multipart 字段名必须是 file（实际 'file'）
+  [ok]   文件名带正确扩展名（实际 'front.jpg'）
+  [ok]   上传携带 Authorization: Bearer <配置的测试键>（实际 'Bearer qa-fake-tripo-key-9931'）
+  [ok]   上传是合法 multipart
+  [ok]   上传 body 恰好 1 个 part（实际 1）
+  [ok]   multipart 字段名必须是 file（实际 'file'）
+  [ok]   文件名带正确扩展名（实际 'left.png'）
+  [ok]   front 的 part Content-Type=image/jpeg（实际 'image/jpeg'）
+  [ok]   left 的 part Content-Type=image/png（实际 'image/png'）
+  [ok]   front 图片字节原样进入 multipart（sha256 与源文件一致）
+  [ok]   left 图片字节原样进入 multipart（sha256 与源文件一致）
+  [ok]   提交携带 Authorization: Bearer（值 = 配置键）
+  [ok]   提交 Content-Type=application/json
+  [ok]   提交 body 是合法 JSON
+  [ok]   请求体没有 v2 字段形态（实际 []）
+  [ok]   请求体没有预期外顶层字段（实际 []）
+  [ok]   请求体顶层字段集合恰为冻结的 9 项（实际 ['face_limit', 'generate_parts', 'geometry_quality', 'inputs', 'model', 'pbr', 'quad', 'texture', 'texture_quality']）
+  [ok]   model=v3.1-20260211
+  [ok]   texture=true
+  [ok]   pbr=true
+  [ok]   texture_quality=standard
+  [ok]   geometry_quality=standard
+  [ok]   face_limit=100000
+  [ok]   quad=false
+  [ok]   generate_parts=false
+  [ok]   inputs 是 2 项数组（实际 [{'front': 'qa-token-1-front.jpg'}, {'left': 'qa-token-2-left.png'}]）
+  [ok]   inputs[0] 是 front view-key
+  [ok]   inputs[1] 是 left view-key（侧视图）
+  [ok]   front token 来自上传响应（实际 'qa-token-1-front.jpg'）
+  [ok]   left token 来自上传响应（实际 'qa-token-2-left.png'）
+  [ok]   查询携带 Authorization: Bearer
+  [ok]   付费提交 1 次（实际 1）
+  [ok]   有可下载模型即组装成功（实际 succeeded）
+  [ok]   modelUrl 已保存为事实
+  [ok]   无计费字段：usage 中不出现 billing 事实
+  [ok]   无计费事实不猜测金额、不结算（实际 {'currency': 'credit_minor', 'reserved': 3000, 'actual': None, 'state': 'reserved'}）
+=== 断言 39 项，失败 0 项
+== 场景 no_billing 结果：PASS

@@ -1,0 +1,27 @@
++(eval):8> echo '### check #2（幂等）'
+### check #2（幂等）
++(eval):8> /Users/qsyj/Code/rust/everything-manual/target/debug/everything-manual check --data-dir ./manual-data
+有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-t03-manual/manual-data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：已就绪（v2；WAL=wal synchronous=2 foreign_keys=ON busy_timeout=5000ms）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T18:45:07.589182Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
++(eval):8> echo 'exit=0'
+exit=0

@@ -1,0 +1,20 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.31s
+     Running tests/qa_t21_independent.rs (target/debug/deps/qa_t21_independent-8c6cc9fcee05cc60)
+
+running 4 tests
+test qa21_blob_renamed_before_metadata_commit_is_safe_after_restart ... ok
+test qa21_draft_committed_before_response_is_never_duplicated_on_restart ... ok
+test qa21_three_batch_interruption_never_reruns_completed_batch ... 
+thread 'qa21_three_batch_interruption_never_reruns_completed_batch' (14678244) panicked at crates/server/src/jobs/failpoints.rs:105:39:
+命中测试断点 manual_after_request_before_response（job-failpoints feature）
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+QA21 实测形态：恢复后第 3 批在已确认预算内继续（POST 总数 = 3）
+ok
+test qa21_upload_stream_abort_mid_body_leaves_no_half_asset ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.34s
+

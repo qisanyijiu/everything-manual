@@ -1,0 +1,6 @@
+/vendor/pdfjs/cmaps/UniGB-UCS2-H.bcmap                  HTTP 200 43366 bytes
+/vendor/pdfjs/standard_fonts/LiberationSans-Regular.ttf HTTP 200 139512 bytes
+/vendor/pdfjs/wasm/openjpeg.wasm                        HTTP 200 252032 bytes
+/vendor/pdfjs/wasm/qcms_bg.wasm                         HTTP 200 96589 bytes
+/vendor/pdfjs/iccs/CGATS001Compat-v2-micro.icc          HTTP 200 8464 bytes
+/vendor/pdfjs/cmaps/UniGB-UCS2-H.bcmap 的 sha256（应与 node_modules 一致）9201569b402e81ad8860650bd86350c4fa28e5dd5971f05fcacaf40f51de18ed  -

@@ -1,0 +1,5 @@
+# QA 回合 20 证据：三条回合 19 复现脚本的哈希与 mtime（证明复验为“原样重跑”）
+# 生成时间：2026-09-12 17:46（本地 UTC+8）
+79f7e4332b7461a58960cf6c92485f7588ed9f50a1a497664dedc98add5a194f  artifacts/web-mvp/t16-qa-r19/repro-conc-photos-500.sh          （mtime 2026-09-12 16:47:44，回合 19）
+0ed45f754c9c5c718b69488d5ea97dfa0ee8c40cc6e693f054f7b2a21013cdb1  artifacts/web-mvp/t16-qa-r19/repro-conc-photos-500-natural.sh  （mtime 2026-09-12 16:59:12，回合 19）
+886d9cc8a0c1ab7d5812feafb750b35d9871594d941d939f4f04ef7bd2774d46  artifacts/web-mvp/t16-qa-r19/repro-conc-photos-500-focused.sh  （mtime 2026-09-12 16:59:53，回合 19）

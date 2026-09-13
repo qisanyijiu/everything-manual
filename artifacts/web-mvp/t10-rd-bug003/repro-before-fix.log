@@ -1,0 +1,28 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.34s
+     Running tests/qa_t10_independent.rs (target/debug/deps/qa_t10_independent-9a9d3e89b9947fd1)
+
+running 1 test
+[qa probe] 观察 1（轮询阶段自带 attempt）status=needs_input
+[qa probe] 观察 2（submit 级 attempt 才老化）status=waiting_provider
+[qa probe] 观察 2（submit 级 attempt 才老化）status=waiting_provider
+[qa probe] 观察 2（submit 级 attempt 才老化）status=waiting_provider
+[qa probe] 观察 2（submit 级 attempt 才老化）status=waiting_provider
+
+thread 'qa_total_wait_budget_must_trigger_on_real_poll_shape' (12336354) panicked at crates/server/tests/qa_t10_independent.rs:1355:5:
+assertion `left == right` failed: AC-036：总等待超 30 分钟应转 needs_input 并保留 task_id（真实轮询链路形态）
+  left: "waiting_provider"
+ right: "needs_input"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test qa_total_wait_budget_must_trigger_on_real_poll_shape ... FAILED
+
+failures:
+
+failures:
+    qa_total_wait_budget_must_trigger_on_real_poll_shape
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `-p everything-manual --test qa_t10_independent`

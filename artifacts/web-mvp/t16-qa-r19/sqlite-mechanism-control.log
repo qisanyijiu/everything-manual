@@ -1,0 +1,6 @@
+db=/var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/em-r19-sqlite-mech2.4xpi8zhp/t.sqlite3  WAL 已启用，isolation_level=None（直通 SQL）
+(a) deferred：SELECT → INSERT（photos.rs:90 形态）: 失败（0.001s）→ database is locked
+(b) deferred：INSERT 先写（无先读快照）: 成功（等待 2.14s）
+holder 输出： holder: 写锁已持有（BEGIN IMMEDIATE + UPDATE） | holder: 已释放
+(c) 锁释放后：SELECT → INSERT（对照组）: 成功（等待 0.00s）
+(d) BEGIN IMMEDIATE：先拿写锁再读再写（T14 修法）: 成功（等待 0.00s）

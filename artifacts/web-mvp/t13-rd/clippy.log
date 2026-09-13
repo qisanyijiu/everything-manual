@@ -1,0 +1,9 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Checking everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Checking xtask v0.1.0 (/Users/qsyj/Code/rust/everything-manual/xtask)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.63s

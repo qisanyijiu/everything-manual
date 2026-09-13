@@ -1,0 +1,16 @@
+{
+  "itemId": "01a0977b-f22e-7363-800b-c3f0d8b8d01b",
+  "draftId": "01a0977b-f4ce-7161-86e8-7dc9ec70371d",
+  "narrowReleaseId": "01a0977c-03c4-7487-97b5-87dc2e2617cb",
+  "forbiddenHits": [],
+  "modelReviewDeclaresLiteralAsterisks": true,
+  "modelReviewText": "模型复核（两个独立声明）这是**你的复核声明**，不是服务端 GPU 测试结论；两个动作都记录声明时间，换模型后清空。已在浏览器成功打开此模型我已核对模型与资料一致打开模型：未声明核对一致：未声明",
+  "publishConflict": {
+    "buttonDisabledDuringConflict": false,
+    "conflictPanelStillVisible": true
+  },
+  "routing": {
+    "fulfilledOk": 0,
+    "external": []
+  }
+}

@@ -1,0 +1,13 @@
+
+> everything-manual-web@0.1.0 test
+> vitest run --run src/features/viewer/coordinates.test.ts
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  19:38:42
+   Duration  537ms (environment 76%, transform 9%, setup 8%, import 5%, tests 2%, worker 1%)
+

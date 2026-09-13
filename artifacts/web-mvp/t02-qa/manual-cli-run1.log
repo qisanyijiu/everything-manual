@@ -1,0 +1,292 @@
+binary: /Users/qsyj/Code/rust/everything-manual/target/debug/everything-manual
+c919e595b0fe7bb2c71d90d6335964a4c59161f8c0da10e37c92b0857ff094ff  /Users/qsyj/Code/rust/everything-manual/target/debug/everything-manual
+root: /tmp/em-qa-t02-run1-xyzDzF
+date: 2026-09-12 02:17:48 CST
+---- [help] cmd: everything-manual --help
+exit=0 expected=0
+stdout: 万物说明书：上传说明书与多视图照片，生成可校准的交互说明书。
+数据保存在独立 data-dir；同一 data-dir 同时只允许一个进程持有排他锁。
+
+Usage: everything-manual <COMMAND>
+
+Commands:
+  init     初始化 data-dir（创建目录结构与锁文件）
+  serve    启动 HTTP 服务（默认仅监听 127.0.0.1）
+  check    校验配置、data-dir 与 schema；不发起外部请求、不产生费用
+  backup   备份 data-dir（已规划于 T20；当前版本返回未实现）
+  restore  从备份恢复到新 data-dir（已规划于 T20；当前版本返回未实现）
+
+Options:
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
+stderr: 
+---- [version] cmd: everything-manual --version
+exit=0 expected=0
+stdout: everything-manual 0.1.0
+stderr: 
+---- [unknown-subcmd] cmd: everything-manual frobnicate
+exit=2 expected=2
+stdout: 
+stderr: 错误：error: unrecognized subcommand 'frobnicate'
+
+Usage: everything-manual <COMMAND>
+
+For more information, try '--help'.
+---- [no-args] cmd: everything-manual 
+exit=2 expected=2
+stdout: 
+stderr: 错误：万物说明书服务（init / serve / check / backup / restore）
+
+Usage: everything-manual <COMMAND>
+
+Commands:
+  init     初始化 data-dir（创建目录结构与锁文件）
+  serve    启动 HTTP 服务（默认仅监听 127.0.0.1）
+  check    校验配置、data-dir 与 schema；不发起外部请求、不产生费用
+  backup   备份 data-dir（已规划于 T20；当前版本返回未实现）
+  restore  从备份恢复到新 data-dir（已规划于 T20；当前版本返回未实现）
+
+Options:
+  -h, --help     Print help (see more with '--help')
+  -V, --version  Print version
+---- [serve-no-data-dir] cmd: everything-manual serve
+exit=3 expected=3
+stdout: 
+stderr: 错误：缺少 data_dir：请使用 --data-dir <dir>、环境变量 EM_DATA_DIR 或配置键 data_dir
+---- [check-no-data-dir] cmd: everything-manual check
+exit=3 expected=3
+stdout: 
+stderr: 错误：缺少 data_dir：请使用 --data-dir <dir>、环境变量 EM_DATA_DIR 或配置键 data_dir
+---- [init-no-password] cmd: everything-manual init --data-dir data
+exit=2 expected=2
+stdout: 
+stderr: 错误：标准输入不是终端（非交互环境）；无人值守初始化请使用 --password-file <受限文件>
+data dir exists after failed init? NO
+---- [init-argv-password] cmd: everything-manual init --data-dir data --password canary-argv-1
+exit=2 expected=2
+stdout: 
+stderr: 错误：error: unexpected argument '--password' found
+
+  tip: a similar argument exists: '--password-file'
+
+Usage: everything-manual init --data-dir <DIR> --password-file <FILE>
+
+For more information, try '--help'.
+---- [init-loose-file] cmd: everything-manual init --data-dir data --password-file loose.txt
+exit=3 expected=3
+stdout: 
+stderr: 错误：密码文件权限过宽（644）：loose.txt；请执行 chmod 600 loose.txt 后重试
+---- [init-ok] cmd: everything-manual init --data-dir data --password-file pw.txt
+exit=0 expected=0
+stdout: {"timestamp":"2026-09-11T18:17:48.486122Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-qa-t02-run1-xyzDzF/data","passwordSource":"受限文件 pw.txt"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-qa-t02-run1-xyzDzF/data
+  - 已创建：/private/tmp/em-qa-t02-run1-xyzDzF/data
+  - 已创建：/private/tmp/em-qa-t02-run1-xyzDzF/data/tmp
+  - 已创建：/private/tmp/em-qa-t02-run1-xyzDzF/data/logs
+  - 已创建：/private/tmp/em-qa-t02-run1-xyzDzF/data/blobs
+  - 已创建：/private/tmp/em-qa-t02-run1-xyzDzF/data/lock
+管理员密码：已从 受限文件 pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码，也不创建数据库。
+stderr: 
+=== structure & permissions ===
+total 8
+drwx------@  6 qsyj  wheel  192  9月 12 02:17 .
+drwx------@ 27 qsyj  wheel  864  9月 12 02:17 ..
+drwx------@  2 qsyj  wheel   64  9月 12 02:17 blobs
+-rw-------@  1 qsyj  wheel   37  9月 12 02:17 lock
+drwx------@  3 qsyj  wheel   96  9月 12 02:17 logs
+drwx------@  2 qsyj  wheel   64  9月 12 02:17 tmp
+drwx------ data
+drwx------ data/tmp
+drwx------ data/logs
+drwx------ data/blobs
+-rw------- data/lock
+manual.sqlite3 present? NO
+canary in init stdout? 0; in stderr? 0; in log file? 0
+log file content:
+{"timestamp":"2026-09-11T18:17:48.486122Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-qa-t02-run1-xyzDzF/data","passwordSource":"受限文件 pw.txt"},"target":"everything_manual::config::commands"}
+log file perms: -rw-------
+---- [init-again-idempotent] cmd: everything-manual init --data-dir data --password-file pw.txt
+exit=0 expected=0
+stdout: {"timestamp":"2026-09-11T18:17:48.531025Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/private/tmp/em-qa-t02-run1-xyzDzF/data","passwordSource":"受限文件 pw.txt"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/private/tmp/em-qa-t02-run1-xyzDzF/data
+  - 目录已存在：/private/tmp/em-qa-t02-run1-xyzDzF/data
+  - 目录已存在：/private/tmp/em-qa-t02-run1-xyzDzF/data/tmp
+  - 目录已存在：/private/tmp/em-qa-t02-run1-xyzDzF/data/logs
+  - 目录已存在：/private/tmp/em-qa-t02-run1-xyzDzF/data/blobs
+  - 锁文件已存在：/private/tmp/em-qa-t02-run1-xyzDzF/data/lock
+管理员密码：已从 受限文件 pw.txt 读取并通过校验（不落盘、不进入日志与 shell history）。
+注意：管理员凭据存储（Argon2 哈希入 SQLite）随 T04 提供；本版本 init 不保存密码，也不创建数据库。
+stderr: 
+---- [check-ok] cmd: everything-manual check --data-dir data
+exit=0 expected=0
+stdout: 有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-qa-t02-run1-xyzDzF/data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：尚未建立（T03 起提供迁移与 schema 校验；当前不影响）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T18:17:48.546654Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+stderr: 
+---- [backup] cmd: everything-manual backup --data-dir data --out /tmp/em-qa-t02-run1-xyzDzF/backup-out
+exit=7 expected=7
+stdout: 
+stderr: 错误：backup 尚未实现（计划于 T20）：将要求停服并获取 data-dir 排他锁，产出一致 SQLite 快照 + 全部被引用 blob + manifest + sha256；当前版本不会创建或覆盖任何文件（--out /tmp/em-qa-t02-run1-xyzDzF/backup-out 保持不变）。
+backup-out created? NO
+---- [restore] cmd: everything-manual restore --from /tmp/em-qa-t02-run1-xyzDzF/backup-out --data-dir /tmp/em-qa-t02-run1-xyzDzF/restored
+exit=7 expected=7
+stdout: 
+stderr: 错误：restore 尚未实现（计划于 T20）：将要求目标 data-dir 不存在或为空，校验 hash/外键/引用后恢复；当前版本不会创建或修改任何目录（目标 /tmp/em-qa-t02-run1-xyzDzF/restored）。
+restored dir created? NO
+---- [unknown-key] cmd: everything-manual check --data-dir data
+exit=3 expected=3
+stdout: 
+stderr: 错误：配置文件解析失败（/private/tmp/em-qa-t02-run1-xyzDzF/data/config.toml）：TOML parse error at line 1, column 1
+  |
+1 | totally_unknown_key = 1
+  | ^^^^^^^^^^^^^^^^^^^
+unknown field `totally_unknown_key`, expected one of `data_dir`, `listen`, `public_origin`, `price_catalog_path`, `tls`, `trusted_proxy_cidrs`, `providers`, `limits`, `concurrency`
+---- [unknown-key-nested] cmd: everything-manual check --data-dir data
+exit=3 expected=3
+stdout: 
+stderr: 错误：配置文件解析失败（/private/tmp/em-qa-t02-run1-xyzDzF/data/config.toml）：TOML parse error at line 2, column 1
+  |
+2 | bogus_field = "x"
+  | ^^^^^^^^^^^
+unknown field `bogus_field`, expected one of `base_url`, `model`, `api_key_env`, `api_key_file`
+---- [serve-nonloopback] cmd: everything-manual serve --data-dir data --listen 0.0.0.0:18099
+exit=6 expected=6
+stdout: 
+stderr: 错误：拒绝启动：监听地址 0.0.0.0:18099 不是 loopback，且未配置 tls.cert_file/key_file 或 trusted_proxy_cidrs（可信反向代理）；公网/局域网部署必须使用 TLS 或明确的可信代理模式
+---- [check-nonloopback] cmd: everything-manual check --data-dir data --listen 0.0.0.0:18099
+exit=6 expected=6
+stdout: 有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-qa-t02-run1-xyzDzF/data
+  listen = 0.0.0.0:18099
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：尚未建立（T03 起提供迁移与 schema 校验；当前不影响）
+stderr: 错误：拒绝启动：监听地址 0.0.0.0:18099 不是 loopback，且未配置 tls.cert_file/key_file 或 trusted_proxy_cidrs（可信反向代理）；公网/局域网部署必须使用 TLS 或明确的可信代理模式
+---- [serve-with-tls] cmd: everything-manual serve --data-dir data --listen 127.0.0.1:0
+exit=6 expected=6
+stdout: 
+stderr: 错误：已配置 TLS 证书（cert=/tmp/em-qa-t02-run1-xyzDzF/cert.pem，key=/tmp/em-qa-t02-run1-xyzDzF/key.pem），但内置 TLS 监听尚未实现（后续卡提供）；请移除 tls 配置（loopback 开发）或改用反向代理模式（trusted_proxy_cidrs）
+---- [check-with-tls] cmd: everything-manual check --data-dir data
+exit=6 expected=6
+stdout: 有效配置（脱敏）：
+  配置文件：/private/tmp/em-qa-t02-run1-xyzDzF/data/config.toml
+  data_dir = /private/tmp/em-qa-t02-run1-xyzDzF/data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = 已配置（cert=/tmp/em-qa-t02-run1-xyzDzF/cert.pem key=/tmp/em-qa-t02-run1-xyzDzF/key.pem；内置 TLS 监听未实现，见监听安全）
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：尚未建立（T03 起提供迁移与 schema 校验；当前不影响）
+stderr: 错误：已配置 TLS 证书（cert=/tmp/em-qa-t02-run1-xyzDzF/cert.pem，key=/tmp/em-qa-t02-run1-xyzDzF/key.pem），但内置 TLS 监听尚未实现（后续卡提供）；请移除 tls 配置（loopback 开发）或改用反向代理模式（trusted_proxy_cidrs）
+---- [check-half-tls] cmd: everything-manual check --data-dir data
+exit=3 expected=3
+stdout: 
+stderr: 错误：tls.cert_file 与 tls.key_file 必须成对配置
+serve1 pid=94619 listening line: listening on http://127.0.0.1:18123
+---- [second-serve] cmd: everything-manual serve --data-dir data --listen 127.0.0.1:18124
+exit=5 expected=5
+stdout: 
+stderr: 错误：data-dir 正被另一个进程使用（排他锁 /private/tmp/em-qa-t02-run1-xyzDzF/data/lock 已被持有，持有者信息：pid=94619 started_at_unix=1789150668）；同一 data-dir 只允许一个进程，请先停止该进程
+---- [check-while-running] cmd: everything-manual check --data-dir data
+exit=0 expected=0
+stdout: 有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-qa-t02-run1-xyzDzF/data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：警告——data-dir 正被另一个进程使用（排他锁 /private/tmp/em-qa-t02-run1-xyzDzF/data/lock 已被持有，持有者信息：pid=94619 started_at_unix=1789150668）；同一 data-dir 只允许一个进程，请先停止该进程
+[检查] 数据库 schema：尚未建立（T03 起提供迁移与 schema 校验；当前不影响）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T18:17:48.745591Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+stderr: 
+check-while-running lock line: [检查] 排他锁：警告——data-dir 正被另一个进程使用（排他锁 /private/tmp/em-qa-t02-run1-xyzDzF/data/lock 已被持有，持有者信息：pid=94619 started_at_unix=1789150668）；同一 data-dir 只允许一个进程，请先停止该进程
+health/live status=200
+{"data":{"status":"ok"}}---- [check-after-kill9] cmd: everything-manual check --data-dir data
+exit=0 expected=0
+stdout: 有效配置（脱敏）：
+  配置文件：内置默认（未找到配置文件）
+  data_dir = /private/tmp/em-qa-t02-run1-xyzDzF/data
+  listen = 127.0.0.1:8080
+  public_origin = (未设置)
+  tls = (未配置)
+  trusted_proxy_cidrs = (空)
+  providers.tripo = 未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+  providers.manual_ai = 未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+  limits = json=1048576B pdf=52428800B/100页 photo=20971520B glb=157286400B item_total=524288000B
+  concurrency = remote_generation=2 manual_ai_batches=2
+  price_catalog_path = (未设置)
+[检查] data-dir 结构与锁文件：通过（tmp/、logs/、blobs/、lock）
+[检查] data-dir 可写：通过
+[检查] 排他锁：通过（当前空闲，可启动 serve）
+[检查] 数据库 schema：尚未建立（T03 起提供迁移与 schema 校验；当前不影响）
+[检查] 监听安全：通过（loopback）
+[检查] Provider tripo：未配置（缺少：api_key；生成与报价不可用，已有资料仍可读）
+[检查] Provider manual_ai：未配置（缺少：api_key、model；生成与报价不可用，已有资料仍可读）
+{"timestamp":"2026-09-11T18:17:49.298249Z","level":"INFO","fields":{"message":"check 完成（未发起任何外部请求）","event":"check"},"target":"everything_manual::config::commands"}
+[检查] 外部请求：本命令不发起任何网络请求（0 次）
+结果：check 通过
+stderr: 
+check-after-kill9 lock line: [检查] 排他锁：通过（当前空闲，可启动 serve）
+SIGTERM exit code=0
+graceful stop stdout: {"timestamp":"2026-09-11T18:17:49.337099Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T18:17:49.337208Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-11T18:17:49.337245Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:18125","dataDir":"/private/tmp/em-qa-t02-run1-xyzDzF/data","securityMode":"loopback"},"target":"everything_manual::config::commands"}
+listening on http://127.0.0.1:18125
+{"timestamp":"2026-09-11T18:17:49.338286Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+已停止：data-dir 排他锁已释放。
+=== leftover processes ===
+none
+done; log at /tmp/em-qa-t02-run1-xyzDzF/run1.log

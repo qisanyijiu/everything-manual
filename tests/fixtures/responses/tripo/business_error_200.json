@@ -1,0 +1,6 @@
+{
+  "_fixtureNote": "自建脱敏样例（非供应商官方响应原文）：HTTP 200 但 code 非 0 的业务错误（必须按 code 判定，不能只看 HTTP 状态）；message/suggestion 是适配器保存为脱敏错误信息的字段（contracts.md §6）。",
+  "code": 1201,
+  "message": "invalid image token",
+  "suggestion": "请重新上传正面照片后再试"
+}

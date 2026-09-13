@@ -1,0 +1,60 @@
+QA 回合 17 · T15 现场源码/测试哈希（2026-09-12；仓库 /Users/qsyj/Code/rust/everything-manual）
+git HEAD: cb69afb44ee2a6088f440eade3f1424546fbb62d （T01–T15 未提交；工作树含 QA 新增与 artifacts）
+QA 本回合新增文件：
+  crates/server/tests/qa_t15_independent.rs
+  artifacts/web-mvp/t15-qa/**
+
+== 被验收的生产源码（T15 相关） ==
+c8d7b5ed17e71800a2cca3db75e1e91c5a38ada9e51e5c4b819cfb12ec4541c2  crates/server/src/drafts/mod.rs
+f41e053eeb7bccd4cb9ccdc7db091f124027279f04c711bc102a0cc73e335928  crates/server/src/drafts/knowledge.rs
+0dd72bb992c1541b3f508d01f049bf6fea625c2b01090abdc3abd751c39e2866  crates/server/src/drafts/service.rs
+cb54766a326ae25ddbc687bfdc2b1057915d1dd5d07c0935a59bf9c39e2a221e  crates/server/src/jobs/pipeline.rs
+d9a934ec8ee99331e0365f0fafb833242602e5b8fdf985e3f25cb7cb52d9110d  crates/server/src/jobs/control.rs
+38fdca550fa5f203365c043e39dd9396cc18b6a96c8a1b52f5ed424410ab50d5  crates/server/src/jobs/recover.rs
+ee0d11e05843dc404a3e7bf56d859508a4760223586c4546416e0712e5dd9502  crates/server/src/jobs/executor.rs
+d81abd47dc1790b82c6e2a7985d16579745f091b0b55d0de6ac024b367483135  crates/server/src/storage/repo/job_stages.rs
+adcf67a683892eb6252f1e0900061261a156a6bb935249e0e64acf1ec15a15b7  crates/server/src/storage/repo/jobs.rs
+c1c9cabdede452dfdf9182d2dfe8a14ffeede51ab07da6379e9747a542dd5143  crates/server/src/storage/repo/drafts.rs
+68c3ea03542f243525861f50ffbdbca89768d7ddd1fb34111cd24fdc32035508  crates/server/src/storage/repo/attempts.rs
+5e9d93b4e693063a4d6d5371f2655b3d85d9df8fcbc4366afec18d4404fbc2ba  crates/server/src/http/jobs.rs
+2b7753edb759946ad5df6e09cb12c60f52593f4fba441830133dc9eace158c75  crates/server/src/http/drafts.rs
+68bf56c58efcaa1cb5e62ed99b9db2d70b63b4d996c912e6079d4a503f39fd1a  crates/server/src/http/dto/jobs.rs
+4eb808c0204c634f0e7a77186840acbf669e58b38afd57736338eb40e23812f5  crates/server/src/http/dto/drafts.rs
+
+== 测试与产物 ==
+8bc18095bc4cf0235dd7a65da381c695d6366ac4438e3a11c2aed6be2a6b5e37  crates/server/tests/pipeline.rs
+1cda96da5b192613c99f5b77c0cb44db4832c9dba96009df7f9ed4fb37197583  crates/server/tests/qa_t15_independent.rs
+15ee2de3f281f1e0d1924fb62fab1d68f975f1052b6c12caa070fb13a8e909f2  crates/server/tests/qa_t14_independent.rs
+9aeeeaf3df0d11f0390c97db9a3e05be902bed426ad331dced67764d2403ce60  crates/server/tests/qa_t10_independent.rs
+f6bc9e2a1380a8c018aaeee2ca9f5abf97cd8f9198940a54d39e1bfee09ec85c  dist/aarch64-apple-darwin/everything-manual
+
+== dist 产物大小 ==
+22494896 bytes dist/aarch64-apple-darwin/everything-manual
+
+== git status（短） ==
+ M .gitignore
+ M llmdoc/contracts.md
+ M llmdoc/decisions.md
+ M llmdoc/requirements/web-mvp/state.yaml
+?? .cargo/
+?? Cargo.lock
+?? Cargo.toml
+?? apps/
+?? artifacts/
+?? config.example.toml
+?? contracts/
+?? crates/
+?? llmdoc/requirements/web-mvp/implementation.md
+?? llmdoc/requirements/web-mvp/prd.md
+?? llmdoc/requirements/web-mvp/qa-report.md
+?? migrations/
+?? price-catalog.example.toml
+?? rust-toolchain.toml
+?? tests/
+?? xtask/
+
+== 终版刷新（2026-09-12 15:3x；QA 最后两处断言追加后） ==
+b4446820749d0139205bd3171cbc063545d7ad458e725dc841e9b7f10728d281  crates/server/tests/qa_t15_independent.rs
+f6bc9e2a1380a8c018aaeee2ca9f5abf97cd8f9198940a54d39e1bfee09ec85c  dist/aarch64-apple-darwin/everything-manual
+workspace: passed=471 failed=0 ignored=3
+xtask check: 7/7 通过；exit=exit=0

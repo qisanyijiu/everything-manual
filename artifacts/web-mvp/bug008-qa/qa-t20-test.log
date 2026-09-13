@@ -1,0 +1,29 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.71s
+     Running tests/qa_t20_bug008_independent.rs (target/debug/deps/qa_t20_bug008_independent-22cdb6c4a6fa82ee)
+
+running 2 tests
+QA-R26 transport message = 模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (http://127.0.0.1:65076/qa-r26/model.glb?sign=qa26-canary-transport-signature-7d31)
+
+thread 'qa26_connect_refused_message_must_not_leak_signed_url' (14442497) panicked at crates/server/tests/qa_t20_bug008_independent.rs:192:5:
+阶段消息不得含签名：模型下载传输失败（下载可安全重试；不产生供应商费用）：连接失败：error sending request for url (http://127.0.0.1:65076/qa-r26/model.glb?sign=qa26-canary-transport-signature-7d31)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test qa26_connect_refused_message_must_not_leak_signed_url ... FAILED
+QA-R26 transport message = 模型下载传输失败（下载可安全重试；不产生供应商费用）：超时：error sending request for url (http://127.0.0.1:65077/qa-r26/model.glb?sign=qa26-canary-transport-signature-7d31&expires=9999999999)
+
+thread 'qa26_timeout_message_must_not_leak_signed_url' (14442498) panicked at crates/server/tests/qa_t20_bug008_independent.rs:192:5:
+阶段消息不得含签名：模型下载传输失败（下载可安全重试；不产生供应商费用）：超时：error sending request for url (http://127.0.0.1:65077/qa-r26/model.glb?sign=qa26-canary-transport-signature-7d31&expires=9999999999)
+test qa26_timeout_message_must_not_leak_signed_url ... FAILED
+
+failures:
+
+failures:
+    qa26_connect_refused_message_must_not_leak_signed_url
+    qa26_timeout_message_must_not_leak_signed_url
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 1 filtered out; finished in 30.02s
+
+error: test failed, to rerun pass `-p everything-manual --test qa_t20_bug008_independent`

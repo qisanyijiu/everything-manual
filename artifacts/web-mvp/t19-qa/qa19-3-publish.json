@@ -1,0 +1,18 @@
+{
+  "itemId": "01a0977b-ecb1-7337-b6e5-c440931a653c",
+  "draftId": "01a0977b-ee8c-759d-91a2-7d8192743317",
+  "releaseId": "01a0977b-efcf-76a4-b1e3-c147dfe2f714",
+  "revisionBeforePublish": 5,
+  "manifestSha256": "d162beebcf2fbc0a52a838516e19e741f879a0bb986241a36451dc5baceff8eb",
+  "issuesCodes": [
+    "modelReviewMissing",
+    "knowledgeUnreviewed",
+    "knowledgeUnreviewed",
+    "knowledgeUnreviewed",
+    "knowledgeUnreviewed",
+    "knowledgeUnreviewed",
+    "hotspotMissing",
+    "hotspotMissing"
+  ],
+  "replayedId": "01a0977b-efcf-76a4-b1e3-c147dfe2f714"
+}

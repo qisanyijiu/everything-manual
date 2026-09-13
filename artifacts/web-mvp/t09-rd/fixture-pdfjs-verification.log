@@ -1,0 +1,30 @@
+=== node 复核：fixture PDF 与 PDF.js 行为（T05 生成器 + T09 样例） ===
+命令：node /tmp/check-fixtures.mjs（使用 apps/web/node_modules/pdfjs-dist 6.3.289）
+text       {
+  ok: true,
+  pages: 2,
+  viewport: '595x842 rot=0',
+  text: 'Sample Manual - Synthetic Fixture (Page 1 of 2)|Model X100: self-built test document, not a real manual.|Step 1: Loosen the four captive screws on the rear cover.'
+}
+rotated p2 {
+  viewport: '842x595 rot=90',
+  text: 'Rotated fixture (page 2 of 2): this page is /Rotate 90.|Marker: ROTATE-PAGE-TWO'
+}
+many-pages {
+  ok: true,
+  pages: 101,
+  viewport: '595x842 rot=0',
+  text: 'Many pages fixture: page 1 of 101.'
+}
+encrypted (no password)  { ok: false, name: 'PasswordException', message: 'No password given' }
+encrypted (with password) { ok: true, pages: 1, viewport: '595x842 rot=0', text: '' }
+nonlatin   { ok: true, pages: 1, viewport: '595x842 rot=0', text: '' }
+
+=== 非拉丁字体页（解释性记录，不作为结论） ===
+在 Node 里用 pdfjs-dist legacy 构建打开 sample-manual-nonlatin.pdf 时，即使提供 cMapUrl
+（本机 HTTP 静态服务 cmaps/），也观察不到 CMap 请求且文字层为空：legacy 构建的 CMap
+读取走浏览器 XHR 路径，Node 无 XHR（check-nonlatin-cmaps.mjs 可复现）。
+该样例的权威证据在真实 Chrome 的 e2e：
+- pdf-preparation.spec.ts「非拉丁字体页」断言页文字资产内容含「部件一：松开四颗螺丝」，
+  并断言出现了本地请求 /vendor/pdfjs/cmaps/UniGB-UCS2-H.bcmap；
+- 「断外网」用例断言零外部请求、worker 与 CMaps 均来自本地 vendor 目录。

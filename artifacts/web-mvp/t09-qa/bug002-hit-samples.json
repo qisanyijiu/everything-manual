@@ -1,0 +1,36 @@
+[
+  {
+    "width": 1280,
+    "firstFrame": {
+      "tag": "A",
+      "linkText": "资料库",
+      "topBarBottom": 63,
+      "noticeTop": 63,
+      "noticesTopVar": "63px"
+    },
+    "settled": {
+      "tag": "A",
+      "linkText": "资料库",
+      "topBarBottom": 63,
+      "noticeTop": 63,
+      "noticesTopVar": "63px"
+    }
+  },
+  {
+    "width": 390,
+    "firstFrame": {
+      "tag": "DIV",
+      "linkText": null,
+      "topBarBottom": 138,
+      "noticeTop": 104,
+      "noticesTopVar": "104px"
+    },
+    "settled": {
+      "tag": "A",
+      "linkText": "资料库",
+      "topBarBottom": 138,
+      "noticeTop": 138,
+      "noticesTopVar": "138px"
+    }
+  }
+]

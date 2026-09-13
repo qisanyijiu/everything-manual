@@ -1,0 +1,30 @@
+
+== 0) 建 32 MiB 磁盘镜像并挂载（真实文件系统，真实 statvfs）
+  Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+  /dev/disk5s1    32Mi    20Ki    31Mi     1%       0  321k    0%   /private/tmp/em-t06-qa-mnt
+
+== 1) init + serve（data-dir 在镜像上）
+  init exit=0（/tmp/em-t06-qa-mnt/data 已建立）
+  PASS  health/ready = 200
+  item=8ac7d4d9-3565-4e3b-8a44-35c34a0b3d59
+
+== 2) 上传 40 MiB PDF（可用空间远小于它）→ 期望 413 + details.reason=insufficientStorage
+  PASS  HTTP 状态 = 413
+  PASS    error.code = PAYLOAD_TOO_LARGE
+  PASS    details.reason = insufficientStorage
+  message: 磁盘可用空间不足：本次上传至少需要 41943560 字节，当前可用 32415744 字节；请清理磁盘后重试（未保存任何资产）
+  PASS    tmp 无残留 = 0
+  PASS    blobs 无文件 = 0
+  PASS    无资产行 = 0
+  PASS    无 blob 行 = 0
+
+== 3) 小文件（可用空间内）仍可成功上传（证明不是把一切都拒掉）
+  PASS  pageText 201 = 201
+  PASS    blobs 文件数 = 1
+
+== 4) 记录写入期间的服务端错误日志（磁盘相关）
+  "level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"
+  "level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"
+  "level":"WARN","fields":{"message":"上传被拒绝","requestId":"01a09228-b6e9-76b9-8f28-c2c770542332","itemId":"8ac7d4d9-3565-4e3b-8a44-35c34a0b3d59","error":"磁盘空间不足：需要 41943560 字节，可用 32415744 字节"
+
+===== 磁盘满（真实环境）小结：PASS=10 FAIL=0 =====

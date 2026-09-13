@@ -1,0 +1,24 @@
+== 0) 建 64 MiB 镜像并挂载
+  Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+  /dev/disk5s1    64Mi    20Ki    63Mi     1%       0  647k    0%   /private/tmp/em-t06-qa-mnt2
+== 1) init + serve
+  init exit=0
+  item=8b72c512-1583-4087-93d6-7c087163540d  文件大小=41943248
+== 2) 限速上传 40 MiB，同时用填充文件占满磁盘
+  填充磁盘（dd 可能因空间不足退出，属预期）
+    dd 退出非零（磁盘已满）：dd: /tmp/em-t06-qa-mnt2/filler.bin: No space left on device
+  Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on
+  /dev/disk5s1    64Mi    61Mi   2.3Mi    97%      22   24k    0%   /private/tmp/em-t06-qa-mnt2
+  上传 HTTP 状态：500
+  响应体：{"error":{"code":"INTERNAL","message":"服务器内部错误：请稍后重试或查看服务端日志","details":null,"requestId":"01a09228-f465-75e0-ba39-6d240292e371"}}
+  日志（磁盘/写入相关）：
+    "level":"ERROR","fields":{"message":"上传失败","requestId":"01a09228-f465-75e0-ba39-6d240292e371","itemId":"8b72c512-1583-4087-93d6-7c087163540d","error":"内部错误：写入暂存文件失败：No space left on device (os error 28)"
+    "level":"ERROR","fields":{"message":"资产服务内部错误（细节只进服务端日志）","detail":"写入暂存文件失败：No space left on device (os error 28)"
+== 3) 半提交核对
+  assets 行：0
+  blobs  行：0
+  tmp 文件数：0
+  blobs 文件数：0
+  blobs 文件大小：
+  quarantine：0
+== 结束（镜像将在清理时卸载并删除）

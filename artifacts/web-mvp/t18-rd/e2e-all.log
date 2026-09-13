@@ -1,0 +1,30 @@
+  ✓  54 [chromium] › tests/e2e/viewer.spec.ts:206:3 › GLB 阅读器与资源恢复（T18） › OrbitControls：旋转/缩放/复位/适配与键盘等价控件（AC-050/UI-043） (3.6s)
+[2m[WebServer] [22m[2m19:25:17[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:18[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:19[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.WebGLRenderer: WEBGL_lose_context extension not supported.
+  ✓  55 [chromium] › tests/e2e/viewer.spec.ts:278:3 › GLB 阅读器与资源恢复（T18） › WebGL 上下文丢失 → 提示 → 恢复后继续渲染并保留相机（AC-050/UI-044） (4.3s)
+[2m[WebServer] [22m[2m19:25:22[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:22[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mWarning: getOperatorList - ignoring errors during "GetOperatorList: page 0" task: "Error: Worker task was terminated".
+[2m[WebServer] [22m[2m19:25:22[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  56 [chromium] › tests/e2e/viewer.spec.ts:331:3 › GLB 阅读器与资源恢复（T18） › 卸载/换模型：资源被释放、旧资源与旧热点不串入（AC-050/AC-051） (3.2s)
+[2m[WebServer] [22m[2m19:25:25[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:25[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:25[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:26[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:27[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:28[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m[2m19:25:28[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+T18 资源趋势：存活(geometry/material/texture)=1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1 1/1/1
+T18 堆用量采样（字节，Chrome 专有）：44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000, 44700000
+T18 堆用量首末比：1.00（1.0 附近为正常；不设阈值）
+  ✓  57 [chromium] › tests/e2e/viewer.spec.ts:386:3 › GLB 阅读器与资源恢复（T18） › 连续切换 10 次模型：资源数不增长（AC-062/REQ-040 的资源趋势） (6.0s)
+  ✓  58 [chromium] › tests/e2e/viewer.spec.ts:428:3 › GLB 阅读器与资源恢复（T18） › 3D 失败时文字与 PDF 仍可读（AC-050/UI-045） (3.0s)
+  ✓  59 [chromium] › tests/e2e/viewer.spec.ts:455:3 › GLB 阅读器与资源恢复（T18） › WebGL 不可用：给出可读原因，文字与 PDF 仍可用（UI-044/UI-045） (3.0s)
+[2m[WebServer] [22m[2m19:25:37[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✓  60 [chromium] › tests/e2e/viewer.spec.ts:484:3 › GLB 阅读器与资源恢复（T18） › AC-051 浏览器侧：同一局部点在不同旋转/缩放下世界位置一致、锚点不漂移 (3.0s)
+
+  60 passed (4.6m)

@@ -1,0 +1,30 @@
+# QA T03 old-schema v1 -> v2 upgrade (real binary) 2026-09-11T18:53:57Z
+init exit=0
+-- downgrade DB state to v1 (drop 0002 objects + delete v2 migration row; 0001 row stays genuine)
+0|0|0
+-- v1 state:
+1|1
+0
+升级前数据|3
+sha_before_check=14d59f25eeb7769ce043a45bb719df667b6e48a93851092ae424833d45c89de0
+--- check (expect exit 0, 待迁移)
+[检查] 数据库 schema：待迁移（库 v1 → 程序 v2；serve/init 启动时自动迁移，本命令不修改数据）
+结果：check 通过
+check exit=
+sha_after_check=14d59f25eeb7769ce043a45bb719df667b6e48a93851092ae424833d45c89de0
+CHECK_DID_NOT_MODIFY_DB=yes
+Error: in prepare, unrecognized token: "\"
+  SELECT COUNT(*) FROM sqlite_master WHERE type=\"trigger\";
+                                  error here ---^
+triggers_after_check=
+--- serve (expect auto-migrate to v2, exit 0 on SIGTERM)
+serve exit=0
+{"timestamp":"2026-09-11T18:53:57.823415Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/em-t03-qa/data3","schemaVersion":2},"target":"everything_manual::config::commands"}
+listening on http://127.0.0.1:51998
+{"timestamp":"2026-09-11T18:53:58.254189Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+--- post-upgrade state:
+1|1
+2|1
+4
+1
+升级前数据|3

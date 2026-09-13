@@ -1,0 +1,17 @@
+typecheck=0
+lint=0
+web-test=0
+build=0
+viewer-e2e=0
+cargo-test=0
+xtask-check=1
+qa-t18-e2e=1
+qa-t18-e2e-run2=1
+qa-t18-e2e-run3=1
+qa-t18-e2e-run4=1
+qa-t18-e2e-run5-t4=0
+xtask-check-final=0
+contracts-check=0
+dist=0
+smoke-bootstrap=0
+e2e-full=1

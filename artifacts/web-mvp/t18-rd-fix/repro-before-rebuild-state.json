@@ -1,0 +1,9 @@
+{
+  "说明": "手动「立即重建」后 5 秒的现场（QA 独立 GL draw 计数证明渲染已恢复）",
+  "modelsAlive": 1,
+  "drawsBeforeRebuild": 31,
+  "drawsAfterRebuild": 349,
+  "statusText": "3D 显示已中断，正在重建…",
+  "resetButtonDisabled": true,
+  "rebuildButtonVisible": true
+}

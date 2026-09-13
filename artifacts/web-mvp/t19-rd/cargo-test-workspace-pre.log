@@ -1,0 +1,23 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling manual-core v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/core)
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+error[E0425]: cannot find function `releases_count` in this scope
+    --> crates/server/tests/qa_t15_independent.rs:1425:9
+     |
+1066 | async fn release_count(pool: &SqlitePool) -> i64 {
+     | ------------------------------------------------ similarly named function `release_count` defined here
+...
+1425 |         releases_count(&pool, "manual_releases", None).await,
+     |         ^^^^^^^^^^^^^^
+     |
+help: a function with a similar name exists
+     |
+1425 -         releases_count(&pool, "manual_releases", None).await,
+1425 +         release_count(&pool, "manual_releases", None).await,
+     |
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `everything-manual` (test "qa_t15_independent") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

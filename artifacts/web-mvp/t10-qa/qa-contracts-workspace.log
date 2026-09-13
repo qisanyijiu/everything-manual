@@ -1,0 +1,75 @@
+=== #1 cargo xtask contracts --check
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.26s
+     Running `target/debug/xtask contracts --check`
+$ (cd /Users/qsyj/Code/rust/everything-manual/apps/web && /Users/qsyj/Code/rust/everything-manual/apps/web/node_modules/.bin/openapi-typescript /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-33236/openapi.json -o /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-33236/generated.ts)
+✨ openapi-typescript 7.13.0
+🚀 /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-33236/openapi.json → /var/folders/5y/y4jt01gd7mzglrwt5pf7p3m00000gn/T/everything-manual-contracts-check-33236/generated.ts [63.1ms]
+  [一致] contracts/openapi.json
+  [一致] apps/web/src/api/generated.ts
+合同检查通过：openapi.json 与 generated.ts 均与 Rust DTO 一致。
+CONTRACTS_EXIT=0
+=== #2 cargo test --workspace
+test jobs::tests::only_unsubmitted_statuses_are_cancellable ... ok
+test jobs::tests::parent_job_status_priority_and_branch_isolation ... ok
+test jobs::tests::poll_ramp_and_wait_budget ... ok
+test jobs::tests::retry_budget_and_retry_after_cap ... ok
+test jobs::tests::transition_table_matches_contract ... ok
+test tests::api_prefix_is_versioned ... ok
+test timestamps::tests::arithmetic_is_checked ... ok
+test tests::error_code_wire_format_is_screaming_snake_case ... ok
+test timestamps::tests::plain_and_fractional_seconds_both_parse ... ok
+test validation::tests::create_reports_too_long_fields_by_char_count ... ok
+test timestamps::tests::rfc3339_round_trip_and_serde ... ok
+test validation::tests::create_requires_name_and_model_and_trims ... ok
+test validation::tests::page_number_is_one_based_and_bounded ... ok
+test validation::tests::document_title_and_url_rules ... ok
+test validation::tests::patch_empty_body_is_rejected ... ok
+test validation::tests::patch_null_clears_optional_fields ... ok
+test validation::tests::patch_null_on_required_fields_is_an_error ... ok
+test validation::tests::photo_view_field_lists_allowed_values ... ok
+test validation::tests::viewport_rejects_zero_size_oversize_and_bad_rotation ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/test_support-e82de81faf58326d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/generate_fixtures.rs (target/debug/deps/generate_fixtures-1df1049b9db44c5c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/xtask-3423990994a3e710)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests everything_manual
+
+running 1 test
+test crates/server/src/storage/repo/items.rs - storage::repo::items (line 16) ... ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.76s; merged doctests compilation took 0.34s
+   Doc-tests manual_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests test_support
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+WORKSPACE_TESTS_EXIT=0

@@ -1,0 +1,7 @@
+== QA 回合 27 · BUG-011 现场（dist f68d14874936b74f70aaa99b0eb8462396e933344a4495653ed239ba8838ac02 ）
+  源库 needs_input_json = [{"code": "download_insecure_scheme", "message": "模型下载必须使用 HTTPS（实际 http://cdn.qa27.invalid/m.glb）：拒绝下载"}]
+  快照 needs_input_json = [{"code":"download_insecure_scheme","message":"模型下载必须使用 HTTPS（实际 （临时供应商地址已脱敏：host=cdn.qa27.invalid；sha256=b7a5b2bfabe7289b…））：拒绝下载"}]
+  恢复库 stage.status   = needs_input
+  恢复库 needsInput     = [{'code': 'download_insecure_scheme', 'message': '模型下载必须使用 HTTPS（实际 （临时供应商地址已脱敏：host=cdn.qa27.invalid；sha256=b7a5b2bfabe7289b…））：拒绝下载'}]
+  恢复库 needsInput 条数 = 1
+== 结论：若'恢复库 needsInput 条数 = 0'而源库/快照行不可解析 → BUG-011（备份快照把整条 message 替换为摘要对象，恢复后缺项静默消失）

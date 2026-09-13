@@ -1,0 +1,15 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.22s
+     Running tests/qa_t13_independent.rs (target/debug/deps/qa_t13_independent-6fefcc67a5ae0bf2)
+
+running 2 tests
+QA27 manual needs_input = [{"code":"manual_ai_refusal","message":"模型拒答（refusal）：无法从页图可靠识别；下载参考 （临时供应商地址已脱敏：host=cdn.qa27.invalid；sha256=f9afd5092646d902…） 也失败；该批不产生正式知识（不自动重试、不重复付费），请人工复核后对该批重新授权重算"}]
+QA27 manual needs_input = [{"code":"manual_ai_refusal","message":"模型拒答（refusal）：无法从页图可靠识别；下载参考 （临时供应商地址已脱敏：host=cdn.qa27.invalid；sha256=98628d5988274611…） 也失败；该批不产生正式知识（不自动重试、不重复付费），请人工复核后对该批重新授权重算"}]
+test qa_r28_usage_json_new_writes_never_contain_url_scheme ... ok
+test qa_bug012_provider_text_signed_url_must_not_be_persisted_into_usage_json ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.95s
+
