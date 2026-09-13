@@ -1,0 +1,57 @@
+== 容器内有什么（应为：无 node/python/cargo/源码） ==
+node     未安装
+python3  未安装
+python   未安装
+cargo    未安装
+rustc    未安装
+git      未安装
+根目录条目：bin
+dev
+etc
+home
+lib
+media
+mnt
+opt
+proc
+root
+run
+sbin
+srv
+sys
+tmp
+usr
+var
+工作目录：/
+== 二进制 ==
+-rwxr-xr-x    1 root     root      28236728 Sep 13 14:44 /opt/em/everything-manual
+== init（全新 data-dir，无人值守密码文件） ==
+  [检查] 权限过宽的密码文件被拒绝（fail-closed，退出码 3）
+{"timestamp":"2026-09-13T14:54:27.317236Z","level":"INFO","fields":{"message":"data-dir 初始化完成","event":"init","dataDir":"/work/data","passwordSource":"受限文件 /work/pw","schemaVersion":7,"adminId":"01a09b43-31f3-7620-b093-31e4a2e0a14e","adminStatus":"已创建"},"target":"everything_manual::config::commands"}
+data-dir 已初始化：/work/data
+  - 目录已存在：/work/data
+  - 已创建：/work/data/tmp
+  - 已创建：/work/data/logs
+  - 已创建：/work/data/blobs
+  - 已创建：/work/data/lock
+数据库：已创建并迁移（/work/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /work/pw；明文不落盘、不进入日志与 shell history。
+init exit=0
+== serve（冷启动；仅内嵌资源） ==
+  [检查] GET /（内嵌 index.html）       -> 200（期望 200）
+  [检查] GET /assets/index-D2JcMJ4C.js      -> 200（期望 200）
+  [检查] GET /assets/index-CE8-SplE.css     -> 200（期望 200）
+  [检查] GET /vendor/pdfjs/cmaps/78-EUC-H.bcmap -> 200（期望 200）
+  [检查] GET /api/v1/health/live            -> 200（期望 200）
+  [检查] GET /api/v1/health/ready           -> 200（期望 200）
+  [检查] GET /api/unknown（JSON 404）     -> 404（期望 404）
+  [检查] GET /library/some-item（SPA 回退） -> 200（期望 200）
+  [检查] GET /assets/definitely-missing.js  -> 404（期望 404）
+  [说明] JSON 404 的内容类型断言由 smoke-bootstrap 覆盖（busybox wget 无法展示 404 响应头）
+== 停服（SIGTERM） ==
+停服后 serve.log 末尾：
+{"timestamp":"2026-09-13T14:54:27.560098Z","level":"INFO","fields":{"message":"任务执行器已停止领取","event":"job_executor_stopped","owner":"44:01a09b43-3244-7038-af7e-4167bce6312b"},"target":"everything_manual::jobs::executor"}
+{"timestamp":"2026-09-13T14:54:27.563032Z","level":"INFO","fields":{"message":"收到终止信号，服务已停止","event":"serve_stop"},"target":"everything_manual::config::commands"}
+已停止：data-dir 排他锁已释放。
+== 冷启动检查失败项：0 ==

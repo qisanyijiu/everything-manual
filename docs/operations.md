@@ -25,10 +25,24 @@ sha256sum -c SHA256SUMS         # Linux
 | 平台 | 状态 | 证据 |
 | --- | --- | --- |
 | macOS Apple Silicon（`aarch64-apple-darwin`） | 已构建并自证（原生构建 + 可复现哈希 + 冷目录 smoke 7 步 + 断网复检）；**尚未经独立 QA 验收** | `cargo xtask dist --target aarch64-apple-darwin`（本地 `dist/` 已按用户要求清理，可由该命令重建，哈希可复现） |
-| Linux x86_64 静态（`x86_64-unknown-linux-musl`） | **未验证**（构建与运行证据均缺失：本机 Docker 引擎故障，环境阻塞；脚本 `scripts/linux-musl.sh`、CI `dist-musl` job 已就绪但未执行） | — |
+| Linux x86_64 静态（`x86_64-unknown-linux-musl`） | 已构建并自证（Linux 容器内原生 `dist` + 原生 `smoke` 7 步 + `--network none` 整条 smoke + 静态链接与 0 动态依赖）；**尚未经独立 QA 验收** | `scripts/linux-musl.sh --arch amd64`、`scripts/linux-musl.sh --offline-only`；证据 `artifacts/web-mvp/t22-rd/linux/`，摘要见 [implementation §T22](../llmdoc/requirements/web-mvp/implementation.md) |
 | Windows / Intel macOS | **未支持**（未构建、未运行） | — |
 
-按 `validation-release.md` §6：**未跑平台不得贴支持标签**；Linux 平台在取得原生运行证据前不得对外声明支持。
+按 `validation-release.md` §6：**未跑平台不得贴支持标签**。
+
+Linux 侧复现（Apple Silicon 宿主上跑 x86_64 容器，Rosetta 执行）需要 Docker：
+
+```sh
+scripts/linux-musl.sh --arch amd64          # 复制工作树 → 容器内原生 dist + file/ldd + smoke 7 步
+scripts/linux-musl.sh --offline-only        # docker run --network none 跑整条 smoke（离线读取证据）
+scripts/linux-musl.sh --prepare-sample-backup   # 样例备份缺 DB 时重新生成（见下）
+```
+
+**样例备份的已知坑**：`artifacts/web-mvp/t20-rd/sample-backup/database/manual.sqlite3`
+被 `.gitignore` 的 `*.sqlite3` 排除，因此**全新 clone 里没有它**，`cargo xtask smoke`
+的第 2 步会报"备份快照数据库缺失"（这是环境缺文件，不是产品缺陷）。用
+`scripts/linux-musl.sh --prepare-sample-backup`（容器内）或按 T20 的手工演练说明用
+`cargo test … prepare_rehearsal_datadir` + `backup` 重新生成一份自洽备份。
 
 macOS 二进制**未做代码签名与公证**（需要用户账号授权）：在其它机器首次运行需在
 「系统设置 → 隐私与安全性」按 Gatekeeper 提示放行，或由所有者用自有证书签名。
@@ -130,6 +144,11 @@ mkdir -p /srv/manual-data            # 数据目录：独立、可写、随备�
 - 正式包验收：`cargo xtask smoke --binary <绝对路径>`（7 步：冷目录 → 样例备份 restore → 登录/
   资源/路由 → Range/HEAD/未配置拒绝 → 断网读取 → 重启持久化 → backup→restore 再读）；
   这是**发布包检查**，与 T01 的 `smoke-bootstrap` 不同。
+  样例备份不在仓库里完整存在时，先按 §1 的 `--prepare-sample-backup` 重新生成。
+- Linux 侧（Apple Silicon / 任意宿主）：见 §1 的 `scripts/linux-musl.sh` 三条命令；
+  容器内是**原生 Linux x86_64 构建与运行**（`file` 结论为 `static-pie linked`、`ldd` 为
+  `statically linked`、`DT_NEEDED` 为 0），离线读取证据由 `--network none` 整条 smoke 提供。
 - CI：`.github/workflows/ci.yml`（推送到 master / PR 触发）跑 `cargo xtask check`，并在
-  `dist-musl` job 中原生构建 Linux musl 产物与 smoke。CI **未**覆盖浏览器矩阵（Firefox/Edge）、
-  macOS 构建与真实 Provider（需授权，属 T23）。
+  `dist-musl` job 中原生构建 Linux musl 产物与 smoke（该 job 会先用 T20 造数用例重建样例备份，
+  因为 `*.sqlite3` 不入库）。CI **未**覆盖浏览器矩阵（Firefox/Edge）、macOS 构建与
+  真实 Provider（需授权，属 T23）。

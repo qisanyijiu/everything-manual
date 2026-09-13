@@ -1,0 +1,2 @@
+[host-step] rsync-worktree       exit=0 elapsed=1s
+[host-step] docker-build-and-smoke exit=0 elapsed=129s

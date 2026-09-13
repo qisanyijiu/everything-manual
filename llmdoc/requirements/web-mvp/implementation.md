@@ -6199,7 +6199,8 @@ test result: FAILED. 0 passed; 2 failed; 0 ignored; 1 filtered out
 
 # T22 交付记录 —— 多平台单二进制发布
 
-状态：**RD_READY（部分：macOS 完成；Linux x86_64-musl BLOCKED）** · PRD 修订：2（ui_revision 2）·
+状态：**RD_READY**（macOS 见 T22-1…T22-12；Linux x86_64-musl 见 **T22-13**（2026-09-13 续做，
+原 BLOCKED 已解除）；两平台均已交付，**待 QA 独立验收**）· PRD 修订：2（ui_revision 2）·
 任务：T22 · 日期：2026-09-13
 派发范围：T22 卡（PRD §3 **REQ-001 / REQ-042**、§4 **AC-002 / AC-064 / AC-059**（+ AC-063 缺口标注）、
 §5.6 必选平台与部署边界）；validation-release **§2 命令合同**（`dist` / `smoke`）、**§6 平台发布矩阵**、
@@ -6408,3 +6409,190 @@ xtask/src/util.rs     sha256_bytes / host_triple / capture_in_with_stderr / run_
 
 **QA 复现提示**：`smoke` 的 7 步日志在 `artifacts/web-mvp/t22-rd/smoke-macos.log`；`--keep` 可保留
 临时目录；`--skip-offline-sandbox` 只在排障时使用（会跳过断网复检，不得据此声称离线通过）。
+
+## T22-13 Linux x86_64-unknown-linux-musl 平台验证（2026-09-13 续做；解除原 BLOCKED）
+
+状态：**已交付，待 QA 复验**（不自行签发 PASS）· PRD 修订：2（ui_revision 2）· 任务：T22（Linux 半边）·
+回合：QA 回合 30 待验 · 依赖：T22 macOS 半边（T22-1…T22-12，未改动、未重做）。
+证据根目录：`artifacts/web-mvp/t22-rd/linux/`（大日志），llmdoc 只记结论与摘要。
+
+### T22-13.1 执行的命令与真实结果（退出码 / 耗时）
+
+| # | 命令 | 退出码 | 耗时 | 结果 |
+| --- | --- | --- | --- | --- |
+| 1 | `scripts/linux-musl.sh --prepare-sample-backup --arch amd64` | 0 | 49 s（容器内 造数 32 s + backup 0 s） | 重新生成自洽样例备份（原因见 T22-13.4 ③）；`sha256sum -c SHA256SUMS` 通过 |
+| 2 | `scripts/linux-musl.sh --arch amd64`（首次完整跑通） | 0 | 容器 532 s（冷依赖：apt/Node/rustup 下载 + 全量编译 340 s + smoke 67 s） | dist + `file`/`ldd`/`readelf` + smoke 7 步全过 |
+| 3 | `scripts/linux-musl.sh --check-reproducible --arch amd64`（产出最终证据） | 0 | 容器 104 s（含独立重链接） | 两次独立构建 sha256 一致；smoke 7 步再跑通过 |
+| 4 | `scripts/linux-musl.sh --offline-only --arch amd64` | 0 | 4 s（容器内 smoke 3 s） | `--network none` 下整条 smoke 7 步全过（AC-059 Linux 侧） |
+| 5 | `scripts/linux-musl.sh --check --arch amd64`（Linux 侧回归；复跑 3 次） | **1** | 容器 210 s / 99 s / 46 s（冷→热） | `cargo fmt --check`✓、`clippy --workspace --all-targets -D warnings`✓、前端 lint/typecheck/vitest 130✓、`contracts --check`✓；`cargo test --workspace` **1 例失败**（3 次同一例，结论稳定）→ 见 T22-13.6（新发现，非 T22 引入） |
+| 6 | 容器内 `cargo test --workspace --no-fail-fast`（补跑，枚举范围） | 0（cargo 汇总报 1 个 target 失败） | — | 37 个测试目标：**557 passed / 1 failed / 2 ignored**（macOS 基线 558/0/2）；唯一失败＝T22-13.6 那一例 |
+| 7 | 容器内 `cargo xtask smoke-bootstrap --binary <dist>`（T01 最小链回归） | 0 | — | 7×`[检查]` 通过（内嵌页面/静态资源/health，与 macOS 侧同口径）；`regression/smoke-bootstrap.log` |
+| 8 | `ruby -ryaml -e 'YAML.load_file(".github/workflows/ci.yml")'` | 0 | — | YAML 合法；`dist-musl` job 新增"重建 T20 样例备份"步骤 |
+
+命令入口都走仓库脚本（`scripts/linux-musl.sh`），没有自建旁路流程；构建与运行**都在 Linux 容器内原生执行**
+（`env-report.log`：`uname` Linux 6.12.76-linuxkit、`arch x86_64`、rustc 1.98.1 x86_64-unknown-linux-gnu、
+clang/cmake/musl-gcc 版本、10 vCPU）。宿主是 Apple Silicon，容器为 `linux/amd64`，`/proc/cpuinfo`
+报 `VirtualApple @ 2.50GHz`＝**Rosetta 加速**（非 QEMU 纯软件模拟）。
+
+### T22-13.2 产物、静态链接与隔离（AC-064 Linux 半边）
+
+- 产物目录 `dist-x86_64-unknown-linux-musl/`：`everything-manual`、`SHA256SUMS`、`licenses.json`(v2)、
+  `build-info.json`、`dynamic-dependencies.txt`（`assert_clean_output_dir` 白名单通过）。
+- 二进制：sha256 **`77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246`**，
+  **28 236 728 B**（`binary-hash.log` 在 Linux 内计算；`SHA256SUMS` 同值）。
+- 静态链接（`build-file-ldd.log`，`file`/`ldd`/`readelf -d` 原始输出）：
+  `ELF 64-bit LSB pie executable, x86-64 … static-pie linked`；`ldd` → `statically linked`；
+  `readelf -d` 全文 + **DT_NEEDED 条目数 = 0** → 无外部动态库依赖（§6 的 Linux 依赖结论）。
+- `dynamic-dependencies.txt` 由 `dist` 写入同一结论（`staticLinked: true`、`samePlatformAsBuild: false`、
+  `host: x86_64-unknown-linux-gnu`、`target: x86_64-unknown-linux-musl`）：**如实标注 triple 不相同**
+  （见 T22-13.4 ⑥ 的判据细化），不冒充"同 triple 原生构建"。
+- 隔离扫描（`build-info.json.isolation`）：**`hits: 0`**、`remappedHomePathHits: 559`、
+  `remappedRepoPathHits: 0`、`nodeModulesLiteralHits: 0`；禁用模式为
+  `/src/everything-manual`（仓库根）、`…/apps/web/dist`、`…/apps/web/node_modules`、`/root`（HOME）。
+- `licenses.json` v2：Rust **205** 包（2 项未知许可证）、前端 **40** 包（MIT 38 / Apache-2.0 1 /
+  BSD-3-Clause 1）。与 macOS 的 203 包差 2 个目标平台相关依赖（target 过滤的结果，非清单缺失）。
+- `signature.signed=false / notarized=false`（未做签名公证，需用户账号）；`deployment` 记录
+  loopback／受信反代边界与"无内置 TLS 监听"。
+- 可复现：`--check-reproducible` 清理本包构件后**独立重链接**，sha256 仍为 `77b38c91…`（第 3 行命令）。
+
+### T22-13.3 `smoke` 7 步逐项（validation-release §7；日志 `smoke-console.log`）
+
+| §7 步 | Linux 实测 |
+| --- | --- |
+| 1 冷目录只放 binary | `[步骤 1]` 通过（`/tmp/everything-manual-smoke-…`，无源码/dist/Node） |
+| 2 restore + init + 生产构图 | `restore` 退出码 0：校验 manifest、快照与 11 个 blob 的 sha256、外键与引用；独立空目录 `init`+`check` 通过；`serve --listen 127.0.0.1:<随机>` 启动（子进程环境清空、工作目录不在仓库内） |
+| 3 登录/首页/嵌套路由/本地资源 | `/` 200 HTML(539 B)；`index-D2JcMJ4C.js` 200(409 200 B)、`index-CE8-SplE.css` 200(18 901 B)；PDF.js `cmaps`/`standard_fonts`/`wasm`/`iccs` 与 `pdf.worker.min-Dswkl-cV.mjs` 均 200；嵌套路由刷新 200（SPA 回退）；未登录 `/api/v1/items` 401 |
+| 4 Range/HEAD/持久化/未配置拒绝 | GLB 2912 B、PDF 1216 B：完整 GET 200 + sha256 与 manifest 一致 + ETag 一致 + `Range: bytes=0-99` → 206 前缀一致 + HEAD 200 无 body；`POST /items/{id}/estimates` → **409 `PROVIDER_NOT_CONFIGURED`**；`/health/ready` = ready；`providersConfigured=false` |
+| 5 断外网仍可读 | Linux 无 `sandbox-exec`，smoke 打印"本平台无 sandbox-exec：跳过沙箱复检（Linux 请用 `docker run --network none` 运行整条 smoke）"；**该步证据由第 4 行命令（离线轮）提供**——整条 smoke 在无网络命名空间内 7 步全过 |
+| 6 停服重启数据仍在 | 停服（只结束自启动 PID）→ 同 data-dir 重启 → 模型/PDF sha256 与首轮一致 |
+| 7 backup → 新目录 restore → 再读 | 正式二进制 `backup`（停服后一致快照）→ `restore` 新目录 → 启动 → 同一 release 可读，manifest/模型/PDF sha256 与首轮一致 |
+
+**离线证据（AC-059 Linux 侧）**：`artifacts/web-mvp/t22-rd/linux/offline/`
+- `network-none-probe.log`：容器内核路由表 `/proc/net/route` 只有表头（**无默认路由**）、
+  `getent hosts registry.npmjs.org` 解析失败、`curl https://static.crates.io/` → `http_code=000`
+  → 断网自证，不依赖调用方口头声明；
+- `offline-smoke-console.log`：同一命名空间内 smoke 7 步全过（步骤 1→7 全部 `[检查]` 通过）。
+
+### T22-13.4 本轮在 Linux 路径上发现并修复的真实缺陷（脚本范围）
+
+① **容器挂载点与 dist 隔离扫描自撞**：隔离扫描把"仓库根"当**子串**搜二进制。实测两次误报：
+   - 挂载 `/build`：remap 目标 `/build/home`、`/build/repo` 自身含 `/build` → 命中；
+   - 挂载 `/work`：依赖 panic 路径里极常见的 `.../worker.rs`（sqlx/tokio 等 5 处）含 `/work` → 命中。
+   修复：容器挂载点改为 `/src/everything-manual`（带项目名的深路径，`EM_LINUX_WORK_MOUNT` 可覆盖）。
+   **不**放宽扫描（子串语义保持不变），因为这是构建环境问题不是产品问题。
+② **CARGO_HOME 必须与 RUSTUP_HOME 成对且位于 HOME 之下**：rustup 要求自身安装在 `$CARGO_HOME/bin`；
+   同时 `dist` 的隔离扫描以 `$HOME` 为归一化锚点——`CARGO_HOME` 若在 `$HOME` 之外，registry/src 的
+   构建机路径既不会被 remap 归一化、也不会被扫描拒绝（＝运行包带脏路径）。脚本固定
+   `HOME=/root`、`CARGO_HOME=/root/.cargo`（从镜像 `/usr/local/cargo` 播种）、`RUSTUP_HOME=/usr/local/rustup`。
+③ **样例备份缺 DB 导致 §7 第 2 步必然失败**：`artifacts/web-mvp/t20-rd/sample-backup/database/manual.sqlite3`
+   被 `.gitignore` 的 `*.sqlite3` 排除，全新 checkout 里没有它（manifest/SHA256SUMS 在版本控制、DB 不在）。
+   修复：新增 `--prepare-sample-backup`，用仓库自己的 T20 造数用例（`prepare_rehearsal_datadir`，
+   口令常量与 smoke 默认一致）+ 正式二进制 `backup` 重新生成一份自洽备份，落在构建目录（不回写仓库）；
+   宿主脚本在仓库备份不完整时**拒绝用仓库那份覆盖**已生成的完整备份（否则 manifest 与 DB 对不上）。
+④ **挂载点变化会让 target/ 复用旧 build script**：build script 二进制把编译期 `CARGO_MANIFEST_DIR`
+   烧进 `cargo:rerun-if-changed=<旧路径>/migrations`，cargo 指纹只看源码 mtime，于是**复用旧 build script**，
+   `build.rs` 按旧路径找 `apps/web/dist` 并 panic。修复：缓存目录记 `work-mount.txt`，挂载点变化时清 `target/`、`dist/`。
+⑤ **传输镜像**：本环境 `deb.debian.org`(http) 503/未签名、`static.rust-lang.org` TLS 握手 EOF、
+   `static.crates.io` 约 45 KB/s 且常失败、`registry.npmjs.org` 不可达。脚本默认改用实测可达镜像
+   （apt `https://mirrors.ustc.edu.cn`（debian 与 debian-security 是两条不同路径）、rustup `https://rsproxy.cn`、
+   crates sparse `https://rsproxy.cn/index/`（`CARGO_SOURCE_CRATES_IO_REPLACE_WITH`，ADR-010 的机制）、
+   npm `https://registry.npmmirror.com`、Node 二进制 npmmirror）。**只换传输来源**：rustup 校验 sha256 清单、
+   npm ci 校验 package-lock 的 integrity、cargo 校验 Cargo.lock checksum；`Cargo.lock` 的 source 仍是官方 crates.io。
+   另把容器内 Node 从 v22.20.0 提到 **v22.22.2**：`jsdom@30` 声明 `engines.node ^22.22.2`，v22.20.0 会触发
+   npm EBADENGINE 警告（工具链与锁文件声明不符）。
+⑥ **`dist` 动态依赖采集判据细化**：原实现要求 `target == host` 才采集，于是
+   `x86_64-unknown-linux-gnu` 主机上的 `x86_64-unknown-linux-musl` 产物被标成"跨构建→未采集"，
+   而 §6/T22 交接要求每平台动态依赖清单。改为**同架构同 OS 即采集**（gnu→musl 只差 libc/ABI，
+   且该产物就在同一环境被 smoke 真实运行）；跨架构/跨 OS（如 macOS 构建 Linux）仍写"未采集"。
+   `build-info.json` 如实保留 `crossCompiled: true` 与 `samePlatformAsBuild: false`，不制造"原生 triple"假象。
+   同时 `dynamic-dependencies.txt` 改为**不截断**输出 `readelf -d` 并给出 `DT_NEEDED` 计数。
+⑦ **macOS `bash 3.2` 把全角标点当变量名字符**：`"$BUILD_DIR）"` 会解析成变量 `BUILD_DIR）` →
+   `unbound variable`（本轮真实踩到，宿主脚本收尾步骤因此中断）。已对两脚本中"变量紧跟全角标点"的写法
+   统一加 `${}`（容器内 bash 5 无此问题，但同一脚本在 macOS 上跑就必须修）。
+⑧ **工作树同步的 `--delete` 会清掉上一轮的容器日志**：`rsync -a --delete` 时源里没有
+   `xtask-check.log` 等生成物 → 被删（失败轮的排查证据丢失，本轮真实发生）。已在排除表加入 `*.log`
+   （仓库不跟踪任何非 `artifacts/` 的 `.log`，已核对）。
+
+### T22-13.5 与 macOS 半边的差异（不覆盖、不替代）
+
+| 项 | macOS aarch64（T22-1…T22-12） | Linux x86_64-musl（本轮） |
+| --- | --- | --- |
+| binary sha256 / 大小 | `ab693cc3…` / 25 112 080 B | `77b38c91…` / 28 236 728 B |
+| 动态依赖 | `otool -L` 仅 4 个系统库 | 静态 musl：0 动态依赖（DT_NEEDED=0） |
+| 离线证据形式 | `sandbox-exec` 断网沙箱 | `docker run --network none` 跑整条 smoke + 断网自证 |
+| 可复现 | 3 次构建同哈希 | `--check-reproducible` 独立重链接同哈希 |
+| licenses.json | rust 203 / web 40 | rust 205 / web 40（目标过滤差异） |
+
+### T22-13.6 新发现（未修复；需协调者/QA 决定归属）
+
+`cargo test --workspace` 在 Linux 容器内 **1 例必现失败**（macOS 上 T21 回合 29 为 558/0/2，故非本轮改动引入；
+本轮 `crates/**` 未改）：
+
+- 用例：`crates/server/tests/backup_restore.rs::legacy_schema_backup_restores_and_migrates_automatically`
+  （第 2390 行 `assert_eq!(exit, 0, "serve 应优雅退出")`，实得 `left: -1` ＝ 进程被信号杀死而非退出 0）。
+- 复现：容器内 `cargo test -p everything-manual --test backup_restore -- --exact legacy_schema_backup_restores_and_migrates_automatically`
+  连续 3 次均失败（0.8 s 内），stderr 为空、无 panic；`ServeProcess::terminate()` 用 `kill -TERM`。
+- 定位（读代码）：`crates/server/src/config/commands.rs` 的 `run_serve` 先 `println!("listening on …")`，
+  之后才把 `shutdown_signal()` 交给 `axum::serve(...).with_graceful_shutdown(...)`；而
+  `shutdown_signal()` 里的 `tokio::signal::unix::signal(SignalKind::terminate())` **在被 poll 时才注册**
+  → "打印 listening 之后、serve 首次 poll 之前"存在一个窗口，窗口内到达的 SIGTERM 走默认动作直接杀进程。
+  测试在读到 stdout 标记后立刻发信号，容器（Rosetta）下该窗口稳定命中，macOS 上则未命中。
+- 影响：不是数据损坏（锁与 SQLite 由 OS 回收），但**该窗口内 SIGTERM 不会优雅停服**；同容器内其他
+  SIGTERM 用例（`config_cli.rs` 12+13 例）通过，说明稳态停服正常。
+- 未修复原因：属产品代码（`crates/**`），超出本卡"产品代码零改动"的既有口径；且改动产品代码会使已交付的
+  macOS 证据（同一 commit 要求）需要重跑。**建议**：由 PM/协调者决定是否作为 T20/T21 缺陷单派发
+  （最小修法：在打印启动协议行之前先注册 SIGTERM/SIGINT 处理器，再交给 `with_graceful_shutdown`），
+  并在修复后按 T22 要求重跑两平台证据。
+
+### T22-13.7 已知限制（本轮）
+
+1. 容器是 **x86_64 模拟执行（Rosetta）**，非真实 x86_64 硬件；耗时数字只作参考（冷启动约 9 分钟、
+   热构建约 100 秒）。`file`/`ldd` 结论与架构无关，可采信；性能类结论不得引用本环境。
+2. `build-info.json.crossCompiled=true`、`dynamicDependencies.samePlatformAsBuild=false` 如实保留：
+   triple 不同名（gnu 主机 / musl 目标），证据强度按"同架构同 OS 的真实构建与真实运行"记录。
+3. 样例备份用的是**重建件**（T22-13.4 ③）：11 个 blob 的种类/大小与仓库 tracked 版本一致，
+   其中 3 个 JSON blob（含时间戳的 manifest 类内容）哈希不同；GLB 2912 B、PDF 1216 B 与 tracked 版本一致。
+4. 未做代码签名/公证（需用户账号）；未跑真实 Provider（属 T23）；Windows/Intel macOS 未构建未运行。
+5. `.github/workflows/ci.yml` 仍未推送、未触发；本轮按其口径补齐了"重建样例备份"步骤（YAML 校验通过）。
+6. AC-063（Chrome/Edge/Firefox 矩阵）仍缺口，沿用 T21 结论，本卡不闭环。
+7. `smoke` 的 Range/HEAD 覆盖 GLB 与 PDF 各一段，未逐一枚举页图/照片（与 T21 矩阵一致）。
+
+### T22-13.8 本轮改动文件
+
+```text
+scripts/linux-musl.sh               挂载点/缓存/样例备份/离线/回归/可复现 编排；分步退出码与耗时；bash 3.2 全角标点修复；
+                                    rsync 排除 *.log（避免 --delete 清掉上一轮排查日志）
+scripts/container-linux-musl.sh     传输镜像与 apt 镜像；Node 22.22.2；离线断网自证；样例备份重建；--check 回归；
+                                    readelf 全文 + DT_NEEDED 计数；分步退出码与耗时
+xtask/src/dist.rs                   动态依赖采集判据（同架构同 OS）＋不截断 readelf ＋结论字段；JSON 增加 host/target/
+                                    samePlatformAsBuild；跨平台时的说明文案
+.github/workflows/ci.yml            dist-musl job 新增"重建 T20 样例备份（*.sqlite3 不入库）"
+docs/operations.md                  §1 平台支持表更新为 Linux 已自证；新增 scripts 用法与样例备份坑；§9 构建与 CI 说明
+llmdoc/decisions.md                 ADR-036（本轮容器路径的取舍与踩坑，见该 ADR）
+llmdoc/validation-release.md        §9 执行记录追加本轮 Linux 行
+llmdoc/requirements/web-mvp/implementation.md  本节（T22-13）＋ §T22 状态行更新
+artifacts/web-mvp/t22-rd/linux/**   原始日志与终端产物（见 T22-13.9）
+```
+
+未改动：`crates/**`（产品代码）、`contracts/openapi.json`、`apps/web/**`、PRD、任务卡、其他 llmdoc 语义。
+
+### T22-13.9 证据索引（`artifacts/web-mvp/t22-rd/linux/`）
+
+- 构建/冒烟：`host-run.log`、`host-steps.log`、`build-dist.log`、`build-file-ldd.log`（file/ldd/readelf）、
+  `binary-hash.log`、`smoke-console.log`（7 步）、`steps.log`、`env-report.log`、`rustup-*.log`
+- 产物：`dist-x86_64-unknown-linux-musl/{everything-manual,SHA256SUMS,licenses.json,build-info.json,dynamic-dependencies.txt}`
+- 离线：`offline/{network-none-probe.log,offline-smoke-console.log,offline-steps.log,offline-host-steps.log}`、`offline-host-run.log`
+- 回归：`regression/{xtask-check.log,smoke-bootstrap.log,host-steps.log}`、`regression-host-run.log`（宿主总日志）、
+  `cargo-test-workspace-nff.log`（37 目标 557/1/2 的完整枚举）
+- 其他：`sample-backup-gen.log`（样例备份重建）、`reproducible-host-run.log`（可复现轮）
+- CI 自检：`.github/workflows/ci.yml`（YAML 合法；含重建样例备份步骤；仍未推送未触发）
+
+### T22-13.10 QA 复现入口（命令 ↔ AC）
+
+| AC | 命令 | 期望 |
+| --- | --- | --- |
+| AC-064（Linux 半边） | `scripts/linux-musl.sh --check-reproducible --arch amd64` | exit 0；`dist-x86_64-unknown-linux-musl/` 5 件产物；sha256 `77b38c91…`；独立重建同哈希；`file`=`static-pie linked`、`DT_NEEDED=0`；`isolation.hits=0` |
+| AC-002（正式包 smoke 全项） | 同上（smoke 步骤随 dist 一起跑）或 `--skip-dist` 复用 | exit 0；步骤 1–7 全过（步骤 5 在 Linux 打印"跳过沙箱复检"提示，属预期） |
+| AC-059（断外网可读，Linux 侧） | `scripts/linux-musl.sh --offline-only --arch amd64` | exit 0；`offline/network-none-probe.log` 显示无路由/DNS 失败；`offline-smoke-console.log` 7 步全过 |
+| 样例备份可用性 | `scripts/linux-musl.sh --prepare-sample-backup --arch amd64` | exit 0；备份目录含 `database/manual.sqlite3` 且 `sha256sum -c SHA256SUMS` 通过 |
+| Linux 侧回归（**已知 1 例失败**） | `scripts/linux-musl.sh --check --arch amd64` | fmt/clippy/前端/合同通过；`cargo test --workspace` 因 T22-13.6 的 1 例失败返回 1 —— **不得据此判 T22 Linux 通过或不通过，按 T22-13.6 单独处理** |

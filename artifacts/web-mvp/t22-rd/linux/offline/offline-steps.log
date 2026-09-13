@@ -1,0 +1,5 @@
+[step] network-none-probe     exit=0 elapsed=0s
+[step] env-report             exit=0 elapsed=1s
+[step] build-file-ldd         exit=0 elapsed=0s
+[step] binary-hash            exit=0 elapsed=0s
+[step] smoke-console          exit=0 elapsed=3s

@@ -3670,3 +3670,143 @@ RD 报告的全量 e2e 2 条失败来自 QA 在回合 18 写的"任务中心尚�
 - **交接给 PM**：OB-16（contracts §5 与 validation-release §3 的措辞张力 + "明确显示"的 UI 义务）；UI-060 排期裁定（T22 或专派小卡）；AC-061 的"具名测试机/目标设备"确认（当前仅本机 Apple M1）；性能长期项（≥5 分钟旋转、模型加载耗时）是否纳入 T22/T23。
 - **llmdoc 更新清单**：`llmdoc/decisions.md` 追加「T21 验收知识（QA 回合 29）」（否定型用例正对照、断点四/五的现场构造与重启核对五件事、per-stage attempt 归因、Playwright worker 阻断陷阱、bash 全角标点陷阱、CI/浏览器/性能缺口结论）；`llmdoc/validation-release.md` 命令合同**语义无变化**（仅按需在执行记录小节留痕；本轮不动合同文本）。本报告即验收依据、缺陷与未覆盖边界的正式记录。
 - **QA 产出与证据**：`artifacts/web-mvp/t21-qa/`——`r29-xtask-check-final.log`、`r29-cargo-test-workspace.log`、`r29-vitest.log`、`r29-e2e-full.log`（88/0/0）、`r29-e2e-qat21.log`、`r29-qa21-tests.log`、`r29-blob-breakpoint-dist.log`、`qa-r29-blob-breakpoint-dist.sh`、`r29-metadata-api-p95.log`、`qa-r29-metadata-api-p95.sh`、`metadata-*-times.txt`、`r29-viewer-perf.log`/`r29-viewer-perf.json`、`r29-smoke-bootstrap.log`、`r29-clippy-pretest.log`、`r29-source-manifest.txt`、`r29-ignored-qa-t10.log`。**本回合临时目录（`/tmp/em-r29-*`）已清理；本回合启动的进程已结束（pgrep 复核）；`git status` 复核无预期外改动（QA 仅新增测试文件与 artifacts）。**
+
+---
+
+# 回合 30 · T22（多平台单二进制发布）Linux 半边验收（QA 独立执行）
+
+结果：**PASS**（T22 切片 **Linux 半边**：AC-064 Linux / AC-002 / AC-059 Linux 三条必选全过）· 回合：30 · PRD 修订：2（ui_revision 2，与 RD 依据一致）· 范围：切片（T22）· **不代表产品全量 PASS**（T23 真实 Provider、AC-063 Firefox/Edge、物理 x86_64 硬件、签名/公证仍未验）· **附带 1 个未关闭缺陷 BUG-013（P3，跨卡，不阻断本切片；阻断全量发布门禁）**
+
+## 环境与交付版本
+
+- 工作树：HEAD `39e202d` + 未提交改动（`scripts/*`、`xtask/src/dist.rs`、`.github/workflows/ci.yml`、`docs/operations.md`、llmdoc）；**`crates/**`、`apps/web/**`、`contracts/**`、PRD 未改**（`git status` 复核）。RD 依据 PRD 修订 = 当前修订 = 2。
+- 宿主：macOS `Darwin 25.6.0 arm64`（Apple M1）。容器：Docker Desktop 4.68.0 / engine 29.3.1，`--platform linux/amd64`，内核 `6.12.76-linuxkit x86_64`，rustc/cargo 1.98.1，容器内 Node v22.22.2。容器内 `/proc/cpuinfo` = `VirtualApple @ 2.50GHz` → **x86_64 用户态由 Rosetta 翻译执行（宿主是 arm64，不是物理 x86_64）**。
+- 交付产物 `artifacts/web-mvp/t22-rd/linux/dist-x86_64-unknown-linux-musl/`（5 件，白名单通过）：binary sha256 **`77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246`**、**28 236 728 B**。QA 在**宿主**与**容器内**各独立复算一次 → 与 `SHA256SUMS`/`build-info.json` 一致；并**独立重跑 `dist --check-reproducible`**（`cargo clean -p` 后重链接）得同一哈希（见下表）。
+- 样例备份：T20 tracked 目录**缺** `database/manual.sqlite3`（`.gitignore` 的 `*.sqlite3`；`git ls-files artifacts/web-mvp/t20-rd/sample-backup` 无 DB 条目）→ 本轮 smoke 用容器内**重建件**（同源生成器 + 正式二进制 `backup`）。
+- 数据与边界：全部本机 loopback；离线轮在 `docker run --network none` 命名空间内；**零真实外网依赖、零付费调用**（T23 才允许）。
+
+## AC 验收矩阵（本回合必选）
+
+| AC | 期望 | 实际（QA 亲测） | 判定 | 命令／证据 |
+| --- | --- | --- | --- | --- |
+| **AC-064**（Linux 半边） | 单文件 + SHA256 + licenses + 动态依赖清单；冷环境启动通过 smoke；未跑平台不贴标签 | `static-pie linked`、`ldd: statically linked`、`DT_NEEDED=0`；隔离扫描（QA 自算）0 命中；licenses v2（rust 205 / web 40）；smoke 7 步通过；`--check-reproducible` 同哈希 | **PASS**（+ 下方"原生"限定） | 见下表 #1/#2/#5；`artifacts/web-mvp/t22-qa/t22-qa-verify-static.log`、`qa-r30-reproducible-dist-smoke.log` |
+| **AC-002** | 冷目录 + restore 合法样例备份 + 首页/嵌套路由/本地资源/JSON 404 + 停服重启持久 + 不连 fixture | smoke 7 步全过（31 条 `[检查]`）；`/api/unknown → 404 application/json` 与未知静态资源 `404 text/plain` 由 `smoke-bootstrap` 在同一发布二进制上逐字断言。样例备份为 **T20 同源重建件**（tracked 目录缺 DB，见下"质疑 3"） | **PASS** | 下表 #3/#4/#8 |
+| **AC-059**（Linux 侧） | 断外网仍可读 3D/部件/步骤/原文/PDF，`/health/ready` 不因云端不可达失败 | `--network none` 整条 smoke 7 步全过（同一命名空间内先自证无默认路由/DNS 失败/`http_code=000`）；`providersConfigured=false`、`409 PROVIDER_NOT_CONFIGURED`、`ready=ready` | **PASS** | 下表 #3/#4；`artifacts/web-mvp/t22-qa/qa-r30-wrapper-offline/`、`t22-qa-offline-smoke.log` |
+| AC-063（浏览器矩阵） | Chrome/Edge/Firefox 当前版本 | 仅 Chromium（本机无 Firefox/Edge） | **NOT_RUN**（本机无环境；沿用 T21，非本轮范围） | 回合 29 记录 |
+| T23（真实 Provider） | 真实 Tripo/说明书 AI 授权链路 | 未开始 | **NOT_RUN** | 需用户凭据与预算 |
+
+**"原生冷启动"的明确判定（本轮要求写死）**：构建与运行**都发生在容器内的 Linux 环境**（不是 macOS→Linux 交叉编译）；`crossCompiled: true` 只表达 triple 差（`x86_64-unknown-linux-gnu` 构建机 → `x86_64-unknown-linux-musl` 目标），**不表达跨 OS**。产物是真实 x86_64 Linux ELF，在**真实 Linux 内核**上以 x86_64 ABI 冷启动并跑完整 smoke。因此 AC-064 的"原生冷启动"在**"目标 OS + 目标 ABI + 无源码/工具链依赖的冷目录"意义上成立**（§6 的立意是"不得以交叉编译退出码 0 替代运行证据"——本轮有真实运行证据，且 QA 独立重跑复现）；在**"物理 x86_64 CPU 原生执行"意义上不成立**（Rosetta 指令翻译）。该环境由**用户明确授权**（`state.yaml user_decisions` 2026-09-13），非 RD 单方面选择；残留风险已由 RD 声明（ADR-036 §2、implementation T22-13.7、validation §9），**判定为已声明的非阻断限制**。需要物理硬件证据时用同一参数化脚本在真机重跑即可。
+
+**性能类结论核对**：RD 全部记录中**未引用**本环境的任何产品性能结论（仅有冷/热构建耗时 9 min/100 s，且明确标注"只作参考"）；QA 逐处 grep 确认。本环境不得用于 AC-061 类结论。
+
+## 五处重点质疑的独立结论
+
+### 1. `xtask/src/dist.rs` 动态依赖判据放宽 —— **不构成弱化证据**（逐行核对）
+
+改动三处：① 采集门从 `target == host` 改为 `same_arch_and_os(host, target)`；② JSON 增加 `host`/`target`/`samePlatformAsBuild`；③ `readelf -d` 由"节选 20 行"改为**全文 + `DT_NEEDED` 计数**；失败原因的 `reason` 由 `cross-compiled` 改为 `cross-platform`。
+
+- 采集到的 `file`/`ldd`/`readelf -d` 是**产物自身属性**（不依赖宿主 CPU），且该产物**就在同一环境被 smoke 真实运行**——不是拿编译成功当运行证据。
+- **未制造"原生"假象**：`crossCompiled: true` 与 `samePlatformAsBuild: false` 均保留真值；控制台仍打印"跨构建"。
+- **反例边界仍拒绝采集**（逐分支核对 13 行解析函数）：arm64→x86_64（含 macOS Intel 行）、macOS→Linux、Linux→Windows 均为"未采集"。解析启发式（≥4 段取 `parts[len-2]` 为 OS）对项目目标 triple 全对；`thumbv7em-none-eabihf` 一类异形 triple 会误解析，但本项目不会构建它们（且产物级证据仍由 smoke 兜底）。
+- **macOS 侧结论不受影响**：host==target 时新判据恒真 → 与原路径等价（代码级证明）。macOS 产物已被用户要求清理，本轮未重测 macOS（不在本轮范围）。
+- QA **不采信 `build-info.json` 自述**，独立在容器里自算：禁用模式（仓库根 / `apps/web/dist` / `node_modules` / `$HOME`）**全 0 命中**、`/build/home` 559（与自述一致）、`/Users/` 0、`node_modules` 字面量 0。
+- **P4 边界（非缺陷）**：Linux 分支不做"仅系统库"硬失败（macOS 分支会 `bail`），结论依赖 `staticLinked` + `DT_NEEDED` 全文；对静态 musl 无实际影响。
+
+### 2. `crossCompiled: true` 与"原生冷启动" —— 见上"明确判定"
+
+### 3. 样例备份是重建件 —— **smoke 没有变成自证**（逐 blob 核实）
+
+- tracked 备份缺 DB 的两条独立证据：`git ls-files` 无 DB 条目；工作树里连 `database/` 目录都不存在（macOS 侧的 T20 备份同样缺，见"交接"）。
+- 重建路径用**仓库自己的 T20 生成器**（`cargo test … prepare_rehearsal_datadir`）+ **正式二进制 `backup`**，不是用 smoke 自己的产物回灌；宿主脚本在仓库备份不完整时**拒绝**用它覆盖构建目录里的完整备份（分支逐一核对）。
+- QA 逐文件对比重建件 vs tracked：**各 11 个 blob**；**8 个逐字节相同**（含 GLB 2912 B = `a9f884c2…`、PDF 1216 B = `e18cf61a…`）；**3 个仅时间戳/UUID 字段不同**（大小相同：1962 / 2030 / 5181 B，差异字段为 `assetId`/`documentId`/`preparationId`）→ RD 描述与事实一致。
+- 断言未退化：smoke 读**磁盘上的备份 manifest** 取 blob sha 集合 → 要求恢复出的 release `manifestSha256` ∈ 该集合 → 再比对**实际下载字节**的 sha256 与 manifest 声明一致；`restore` 自身重算 manifest/快照/11 个 blob 的 sha256 + 外键与引用。三方交叉核对仍在。
+- **P4 记录**：身份断言的输入从"版本控制里那份 T20 备份"变为"同源新生成的备份"。因 DB 从未入库，任何 checkout 都只能如此。建议二选一（非阻断）：把样例 DB 以豁免/压缩形式入库，或把重建步骤固定为唯一入口（RD 已在 `docs/operations.md` 与 CI 落地后者）。
+
+### 4. `cargo test --workspace` Linux 必现失败 —— 复现并定性；**不阻断本切片**，开 **BUG-013**
+
+- **独立复现 3/3**：`cargo test -p everything-manual --test backup_restore -- --exact legacy_schema_backup_restores_and_migrates_automatically` → panic 于 `backup_restore.rs:2390`，`left: -1 / right: 0`，stderr 空，约 0.85 s。**QA 独立全量枚举**：容器内 `cargo test --workspace --no-fail-fast` = 37 个目标 / **557 passed / 1 failed / 2 ignored**，唯一失败目标即 `backup_restore`、唯一失败用例即此例（RD 记录同口径）。
+- **QA 独立定性实验**（用**发布二进制**直接做，不经测试框架）：`listening on` 行出现后立即 `SIGTERM` → 退出码 **143**（3/3）；延迟 **≥100 ms** → **0**（3/3）；延迟 1/5/20/50 ms → 143（3/3）。→ **窗口≈50–100 ms**，窗口内 SIGTERM 走默认动作杀进程。
+- 该用例的实质断言（v1→v7 自动迁移、数据保留、备份校验）**全部通过**，唯一失败项是"退出码 0"。
+- 项目内已有同一判定：`crates/server/tests/storage.rs:1817-1819` 写明"`listening on` 在 SIGTERM 处理器注册前打印…**不是产品缺陷**"，并用 300 ms settle 规避；`backup_restore.rs`/`config_cli.rs` 未 settle（后者用例此前已有 HTTP 交互，故未命中）。
+- **定性**：**测试侧启动竞态为主**（读到 listening 行后零等待即发信号）+ **产品侧 50–100 ms 窄窗口**（`listening on` 打印先于 `shutdown_signal()` 被首次 poll）。数据安全影响可忽略：窗口内无写入在途，SQLite 锁由内核回收，执行器租约 120 s 到期恢复（T21 已用 SIGKILL 覆盖更坏情形）。**稳态 SIGTERM 优雅退出 QA 实测正常**（裸容器：退出码 0 + `收到终止信号，服务已停止` + 排他锁释放）。
+- **是否阻断本切片**：T22 三条必选 AC 全过，本缺陷**不违反任何 T22 必选 AC**（AC-002 的停服重启步骤用 SIGKILL 完成，比"优雅"更强，故不受影响；AC-064/AC-059 与本缺陷无关）→ 按 `collaboration.md` §4"违反当前必选验收项的问题才阻断当前切片 PASS"，**不阻断 T22 切片**。**但它阻断全量发布门禁**（validation §8"0 个未关闭验收缺陷"），并使 Linux 侧 `cargo xtask check` 红灯（本轮实测），因而 CI 的 `check` job（`ubuntu-latest`）**很可能**同样红灯（`dist-musl` 依赖 `check`，命中则连坐）——该判断**基于容器内在 Rosetta 下必现的实测**，**未在真实 x86_64 Linux 上验证**；CI 尚未推送触发，故目前未暴露。→ 开 **BUG-013（P3 / OPEN）**，归属由协调者/PM 裁定（T20/T21 卡或 T22 后小卡）。
+
+### 5. 两个 shell 脚本改动 —— **没有跳过、短路或弱化 smoke 的任何一步**（逐项核对）
+
+- `step()` 用 `${PIPESTATUS[0]}` 取**真实退出码**（不再是 `| tee` 后可能被吞的状态），失败经 `set -e` 传播；宿主脚本在失败路径**先回收日志再非零退出**（`RUN_RC` 逐层传出）——日志回收不掩盖失败。
+- **增强**（非弱化）：`rustup toolchain install` 去掉 `2>/dev/null || true`（原来失败会被吞）；`rustup target add` 变成受检步骤；离线分支要求 `cargo/rustc/file/readelf` 存在，缺失即 `exit 1`；断网自证在**同一命名空间**内先做（路由表/DNS/HTTP 三重），随后整条 smoke 才运行；`readelf` 由节选改为全文 + DT_NEEDED 计数。
+- 挂载点/缓存改动是**构建环境修复**（`/src/everything-manual`），**未动 dist 的隔离扫描子串语义**（QA 复核禁用模式与 hits=0 均不变）。
+- `--exclude '*.log'`：QA 核对仓库**未跟踪任何非 `artifacts/` 的 `.log`**（`git ls-files '*.log'` 为空）→ 不会漏拷源码，只是避免 `--delete` 清掉上一轮日志。
+- **P4 隐患（非阻断，记录待改）**：① `readelf -d … | grep -c "(NEEDED)" || true` 在 `readelf` 本身失败时会打印 `0` 且返回成功（权威结论来自 `dist.rs` 的 `file` 判断与全文输出，`file` 失败是 fatal）→ 建议不要在工具失败时 `|| true`；② 失败路径仍会 `rsync` 回收 `dist/`，可能回收**上一轮的旧产物**（退出码已非零、日志可见，但建议失败路径记录产物 sha256 以免误读）；③ `--keep` 两个分支行为相同（都保留 `BUILD_DIR`），仅打印不同，名不副实。
+
+## QA 亲跑命令与结果（本回合；日志在 `artifacts/web-mvp/t22-qa/`）
+
+| # | 命令 | 结果 |
+| --- | --- | --- |
+| 1 | 宿主 `shasum -a 256` + 容器内 `sha256sum`/`stat` | `77b38c91…` / 28 236 728 B，与 `SHA256SUMS`、`build-info.json` 一致 |
+| 2 | 容器内 `file` / `ldd` / `readelf -d` + **QA 自算**禁用模式计数 | `ELF 64-bit LSB pie executable, x86-64 … static-pie linked`；`statically linked`；`DT_NEEDED=0`；禁用模式 0/0/0/0、`/Users/` 0、`node_modules` 字面量 0 → `t22-qa-verify-static.log` |
+| 3 | `docker run --network none … container-linux-musl.sh --skip-dist --offline-only`（QA 直接调用容器脚本） | exit 0；31 条 `[检查]` **与 RD 原始离线轮归一化后逐条一致**（diff 为空）→ `t22-qa-offline-smoke.log` |
+| 4 | `bash scripts/linux-musl.sh --offline-only --arch amd64`（官方宿主入口） | exit 0，证据回收成功；QA 已把 RD 原始证据按快照**逐字节还原** → `qa-r30-wrapper-offline/`（含 `wrapper-console.log`） |
+| 5 | 容器内 `cargo xtask dist --target x86_64-unknown-linux-musl --check-reproducible`（QA 独立重跑，含 `cargo clean -p` 重链接） | exit 0；**两次独立构建同哈希 `77b38c91…`**；QA 轮 `build-info.json` 与交付件**除 `builtAt` 外逐字段一致** → `qa-r30-reproducible-dist-smoke.log`、`qa-r30-build-info.json` |
+| 6 | `cargo test -p everything-manual --test backup_restore -- --exact legacy_schema_backup_restores_and_migrates_automatically`（×3） | **3/3 FAILED**（`left -1`，0.85 s）→ `t22-qa-failing-test.log` |
+| 7 | 发布二进制 SIGTERM 窗口扫描（0/1/5/20/50/100/200/300 ms ×3） | 0–50 ms → 143（3/3）；100–300 ms → 0（3/3）→ `t22-qa-sigterm-window.log`、`t22-qa-sigterm-window-scan.log` |
+| 8 | 容器内 `cargo xtask smoke-bootstrap --binary <release>` | exit 0；7/7，含 `GET /api/unknown -> 404 application/json`、未知静态资源 `404 text/plain` → `t22-qa-smoke-bootstrap.log` |
+| 9 | **QA 新增**：`qa-r30-coldstart-bare-container.sh`（裸 `alpine:3.20`，无 node/python/cargo/git、无源码，只挂一个二进制） | exit 0；`init`（含**权限过宽的密码文件被 fail-closed 拒绝**）、`serve` 冷启动、内嵌 `/`+JS+CSS+PDF cmaps、`health/live|ready`、`/api/unknown` 404、SPA 回退 200、未知静态资源 404；SIGTERM 优雅停服 → `t22-qa-bare-coldstart.log`。**这是 §7 第 7 步"无 Node/Python/源码环境"在 Linux 上的直接证据**（不再是推断） |
+| 10 | 容器内 `cargo test --workspace --no-fail-fast`（QA 独立重跑） | **37 个测试目标**：**557 passed / 1 failed / 2 ignored**；唯一失败目标＝`backup_restore`（9 passed / 1 failed / 1 ignored），唯一失败用例＝`legacy_schema_backup_restores_and_migrates_automatically` → 与 RD 枚举**完全同口径** → `t22-qa-workspace-test.log`（macOS 基线 558/0/2，`crates/**` 本轮未改） |
+
+## 缺陷
+
+### BUG-013 · Linux 上 `serve` 启动窗口内 SIGTERM 不优雅退出，导致 `backup_restore.rs` 一例在 Linux 必现失败
+
+- 严重度／状态：**P3 / OPEN**（跨卡缺陷；**不阻断 T22 切片**，**阻断全量发布门禁**与 Linux 侧 `cargo xtask check`／CI `check` job）
+- 对应 REQ / UI / AC：validation-release **§5 服务终止合同**（"服务终止先停止领取、完成必要短写入并退出"）；**非** T22 任一必选 AC 的违反（AC-002/AC-059/AC-064 均已独立通过）
+- 环境与输入：容器 `linux/amd64`（Rosetta，内核 6.12.76-linuxkit）；发布二进制 `77b38c91…`；容器内 rustc/cargo 1.98.1
+- 复现步骤：① 容器内 `cargo test -p everything-manual --test backup_restore -- --exact legacy_schema_backup_restores_and_migrates_automatically`（3/3 失败）；② 用发布二进制 `serve`，读到 `listening on http://…` 行后**立即** `kill -TERM` → 退出码 143；延迟 ≥100 ms 再发 → 退出码 0
+- 期望与实际：期望 `serve` 收到 SIGTERM 后优雅退出（退出码 0）；实际在启动后约 50–100 ms 窗口内被信号默认动作杀死（`status.code()=None` → 测试记 `-1`）
+- 证据路径：`artifacts/web-mvp/t22-qa/t22-qa-failing-test.log`、`t22-qa-sigterm-window.log`、`t22-qa-sigterm-window-scan.log`、`artifacts/web-mvp/t22-rd/linux/regression/xtask-check.log`、`cargo-test-workspace-nff.log`
+- 回归范围：`crates/server/src/config/commands.rs::run_serve`（`listening on` 打印与 `shutdown_signal()` 首次 poll 的次序）；`crates/server/tests/{backup_restore,config_cli}.rs` 的 `ServeProcess::terminate`（与 `storage.rs:1817` 的 settle 口径对齐）
+- 修复建议（RD/PM 择一）：① **测试侧** settle（与 `storage.rs` 同口径，最小改动、不改产品行为）；② **产品侧** 把 SIGTERM/SIGINT 处理器的注册提前到打印 `listening on` 之前（更彻底，但任何产品代码改动都会使已交付的 macOS/Linux T22 证据需按 T22 口径重跑）
+- RD 修复摘要引用：待 RD 认领；QA 复验结果与日期：待修复后复验
+
+### 非阻断观察（P4；供协调者/RD/PM）
+
+1. **OB-18 · "原生"措辞精度**：`docs/operations.md` §1/§2 与 `scripts/linux-musl.sh` 头注释写"原生 Linux x86_64 构建与运行"，未在同一句标注 Rosetta 翻译（ADR-036 / implementation T22-13.7 / validation §9 已标注）。建议文档补一句限定，避免读者误认为物理 x86_64 硬件证据。
+2. **OB-19 · 样例备份身份**：见"质疑 3"的 P4；建议入库或以重建为唯一入口（后者已落地）。
+3. **OB-20 · `readelf … || true` 可掩盖工具失败**；**OB-21 · 失败路径回收的 `dist/` 可能是上一轮产物**；**OB-22 · `--keep` 名不副实**：见"质疑 5"的 P4。
+4. **OB-23 · T22 smoke 未断言"未知 /api 的 JSON 404"与"未知静态资源非 HTML200"**：这两条是 AC-002 的字面判据，实际由 `smoke-bootstrap`（同一发布二进制）覆盖。建议把这两条断言并入 `xtask smoke`，使 AC-002 的判据由单一入口闭合（当前证据链成立，仅属口径收敛）。
+5. **OB-15…OB-17 沿用**（回合 25/28/29）。
+6. **artifact 目录不可重定向（P4）**：`scripts/linux-musl.sh` 的 `ARTIFACT_DIR` 硬编码为 `artifacts/web-mvp/t22-rd/linux`，QA 复跑会覆盖 RD 同名证据；本轮 QA 以"先快照、跑完还原"处理（已逐字节还原校验）。建议支持 `EM_LINUX_ARTIFACT_DIR` 覆盖。
+
+## 未覆盖边界（不冒充通过）
+
+1. **物理 x86_64 硬件**：本轮证据来自 arm64 宿主上的 Rosetta 翻译执行；物理机行为与任何性能结论未验（脚本已参数化，可真机重跑）。
+2. **T23 真实 Provider**：真实 Tripo / 说明书 AI 协议、余额账单、真实 CDN 签名 URL、真实模型效果与预算 —— 未验（需用户凭据与预算）。
+3. **AC-063 浏览器矩阵**：本机无 Firefox/Edge；Safari 未列入支持。
+4. **签名与公证**：Linux/macOS 均未做（需用户账号）；分发说明已写在 `build-info.json.deployment`/`signature`。
+5. **`--check-reproducible` 的独立性边界**：`cargo clean -p` + 重链接（依赖不重编），与 macOS 侧同口径（ADR-035 §4）；不能覆盖依赖编译层面的非确定性。
+6. **Windows / Intel macOS**：未构建未运行（未支持，符合 §6"未跑平台不贴标签"）。
+7. **全项目**：T23 未交付 → MVP 未完成；本 PASS 只覆盖 T22 切片（且其中 macOS 半边的 QA 结论仍待协调者按流程确认/回溯）。
+
+## 非代码知识与限制（提炼）
+
+- **"原生运行"要拆成三层说**：目标 OS 内核 / 目标 ABI 用户态 / 物理 CPU。本轮只满足前两层；把三层写清楚比写"原生"更有用（且能被后续真机证据自然替换）。
+- **启动协议行先于信号处理器注册**是本项目已知时序（`storage.rs:1817`）；凡是"读到协议行即发信号"的测试都必须先 settle，否则在慢环境（容器/Rosetta）必然偶发到必现失败。**新增此类测试时按 `storage.rs` 的写法做 settle**。
+- **重建型 fixture 的验收问法**：不要问"是不是自证"，要分三步问——① 生成器是否独立于被测路径；② 差异是否只落在非语义字段（时间戳/UUID）；③ 断言是否仍跨三方（备份清单 ↔ 恢复结果 ↔ 实际字节）。三条都满足即等价，但"与版本控制里那份逐字节相同"这一条会丢，应显式登记。
+- **证书/信任与静态链接**：静态 musl 不含系统 CA，需要 rustls 自带根；本轮 smoke 走 loopback HTTP，**真实 HTTPS 未被本轮证据覆盖**（§6 要求"在冷环境验证真实 HTTPS"属于真实链路范畴，归 T23 与运维声明）。
+- **容器挂载点命名**：dist 的隔离扫描把仓库根当**子串**搜，短名挂载点（`/build`、`/work`）会与 remap 目标或依赖 panic 路径自撞——这是**构建环境问题**，正解是换深路径而不是放宽扫描（ADR-036 已固化）。
+- **复跑取证的纪律**：官方入口的 `ARTIFACT_DIR` 硬编码，QA 复跑前必须先快照、复跑后按快照还原并做 `diff -r` 校验（本轮已做，RD 证据逐字节一致）。
+
+## 回合历史与交接
+
+| 回合 | 日期 | 范围 | 任务 | PRD 修订 | 结果 | 报告 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 27 | 2026-09-13 | 缺陷复验 | BUG-009 / BUG-010 | 2 | PASS | 本文件第 27 节 |
+| 28 | 2026-09-13 | 缺陷复验 + 结构性保障审计 | BUG-011 / BUG-012 | 2 | PASS | 本文件第 28 节 |
+| 29 | 2026-09-13 | 切片验收（回归/安全/故障矩阵） | T21 | 2（ui_revision 2） | PASS | 本文件第 29 节 |
+| 30 | 2026-09-13 | 切片验收（多平台发布 · Linux 半边） | T22 | 2（ui_revision 2） | **PASS**（+ BUG-013 未关闭，跨卡 P3） | 本节 |
+
+- **交接给协调者**：(a) 本轮 `result: PASS`；`accepted_ac_ids` 建议：`["AC-064（Linux 半边；物理 x86_64 硬件为已声明限制）", "AC-002", "AC-059（Linux 侧）"]`，`task_id: T22`、`qa_round: 30`、`prd_revision: 2`；**是否把 T22 整卡移入 `accepted_tasks` 由协调者决定**：本轮只派发了 Linux 半边，macOS 半边的 QA 结论（AC-064 macOS）尚未由 QA 回合单独出具（现有为 RD 自证证据 + 本报告顺带复核的代码级结论）。(b) `qa_history` 追加 `{round: 30, scope: slice, task_ids: [T22], prd_revision: 2, result: PASS}`。(c) **`open_defects` 需新增 `BUG-013`（P3）**，并请裁定归属：T20/T21 缺陷单、或 T22 后小卡、或测试侧硬化小卡；修复路径见 BUG-013 条目（任一产品代码改动都会触发两平台 T22 证据重跑）。(d) **口径提示（需协调者确认）**：按 `collaboration.md` §4"违反当前必选验收项才阻断切片 PASS"，BUG-013 不阻断 T22 切片；若协调者的口径是"任何未关闭缺陷都不放行切片"，则本轮应改判 **FAIL** 并把 BUG-013 交 RD——QA 已把两种口径的事实与证据备齐（本轮建议按前者，理由是缺陷不落在 T22 允许范围与 AC 映射内，且产品数据路径无影响）。(e) `carry_over` 建议新增：**T22 重跑前置条件**（`artifacts/web-mvp/t20-rd/sample-backup` 现缺 `database/manual.sqlite3`，macOS 侧复跑需先按 `docs/operations.md` §1 手工重建）、OB-18…OB-23。
+- **交接给 RD**：必须修 **BUG-013**（路径二选一，见条目）。非阻断建议：OB-20/OB-21/OB-22（脚本失败路径与 `--keep` 语义）、OB-23（把未知路径断言并入 `xtask smoke`）、OB-19（样例备份入库或固化重建为唯一入口）、`EM_LINUX_ARTIFACT_DIR` 可覆盖。**请勿在 QA 复验前修改断言口径或阈值**（`backup_restore.rs` 若走测试侧 settle 路线，改动需在复验时逐字核对只加等待、不动断言）。
+- **交接给 PM**：OB-18（文档措辞精度，是否需要在发布说明中声明"Linux 证据取自 x86_64 容器（Rosetta）"）；物理 x86_64 真机证据是否列入发布要求；AC-063（Firefox/Edge）与真实 HTTPS 的承接位置。
+- **llmdoc 更新清单（本回合实际写入）**：① 本报告（回合 30：AC 矩阵、五处质疑的独立结论、BUG-013、OB-18…OB-23、未覆盖边界、非代码知识）；② `llmdoc/decisions.md` 追加「T22 Linux 半边验收知识（QA 回合 30）」——"原生运行"三层表述、启动协议行竞态（含 BUG-013 与 settle 纪律）、重建型 fixture 验收三步问法、复跑取证纪律、挂载点命名与静态链接等跨卡复用结论；③ `llmdoc/validation-release.md` **§9 追加一行 QA 回合 30 执行记录**（§1–§8 命令合同语义**未改动**）。未修改任何 AC 判据与阈值。
+- **QA 产出与证据**：`artifacts/web-mvp/t22-qa/`——`qa-r30-coldstart-bare-container.sh`（QA 新增脚本）、`t22-qa-verify-static.log`、`t22-qa-offline-smoke.log`、`qa-r30-wrapper-offline/`（`offline-smoke-console.log`、`network-none-probe.log`、`offline-steps.log`、`offline-host-steps.log`、`wrapper-console.log`）、`t22-qa-failing-test.log`、`t22-qa-sigterm-window.log`、`t22-qa-sigterm-window-scan.log`、`t22-qa-smoke-bootstrap.log`、`t22-qa-bare-coldstart.log`、`qa-r30-reproducible-dist-smoke.log`、`qa-r30-build-info.json`、`t22-qa-workspace-test.log`。**本轮未改动任何生产代码、测试断言、PRD 或 `state.yaml`；RD 的 Linux 证据目录已按快照逐字节还原（`diff -r` 通过）；本轮启动的容器/进程已结束（`docker ps -a`、`pgrep` 复核为空）。**

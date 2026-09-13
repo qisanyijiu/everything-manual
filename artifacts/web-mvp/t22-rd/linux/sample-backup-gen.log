@@ -1,0 +1,129 @@
+== 准备构建目录：/tmp/em-linux-musl-build ==
+[host-step] rsync-worktree       exit=0 elapsed=0s
+   警告：样例备份不完整且构建目录里也没有可用的完整备份，smoke 第 2 步会失败
+[host-step] rsync-sample-backup  exit=0 elapsed=0s
+== 缓存目录：/tmp/em-linux-musl-cache ==
+== 重新生成 T20 样例备份（容器内：造数用例 + 正式二进制 backup）==
+[container] CARGO_HOME=/root/.cargo RUSTUP_HOME=/usr/local/rustup HOME=/root
+[container] 镜像：rustup=https://rsproxy.cn npm=https://registry.npmmirror.com crates=sparse+https://rsproxy.cn/index/
+[container] 安装 musl-tools / cmake / file / binutils（apt 镜像 https://mirrors.ustc.edu.cn）
+debconf: delaying package configuration, since apt-utils is not installed
+[container] 安装 Node 22（构建期依赖；运行期不需要）
+[container] rustc: rustc 1.98.1 (48a229cea 2026-09-01)
+info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+info: component clippy is up to date
+info: component rustfmt is up to date
+
+  1.98.1-x86_64-unknown-linux-gnu unchanged - rustc 1.98.1 (48a229cea 2026-09-01)
+
+info: checking for self-update (current version: 1.29.0)
+info: downloading self-update (new version: 1.29.1)
+[step] rustup-toolchain       exit=0 elapsed=3s
+info: component rust-std for target x86_64-unknown-linux-musl is up to date
+[step] rustup-target          exit=0 elapsed=1s
+[container] node: v22.22.2；npm: 10.9.7；cmake: cmake version 3.25.1；musl-gcc: x86_64-linux-gnu-gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+uname: Linux 157377c5c9bb 6.12.76-linuxkit #1 SMP Sun Mar  8 14:41:59 UTC 2026 x86_64 GNU/Linux
+os: PRETTY_NAME="Debian GNU/Linux 12 (bookworm)" NAME="Debian GNU/Linux" 
+arch: x86_64
+rustc: rustc 1.98.1 (48a229cea 2026-09-01) binary: rustc commit-hash: 48a229ceaefd4985c50990b14116b6d856af0985 commit-date: 2026-09-01 host: x86_64-unknown-linux-gnu release: 1.98.1 LLVM version: 22.1.8 
+cargo: cargo 1.98.1 (797e8a9bc 2026-08-05)
+info: This is the version for the rustup toolchain manager, not the rustc compiler.
+info: the currently active `rustc` version is `rustc 1.98.1 (48a229cea 2026-09-01)`
+rustup: rustup 1.29.0 (28d1352db 2026-03-05)
+node: v22.22.2
+npm: 10.9.7
+cc: cc (Debian 12.2.0-14+deb12u1) 12.2.0
+musl-gcc: x86_64-linux-gnu-gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+cmake: cmake version 3.25.1
+file: file-5.44
+ldd: ldd (Debian GLIBC 2.36-9+deb12u14) 2.36
+readelf: GNU readelf (GNU Binutils for Debian) 2.40
+cpu: 10 vCPU；mem: 7.65273 GiB
+[step] env-report             exit=0 elapsed=1s
+[container] T20 造数：cargo test … prepare_rehearsal_datadir（EM_T20_REHEARSAL_DIR=/tmp/em-t20-rehearsal）
+   Compiling serde_core v1.0.229
+   Compiling rustversion v1.0.23
+   Compiling libsqlite3-sys v0.37.0
+   Compiling everything-manual v0.1.0 (/src/everything-manual/crates/server)
+   Compiling reqwest v0.13.5
+   Compiling test-support v0.1.0 (/src/everything-manual/crates/test-support)
+   Compiling multiversion-macros v0.9.0
+   Compiling encoding_rs v0.8.41
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling either v1.18.0
+   Compiling multiversion v0.9.0
+   Compiling sqlx-core v0.9.0
+   Compiling multer v3.1.0
+   Compiling sqlx-sqlite v0.9.0
+   Compiling axum v0.8.9
+   Compiling sqlx-macros-core v0.9.0
+   Compiling sqlx-macros v0.9.0
+   Compiling sqlx v0.9.0
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 31.23s
+     Running tests/backup_restore.rs (target/debug/deps/backup_restore-a379c82306b15ade)
+
+running 1 test
+演练数据已就绪：/tmp/em-t20-rehearsal/data
+{
+  "documentAssetId": "01a09b18-ab5e-75e1-97e4-32aeb2d47dd4",
+  "documentSha256": "e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda",
+  "itemId": "01a09b18-ab48-71dc-9236-15238d02bee0",
+  "manifestSha256": "8efdca99dc488a389900b95ce1b6bd42a727fd747dc2054e92cfe0dad3a09600",
+  "modelAssetId": "01a09b18-ac7c-76eb-a066-ce96ca725463",
+  "modelSha256": "a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb",
+  "password": "test-password-t20-backup",
+  "releaseId": "01a09b18-acb7-729d-a183-efa3e946df5c"
+}
+test prepare_rehearsal_datadir ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 1.18s
+
+[step] t20-rehearsal-data     exit=0 elapsed=32s
+[container] 用正式二进制生成样例备份（backup --out 新路径）
+{"timestamp":"2026-09-13T14:08:00.835398Z","level":"INFO","fields":{"message":"备份完成（一致快照 + 被引用 blob + manifest；不含会话与供应商临时 URL）","event":"backup_created","outDir":"/tmp/em-t20-backup-out","schemaVersion":7,"databaseSha256":"acfe61d87108f91d10293379d04714df27a7eae596416bf230a40ee89cfb4c06","blobsCopied":11,"missingBlobs":0,"totalBytes":393592,"sessionsRemoved":1,"tempUrlsRedacted":0},"target":"everything_manual::backup::create"}
+备份完成：/tmp/em-t20-backup-out
+  一致快照：database/manual.sqlite3（sha256 acfe61d87108f91d10293379d04714df27a7eae596416bf230a40ee89cfb4c06，360448 字节，schema v7；VACUUM INTO，含 WAL 中已提交事务）
+  被引用 blob：复制 11 个
+  manifest 与 sha256：manifest.json；会话已从快照中清空（恢复后需重新登录，共清空 1 条）
+  供应商临时 URL 脱敏：快照内 0 处临时/签名地址已替换为 sha256 摘要 + host（AC-010；恢复后按 task_id 重新查询链接）
+  恢复方式：everything-manual restore --from /tmp/em-t20-backup-out --data-dir <不存在或为空的新目录>
+database/manual.sqlite3: OK
+blobs/0a/0a74e5a5b542aa62440b48aee24838b664802bf5a98cd73fed45123cd7d2c890: OK
+blobs/12/122e645391038b12830365dd96f125b35a78cedcdab5183fc67476c89992c586: OK
+blobs/4b/4b6ff8fce682710009a7a0573cb2b61b0ea2ff071ab73a7afdff53b4aedd340d: OK
+blobs/60/6040550076320303894e351b83bb7844d84ea5431ae7a209947026accd79c79b: OK
+blobs/74/74b3edaa5bcc408629228edf8365bd691844025c8135c50cc4892bc1acdbb20b: OK
+blobs/8e/8efdca99dc488a389900b95ce1b6bd42a727fd747dc2054e92cfe0dad3a09600: OK
+blobs/97/972f6c241a5c0bfcec4af02a660218f9cd0689d77840fe5cf49a8ffe97edd010: OK
+blobs/a9/a9f884c27da21ec86e27b9f1df92762d2a4bb4b2431086c19eaf7b932db2ddfb: OK
+blobs/da/daa48f0d8a240072c9dea69d7fea52229e2c7ab37b5fea1126d02b594d329ccf: OK
+blobs/de/de066bb10d6dd272fe3366b39f02d03f5a3bc64e8e0d518ad4db6cc1cc76cd20: OK
+blobs/e1/e18cf61a61c9f9834a73e7454c9f1c3a50e897908474f21edac4759fd3695cda: OK
+manifest.json: OK
+[step] t20-sample-backup      exit=0 elapsed=0s
+[container] 样例备份已就绪：/src/everything-manual/artifacts/web-mvp/t20-rd/sample-backup
+total 8
+drwx------  6 root root  192 Sep 13 14:08 .
+drwxr-xr-x  3 root root   96 Sep 13 14:08 ..
+-rw-------  1 root root 1710 Sep 13 14:08 SHA256SUMS
+drwxr-xr-x 13 root root  416 Sep 13 14:08 blobs
+drwxr-xr-x  3 root root   96 Sep 13 14:08 database
+-rw-------  1 root root 3607 Sep 13 14:08 manifest.json
+[container] 完成（--prepare-sample-backup；逐步退出码与耗时见 /src/everything-manual/steps.log）
+[step] rustup-toolchain       exit=0 elapsed=3s
+[step] rustup-target          exit=0 elapsed=1s
+[step] env-report             exit=0 elapsed=1s
+[step] t20-rehearsal-data     exit=0 elapsed=32s
+[step] t20-sample-backup      exit=0 elapsed=0s
+[host-step] prepare-sample-backup exit=0 elapsed=49s
+== 生成结果 ==
+total 16
+drwx------@  6 lizhao  staff   192  9月 13 22:08 .
+drwxr-xr-x@  3 lizhao  staff    96  9月 13 22:08 ..
+drwxr-xr-x@ 13 lizhao  staff   416  9月 13 22:08 blobs
+drwxr-xr-x@  3 lizhao  staff    96  9月 13 22:08 database
+-rw-------   1 lizhao  staff  3607  9月 13 22:08 manifest.json
+-rw-------   1 lizhao  staff  1710  9月 13 22:08 SHA256SUMS
+（构建目录内的样例备份已可被 smoke 使用；如需回填仓库，见 implementation 记录）

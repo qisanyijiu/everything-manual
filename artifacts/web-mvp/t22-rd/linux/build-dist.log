@@ -1,0 +1,114 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.41s
+     Running `target/debug/xtask dist --target x86_64-unknown-linux-musl --check-reproducible`
+$ (cd /src/everything-manual/apps/web && npm ci)
+
+added 292 packages in 7s
+npm notice
+npm notice New major version of npm available! 10.9.7 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+$ (cd /src/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /src/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90m/src/everything-manual/apps/web[39m
+
+ [32m✓[39m src/features/viewer/draft-view.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/manual/review-state.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/features/jobs/status.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/viewer/coordinates.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/features/viewer/qa-t18-independent.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m src/features/viewer/glb.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m src/api/client.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 797[2mms[22m[39m
+   [32m✓[39m 请求封装（类型来自生成合同） [2m(9)[22m
+     [33m[2m✓[22m[39m retry 策略不自动重放（QueryClient 默认值）[33m 781[2mms[22m[39m
+ [32m✓[39m src/features/jobs/jobDetail.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[32m 284[2mms[22m[39m
+[90mstderr[2m | src/features/shell/shell.test.tsx[2m > [22m[2m路由骨架与文案边界[2m > [22m[2m向导占位页保留五步步骤条且当前步 aria-current
+[22m[39mWarning: Please use the `legacy` build in Node.js environments.
+
+ [32m✓[39m src/features/shell/shell.test.tsx [2m([22m[2m19 tests[22m[2m)[22m[33m 1370[2mms[22m[39m
+   [32m✓[39m 路由骨架与文案边界 [2m(3)[22m
+     [33m[2m✓[22m[39m 版本列表已交付：显示真实空态而不是占位页，且只请求它需要的数据[33m 315[2mms[22m[39m
+     [33m[2m✓[22m[39m 向导占位页保留五步步骤条且当前步 aria-current[33m 323[2mms[22m[39m
+ [32m✓[39m src/features/import/views.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/features/import/money.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/import/upload-messages.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+[90mstderr[2m | src/features/import/pdf/prepare.test.ts
+[22m[39mWarning: Please use the `legacy` build in Node.js environments.
+
+[90mstderr[2m | src/features/import/pdf/errors.test.ts
+[22m[39mWarning: Please use the `legacy` build in Node.js environments.
+
+ [32m✓[39m src/features/import/pdf/errors.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/features/import/pdf/prepare.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/features/import/messages.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/App.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 238[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[32m130 passed[39m[22m[90m (130)[39m
+[2m   Start at [22m 14:43:59
+[2m   Duration [22m 8.56s[2m (environment 77%, setup 12%, transform 5%, tests 5%, import 2%, worker 1%)[22m
+
+[2mEnvironment [22m [33mjsdom was created 16 times[39m[2m · 47.94s total, 77% of tracked time[22m
+[2m            [22m [2mcreate it once per worker with [22m[33mpool: 'vmThreads'[39m[2m (keeps per-file isolation) or [22m[33misolate: false[39m[2m (shares it across files)[22m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#test-environments[22m
+
+$ (cd /src/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 161 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                    0.53 kB │ gzip:   0.34 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs        1,265.41 kB
+dist/assets/index-CE8-SplE.css                    18.90 kB │ gzip:   3.98 kB
+dist/assets/ReleaseListPage-G0YMfYQG.js            1.69 kB │ gzip:   0.97 kB
+dist/assets/OriginalDocumentPanel-BHYKztbs.js      3.33 kB │ gzip:   1.53 kB
+dist/assets/ReleaseReaderPage-BnKsNYso.js          7.43 kB │ gzip:   2.93 kB
+dist/assets/jsx-runtime-D3jfb0Ew.js                8.90 kB │ gzip:   3.38 kB
+dist/assets/PreparePage-D-3r--ih.js                9.78 kB │ gzip:   3.61 kB
+dist/assets/ViewerPanel-C9eT-R6D.js               12.18 kB │ gzip:   4.60 kB
+dist/assets/ReviewWorkspacePage-CBuRNkIF.js       30.09 kB │ gzip:   9.64 kB
+dist/assets/index-D2JcMJ4C.js                    409.20 kB │ gzip: 123.86 kB
+dist/assets/prepare-CtQEyV7y.js                  432.92 kB │ gzip: 130.28 kB
+dist/assets/ViewerStage-lNwz4s_i.js              969.77 kB │ gzip: 258.64 kB
+
+✓ built in 653ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+$ (cd /src/everything-manual && RUSTFLAGS="--remap-path-prefix=/root=/build/home --remap-path-prefix=/src/everything-manual=/build/repo" cargo build --release --locked --features embedded-ui --target x86_64-unknown-linux-musl --package everything-manual)
+   Compiling everything-manual v0.1.0 (/src/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 32.02s
+
+[可复现] 清理本包构件并重新构建（独立重链接）…
+$ (cd /src/everything-manual && cargo clean --package everything-manual --release --target x86_64-unknown-linux-musl)
+     Removed 30 files, 233.0MiB total
+$ (cd /src/everything-manual && RUSTFLAGS="--remap-path-prefix=/root=/build/home --remap-path-prefix=/src/everything-manual=/build/repo" cargo build --release --locked --features embedded-ui --target x86_64-unknown-linux-musl --package everything-manual)
+   Compiling everything-manual v0.1.0 (/src/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 29.69s
+[可复现] 两次独立构建 sha256 一致：77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246
+
+dist 完成：
+  binary : /src/everything-manual/dist/x86_64-unknown-linux-musl/everything-manual
+  sha256 : 77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246
+  size   : 28236728 bytes
+  target : x86_64-unknown-linux-musl（host x86_64-unknown-linux-gnu，跨构建）
+  文件   : SHA256SUMS, licenses.json, build-info.json, dynamic-dependencies.txt
+  可复现 : 独立重建后 sha256 仍为 77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246

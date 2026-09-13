@@ -1,0 +1,81 @@
+########## RUN 1 ##########
+thread 'legacy_schema_backup_restores_and_migrates_automatically' (20) panicked at crates/server/tests/backup_restore.rs:2390:5:
+assertion `left == right` failed: serve 应优雅退出；stdout：{"timestamp":"2026-09-13T14:51:13.931757Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/em-auth-t20-legacy-cli-19-1789311073183177001-0/restored-data","schemaVersion":7},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:13.933940Z","level":"WARN","fields":{"message":"数据库 schema 已自动升级：升级前应先备份；回滚程序不能读取比它新的 schema","event":"schema_upgraded","from":1,"to":7},"target":"everything_manual::config::commands"}
+提示：数据库 schema 已自动升级 v1 → v7。升级前应先备份（backup --data-dir <dir> --out <新路径>，需停服）；程序回滚不等于数据库回滚（旧程序不能打开更新的 schema，只能用迁移前备份恢复到新目录）。
+{"timestamp":"2026-09-13T14:51:13.937093Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":1,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:13.937980Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:13.938297Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:13.939366Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"67:01a09b40-3e92-77b9-8854-0829bd0effda","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:13.943721Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:13.943894Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:13.944415Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:36863","dataDir":"/tmp/em-auth-t20-legacy-cli-19-1789311073183177001-0/restored-data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+listening on http://127.0.0.1:36863
+
+stderr：
+  left: -1
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    legacy_schema_backup_restores_and_migrates_automatically
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.84s
+
+error: test failed, to rerun pass `-p everything-manual --test backup_restore`
+run1 cargo exit=101
+########## RUN 2 ##########
+thread 'legacy_schema_backup_restores_and_migrates_automatically' (96) panicked at crates/server/tests/backup_restore.rs:2390:5:
+assertion `left == right` failed: serve 应优雅退出；stdout：{"timestamp":"2026-09-13T14:51:15.258325Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/em-auth-t20-legacy-cli-95-1789311074493794918-0/restored-data","schemaVersion":7},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:15.260432Z","level":"WARN","fields":{"message":"数据库 schema 已自动升级：升级前应先备份；回滚程序不能读取比它新的 schema","event":"schema_upgraded","from":1,"to":7},"target":"everything_manual::config::commands"}
+提示：数据库 schema 已自动升级 v1 → v7。升级前应先备份（backup --data-dir <dir> --out <新路径>，需停服）；程序回滚不等于数据库回滚（旧程序不能打开更新的 schema，只能用迁移前备份恢复到新目录）。
+{"timestamp":"2026-09-13T14:51:15.263516Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":1,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:15.264395Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:15.264712Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:15.265753Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"143:01a09b40-43c0-7681-aeee-35766c1e667d","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:15.268552Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:15.268733Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:15.269262Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:46091","dataDir":"/tmp/em-auth-t20-legacy-cli-95-1789311074493794918-0/restored-data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+listening on http://127.0.0.1:46091
+
+stderr：
+  left: -1
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    legacy_schema_backup_restores_and_migrates_automatically
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.86s
+
+error: test failed, to rerun pass `-p everything-manual --test backup_restore`
+run2 cargo exit=101
+########## RUN 3 ##########
+thread 'legacy_schema_backup_restores_and_migrates_automatically' (172) panicked at crates/server/tests/backup_restore.rs:2390:5:
+assertion `left == right` failed: serve 应优雅退出；stdout：{"timestamp":"2026-09-13T14:51:16.578900Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/em-auth-t20-legacy-cli-171-1789311075821255419-0/restored-data","schemaVersion":7},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:16.581017Z","level":"WARN","fields":{"message":"数据库 schema 已自动升级：升级前应先备份；回滚程序不能读取比它新的 schema","event":"schema_upgraded","from":1,"to":7},"target":"everything_manual::config::commands"}
+提示：数据库 schema 已自动升级 v1 → v7。升级前应先备份（backup --data-dir <dir> --out <新路径>，需停服）；程序回滚不等于数据库回滚（旧程序不能打开更新的 schema，只能用迁移前备份恢复到新目录）。
+{"timestamp":"2026-09-13T14:51:16.584229Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":1,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:16.585092Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:16.585388Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:16.586397Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"219:01a09b40-48e9-759d-96fb-c378007070f6","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:16.590347Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:16.590522Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+{"timestamp":"2026-09-13T14:51:16.591050Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:34559","dataDir":"/tmp/em-auth-t20-legacy-cli-171-1789311075821255419-0/restored-data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+listening on http://127.0.0.1:34559
+
+stderr：
+  left: -1
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    legacy_schema_backup_restores_and_migrates_automatically
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.85s
+
+error: test failed, to rerun pass `-p everything-manual --test backup_restore`
+run3 cargo exit=101

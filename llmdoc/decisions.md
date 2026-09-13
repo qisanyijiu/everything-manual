@@ -2248,3 +2248,116 @@ ADR-xxx — 简短结论
 - 相关链接：`xtask/src/{dist,smoke,util}.rs`、`.github/workflows/ci.yml`、`docs/operations.md`、
   `scripts/{linux-musl,container-linux-musl}.sh`；证据：`artifacts/web-mvp/t22-rd/**`、
   `dist/aarch64-apple-darwin/*`；实现记录：`requirements/web-mvp/implementation.md` §T22。
+
+## ADR-036 — T22 Linux x86_64-musl：容器原生构建的路径/缓存/镜像取舍，与 ADR-035 的差异
+
+- 状态：accepted（Linux 半边**已实测**：原生 `dist` + 原生 `smoke` 7 步 + `--network none` 整条 smoke +
+  静态链接 0 动态依赖 + 独立重链接同哈希；2026-09-13）。**尚未经独立 QA 验收**。
+- 日期／作者角色：2026-09-13 · RD（T22 续做，QA 回合 30 待验）。
+- 背景与证据（原始日志 `artifacts/web-mvp/t22-rd/linux/**`，实现记录 §T22-13）：
+  1. Docker 引擎恢复后，仍走 ADR-035 固化的脚本路径（宿主复制工作树 → amd64 容器内原生构建 + smoke），
+     没有另建旁路流程。宿主 Apple Silicon 上 `--platform linux/amd64` 由 **Rosetta** 执行
+     （容器 `/proc/cpuinfo` = `VirtualApple @ 2.50GHz`），冷启动全流程约 9 分钟、热构建约 100 秒——
+     比"数小时"的保守预期快得多，故今后同环境可放心重跑。
+  2. 产物 `77b38c91…`（28 236 728 B）：`file` = `static-pie linked`、`ldd` = `statically linked`、
+     `readelf -d` 的 **DT_NEEDED = 0**；`--check-reproducible` 独立重链接后同哈希。
+  3. `--network none` 下整条 smoke 7 步全过；容器内自证断网（无默认路由、DNS 失败、`curl` http_code=000）。
+- 结论与原因：
+  1. **容器内工作树挂载点必须是"不与隔离扫描子串语义冲突"的深路径**，最终
+     `/src/everything-manual`（`EM_LINUX_WORK_MOUNT` 可覆盖）。两次真实误报：
+     ① `/build` 与 remap 目标 `/build/home`、`/build/repo` 自撞；② `/work` 与依赖 panic 路径里极常见的
+     `.../worker.rs` 自撞（sqlx/tokio 共 5 处）。**没有**放宽扫描的子串语义——这是构建环境问题。
+  2. **`CARGO_HOME` 与 `RUSTUP_HOME` 必须成对，且 `CARGO_HOME` 要在 `$HOME` 之下**：
+     rustup 要求自身装在 `$CARGO_HOME/bin`（否则报 "rustup is not installed at …"）；而 `dist` 的隔离扫描
+     以 `$HOME` 为归一化锚点，`CARGO_HOME` 在 `$HOME` 之外时 registry/src 的构建机路径既不被 remap
+     归一化、也不被扫描拒绝（运行包带脏路径）。脚本固定 `HOME=/root` + `CARGO_HOME=/root/.cargo`
+     （从镜像 `/usr/local/cargo` 播种）+ `RUSTUP_HOME=/usr/local/rustup`，两个缓存目录宿主持久化，
+     供离线轮次无网络复用（离线容器还要能通过 rust-toolchain.toml 的 rustfmt/clippy 校验，
+     否则 rustup 会在每次调用时尝试联网补齐而失败）。
+  3. **传输镜像只换来源，不换内容**：本环境 `deb.debian.org`(http) 不可用、`static.rust-lang.org` 握手失败、
+     `static.crates.io` 极慢且常失败、`registry.npmjs.org` 不可达。默认走 apt `https://mirrors.ustc.edu.cn`
+     （`debian` 与 `debian-security` 是两条不同路径，不能统一替换）、rustup `https://rsproxy.cn`、
+     crates sparse `https://rsproxy.cn/index/`（`CARGO_SOURCE_CRATES_IO_REPLACE_WITH`，即 ADR-010 机制）、
+     npm `https://registry.npmmirror.com`、Node 二进制 npmmirror。内容校验依旧：rustup sha256 清单、
+     npm `package-lock` integrity、cargo `Cargo.lock` checksum；`Cargo.lock` 的 source 仍是官方 crates.io。
+     容器内 Node 由 v22.20.0 提至 **v22.22.2**（`jsdom@30` 声明 `engines.node ^22.22.2`）。
+  4. **样例备份的 DB 不在版本控制内**：`.gitignore` 的 `*.sqlite3` 使
+     `artifacts/web-mvp/t20-rd/sample-backup/database/manual.sqlite3` 在全新 checkout 里缺失
+     （manifest/SHA256SUMS 在、DB 不在）→ §7 第 2 步必然失败。新增 `scripts/linux-musl.sh
+     --prepare-sample-backup`：容器内用 T20 造数用例（`prepare_rehearsal_datadir`）+ 正式二进制 `backup`
+     重新生成自洽备份；宿主脚本在仓库备份不完整时**拒绝覆盖**构建目录里的完整备份（否则 manifest 与 DB 对不上）。
+     CI 的 `dist-musl` job 同步补了该步骤。**这是"环境缺文件"，不是产品缺陷**。
+  5. **挂载点变化必须清 `target/`**：build script 二进制把编译期 `CARGO_MANIFEST_DIR` 烧进
+     `cargo:rerun-if-changed=<旧路径>/migrations`，cargo 指纹只看源码 mtime → 会复用旧 build script，
+     `build.rs` 按旧路径找 `apps/web/dist` 并 panic。宿主脚本用缓存目录里的 `work-mount.txt` 检测并清理。
+  6. **修订 ADR-035 第 3 条（动态依赖采集判据）**：原判据 `target == host` 会把
+     `x86_64-unknown-linux-gnu` 主机上的 `x86_64-unknown-linux-musl` 产物标成"跨构建→未采集"，
+     而 §6 与 T22 交接要求每平台依赖清单。改为**同架构同 OS 即采集**（gnu→musl 只差 libc/ABI，
+     且产物就在同一环境被 `smoke` 真实运行）；跨架构/跨 OS 仍是"未采集"。`build-info.json` 保留真值
+     `crossCompiled: true`、`sameArchOs` 语义字段 `samePlatformAsBuild: false`，不制造"原生 triple"假象；
+     `dynamic-dependencies.txt` 改为不截断输出 `readelf -d` 并给出 `DT_NEEDED` 计数。
+  7. **macOS 宿主脚本的 bash 3.2 会把全角标点当变量名字符**：`"$VAR）"` 解析为变量 `VAR）` →
+     `unbound variable`（真实踩到）。两脚本中"变量紧跟全角标点"处统一加 `${}`。
+- 影响：
+  1. 后续调 `scripts/linux-musl.sh` 时不要改挂载点短名、不要把 `CARGO_HOME` 挪出 `HOME`；
+     改了就重跑并复核 `build-info.json.isolation.hits` 与 `remappedHomePathHits`。
+  2. Linux 侧新增三个可用入口：`--offline-only`（离线证据）、`--prepare-sample-backup`（备份重建）、
+     `--check`（Linux 侧回归）、`--check-reproducible`（可复现）。
+  3. `dist` 的"同架构同 OS"判据对 macOS 无影响（target==host 仍成立）。
+- 未验证边界与下一步：
+  1. **新发现（未修复）**：`crates/server/tests/backup_restore.rs::legacy_schema_backup_restores_and_migrates_automatically`
+     在 Linux 容器内必现失败（3/3），原因是 `run_serve` 打印 `listening on …` 之后才把
+     `shutdown_signal()` 交给 `axum::serve(...).with_graceful_shutdown(...)`，而 tokio 的 SIGTERM 处理器
+     **在被 poll 时才注册** → 该窗口内 SIGTERM 走默认动作杀进程（退出码 None，测试期望 0）。
+     同容器内 `config_cli.rs` 的同类 SIGTERM 用例通过，说明稳态停服正常。属产品代码范围，
+     本卡未改（沿用"产品代码零改动"口径，且改产品代码会使已交付的 macOS 证据需要重跑）；
+     建议由 PM/协调者决定是否作为 T20/T21 缺陷派发。
+  2. 容器是 Rosetta 模拟执行 x86_64，不是真实 x86_64 硬件：架构相关的 `file`/`ldd` 结论可采信，
+     性能类结论不得引用；若需真实硬件证据，应在 x86_64 Linux 机器上重跑同一脚本（脚本已参数化）。
+  3. 浏览器矩阵（Firefox/Edge）、真实 Provider（T23）、签名/公证仍为未覆盖项。
+- 相关链接：`scripts/{linux-musl,container-linux-musl}.sh`、`xtask/src/dist.rs`、`.github/workflows/ci.yml`、
+  `docs/operations.md`；证据：`artifacts/web-mvp/t22-rd/linux/**`；实现记录：`requirements/web-mvp/implementation.md` §T22-13。
+
+### T22 Linux 半边验收知识（追加，2026-09-13；QA 回合 30：AC-064 Linux / AC-002 / AC-059 Linux 三条必选独立复现通过，切片 **PASS**；新增未关闭 **BUG-013**（P3，跨卡））
+
+- 状态：QA 独立复现与定性结论，供 T23、真机复跑与测试硬化复用。完整证据见
+  [QA 回合 30 报告](requirements/web-mvp/qa-report.md)；本轮未改任何命令合同语义。
+- **"原生运行"要分三层说（本轮核心判据）**：① 目标 OS 内核；② 目标 ABI 用户态；③ 物理 CPU。
+  `--platform linux/amd64` 在 Apple Silicon 上只满足 ①②（x86_64 用户态由 Rosetta 翻译），
+  ③ 未满足。因此：`file`/`ldd`/`readelf`/sha256 这类**产物自身属性**可采信；
+  **任何性能结论不得引用**（本轮 RD/QA 都没有引用，已逐处核对）；需要 ③ 时用同一参数化脚本在真机重跑。
+  另：`build-info.json.crossCompiled=true` 只表达 **triple 差**（gnu 构建机 → musl 目标），
+  **不表达跨 OS**——不要把它读成"在别的 OS 上交叉编译"。
+- **启动协议行先于信号处理器注册（跨卡陷阱）**：`run_serve` 先打印 `listening on …`，
+  之后 `shutdown_signal()` 才被首次 poll → 期间 SIGTERM 走默认动作。实测窗口 **≈50–100 ms**
+  （≤50 ms → 退出码 143；≥100 ms → 0）。`crates/server/tests/storage.rs:1817` 已知此坑并用
+  300 ms settle 规避；**`backup_restore.rs` / `config_cli.rs` 未 settle**，故 Linux 容器内
+  `legacy_schema_backup_restores_and_migrates_automatically` **必现失败（3/3）**（→ BUG-013）。
+  **后续任何"读到协议行即发信号"的测试都必须先 settle**，否则在慢环境（容器/Rosetta）从偶发变必现。
+- **重建型 fixture 的验收三步问法**（本轮样例备份场景，可复用于任何 T20 式 fixture）：
+  ① 生成器是否**独立于**被测路径（此处＝仓库自己的 T20 造数用例 + 正式 `backup`，不是 smoke 的产物）；
+  ② 差异是否只落在**非语义字段**（本轮 11 个 blob 中 8 个逐字节相同，3 个仅 `assetId`/`documentId`/
+  `preparationId` 时间戳不同）；③ 断言是否仍**跨三方**（备份清单 ↔ 恢复结果 ↔ 实际下载字节）。
+  三条都满足即等价；但"与版本控制里那份逐字节相同"这条身份断言会丢，**必须显式登记**。
+  附带事实：`artifacts/web-mvp/t20-rd/sample-backup/database/manual.sqlite3` 因 `.gitignore` 的
+  `*.sqlite3` **不在任何 checkout 里**，macOS 侧复跑同样需要先重建（`docs/operations.md` §1）。
+- **复跑取证的纪律**：`scripts/linux-musl.sh` 的 `ARTIFACT_DIR` **硬编码**为 `artifacts/web-mvp/t22-rd/linux`，
+  QA/他人复跑会覆盖 RD 同名证据 → 复跑前**快照**、跑后**按快照还原**并 `diff -r` 校验（本轮已做，
+  逐字节还原通过）。建议后续支持 `EM_LINUX_ARTIFACT_DIR` 覆盖。
+- **隔离扫描的挂载点命名**：扫描把"仓库根"当**子串**搜，短名挂载点会自撞（`/build` 撞 remap 目标
+  `/build/home`；`/work` 撞依赖 panic 路径 `.../worker.rs`）。正解是**深路径**（`/src/everything-manual`），
+  **不是**放宽扫描子串语义；`CARGO_HOME` 必须在 `$HOME` 之下，否则路径既不归一化也不被拒绝。
+- **脚本静默失败面**：`cmd | grep -c "X" || true` 在工具本身失败时会打印 `0` 且返回成功
+  （本轮 `readelf -d … | grep -c "(NEEDED)"`）；`step()` 必须用 `${PIPESTATUS[0]}` 取真实退出码，
+  失败路径要"先回收日志再非零退出"。以上属本轮 P4（OB-20/OB-21）。
+- **取证手法（可复用）**：① 判据权威性——不采信产物自述，QA 在容器内**自算**禁用模式命中数与
+  `DT_NEEDED`；② provenance——QA 独立重跑 `dist --check-reproducible`，比对交付 sha256，
+  并要求重建的 `build-info.json` 与交付件**除 `builtAt` 外逐字段一致**；③ §7 第 7 步"无 Node/Python/源码"
+  的**直接**证据——裸 `alpine` 容器只挂一个二进制做 init/serve/资源/404/停服
+  （`artifacts/web-mvp/t22-qa/qa-r30-coldstart-bare-container.sh`），不再靠"环境清理 + 静态链接"推断。
+- **未覆盖边界（本轮记录，不冒充通过）**：物理 x86_64 硬件；真实 HTTPS（静态 musl 不含系统 CA，
+  真实 TLS 信任链属真实链路与运维声明）；Firefox/Edge（AC-063）；签名/公证；`--check-reproducible`
+  只做"重链接"不做依赖重编（与 macOS 同口径）。
+- 相关代码／证据：`crates/server/src/config/commands.rs`、`crates/server/tests/{backup_restore,storage,config_cli}.rs`、
+  `xtask/src/{dist,smoke}.rs`、`scripts/{linux-musl,container-linux-musl}.sh`、`artifacts/web-mvp/t22-qa/**`、
+  `artifacts/web-mvp/t22-rd/linux/**`；实现记录：`requirements/web-mvp/implementation.md` §T22-13。

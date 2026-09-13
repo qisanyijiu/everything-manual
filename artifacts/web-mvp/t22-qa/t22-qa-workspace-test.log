@@ -1,0 +1,5 @@
+cargo exit=101
+测试目标数=37
+FAILED-TARGET: test result: FAILED. 9 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 8.60s
+汇总: passed=557 failed=1 ignored=2
+    legacy_schema_backup_restores_and_migrates_automatically

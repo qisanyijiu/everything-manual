@@ -1,0 +1,2 @@
+[host-step] rsync-worktree       exit=0 elapsed=0s
+[host-step] linux-regression     exit=1 elapsed=62s

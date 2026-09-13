@@ -1,0 +1,5 @@
+[step] rustup-toolchain       exit=0 elapsed=4s
+[step] rustup-target          exit=0 elapsed=0s
+[step] env-report             exit=0 elapsed=1s
+[step] smoke-bootstrap        exit=0 elapsed=1s
+[step] xtask-check            exit=1 elapsed=46s

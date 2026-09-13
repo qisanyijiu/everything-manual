@@ -1,5 +1,5 @@
 work_id: web-mvp
-phase: blocked
+phase: rd_fixing
 request_revision: 1
 prd_revision: 2
 ui_revision: 2
@@ -26,6 +26,7 @@ accepted_tasks:
   - {task_id: T19, prd_revision: 2, qa_round: 24, accepted_ac_ids: [AC-052, AC-053, AC-054, AC-055, AC-056, AC-057], status: accepted}
   - {task_id: T20, prd_revision: 2, qa_round: 25, accepted_ac_ids: [AC-009, AC-010, AC-058, "卡内项"], status: accepted}
   - {task_id: T21, prd_revision: 2, qa_round: 29, accepted_ac_ids: ["§3 矩阵全行", "五个崩溃断点", "批次中断场景"], status: accepted}
+  - {task_id: T22, prd_revision: 2, qa_round: 30, accepted_ac_ids: ["AC-064 Linux 半边", "AC-002（Linux 容器内 smoke 7 步）", "AC-059 Linux 侧（--network none）"], status: needs_retest}
 qa_history:
   - {round: 1, scope: slice, task_ids: [T01], prd_revision: 1, result: PASS}
   - {round: 2, scope: slice, task_ids: [T02], prd_revision: 1, result: PASS}
@@ -56,15 +57,12 @@ qa_history:
   - {round: 27, scope: slice, task_ids: [BUG-009, BUG-010], prd_revision: 2, result: PASS}
   - {round: 28, scope: slice, task_ids: [BUG-011, BUG-012], prd_revision: 2, result: PASS}
   - {round: 29, scope: slice, task_ids: [T21], prd_revision: 2, result: PASS}
-qa_round: 28
+  - {round: 30, scope: slice, task_ids: [T22], prd_revision: 2, result: PASS}
+qa_round: 30
 qa_scope: slice
 qa_result: null
-open_defects: []
+open_defects: [BUG-013]
 closed_defects: [BUG-001, BUG-002, BUG-003, BUG-004, BUG-005, BUG-006, BUG-007, BUG-008, BUG-009, BUG-010, BUG-011, BUG-012]
-blocked_reason: "T22 Linux 平台验证：Docker 引擎在磁盘满事件后无法启动（环境阻塞），macOS 平台已完成"
-resume_phase: rd_running
-blocked_on: environment
-unblock_condition: "Docker 引擎可用（或外部 Linux 机器）→ 执行 Linux 构建+容器内 smoke+离线验证 → QA 补 T22 结论；随后 T23（用户凭据与预算）"
 report: llmdoc/requirements/web-mvp/qa-report.md
 carry_over:
   - "T12/T13 T23 收敛项（upload token/计费字段候选、下载允许域）"
@@ -83,4 +81,35 @@ blocked_episode:
     blocked_on: environment
     attempted: ["重启应用", "docker desktop stop/start", "POST /engine/start", "diagnose", "docker desktop start（CLI）", "完整退出后重启"]
     unblock_condition: "Docker 引擎恢复（可能需用户执行 Troubleshoot → Clean/Purge data，属破坏性需用户授权），或改在外部 Linux 机器执行 scripts/linux-musl.sh；恢复后由 rd 补 Linux 构建+容器内 smoke+离线验证，再交 QA 补 T22 结论"
-next_action: "已按用户要求暂停（2026-09-13）：进度与实现总结已写入 llmdoc/requirements/web-mvp/progress-summary.md 并从 llmdoc/README.md 索引指向。恢复入口：Docker 可用后派 rd 执行 Linux 平台验证（T22 收尾），随后 T23（需用户凭据与预算授权）"
+    resolution: "2026-09-13 恢复会话：磁盘已有 356 GiB 可用，未做任何破坏性清理，仅 `open -a Docker` 重新启动应用即恢复。主协调实测 `docker ps` 正常，server 29.3.1（Docker Desktop / aarch64 宿主），阻塞解除。"
+coordinator_corrections:
+  - "2026-09-13：qa_round 由 28 更正为 29（qa_history 与 accepted_tasks 中 T21 已用回合 29，原值滞后会导致下一回合号冲突）。T22 的 QA 回合从 30 起。"
+pause_history:
+  - at: "2026-09-13"
+    by: user
+    reason: "用户要求暂停（T22 Linux 验证进行中，未完成）"
+    resolved: "2026-09-13 用户执行 /team 恢复；环境复核：Docker server 29.3.1 可用、无残留容器、工作树干净、探针缓存 /tmp/t22-probe 719 MB 仍在。已回 rd_running 继续 T22，不从头开始。"
+    resume_phase: rd_running
+    resume_entry: "/team web-mvp → 派 rd 继续 T22 Linux 半边"
+    state_left: "宿主工作树未被改写（探针在容器内，工作树干净）；无孤儿容器（探针容器已 docker stop）；探针缓存保留于 /tmp/t22-probe（719 MB，含 cargo registry，可复用）"
+    rd_partial_findings:
+      - "镜像可达：docker.1ms.run/library/rust:1.98.1-bookworm 已成功拉取（2.2 GB），镜像源可用。"
+      - "探针缓存目录 /tmp/t22-probe/{cache/cargo,cache/rustup}：cargo registry 复用自既有缓存（非本轮下载），对加速恢复有价值。"
+      - "探针踩坑（恢复时避免重复）：若把 CARGO_HOME 与 RUSTUP_HOME 分开挂载（如 cargo→/root/.cargo、rustup→/usr/local/rustup），rustup 会报 `rustup is not installed at '/root/.cargo'`，`rustup target add` 随之失败。两者必须作为一致的一对（脚本 container-linux-musl.sh 用的是 /build/.cargo-home + /build/.rustup-home，属正确配对，未被该坑影响）。"
+      - "RD 未完成：未产出 Linux 二进制，未取得任何 Linux 原生运行/离线证据，未写 implementation.md 本轮记录。上一轮 T22-5/T22-10 的 Linux BLOCKED 结论仍然有效，不得据此推断任何 Linux 结果。"
+  - at: "2026-09-13"
+    by: user
+    reason: "用户要求：QA 回合 30 验证完成后把结论写入 llmdoc，然后暂停"
+    resolved: null
+    resume_phase: rd_fixing
+    resume_entry: "/team web-mvp → 按 next_action 派 rd（修 BUG-013 + 现行 dist.rs 下复跑 macOS dist），再交 QA 回合 31"
+coordinator_rulings:
+  - at: "2026-09-13"
+    by: coordinator
+    subject: "QA 回合 30 提出「BUG-013 是否阻断 T22 切片」的口径裁决请求"
+    ruling: "T22 切片判 PASS 成立。依据 collaboration.md §4「所有违反当前必选验收项的问题均阻断当前切片 PASS」——BUG-013 不违反 T22 任何必选 AC（AC-002 的停服重启步骤用 SIGKILL 完成，强于优雅退出；AC-064/AC-059 与本缺陷无关）。不采纳「任何未关闭缺陷都不放行切片」的严口径：collaboration.md §2 与 validation-release §8 把「未关闭验收缺陷为 0」挂在 done／全量发布门禁上，不是切片门禁。BUG-013 保持 OPEN，阻断发布门禁。"
+  - at: "2026-09-13"
+    by: coordinator
+    subject: "T22 整卡为何未直接标记 accepted"
+    ruling: "T22 记 needs_retest：(1) 本轮只验了 Linux 半边，macOS 半边尚无 QA 独立回合；(2) xtask/src/dist.rs 是在 macOS 证据产出之后才改的（新增 host/target/samePlatformAsBuild 字段、动态依赖判据由 target==host 改为 same_arch_and_os、readelf 改全文），故 macOS 侧已录证据相对当前代码过期，需在现行代码下复跑确认。"
+next_action: "已按用户要求暂停（2026-09-13）。恢复入口：派 RD 处理两项——① 修 BUG-013（QA 已定性为「测试侧启动竞态为主 + 产品侧 50–100 ms 窄窗口」；项目在 crates/server/tests/storage.rs:1817 已有同源判定『不是产品缺陷』并用 300 ms settle 规避，backup_restore.rs / config_cli.rs 缺该 settle；测试侧修不改变发布二进制，产品侧修则触发两平台 T22 证据重跑，由 RD 评估后择一并写明理由）；② 在现行 dist.rs 下复跑 macOS dist，比对二进制 sha256 是否仍为 ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333，据此判定 macOS 证据是否需整轮重验。两项完成后交 QA（回合 31）复核 T22 整卡。随后 T23（需用户凭据与预算授权）。"

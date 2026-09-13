@@ -85,6 +85,27 @@ jobs:
       - name: 构建单二进制（含 SHA256 / licenses / build-info / 动态依赖）
         run: cargo xtask dist --target x86_64-unknown-linux-musl
 
+      # `.gitignore` 排除 `*.sqlite3`，所以 checkout 里的样例备份缺 database/manual.sqlite3，
+      # smoke 的 §7 第 2 步（restore 合法备份）无法直接跑。用仓库自己的 T20 造数用例 +
+      # 刚构建的二进制重新生成一份自洽备份（内容与仓库 tracked 版本同源）。
+      - name: 重建 T20 样例备份（*.sqlite3 不入库）
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f artifacts/web-mvp/t20-rd/sample-backup/database/manual.sqlite3 ]]; then
+            echo "样例备份已完整，跳过重建"
+            exit 0
+          fi
+          export EM_T20_REHEARSAL_DIR=/tmp/em-t20-rehearsal
+          cargo test -p everything-manual --test backup_restore -- \
+            --ignored --nocapture prepare_rehearsal_datadir
+          rm -rf /tmp/em-t20-backup
+          ./dist/x86_64-unknown-linux-musl/everything-manual backup \
+            --data-dir "$EM_T20_REHEARSAL_DIR/data" --out /tmp/em-t20-backup
+          rm -rf artifacts/web-mvp/t20-rd/sample-backup
+          cp -a /tmp/em-t20-backup artifacts/web-mvp/t20-rd/sample-backup
+          ( cd artifacts/web-mvp/t20-rd/sample-backup && sha256sum -c SHA256SUMS )
+
       - name: 正式包冒烟（§7 的 7 步；样例备份取自仓库 artifacts）
         run: |
           cargo xtask smoke --binary "$PWD/dist/x86_64-unknown-linux-musl/everything-manual" \

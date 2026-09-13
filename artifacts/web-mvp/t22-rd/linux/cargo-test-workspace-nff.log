@@ -1,0 +1,74 @@
+     Running unittests src/lib.rs (target/debug/deps/everything_manual-f64098ca49e51848)
+test result: ok. 177 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.44s
+     Running unittests src/main.rs (target/debug/deps/everything_manual-79e0a95c76f15967)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/assets.rs (target/debug/deps/assets-b4036373fbba9eaf)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.85s
+     Running tests/auth_api.rs (target/debug/deps/auth_api-8e3b70f90f49b6f4)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.72s
+     Running tests/backup_restore.rs (target/debug/deps/backup_restore-0f0f9c458acde5f9)
+test result: FAILED. 9 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 8.51s
+error: test failed, to rerun pass `-p everything-manual --test backup_restore`
+     Running tests/bootstrap.rs (target/debug/deps/bootstrap-2f55410c29cce76f)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+     Running tests/config_cli.rs (target/debug/deps/config_cli-1ed3fcf8048bde1c)
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.61s
+     Running tests/fixture_harness.rs (target/debug/deps/fixture_harness-31d04f938071c26c)
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.76s
+     Running tests/generation_requests.rs (target/debug/deps/generation_requests-10762b88d06cff40)
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.75s
+     Running tests/items.rs (target/debug/deps/items-d639b6753d5ad4a7)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.34s
+     Running tests/jobs_recovery.rs (target/debug/deps/jobs_recovery-c46af73c2bf162d4)
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.99s
+     Running tests/manual_ai_contract.rs (target/debug/deps/manual_ai_contract-6e590664a1b755b5)
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.30s
+     Running tests/model_assets.rs (target/debug/deps/model_assets-33900df28e10b56d)
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.58s
+     Running tests/photos_concurrency.rs (target/debug/deps/photos_concurrency-6597124cd2f40238)
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.82s
+     Running tests/pipeline.rs (target/debug/deps/pipeline-f345cd784b415a8a)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.88s
+     Running tests/preparations.rs (target/debug/deps/preparations-9a02876940c9b6a4)
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.79s
+     Running tests/publishing.rs (target/debug/deps/publishing-708685f4d2f26026)
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.12s
+     Running tests/qa_t10_independent.rs (target/debug/deps/qa_t10_independent-0dd9ef70e1ee2e78)
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.25s
+     Running tests/qa_t10_r11_verify.rs (target/debug/deps/qa_t10_r11_verify-261205d0e7e505b5)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.84s
+     Running tests/qa_t11_independent.rs (target/debug/deps/qa_t11_independent-5fcf60b90c619d1f)
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.30s
+     Running tests/qa_t12_independent.rs (target/debug/deps/qa_t12_independent-c0dc07c054d9c0ec)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.56s
+     Running tests/qa_t13_independent.rs (target/debug/deps/qa_t13_independent-f5a999533f858d60)
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.17s
+     Running tests/qa_t14_independent.rs (target/debug/deps/qa_t14_independent-71985e9f6f27d401)
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.90s
+     Running tests/qa_t15_independent.rs (target/debug/deps/qa_t15_independent-03c2e6625c2a5cba)
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.72s
+     Running tests/qa_t20_bug008_independent.rs (target/debug/deps/qa_t20_bug008_independent-41dd50a2e7c79eb9)
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.39s
+     Running tests/qa_t21_independent.rs (target/debug/deps/qa_t21_independent-5603a7bff3598123)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.56s
+     Running tests/redaction_persistence.rs (target/debug/deps/redaction_persistence-d102465e4a9145f5)
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s
+     Running tests/redaction_surface.rs (target/debug/deps/redaction_surface-0d412613e1f53394)
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+     Running tests/storage.rs (target/debug/deps/storage-501c839ad1394b46)
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.68s
+     Running tests/tripo_contract.rs (target/debug/deps/tripo_contract-ceb5fe18869b5316)
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.49s
+     Running unittests src/lib.rs (target/debug/deps/manual_core-f4ce1ce264799398)
+test result: ok. 51 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+     Running unittests src/lib.rs (target/debug/deps/test_support-ab91f74ec7471450)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/bin/generate_fixtures.rs (target/debug/deps/generate_fixtures-320d7eb977b8c1d5)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/main.rs (target/debug/deps/xtask-21b475b2ab8993c4)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+error: 1 target failed:
+EXIT=0

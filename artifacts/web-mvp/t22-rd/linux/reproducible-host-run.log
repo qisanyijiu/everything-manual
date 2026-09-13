@@ -1,0 +1,292 @@
+== 准备构建目录：/tmp/em-linux-musl-build ==
+[host-step] rsync-worktree       exit=0 elapsed=1s
+   仓库样例备份缺 database/manual.sqlite3（*.sqlite3 不入库）：沿用构建目录内已生成的完整备份
+   （重新生成：scripts/linux-musl.sh --prepare-sample-backup，或设 EM_T20_SAMPLE_BACKUP=…）
+== 缓存目录：/tmp/em-linux-musl-cache ==
+== 容器内原生构建 + 冒烟（image=docker.1ms.run/library/rust:1.98.1-bookworm --platform linux/amd64）==
+[container] CARGO_HOME=/root/.cargo RUSTUP_HOME=/usr/local/rustup HOME=/root
+[container] 镜像：rustup=https://rsproxy.cn npm=https://registry.npmmirror.com crates=sparse+https://rsproxy.cn/index/
+[container] 安装 musl-tools / cmake / file / binutils（apt 镜像 https://mirrors.ustc.edu.cn）
+debconf: delaying package configuration, since apt-utils is not installed
+[container] 安装 Node 22（构建期依赖；运行期不需要）
+[container] rustc: rustc 1.98.1 (48a229cea 2026-09-01)
+info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+info: component clippy is up to date
+info: component rustfmt is up to date
+
+  1.98.1-x86_64-unknown-linux-gnu unchanged - rustc 1.98.1 (48a229cea 2026-09-01)
+
+info: checking for self-update (current version: 1.29.0)
+info: downloading self-update (new version: 1.29.1)
+[step] rustup-toolchain       exit=0 elapsed=6s
+info: component rust-std for target x86_64-unknown-linux-musl is up to date
+[step] rustup-target          exit=0 elapsed=0s
+[container] node: v22.22.2；npm: 10.9.7；cmake: cmake version 3.25.1；musl-gcc: x86_64-linux-gnu-gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+uname: Linux a7e5552c4d1d 6.12.76-linuxkit #1 SMP Sun Mar  8 14:41:59 UTC 2026 x86_64 GNU/Linux
+os: PRETTY_NAME="Debian GNU/Linux 12 (bookworm)" NAME="Debian GNU/Linux" 
+arch: x86_64
+rustc: rustc 1.98.1 (48a229cea 2026-09-01) binary: rustc commit-hash: 48a229ceaefd4985c50990b14116b6d856af0985 commit-date: 2026-09-01 host: x86_64-unknown-linux-gnu release: 1.98.1 LLVM version: 22.1.8 
+cargo: cargo 1.98.1 (797e8a9bc 2026-08-05)
+info: This is the version for the rustup toolchain manager, not the rustc compiler.
+info: the currently active `rustc` version is `rustc 1.98.1 (48a229cea 2026-09-01)`
+rustup: rustup 1.29.0 (28d1352db 2026-03-05)
+node: v22.22.2
+npm: 10.9.7
+cc: cc (Debian 12.2.0-14+deb12u1) 12.2.0
+musl-gcc: x86_64-linux-gnu-gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+cmake: cmake version 3.25.1
+file: file-5.44
+ldd: ldd (Debian GLIBC 2.36-9+deb12u14) 2.36
+readelf: GNU readelf (GNU Binutils for Debian) 2.40
+cpu: 10 vCPU；mem: 7.65273 GiB
+[step] env-report             exit=0 elapsed=0s
+[container] cargo fetch --locked（预取锁文件全部 crate，供离线轮次复用）
+[step] cargo-fetch            exit=0 elapsed=1s
+[container] cargo xtask dist --target x86_64-unknown-linux-musl --check-reproducible
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.41s
+     Running `target/debug/xtask dist --target x86_64-unknown-linux-musl --check-reproducible`
+$ (cd /src/everything-manual/apps/web && npm ci)
+
+added 292 packages in 7s
+npm notice
+npm notice New major version of npm available! 10.9.7 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+$ (cd /src/everything-manual/apps/web && npm run typecheck)
+
+> everything-manual-web@0.1.0 typecheck
+> tsc --noEmit
+
+$ (cd /src/everything-manual/apps/web && npm run test -- --run)
+
+> everything-manual-web@0.1.0 test
+> vitest run --run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90m/src/everything-manual/apps/web[39m
+
+ [32m✓[39m src/features/viewer/draft-view.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/manual/review-state.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/features/jobs/status.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/viewer/coordinates.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/features/viewer/qa-t18-independent.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32m✓[39m src/features/viewer/glb.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m src/api/client.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 797[2mms[22m[39m
+   [32m✓[39m 请求封装（类型来自生成合同） [2m(9)[22m
+     [33m[2m✓[22m[39m retry 策略不自动重放（QueryClient 默认值）[33m 781[2mms[22m[39m
+ [32m✓[39m src/features/jobs/jobDetail.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[32m 284[2mms[22m[39m
+[90mstderr[2m | src/features/shell/shell.test.tsx[2m > [22m[2m路由骨架与文案边界[2m > [22m[2m向导占位页保留五步步骤条且当前步 aria-current
+[22m[39mWarning: Please use the `legacy` build in Node.js environments.
+
+ [32m✓[39m src/features/shell/shell.test.tsx [2m([22m[2m19 tests[22m[2m)[22m[33m 1370[2mms[22m[39m
+   [32m✓[39m 路由骨架与文案边界 [2m(3)[22m
+     [33m[2m✓[22m[39m 版本列表已交付：显示真实空态而不是占位页，且只请求它需要的数据[33m 315[2mms[22m[39m
+     [33m[2m✓[22m[39m 向导占位页保留五步步骤条且当前步 aria-current[33m 323[2mms[22m[39m
+ [32m✓[39m src/features/import/views.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/features/import/money.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/features/import/upload-messages.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+[90mstderr[2m | src/features/import/pdf/prepare.test.ts
+[22m[39mWarning: Please use the `legacy` build in Node.js environments.
+
+[90mstderr[2m | src/features/import/pdf/errors.test.ts
+[22m[39mWarning: Please use the `legacy` build in Node.js environments.
+
+ [32m✓[39m src/features/import/pdf/errors.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/features/import/pdf/prepare.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/features/import/messages.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/App.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 238[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[32m130 passed[39m[22m[90m (130)[39m
+[2m   Start at [22m 14:43:59
+[2m   Duration [22m 8.56s[2m (environment 77%, setup 12%, transform 5%, tests 5%, import 2%, worker 1%)[22m
+
+[2mEnvironment [22m [33mjsdom was created 16 times[39m[2m · 47.94s total, 77% of tracked time[22m
+[2m            [22m [2mcreate it once per worker with [22m[33mpool: 'vmThreads'[39m[2m (keeps per-file isolation) or [22m[33misolate: false[39m[2m (shares it across files)[22m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#test-environments[22m
+
+$ (cd /src/everything-manual/apps/web && npm run build)
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 161 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                    0.53 kB │ gzip:   0.34 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs        1,265.41 kB
+dist/assets/index-CE8-SplE.css                    18.90 kB │ gzip:   3.98 kB
+dist/assets/ReleaseListPage-G0YMfYQG.js            1.69 kB │ gzip:   0.97 kB
+dist/assets/OriginalDocumentPanel-BHYKztbs.js      3.33 kB │ gzip:   1.53 kB
+dist/assets/ReleaseReaderPage-BnKsNYso.js          7.43 kB │ gzip:   2.93 kB
+dist/assets/jsx-runtime-D3jfb0Ew.js                8.90 kB │ gzip:   3.38 kB
+dist/assets/PreparePage-D-3r--ih.js                9.78 kB │ gzip:   3.61 kB
+dist/assets/ViewerPanel-C9eT-R6D.js               12.18 kB │ gzip:   4.60 kB
+dist/assets/ReviewWorkspacePage-CBuRNkIF.js       30.09 kB │ gzip:   9.64 kB
+dist/assets/index-D2JcMJ4C.js                    409.20 kB │ gzip: 123.86 kB
+dist/assets/prepare-CtQEyV7y.js                  432.92 kB │ gzip: 130.28 kB
+dist/assets/ViewerStage-lNwz4s_i.js              969.77 kB │ gzip: 258.64 kB
+
+✓ built in 653ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+$ (cd /src/everything-manual && RUSTFLAGS="--remap-path-prefix=/root=/build/home --remap-path-prefix=/src/everything-manual=/build/repo" cargo build --release --locked --features embedded-ui --target x86_64-unknown-linux-musl --package everything-manual)
+   Compiling everything-manual v0.1.0 (/src/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 32.02s
+
+[可复现] 清理本包构件并重新构建（独立重链接）…
+$ (cd /src/everything-manual && cargo clean --package everything-manual --release --target x86_64-unknown-linux-musl)
+     Removed 30 files, 233.0MiB total
+$ (cd /src/everything-manual && RUSTFLAGS="--remap-path-prefix=/root=/build/home --remap-path-prefix=/src/everything-manual=/build/repo" cargo build --release --locked --features embedded-ui --target x86_64-unknown-linux-musl --package everything-manual)
+   Compiling everything-manual v0.1.0 (/src/everything-manual/crates/server)
+    Finished `release` profile [optimized] target(s) in 29.69s
+[可复现] 两次独立构建 sha256 一致：77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246
+
+dist 完成：
+  binary : /src/everything-manual/dist/x86_64-unknown-linux-musl/everything-manual
+  sha256 : 77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246
+  size   : 28236728 bytes
+  target : x86_64-unknown-linux-musl（host x86_64-unknown-linux-gnu，跨构建）
+  文件   : SHA256SUMS, licenses.json, build-info.json, dynamic-dependencies.txt
+  可复现 : 独立重建后 sha256 仍为 77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246
+[step] build-dist             exit=0 elapsed=107s
+[container] file / ldd / readelf（静态链接证据）
+/src/everything-manual/dist/x86_64-unknown-linux-musl/everything-manual: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), static-pie linked, BuildID[sha1]=baf8e4a91c4aed050e64993b846e6075e738623f, not stripped
+--- ldd ---
+	statically linked
+--- readelf -d（全文）---
+
+Dynamic section at offset 0x16a8b68 contains 20 entries:
+  Tag        Type                         Name/Value
+ 0x000000000000000c (INIT)               0x84000
+ 0x000000000000000d (FINI)               0xce8e43
+ 0x0000000000000019 (INIT_ARRAY)         0x1657e98
+ 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x1657ea8
+ 0x000000000000001c (FINI_ARRAYSZ)       24 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x298
+ 0x0000000000000005 (STRTAB)             0x2d0
+ 0x0000000000000006 (SYMTAB)             0x2b8
+ 0x000000000000000a (STRSZ)              1 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000015 (DEBUG)              0x0
+ 0x0000000000000003 (PLTGOT)             0x16a9ce8
+ 0x0000000000000007 (RELA)               0x2d8
+ 0x0000000000000008 (RELASZ)             537360 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000000000001e (FLAGS)              BIND_NOW
+ 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE
+ 0x000000006ffffff9 (RELACOUNT)          22390
+ 0x0000000000000000 (NULL)               0x0
+--- DT_NEEDED 条目数（静态 musl 应为 0）---
+0
+[step] build-file-ldd         exit=0 elapsed=0s
+[container] 二进制指纹（sha256 与字节数，在 Linux 内计算）
+77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246  /src/everything-manual/dist/x86_64-unknown-linux-musl/everything-manual
+bytes=28236728
+[step] binary-hash            exit=0 elapsed=0s
+[container] cargo xtask smoke --binary /src/everything-manual/dist/x86_64-unknown-linux-musl/everything-manual（§7 的 7 步）
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.38s
+     Running `target/debug/xtask smoke --binary /src/everything-manual/dist/x86_64-unknown-linux-musl/everything-manual`
+=== T22 正式包冷目录冒烟（validation-release §7 的 7 步）===
+binary   : /src/everything-manual/dist/x86_64-unknown-linux-musl/everything-manual
+backup   : /src/everything-manual/artifacts/web-mvp/t20-rd/sample-backup
+临时目录 : /tmp/everything-manual-smoke-1052-1789310728823297050
+[步骤 1] 冷目录已建立：/tmp/everything-manual-smoke-1052-1789310728823297050（只含二进制；无源码 / dist / Node）
+[步骤 2] restore 样例备份 → /tmp/everything-manual-smoke-1052-1789310728823297050/data（退出码 0）
+         {"timestamp":"2026-09-13T14:45:28.985310Z","level":"INFO","fields":{"message":"恢复完成","event":"restore_cli_completed","from":"/src/everything-manual/artifacts/web-mvp/t20-rd/sample-backup","dataDir":"/tmp/everything-manual-smoke-1052-1789310728823297050/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+         恢复完成：/tmp/everything-manual-smoke-1052-1789310728823297050/data
+           来源备份：/src/everything-manual/artifacts/web-mvp/t20-rd/sample-backup（schema v7；快照 sha256 acfe61d87108f91d10293379d04714df27a7eae596416bf230a40ee89cfb4c06）
+           校验通过：manifest、快照与全部 blob 的 sha256、外键与引用；恢复 blob 11 个
+[步骤 2] 独立空目录 init + check 通过：/tmp/everything-manual-smoke-1052-1789310728823297050/init-data（新部署路径）
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.264612Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/everything-manual-smoke-1052-1789310728823297050/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.268576Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":11,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.269276Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.269363Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.269890Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"1107:01a09b3a-fc35-718c-9ebb-e402d1974022","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.271109Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.271117Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.271193Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:36591","dataDir":"/tmp/everything-manual-smoke-1052-1789310728823297050/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+[步骤 2] 生产服务已启动：PID 1107 http://127.0.0.1:36591（环境清空，工作目录不在仓库内）
+  [检查] pgrep 不可用，跳过子进程复核
+  [检查] GET / -> 200 text/html（内嵌 index.html，539 字节）
+  [检查] GET /assets/index-D2JcMJ4C.js -> 200 text/javascript; charset=utf-8（409200 字节）
+  [检查] GET /assets/index-CE8-SplE.css -> 200 text/css; charset=utf-8（18901 字节）
+  [检查] PDF 运行资源·CMaps -> 200 /vendor/pdfjs/cmaps/78-EUC-H.bcmap（2404 字节）
+  [检查] PDF 运行资源·standard_fonts -> 200 /vendor/pdfjs/standard_fonts/FoxitFixed.pfb（17597 字节）
+  [检查] PDF 运行资源·wasm -> 200 /vendor/pdfjs/wasm/openjpeg.wasm（252032 字节）
+  [检查] PDF 运行资源·iccs -> 200 /vendor/pdfjs/iccs/CGATS001Compat-v2-micro.icc（8464 字节）
+  [检查] PDF worker -> 200 /assets/pdf.worker.min-Dswkl-cV.mjs
+  [检查] GET 嵌套路由（/items/…/releases/…）刷新 -> 200 text/html（SPA 回退）
+  [检查] 未登录 GET /api/v1/items -> 401（认证真实生效）
+  [检查] 登录成功（cookie HttpOnly + SameSite=Strict；CSRF token 已获取）
+  [检查] providersConfigured=false（不放行 fixture / 未连接本机 Provider）
+  [检查] release 01a09b18-acb7-729d-a183-efa3e946df5c 的 manifestSha256=8efdca99dc48 命中备份 blob 清单；模型 a9f884c27da2 / PDF e18cf61a61c9 与 manifest 声明一致
+  [检查] GLB GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] GLB GET Range bytes=0-99 -> 206 bytes 0-99/2912（前缀一致）
+  [检查] GLB HEAD -> 200 content-length=2912 无 body
+  [检查] PDF GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] PDF GET Range bytes=0-99 -> 206 bytes 0-99/1216（前缀一致）
+  [检查] PDF HEAD -> 200 content-length=1216 无 body
+  [检查] POST /items/{id}/estimates -> 409 PROVIDER_NOT_CONFIGURED（明确拒绝，不用 mock 冒充）
+  [检查] /health/ready = ready（Provider 未配置不影响本地读取）
+  [清理] 已结束自启动的服务进程 PID 1107
+[步骤 5] 本平台无 sandbox-exec：跳过沙箱复检（Linux 请用 `docker run --network none` 运行整条 smoke 作为离线性证据）
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.796641Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/everything-manual-smoke-1052-1789310728823297050/data","schemaVersion":7},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.800617Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":11,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.801312Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.801397Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.801884Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"1126:01a09b3a-fe49-7345-a315-2f8002f5046f","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.803073Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.803084Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:29.803157Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:39215","dataDir":"/tmp/everything-manual-smoke-1052-1789310728823297050/data","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+  [检查] GLB(重启后) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] GLB(重启后) GET Range bytes=0-99 -> 206 bytes 0-99/2912（前缀一致）
+  [检查] GLB(重启后) HEAD -> 200 content-length=2912 无 body
+[步骤 6] 停服重启后数据仍在：manifest/模型/PDF sha256 与首轮一致
+  [清理] 已结束自启动的服务进程 PID 1126
+[步骤 7] backup → /tmp/everything-manual-smoke-1052-1789310728823297050/backup2（停服后一致快照）
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.330375Z","level":"INFO","fields":{"message":"数据库 schema 已就绪","event":"database_ready","dataDir":"/tmp/everything-manual-smoke-1052-1789310728823297050/data2","schemaVersion":7},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.334389Z","level":"INFO","fields":{"message":"资产残留扫描完成（隔离只移动不删除）","event":"asset_scan","tmpQuarantined":0,"blobsQuarantined":0,"blobsKept":11,"blobsRestored":0,"blobsMarkedMissing":0},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.335037Z","level":"INFO","fields":{"message":"组装阶段处理器已注册（本地确定性组装；不存在自动发布）","event":"pipeline_handlers_registered","stages":"assemble_draft"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.335093Z","level":"WARN","fields":{"message":"任务执行器未注册任何 Provider 阶段处理器（Provider 未配置）：付费阶段会被延后；组装阶段不依赖 Provider，仍正常注册","event":"job_executor_no_handlers"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.335552Z","level":"INFO","fields":{"message":"任务执行器启动（SQLite 事实来源；崩溃断点仅测试构建）","event":"job_executor_start","owner":"1172:01a09b3b-005f-7433-af93-996ee7b849f5","leaseSeconds":120,"renewSeconds":20,"remoteGenerationLimit":2,"manualAiBatchLimit":2},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.336747Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"tripo","missing":"api_key"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.336755Z","level":"WARN","fields":{"message":"Provider 未配置：生成与报价能力将返回“未配置”，不回退 mock；已有资料仍可读","event":"provider_not_configured","provider":"manual_ai","missing":"api_key,model"},"target":"everything_manual::config::commands"}
+  (服务输出) {"timestamp":"2026-09-13T14:45:30.336787Z","level":"INFO","fields":{"message":"服务启动","event":"serve_start","listen":"127.0.0.1:35645","dataDir":"/tmp/everything-manual-smoke-1052-1789310728823297050/data2","securityMode":"loopback","sessionTtlHours":168,"loginRateLimitPerMinute":5,"cookieSecure":false},"target":"everything_manual::config::commands"}
+  [检查] GLB(二次恢复) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] GLB(二次恢复) GET Range bytes=0-99 -> 206 bytes 0-99/2912（前缀一致）
+  [检查] GLB(二次恢复) HEAD -> 200 content-length=2912 无 body
+  [检查] PDF(二次恢复) GET -> 200（sha256 与 manifest 一致，etag 一致）
+  [检查] PDF(二次恢复) GET Range bytes=0-99 -> 206 bytes 0-99/1216（前缀一致）
+  [检查] PDF(二次恢复) HEAD -> 200 content-length=1216 无 body
+[步骤 7] 二次恢复后同一 release 可读，manifest/模型/PDF sha256 与首轮一致
+  [清理] 已结束自启动的服务进程 PID 1172
+
+步骤汇总：1 冷目录 / 2 restore+init / 3 静态与路由 / 4 认证与资产 / 5 断网读取 / 6 重启持久 / 7 备份恢复链 —— 全部通过。
+临时目录已清理：/tmp/everything-manual-smoke-1052-1789310728823297050
+
+正式包冒烟通过（7 步全过；步骤编号与 validation-release §7 一致）。
+[step] smoke-console          exit=0 elapsed=2s
+[container] 完成（逐步退出码与耗时见 /src/everything-manual/steps.log）
+[step] rustup-toolchain       exit=0 elapsed=6s
+[step] rustup-target          exit=0 elapsed=0s
+[step] env-report             exit=0 elapsed=0s
+[step] cargo-fetch            exit=0 elapsed=1s
+[step] build-dist             exit=0 elapsed=107s
+[step] build-file-ldd         exit=0 elapsed=0s
+[step] binary-hash            exit=0 elapsed=0s
+[step] smoke-console          exit=0 elapsed=2s
+[host-step] docker-build-and-smoke exit=0 elapsed=129s
+== 回收产物 ==
+（保留构建目录以便复核：/tmp/em-linux-musl-build）
+== 完成：产物在 /Users/lizhao/Code/rust/everything-manual/artifacts/web-mvp/t22-rd/linux/ ==

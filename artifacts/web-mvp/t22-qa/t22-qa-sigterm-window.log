@@ -1,0 +1,9 @@
+restore exit=0
+=== 立即 SIGTERM（模拟 backup_restore.rs 的无等待终止） ===
+immediate-1 delay=0s exit=143  shutdown_log_lines=0
+immediate-2 delay=0s exit=143  shutdown_log_lines=0
+immediate-3 delay=0s exit=143  shutdown_log_lines=0
+=== 等 0.3s 再 SIGTERM（模拟 storage.rs 的 settle） ===
+delayed-1 delay=0.3s exit=0  shutdown_log_lines=0
+delayed-2 delay=0.3s exit=0  shutdown_log_lines=0
+delayed-3 delay=0.3s exit=0  shutdown_log_lines=0

@@ -492,27 +492,51 @@ fn count_occurrences(haystack: &[u8], needle: &[u8]) -> usize {
     count
 }
 
-/// 原生构建时采集系统动态依赖清单；跨构建写出"未采集"的说明（§6：不得用交叉编译
-/// 退出码 0 替代运行证据，动态依赖必须在目标平台采集）。
+/// 动态依赖采集的适用判据：构建机与目标平台**同架构、同 OS**。
+///
+/// 不要求 triple 完全相等。§6 禁止的是"拿交叉编译退出码 0 当运行证据"——反例是
+/// 在 macOS 上构建 Linux 产物（系统库/内核语义完全不同）。而 `x86_64-unknown-linux-gnu`
+/// 构建机上构建 `x86_64-unknown-linux-musl`（静态）时，构建机与目标平台同 OS 同架构，
+/// `file`/`ldd`/`readelf -d` 的结论对目标产物有效，且该产物就在同一环境由 `smoke` 真实运行；
+/// 差集只有 libc/ABI（gnu→musl），由 `staticLinked` 结论体现。
+fn same_arch_and_os(a: &str, b: &str) -> bool {
+    fn key(triple: &str) -> (String, String) {
+        // <arch>[-<vendor>]-<os>[-<env>]：四段及以上时 os 在 env 之前（末段是 env）。
+        let parts: Vec<&str> = triple.split('-').collect();
+        let arch = parts.first().copied().unwrap_or_default().to_owned();
+        let os = if parts.len() >= 4 {
+            parts[parts.len() - 2]
+        } else {
+            parts.last().copied().unwrap_or_default()
+        };
+        (arch, os.to_owned())
+    }
+    key(a) == key(b)
+}
+
+/// 原生（或同架构同 OS）构建时采集系统动态依赖清单；否则写出"未采集"的说明。
 fn collect_dynamic_dependencies(
     binary: &Path,
     target: &str,
     host: &str,
     out: &Path,
 ) -> Result<serde_json::Value> {
-    if target != host {
+    let same_platform = same_arch_and_os(host, target);
+    if !same_platform {
         std::fs::write(
             out,
             format!(
-                "跨构建（host {host} → target {target}）：动态依赖未在本机采集。\n\
-                 请在目标平台运行本命令（原生构建）后采集 `otool -L` / `file` + `ldd` 输出；\
+                "跨平台构建（host {host} → target {target}）：动态依赖未在本机采集。\n\
+                 请在目标平台（同架构同 OS）重新构建后采集 `otool -L` / `file` + `ldd` 输出；\
                  §6 要求以目标平台原生运行为准。\n"
             ),
         )
         .with_context(|| format!("写入失败：{}", out.display()))?;
         return Ok(serde_json::json!({
             "collected": false,
-            "reason": "cross-compiled",
+            "reason": "cross-platform",
+            "host": host,
+            "target": target,
             "file": out.file_name().and_then(|name| name.to_str()),
         }));
     }
@@ -565,9 +589,21 @@ fn collect_dynamic_dependencies(
         report.push_str("\n\n$ ldd <binary>\n");
         report.push_str(ldd_output.trim_end());
         if !readelf_output.is_empty() {
-            report.push_str("\n\n$ readelf -d <binary>（节选）\n");
-            let excerpt: Vec<&str> = readelf_output.lines().take(20).collect();
-            report.push_str(&excerpt.join("\n"));
+            // 全文（不截断）＋ DT_NEEDED 计数：静态 musl 二进制的结论可一眼核对。
+            let needed: Vec<&str> = readelf_output
+                .lines()
+                .filter(|line| line.contains("(NEEDED)"))
+                .collect();
+            report.push_str("\n\n$ readelf -d <binary>\n");
+            report.push_str(readelf_output.trim_end());
+            report.push_str(&format!(
+                "\n\nDT_NEEDED 条目数：{}（静态链接的 musl 单二进制应为 0）\n",
+                needed.len()
+            ));
+            for line in needed {
+                report.push_str(line);
+                report.push('\n');
+            }
         }
         report.push_str("\n\n判定：");
         if is_static {
@@ -584,6 +620,9 @@ fn collect_dynamic_dependencies(
     std::fs::write(out, report).with_context(|| format!("写入失败：{}", out.display()))?;
     Ok(serde_json::json!({
         "collected": true,
+        "host": host,
+        "target": target,
+        "samePlatformAsBuild": target == host,
         "file": out.file_name().and_then(|name| name.to_str()),
         "staticLinked": static_linked,
         "onlySystemLibraries": only_system,

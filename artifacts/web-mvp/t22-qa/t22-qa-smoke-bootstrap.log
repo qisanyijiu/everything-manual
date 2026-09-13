@@ -1,0 +1,9 @@
+  [检查] GET / -> 200 text/html; charset=utf-8
+  [检查] GET /assets/index-D2JcMJ4C.js -> 200 text/javascript; charset=utf-8
+  [检查] GET /api/v1/health/live -> 200
+  [检查] GET /api/v1/health/ready -> 200
+  [检查] GET /api/unknown -> 404 application/json
+  [检查] GET /library/some-item -> 200 text/html; charset=utf-8
+  [检查] GET /assets/definitely-missing.js -> 404 text/plain; charset=utf-8
+冒烟通过：内嵌页面、静态资源与 health 均可用（T01 最小检查）。
+bootstrap exit=0

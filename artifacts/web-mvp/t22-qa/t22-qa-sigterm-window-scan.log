@@ -1,0 +1,7 @@
+delay=0.001s  exit codes: 143 143 143
+delay=0.005s  exit codes: 143 143 143
+delay=0.02s  exit codes: 143 143 143
+delay=0.05s  exit codes: 143 143 143
+delay=0.1s  exit codes: 0 0 0
+delay=0.2s  exit codes: 0 0 0
+delay=0.3s  exit codes: 0 0 0
