@@ -6596,3 +6596,135 @@ artifacts/web-mvp/t22-rd/linux/**   原始日志与终端产物（见 T22-13.9�
 | AC-059（断外网可读，Linux 侧） | `scripts/linux-musl.sh --offline-only --arch amd64` | exit 0；`offline/network-none-probe.log` 显示无路由/DNS 失败；`offline-smoke-console.log` 7 步全过 |
 | 样例备份可用性 | `scripts/linux-musl.sh --prepare-sample-backup --arch amd64` | exit 0；备份目录含 `database/manual.sqlite3` 且 `sha256sum -c SHA256SUMS` 通过 |
 | Linux 侧回归（**已知 1 例失败**） | `scripts/linux-musl.sh --check --arch amd64` | fmt/clippy/前端/合同通过；`cargo test --workspace` 因 T22-13.6 的 1 例失败返回 1 —— **不得据此判 T22 Linux 通过或不通过，按 T22-13.6 单独处理** |
+
+---
+
+# T22 修复记录 —— BUG-013 修复 + 现行 `dist.rs` 下 macOS 复跑（RD；QA 复核回合 31 用）
+
+状态：**BLOCKED（部分交付）**——
+**②macOS 复跑完成**：现行工作树（HEAD `73b2b04`，含 dist.rs 新判据）下重跑 `dist --check-reproducible`，
+二进制 sha256 = `ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333`、25 112 080 B，
+**与已录 macOS 证据逐字节一致**（两次独立构建同哈希），macOS 侧 smoke 7/7、`xtask check` 7/7、
+`cargo test --workspace` 558/0/2 复跑通过 → 旧 macOS 证据在现行代码下仍有效（§R30-5）。
+**①BUG-013 修复已实现但 Linux 容器取证未完成**：Docker 引擎故障（与 ADR-035 §5 同一签名），
+必须的"容器内 3× 精确用例 + workspace 全量"无法执行（§R30-6），因此本记录**不主张修复已验证**。
+PRD 修订：2（ui_revision 2，未改动）· 缺陷：BUG-013（P3 / 待 QA 复验）· 日期：2026-09-14。
+
+## R30-1 派发范围与依据
+
+- 协调者派发包（2026-09-13）：① 修 BUG-013（在"测试侧 settle"与"产品侧修信号注册时序"之间评估择一，
+  写明理由）；② 在**现行** `xtask/src/dist.rs` 下复跑 macOS dist，比对 sha256 是否仍为 `ab693cc3…`。
+- 依据：PRD 修订 2；`llmdoc/validation-release.md` §5（服务终止合同）、§6/§7/§8；
+  `qa-report.md` 回合 30（BUG-013 定性 + 五处质疑 + 交接）；ADR-035 / ADR-036。
+- 明确不做：T23（真实 Provider，需用户凭据与预算）；不改 PRD/验收阈值；不改 `xtask/src/dist.rs` 判定语义；
+  不动 `apps/web/**`；不 git commit/push；不删除既有证据。
+
+## R30-2 方案选择：测试侧 settle（理由见 ADR-037）
+
+**结论**：在"测试侧补 settle"与"产品侧把 SIGTERM/SIGINT 注册提前到打印 `listening on` 之前"之间，
+**取测试侧**。完整取舍（含"是否改变发布二进制 / 对两平台证据的影响 / 与 `storage.rs:1817` 先例一致性 /
+数据安全 / 长期正确性 / 不做的事）已写入 `llmdoc/decisions.md` **ADR-037**，此处只列要点：
+
+1. **不改发布二进制**→ 两平台已交付证据（Linux `77b38c91…`、macOS `ab693cc3…`）继续有效；
+   产品侧改动会作废两平台全部 T22 产物证据（含 `--check-reproducible`、§7 smoke、AC-064/AC-002/AC-059）。
+2. 与 `crates/server/tests/storage.rs:1817-1819` 的既有判定（"不是产品缺陷"+300 ms settle）**同口径**，
+   量级沿用 300 ms（= QA 实测窗口上限 100 ms 的 3 倍）。
+3. 数据面影响可忽略（窗口内无在途写入；SQLite 锁由内核释放；执行器租约 120 s 自恢复；更坏的 SIGKILL
+   已由 T21 崩溃断点矩阵覆盖）。
+4. 产品侧窄窗口**仍存在且被显式登记为已知可接受行为**；将来若要消除必须走"改产品 + 重跑两平台证据"的
+   独立任务，不借 P3 测试修复夹带。
+5. 未放宽/删除任何断言、未加 `#[ignore]`、未给产品代码塞 sleep、未改退出码期望——**只加"读到协议行后、
+   发信号前"的等待**（QA 可逐字核对 `artifacts/web-mvp/t22-rd/bug013/rd-fix.diff`，71 行 diff 全部是新增等待与注释）。
+
+## R30-3 变更文件清单（行号级）
+
+| 文件 | 位置 | 内容 |
+| --- | --- | --- |
+| `crates/server/tests/common/mod.rs` | 421–435（新增函数） | `pub fn settle_after_listening_line()`：`sleep(300ms)`；doc 注释写明时序事实、`storage.rs` 先例、QA 实测窗口与"这是测试侧竞态、不是产品缺陷"的判定 |
+| `crates/server/tests/backup_restore.rs` | 187–190（`ServeProcess::start` 内，addr 循环之后） | 调用 `common::settle_after_listening_line()`；此后任何 SIGTERM 都落在处理器安装之后 |
+| `crates/server/tests/config_cli.rs` | 12（`mod common;`）+ 202–205 | 同上（该文件原先没有 settle；回合 30 指出其既有用例靠"先做 HTTP 交互"侥幸未命中） |
+
+未改动：`crates/server/src/**`（产品代码零改动）、`xtask/src/dist.rs`、`apps/web/**`、`contracts/**`、
+PRD、`state.yaml`、`scripts/**`。（`storage.rs` 的内联 300 ms settle 保持原样，理由见 ADR-037 §7。）
+
+## R30-4 实际命令与结果（本轮真实执行；日志在 `artifacts/web-mvp/t22-rd/macos-rerun/`、`…/bug013/`）
+
+| # | 命令 | 结果 | 日志 |
+| --- | --- | --- | --- |
+| 1 | `cargo xtask dist --target aarch64-apple-darwin --check-reproducible`（现行 dist.rs；工作树 HEAD `73b2b04` + 本卡未提交的测试修复） | exit 0；sha256 **`ab693cc3…`**、25 112 080 B；`cargo clean -p` 后独立重建**同哈希** | `macos-rerun/dist-macos-rerun.log` |
+| 2 | `shasum -a 256 dist/aarch64-apple-darwin/everything-manual` + `stat` + `otool -L` | 与 `SHA256SUMS`、已录证据一致；仅 4 个系统库（Security/CoreFoundation/libiconv/libSystem） | `macos-rerun/dist-hash-verify.log`、`build-info.json`、`dynamic-dependencies.txt` |
+| 3 | `cargo test -p everything-manual --test backup_restore -- --exact legacy_schema_backup_restores_and_migrates_automatically`（macOS ×3） | **3/3 ok**（各 1.65 s）——仅作"macOS 不回归"证据，**不作 BUG-013 修复证据**（本机改动前也通过） | `bug013/macos-exact-test.log` |
+| 4 | `cargo xtask check` | exit 0；**7/7 [通过]**（fmt / clippy -D warnings --all-targets（含本轮改动的测试）/ workspace 测试 / 前端 lint / typecheck / vitest / contracts --check） | `macos-rerun/xtask-check.log` |
+| 5 | `cargo test --workspace` | exit 0；**558 passed / 0 failed / 2 ignored**，`test result` 行 37 条（34 `Running` + 3 `Doc-tests`）＝与基线口径一致 | `macos-rerun/cargo-test-workspace.log` |
+| 6 | `cargo xtask smoke --binary dist/aarch64-apple-darwin/everything-manual` | exit 0；**7 步全过**（含步骤 5 `sandbox-exec` 断网读取、步骤 6 停服重启、步骤 7 backup→restore→再读） | `macos-rerun/smoke-macos-rerun.log` |
+| 7 | `cargo xtask smoke-bootstrap --binary <同二进制>` | exit 0（T01 最小链） | 同上 |
+
+## R30-5 结论：macOS 证据在现行代码下仍有效（依据）
+
+1. **产物级**：现行 `xtask/src/dist.rs`（新增 `host`/`target`/`samePlatformAsBuild`，动态依赖判据
+   `same_arch_and_os`，`readelf` 全文 + DT_NEEDED 计数）下重跑的二进制 **sha256 与 25 112 080 B 字节数
+   与已录 macOS 证据完全相同**；`build-info.json` 显示 `samePlatformAsBuild: true`、`onlySystemLibraries: true`、
+   `isolation.hits: 0`、`remappedHomePathHits: 651`。
+2. **行为级**：该逐字节相同的二进制在本轮重新跑通 §7 的 7 步 smoke 与 T01 最小链；
+   `cargo xtask check` 7/7、workspace 558/0/2（与旧记录基线一致）。
+3. 因此"已录 macOS smoke / build-info / AC 证据"**不需要整轮重验**；本轮复跑即为其在现行代码下的复现证据。
+4. 说明（如实记录，不影响结论）：本轮 `build-info.json.git.dirty = true`（工作树含本卡未提交的测试修复；
+   **测试代码不参与 release 构建**，且旧证据产出时工作树同样含未提交改动）；`builtAt` 为本次时间（预期差异）。
+
+## R30-6 Linux 容器取证：BLOCKED（Docker 引擎故障；非本仓库问题）
+
+- 现象：Docker Desktop 引擎无法启动——VM 引导成功后约 1.5 s 被宿主 engines 组件 `POST /shutdown`，
+  引擎停在 `ExitBadState`，`docker info` 持续失败；与 ADR-035 §5（T22-5）记录的**同一故障签名**。
+- 已做（全部非破坏性、均失败）：等待轮询 15 min、`docker desktop restart`、`docker desktop stop` +
+  `open -a Docker`、`docker desktop start`、再次 stop（等 backend 归零）+ start、日志诊断
+  （backend / vm console / supervisor / monitor / electron-errd）。
+- 完整证据与时间线：`artifacts/web-mvp/t22-rd/bug013/docker-engine-blocked.txt`（含各次 SessionID 与日志摘录）。
+- 未做（需用户授权）：Troubleshoot → Clean/Purge data、删除/重建 `Docker.raw`、改 Docker VM 磁盘设置
+  （本机 `DiskSizeMiB=61035`，宿主可用约 18–20 GiB）；也未做任何破坏性清理。
+- **唯一所需外部动作**（任一，见上述证据文件）：① 释放宿主磁盘（T22-5 的恢复条件是 356 GiB 可用；
+  建议 ≥60 GiB）后 `open -a Docker`；② 把 Docker Desktop 的 Disk image size 调到小于当前可用空间；
+  ③ 在外部 Linux 机器执行 `scripts/linux-musl.sh`。
+- 恢复后需要补齐的取证（脚本已备好，可直接执行）：
+  ① `artifacts/web-mvp/t22-rd/bug013/../..`→ 容器内 `bash /evidence/bug013-evidence.sh`
+  （`/tmp/em-bug013/bug013-evidence.sh`：精确用例 ×3 + `cargo test --workspace --no-fail-fast` 汇总）；
+  ② `bash scripts/linux-musl.sh --check-reproducible`（Linux dist 与 `77b38c91…` 比对）。
+
+## R30-7 既有断言的变化：无（只加等待，未动任何断言）
+
+`rd-fix.diff`（`artifacts/web-mvp/t22-rd/bug013/rd-fix.diff`）逐行可核：新增内容 = 1 个 helper 函数
+（含文档注释）+ 2 处调用 + `config_cli.rs` 的 `mod common;`；**断言、阈值、退出码期望、过滤条件均未变**。
+`cargo clippy --workspace --all-targets -- -D warnings` 与 `cargo fmt --check` 在本轮改动后通过（#4）。
+
+## R30-8 已知限制（如实记录）
+
+1. **BUG-013 尚未取得"修复有效"的独立运行证据**：Linux 容器内 3/3 与 558/0/2 未执行（§R30-6）；
+   macOS 侧不能作为修复证据（改动前也通过）。
+2. 本轮 macOS 构建走**离线 cargo**（`CARGO_NET_OFFLINE=true`）+ 预取缓存完成：宿主直连
+   `static.crates.io`/`index.crates.io` 实测 8–28 KB/s，冷缓存不可行（细节与非代码知识见 decisions.md
+   "构建环境知识"）。**内容仍由 Cargo.lock 的 sha256 校验**，且产物哈希与既有证据逐字节一致 →
+  该环境手段未改变产物（这也是本轮最直接的证明）。
+3. `web-sys` 的索引条目改用 rsproxy 镜像（官方条目下载过慢），已校验被锁定版本 cksum 与 Cargo.lock 一致；
+   该 crate 为 wasm32-only，不参与 macOS/Linux 目标编译（详见 decisions.md 同节）。
+4. 复现脚本 `seed-crate-cache.py` / `seed-index-cache.py` 是**环境手段**，不是产品/命令合同的一部分；
+   建议后续把"镜像写入 `$CARGO_HOME/config.toml`"这一真生效路径固化进 ADR-010 的说明（本轮未改 ADR 正文之外的文件）。
+5. 物理 x86_64 硬件、AC-063、真实 HTTPS、签名/公证等边界沿用回合 30 结论（未变）。
+
+## R30-9 QA 复验入口（命令 ↔ 缺陷/AC）
+
+| 目标 | 命令 | 期望 |
+| --- | --- | --- |
+| BUG-013 修复（Linux，恢复 Docker 后） | `bash scripts/linux-musl.sh --check`（容器内会跑 `cargo xtask check`）或直接跑 `/tmp/em-bug013/bug013-evidence.sh` | 精确用例 3/3 通过；workspace **558/0/2**（37 个 test result 行） |
+| 只加等待、未动断言 | 读 `artifacts/web-mvp/t22-rd/bug013/rd-fix.diff` | 71 行内不含断言/阈值/ignore 的任何修改 |
+| macOS 证据仍有效（AC-064 macOS / AC-002 / 发布门禁） | `cargo xtask dist --target aarch64-apple-darwin --check-reproducible` + `cargo xtask smoke --binary <abs>` | sha256 `ab693cc3…`、25 112 080 B；smoke 7 步全过 |
+| 发布二进制未被测试侧修复改动（Linux） | 恢复 Docker 后：容器内 `cargo xtask dist --target x86_64-unknown-linux-musl --check-reproducible` | sha256 仍为 `77b38c91…`（**本轮未取得**，见 §R30-6） |
+| macOS 不回归 | `cargo xtask check`；`cargo test --workspace` | 7/7 通过；558/0/2 |
+
+## R30-10 llmdoc 更新（本卡）
+
+1. `llmdoc/decisions.md`：新增 **ADR-037**（BUG-013 取测试侧 settle 的理由、证据有效性影响、不做的事、
+   公共 helper 落点）与 **"构建环境知识"**（`CARGO_SOURCE_*` 环境变量机制实测不生效的判定实验、
+   官方源实测速率、索引目录名是哈希敏感输入、冷缓存下的预取做法与缓存文件格式来源）。
+2. 本文件（§R30）：命令与结果、BLOCKED 记录、QA 复验入口、限制。
+3. `llmdoc/README.md`：状态行更新为"T22 待 QA 复核回合 31；BUG-013 修复已实现、Linux 取证被 Docker 阻塞"。
+4. 原始证据：`artifacts/web-mvp/t22-rd/macos-rerun/**`、`artifacts/web-mvp/t22-rd/bug013/**`
+   （含 `seed-crate-cache.py`、`seed-index-cache.py`、`rd-fix.diff`、`docker-engine-blocked.txt`）。

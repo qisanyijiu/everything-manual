@@ -1,0 +1,24 @@
+== SHA256SUMS ==
+ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333  everything-manual
+== shasum -a 256 独立复算 ==
+ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333  dist/aarch64-apple-darwin/everything-manual
+== stat ==
+bytes=25112080
+== 与已录证据对比 ==
+expected sha256: ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333
+expected bytes : 25112080
+== otool -L ==
+dist/aarch64-apple-darwin/everything-manual:
+	/System/Library/Frameworks/Security.framework/Versions/A/Security (compatibility version 1.0.0, current version 61901.60.40)
+	/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation (compatibility version 150.0.0, current version 4201.0.0)
+	/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)
+== 文件清单 ==
+total 49176
+drwxr-xr-x@ 7 qsyj  staff       224  9月 14 00:03 .
+drwxr-xr-x@ 3 qsyj  staff        96  9月 14 00:03 ..
+-rw-r--r--@ 1 qsyj  staff      2506  9月 14 00:03 build-info.json
+-rw-r--r--@ 1 qsyj  staff       651  9月 14 00:03 dynamic-dependencies.txt
+-rwxr-xr-x@ 1 qsyj  staff  25112080  9月 14 00:03 everything-manual
+-rw-r--r--@ 1 qsyj  staff     52325  9月 14 00:03 licenses.json
+-rw-r--r--@ 1 qsyj  staff        84  9月 14 00:03 SHA256SUMS

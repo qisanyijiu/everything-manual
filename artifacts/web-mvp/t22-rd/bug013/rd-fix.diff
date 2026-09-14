@@ -1,0 +1,71 @@
+diff --git a/crates/server/tests/backup_restore.rs b/crates/server/tests/backup_restore.rs
+index 8b58269..4d2bed2 100644
+--- a/crates/server/tests/backup_restore.rs
++++ b/crates/server/tests/backup_restore.rs
+@@ -184,6 +184,11 @@ impl ServeProcess {
+             }
+         };
+ 
++        // `listening on` 打印在 SIGTERM 处理器注册之前（见 common::settle_after_listening_line
++        // 与 BUG-013）：在把句柄交给调用方之前先 settle，使后续任何 SIGTERM 都不会命中
++        // "信号处理器尚未安装"的启动竞态。只加等待，不改任何断言。
++        common::settle_after_listening_line();
++
+         Self {
+             child,
+             addr,
+diff --git a/crates/server/tests/common/mod.rs b/crates/server/tests/common/mod.rs
+index 0b68c66..2df8185 100644
+--- a/crates/server/tests/common/mod.rs
++++ b/crates/server/tests/common/mod.rs
+@@ -417,6 +417,25 @@ pub fn cidr(value: &str) -> Cidr {
+     Cidr::parse(value).expect("合法 CIDR")
+ }
+ 
++// ---------------------------------------------------------------------------
++// 子进程 serve 的启动时序（BUG-013）
++// ---------------------------------------------------------------------------
++
++/// 读到 `serve` 的 `listening on` 协议行后、发信号前的 settle。
++///
++/// 时序事实：`run_serve` 先 `println!("listening on ...")`，之后
++/// `axum::serve(...).with_graceful_shutdown(shutdown_signal())` 才在**首次 poll** 时注册
++/// SIGTERM/SIGINT 处理器。因此从进程启动到处理器安装之间有一个窗口，窗口内发 SIGTERM
++/// 会走信号默认动作直接杀进程（`status.code() == None`，退出码 143）——这是**测试侧启动
++/// 竞态，不是产品缺陷**（T03 起 `storage.rs` 已有同一判定并用 300 ms settle 规避；
++/// QA 回合 30 实测窗口约 50–100 ms，见 `qa-report.md` BUG-013）。
++///
++/// 凡是"读到 `listening on` 行即发信号（SIGTERM）"的用例，都必须在发信号前调用本函数；
++/// 量级 300 ms = 实测窗口上限的 3 倍，与 `storage.rs` 的既有写法一致。
++pub fn settle_after_listening_line() {
++    std::thread::sleep(std::time::Duration::from_millis(300));
++}
++
+ /// 配置一个已配置（假凭据）的 Tripo：用于验证 `/settings/status` 不泄露密钥与来源。
+ pub fn configured_tripo(canary_key: &str) -> ProviderSettings {
+     ProviderSettings {
+diff --git a/crates/server/tests/config_cli.rs b/crates/server/tests/config_cli.rs
+index 351e522..cb160d1 100644
+--- a/crates/server/tests/config_cli.rs
++++ b/crates/server/tests/config_cli.rs
+@@ -17,6 +17,8 @@ use std::sync::mpsc::{self, Receiver};
+ use std::sync::{Arc, Mutex};
+ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+ 
++mod common;
++
+ const BIN: &str = env!("CARGO_BIN_EXE_everything-manual");
+ const LOG_FILE: &str = "logs/everything-manual.log";
+ 
+@@ -197,6 +199,11 @@ impl ServeProcess {
+             }
+         };
+ 
++        // `listening on` 打印在 SIGTERM 处理器注册之前（见 common::settle_after_listening_line
++        // 与 BUG-013）：本文件既有用例通常先有 HTTP 交互、未命中该窗口，但 settle 使
++        // `start()` 返回后即可安全发信号，不依赖"调用方恰好先做了别的 I/O"。只加等待，不改断言。
++        common::settle_after_listening_line();
++
+         Self {
+             child,
+             addr,

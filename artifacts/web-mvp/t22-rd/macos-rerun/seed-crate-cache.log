@@ -1,0 +1,8 @@
+registry 包数：294；缓存目录：/Users/qsyj/.cargo/registry/cache/index.crates.io-1949cf8c6b5b557f
+  进度 50/294：{'ok': 50, 'cached': 0, 'fail': 0, 'checksum': 0}
+  进度 100/294：{'ok': 100, 'cached': 0, 'fail': 0, 'checksum': 0}
+  进度 150/294：{'ok': 150, 'cached': 0, 'fail': 0, 'checksum': 0}
+  进度 200/294：{'ok': 200, 'cached': 0, 'fail': 0, 'checksum': 0}
+  进度 250/294：{'ok': 250, 'cached': 0, 'fail': 0, 'checksum': 0}
+完成：{'ok': 294, 'cached': 0, 'fail': 0, 'checksum': 0}
+EXIT=0

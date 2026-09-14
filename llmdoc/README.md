@@ -1,6 +1,6 @@
 # 万物说明书 · 项目知识入口
 
-当前产品路线：React + Rust、前后端分离开发、单二进制自托管发布。2026-09-11 起替代旧 macOS 原生实现路线。截至 2026-09-13：T01–T21 已实现并经 QA 验收 PASS；T22 的 **Linux 半边已跑通并经 QA 回合 30 独立验收 PASS**（真实 Linux 容器内构建与运行），但整卡记 `needs_retest`——macOS 半边证据相对当前代码已过期待复跑，另有 1 个未关闭缺陷 BUG-013（P3，阻断发布门禁）；T23 未开始。当前进度与实现概览见 [web-mvp 进度与实现总结](requirements/web-mvp/progress-summary.md)（暂停交接快照）。
+当前产品路线：React + Rust、前后端分离开发、单二进制自托管发布。2026-09-11 起替代旧 macOS 原生实现路线。截至 2026-09-14：T01–T21 已实现并经 QA 验收 PASS；T22 的 **Linux 半边已跑通并经 QA 回合 30 独立验收 PASS**（真实 Linux 容器内构建与运行）；**macOS 半边已在现行 `dist.rs` 下复跑，二进制 sha256 与已录证据逐字节一致**（`ab693cc3…`，smoke 7/7、`xtask check` 7/7、workspace 558/0/2，见 [implementation §R30](requirements/web-mvp/implementation.md)）；唯一未关闭缺陷 **BUG-013**（P3，阻断发布门禁）**修复已实现（测试侧 settle，ADR-037）**，但其**必须的 Linux 容器取证被 Docker 引擎故障阻塞**（与 ADR-035 §5 同一签名；证据见 `artifacts/web-mvp/t22-rd/bug013/docker-engine-blocked.txt`），T22 整卡待 QA 复核回合 31；T23 未开始。当前进度与实现概览见 [web-mvp 进度与实现总结](requirements/web-mvp/progress-summary.md)（暂停交接快照）。
 
 ## 阅读顺序
 

@@ -1,0 +1,8 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Updating crates.io index
+EXIT=143
+== attempt 2: 镜像 env（内容仍由 Cargo.lock checksum 校验，只换传输来源，见 ADR-010）==
+CARGO_SOURCE_CRATES_IO_REPLACE_WITH=rsproxy
+CARGO_SOURCE_RSPROXY_REGISTRY=sparse+https://rsproxy.cn/index/

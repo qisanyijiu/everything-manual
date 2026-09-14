@@ -417,6 +417,25 @@ pub fn cidr(value: &str) -> Cidr {
     Cidr::parse(value).expect("合法 CIDR")
 }
 
+// ---------------------------------------------------------------------------
+// 子进程 serve 的启动时序（BUG-013）
+// ---------------------------------------------------------------------------
+
+/// 读到 `serve` 的 `listening on` 协议行后、发信号前的 settle。
+///
+/// 时序事实：`run_serve` 先 `println!("listening on ...")`，之后
+/// `axum::serve(...).with_graceful_shutdown(shutdown_signal())` 才在**首次 poll** 时注册
+/// SIGTERM/SIGINT 处理器。因此从进程启动到处理器安装之间有一个窗口，窗口内发 SIGTERM
+/// 会走信号默认动作直接杀进程（`status.code() == None`，退出码 143）——这是**测试侧启动
+/// 竞态，不是产品缺陷**（T03 起 `storage.rs` 已有同一判定并用 300 ms settle 规避；
+/// QA 回合 30 实测窗口约 50–100 ms，见 `qa-report.md` BUG-013）。
+///
+/// 凡是"读到 `listening on` 行即发信号（SIGTERM）"的用例，都必须在发信号前调用本函数；
+/// 量级 300 ms = 实测窗口上限的 3 倍，与 `storage.rs` 的既有写法一致。
+pub fn settle_after_listening_line() {
+    std::thread::sleep(std::time::Duration::from_millis(300));
+}
+
 /// 配置一个已配置（假凭据）的 Tripo：用于验证 `/settings/status` 不泄露密钥与来源。
 pub fn configured_tripo(canary_key: &str) -> ProviderSettings {
     ProviderSettings {

@@ -1,0 +1,8 @@
+$ otool -L <binary>
+/Users/qsyj/Code/rust/everything-manual/dist/aarch64-apple-darwin/everything-manual:
+	/System/Library/Frameworks/Security.framework/Versions/A/Security (compatibility version 1.0.0, current version 61901.60.40)
+	/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation (compatibility version 150.0.0, current version 4201.0.0)
+	/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)
+
+判定：仅链接 macOS 系统库（/usr/lib 与 /System/Library），无 Homebrew／/usr/local／构建机路径。

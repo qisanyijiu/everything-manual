@@ -1,0 +1,60 @@
+Docker 引擎无法启动 —— 阻塞 Linux 容器内 BUG-013 取证（RD 修复回合，2026-09-13/14）
+================================================================================
+
+一句话：与 ADR-035/T22-5 记录的同一故障再次出现（VM 引导成功后约 1.5 s 被宿主 engines
+组件发 POST /shutdown），非本仓库问题；本次 RD 侧已做的非破坏性尝试全部失败，需要用户侧动作。
+
+## 故障现象（本次实测）
+
+1. `docker info` 持续失败；`docker desktop status` → `Status: starting`（>16 分钟无变化）。
+2. VM 日志（`~/Library/Containers/com.docker.docker/Data/log/vm/console.log`）显示：
+   - `[com.docker.virtualization] VM has started`（15:51:05.841 / 15:58:34.x，两次尝试）；
+   - guest 各组件正常启动（initd/procd/jfs/metadata/...）；
+   - 约 1.5 s 后收到宿主侧 `1f3b01c4-engines POST /shutdown` → `shutdown complete`；
+     `INFO[0001] reaped pid ... component=init`。
+3. 后端日志（`.../log/host/com.docker.backend.log`）：
+   - `[com.docker.backend.apiproxy] still waiting for the engine to respond to _ping after 6m11s: HTTP 503`
+   - `[com.docker.backend.state] sending desktop state:ExitBadState`
+   - `[com.docker.backend] pid 21827 started: ... --name=error-dialog`（弹出错误对话框）
+   - `[com.docker.backend.engines] user selected recovery action:` +
+     `[W] recovering from error failed: service command exited with code 1: command exited with code 1: io: read/write on closed pipe`
+   - 无任何 "no space left" / "disk" 相关显式报错（与 T22-5 记录一致）。
+4. 与 ADR-035 §5（T22-5 的 BLOCKED 记录）**同一签名**：
+   "VM 能引导…但约 1 秒后宿主 engines 组件发 POST /shutdown…引擎停在 services.ErrServiceFailed"。
+
+## 本次已尝试的非破坏性动作（均失败）
+
+| # | 动作 | 结果 |
+| --- | --- | --- |
+| 1 | 等待轮询（15 min，10 s 间隔 `docker info`） | 未恢复 |
+| 2 | `docker desktop restart`（15:5x） | 新会话启动，VM 起后 1.5 s 被 shutdown，仍未恢复 |
+| 3 | `docker desktop stop`（进程归零复核）+ `open -a Docker` | VM 起后 1.5 s 被 shutdown，仍未恢复 |
+| 4 | `docker desktop start`（显式） | "already running"，引擎仍不可用 |
+| 5 | 日志诊断（backend / vm console / supervisor / monitor / electron-errd） | 只有上述签名，无新根因信息 |
+| 6 | 再次 `docker desktop stop`（等 backend 进程归零）→ `docker desktop start`（16:0x） | 新会话（SessionID 65feb5b1…）：VM 起后仍被 `engines POST /shutdown`（16:06:14Z，`shutdown complete`），引擎仍不可用 |
+
+未做（需用户授权/评估）：Troubleshoot → Clean/Purge data、删除/重建 Docker.raw、
+改 Docker Desktop 的 VM 磁盘设置（本机 `diskSizeMiB = 61035 MiB`，宿主机当前可用约 20 GiB）。
+
+## 环境相关性（供用户判断，非结论）
+
+- T22-5 记录的同一故障出现在宿主数据卷 ENOSPC 之后；恢复发生在"磁盘 356 GiB 可用"的会话
+  （仅 `open -a Docker`）。
+- 本次实测宿主可用约 20 GiB（`/System/Volumes/Data` 228 GiB 中已用 186 GiB），故障复现。
+- 相关性成立但未被独立验证（日志中无显式磁盘告警）。
+
+## 需要的用户动作（任一）
+
+1. 释放宿主磁盘（建议 ≥60 GiB，接近 Docker VM 磁盘设置 61035 MiB），然后 `open -a Docker`；或
+2. Docker Desktop → Settings → Resources → Disk image size 调低到小于当前可用空间；
+   或 Troubleshoot → Clean/Purge data（会丢镜像/容器，属破坏性，需用户明确同意）；或
+3. 在外部 Linux 机器上执行 `scripts/linux-musl.sh`（与 ADR-035 的恢复路径一致）。
+
+恢复后需要的取证命令（RD 已备好脚本，恢复即可执行）：
+- `artifacts/web-mvp/t22-rd/bug013/`（本轮新增）与 `/tmp/em-bug013/bug013-evidence.sh`：
+  `docker run --rm --platform linux/amd64 -v /tmp/em-linux-musl-build:/src/everything-manual \
+   -v /tmp/em-linux-musl-cache/cargo:/root/.cargo -v /tmp/em-linux-musl-cache/rustup:/usr/local/rustup \
+   -v /tmp/em-bug013:/evidence -e HOME=/root -e CARGO_HOME=/root/.cargo \
+   -e RUSTUP_HOME=/usr/local/rustup -e CARGO_BUILD_JOBS=8 -w /src/everything-manual \
+   docker.1ms.run/library/rust:1.98.1-bookworm bash /evidence/bug013-evidence.sh`
+- 以及 `bash scripts/linux-musl.sh --check-reproducible`（Linux dist 哈希比对，见 implementation 记录）。

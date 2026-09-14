@@ -1,12 +1,12 @@
 # web-mvp 进度与实现总结（暂停交接）
 
-状态：**暂停中**，2026-09-13 由主协调会话整理（第二次暂停）；暂停点＝ T22 待收尾（Linux 半边已 QA PASS，macOS 半边证据待重跑；另 1 个未关闭缺陷 BUG-013）；T23 未开始。
-依据：`state.yaml`、`qa-report.md`（回合 1–30）、`implementation.md`（§T01–§T22，含 §T22-13）、`llmdoc/decisions.md`（ADR-001~036）、`artifacts/web-mvp/**`（含 `t22-rd/linux/`、`t22-qa/`）。
+状态：**暂停中**，2026-09-14 由主协调会话整理（第三次暂停）；暂停点＝ T22 待收尾（Linux 半边已 QA PASS；macOS 半边已在现行代码下复跑、哈希逐字节一致；BUG-013 修复已实现，但其 Linux 容器取证被 Docker 引擎故障阻塞）；T23 未开始。
+依据：`state.yaml`、`qa-report.md`（回合 1–30）、`implementation.md`（§T01–§T22，含 §T22-13 与 §R30）、`llmdoc/decisions.md`（ADR-001~037）、`artifacts/web-mvp/**`（含 `t22-rd/linux/`、`t22-rd/macos-rerun/`、`t22-rd/bug013/`、`t22-qa/`）。
 本文件是**交接快照**，不替代 state.yaml（协调状态）与 qa-report（验收证据）；细节数字以各报告与实测为准。
 
 ## 1. 一句话状态
 
-**T01–T21 二十一个切片经 QA 独立验收 PASS；T22 的 Linux 半边已跑通并经 QA 回合 30 独立验收 PASS（AC-064 Linux / AC-002 / AC-059 Linux 三条必选全过），但 T22 整卡记 `needs_retest`：macOS 半边证据相对当前代码已过期待复跑，另有 1 个未关闭缺陷 BUG-013（P3，不阻断切片、阻断发布门禁）；T23（真实 Provider 链路）未开始。** 产品在 fixture 环境下已具备可运行的端到端闭环：建物品 → 上传资料 → 浏览器 PDF 准备 → 报价与确认 → 后台双分支生成 → 草稿复核与热点校准 → 发布不可变版本 → 阅读/导出/备份恢复。
+**T01–T21 二十一个切片经 QA 独立验收 PASS；T22 的 Linux 半边已跑通并经 QA 回合 30 独立验收 PASS（AC-064 Linux / AC-002 / AC-059 Linux 三条必选全过）；macOS 半边已在现行 `dist.rs` 下复跑，二进制 sha256 与已录证据逐字节一致（不再需要整轮重验）；唯一未关闭缺陷 BUG-013（P3，阻断发布门禁）修复已实现（测试侧 settle，ADR-037），但其 Linux 容器内取证被 Docker 引擎故障阻塞 —— T22 整卡仍记 `needs_retest`，待 QA 回合 31；T23（真实 Provider 链路）未开始。** 产品在 fixture 环境下已具备可运行的端到端闭环：建物品 → 上传资料 → 浏览器 PDF 准备 → 报价与确认 → 后台双分支生成 → 草稿复核与热点校准 → 发布不可变版本 → 阅读/导出/备份恢复。
 
 Linux x86_64-unknown-linux-musl 已取得**真实运行证据**（此前受 Docker 环境阻塞）：`static-pie linked`、`ldd: statically linked`、`DT_NEEDED=0`，二进制 sha256 `77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246`（28 236 728 B），两次独立构建同哈希，`smoke` 7 步与 `--network none` 离线 smoke 均全过。限定：执行环境是 Rosetta 翻译的 x86_64（宿主 arm64），故「原生」在目标 OS＋目标 ABI＋冷目录意义上成立，在物理 x86_64 CPU 意义上不成立；性能类结论零引用。
 
@@ -36,7 +36,7 @@ Linux x86_64-unknown-linux-musl 已取得**真实运行证据**（此前受 Dock
 | T19 | 热点校准、步骤联动、知识确认、发布不变量 | accepted | 24 |
 | T20 | 导出、备份、恢复、迁移门禁（backup/restore CLI 落地） | accepted | 25（+26–28 脱敏修复轮） |
 | T21 | 产品回归、安全与故障矩阵（§3 矩阵全行 + 五个崩溃断点） | accepted | 29 |
-| T22 | 多平台单二进制发布 | **部分**：Linux 半边 accepted（PASS）；macOS 半边证据待复跑 → 整卡 `needs_retest` | 30 |
+| T22 | 多平台单二进制发布 | **部分**：Linux 半边 accepted（PASS）；macOS 半边已在现行 `dist.rs` 下复跑、哈希逐字节一致（`artifacts/web-mvp/t22-rd/macos-rerun/`）；BUG-013 修复已实现待 Linux 取证 → 整卡 `needs_retest` | 30（复核回合 31 待做） |
 | T23 | 授权真实链路与最终 QA | 未开始 | — |
 
 另有独立缺陷修复轮：回合 10/12/18/22/26 为 FAIL，修复后 11/13/19/23/27–28 复验 PASS。
@@ -139,41 +139,44 @@ cargo xtask smoke --binary "$PWD/dist/aarch64-apple-darwin/everything-manual"
 
 ## 6. 未完成与已知限制
 
-1. **T22 macOS 半边证据待复跑（未完成）**：`xtask/src/dist.rs` 是在 macOS 证据产出之后才改的（新增 `host`/`target`/`samePlatformAsBuild` 字段；动态依赖判据由 `target == host` 改为 `same_arch_and_os`；`readelf -d` 由节选 20 行改为全文 + `DT_NEEDED` 计数）。QA 逐行核对后判定该放宽**不构成弱化证据**（采集的是产物自身属性，且产物体在同一环境被 smoke 真跑），但已录 macOS 证据相对当前代码**过期**，需在现行代码下复跑 `dist --check-reproducible` 并比对二进制 sha256 是否仍为 `ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333`，据此判定是否需整轮重验。这是 T22 整卡记 `needs_retest` 的原因之一。
-2. **BUG-013 未关闭**（详见 §4）：P3，不阻断 T22 切片，阻断发布门禁；并可能使 CI `check` job 红灯。
-3. **Linux「原生运行」的限定**：构建与运行都在容器 Linux 内完成（非 macOS 交叉编译），但 x86_64 由 **Rosetta 翻译执行**（宿主 arm64）。「原生」在目标 OS＋目标 ABI＋无源码/工具链冷目录意义上成立，在**物理 x86_64 CPU** 意义上不成立。该环境由用户明确授权。需要物理硬件证据时，用同一参数化脚本在真机重跑即可。**性能类结论不得引用本环境。**
-4. **T23 未开始**：需要用户提供 Tripo / 说明书 AI 凭据、真实型号资料与一次生成预算；缺失则记 BLOCKED。
-5. **UI-060 网页导出按钮**未实现（端点与生成类型已就绪）；登记为 T21/T22 之后的独立前端小项。
-6. **浏览器矩阵**：仅 Playwright Chromium 148；Firefox/Edge 本机未安装，AC-063 未满足（T22/T23 承接）。
-7. **热点级 `cameraPose`** 未实现（视角保存落在步骤级 `stepPoses`）：字面偏离 `contracts.md` §2，不影响必选 AC，建议 PM 在合同留痕。
-8. UI-032（字面倒计时）、顶栏任务计数徽标未做；签名/公证未做；模型加载耗时与 ≥5 分钟连续旋转未测（旋转 p95 实测 17.7 ms ≤ 33 ms 已达标）。
-9. T12/T13 的真实形态收敛项（upload token/计费字段候选、下载允许域）待 T23。
-10. **T22 脚本层 P4 隐患**（QA 回合 30 记录，非阻断）：`readelf -d … | grep -c "(NEEDED)" || true` 在工具本身失败时会打印 0 且返回成功；失败路径仍回收 `dist/` 可能带回上一轮旧产物；`--keep` 两分支行为相同、名不副实；`ARTIFACT_DIR` 硬编码。
-11. **样例备份身份**（OB-19）：tracked 样例备份目录缺 DB（`.gitignore` 的 `*.sqlite3`），本轮 smoke 改用容器内**同源重建件**；QA 逐 blob 比对 11 个中 8 个逐字节相同、3 个仅时间戳/UUID 不同，判定**不是自证**，但身份断言已从 tracked 件变为重建件，需登记。
+1. ~~T22 macOS 半边证据待复跑~~ **已完成（2026-09-14）**：现行 `xtask/src/dist.rs`（含 `host`/`target`/`samePlatformAsBuild`、`same_arch_and_os` 判据、`readelf` 全文 + `DT_NEEDED` 计数）下复跑 `cargo xtask dist --target aarch64-apple-darwin --check-reproducible`，sha256 恒为 `ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333`（25 112 080 B），与已录证据逐字节一致；同二进制 smoke 7/7、`smoke-bootstrap`、`cargo xtask check` 7/7、`cargo test --workspace` 558/0/2 → macOS 侧证据仍有效，**不需整轮重验**。证据与坑：`artifacts/web-mvp/t22-rd/macos-rerun/`（构建走预取缓存 + `CARGO_NET_OFFLINE=true`，内容仍由 `Cargo.lock` 校验）。
+2. **BUG-013 修复已实现、未关闭**（详见 §4 与 ADR-037）：P3，不阻断 T22 切片，阻断发布门禁；并可能使 CI `check` job 红灯。修法取测试侧 settle（`common/mod.rs::settle_after_listening_line()`，300 ms；`backup_restore.rs`/`config_cli.rs` 调用），产品代码零改动、断言未动。**缺 Linux 容器内运行证据**（3× 精确用例 + workspace 应 558/0/2 + Linux dist 哈希应仍为 `77b38c91…`），不得据此宣称修复已验证。
+3. **Docker 环境阻塞（新，2026-09-14）**：Docker Desktop 引擎无法启动（VM 起后约 1.5 s 被宿主 `POST /shutdown → ExitBadState`，与 ADR-035 §5 同一签名），6 种非破坏性恢复动作均无效；宿主磁盘 94% 满（剩约 13 GiB，Docker `diskSizeMiB=61035`）。所需用户动作见 `artifacts/web-mvp/t22-rd/bug013/docker-engine-blocked.txt`（释放磁盘 / 调低 disk image size / Purge data〔破坏性〕/ 外部 Linux 机器）。
+4. **Linux「原生运行」的限定**：构建与运行都在容器 Linux 内完成（非 macOS 交叉编译），但 x86_64 由 **Rosetta 翻译执行**（宿主 arm64）。「原生」在目标 OS＋目标 ABI＋无源码/工具链冷目录意义上成立，在**物理 x86_64 CPU** 意义上不成立。该环境由用户明确授权。需要物理硬件证据时，用同一参数化脚本在真机重跑即可。**性能类结论不得引用本环境。**
+5. **T23 未开始**：需要用户提供 Tripo / 说明书 AI 凭据、真实型号资料与一次生成预算；缺失则记 BLOCKED。
+6. **UI-060 网页导出按钮**未实现（端点与生成类型已就绪）；登记为 T21/T22 之后的独立前端小项。
+7. **浏览器矩阵**：仅 Playwright Chromium 148；Firefox/Edge 本机未安装，AC-063 未满足（T22/T23 承接）。
+8. **热点级 `cameraPose`** 未实现（视角保存落在步骤级 `stepPoses`）：字面偏离 `contracts.md` §2，不影响必选 AC，建议 PM 在合同留痕。
+9. UI-032（字面倒计时）、顶栏任务计数徽标未做；签名/公证未做；模型加载耗时与 ≥5 分钟连续旋转未测（旋转 p95 实测 17.7 ms ≤ 33 ms 已达标）。
+10. T12/T13 的真实形态收敛项（upload token/计费字段候选、下载允许域）待 T23。
+11. **T22 脚本层 P4 隐患**（QA 回合 30 记录，非阻断）：`readelf -d … | grep -c "(NEEDED)" || true` 在工具本身失败时会打印 0 且返回成功；失败路径仍回收 `dist/` 可能带回上一轮旧产物；`--keep` 两分支行为相同、名不副实；`ARTIFACT_DIR` 硬编码。
+12. **样例备份身份**（OB-19）：tracked 样例备份目录缺 DB（`.gitignore` 的 `*.sqlite3`），本轮 smoke 改用容器内**同源重建件**；QA 逐 blob 比对 11 个中 8 个逐字节相同、3 个仅时间戳/UUID 不同，判定**不是自证**，但身份断言已从 tracked 件变为重建件，需登记。
 
 ## 7. 挂起决策与待用户/PM 动作
 
 | 事项 | 归属 | 说明 |
 | --- | --- | --- |
-| ~~Docker 恢复~~ | ~~用户~~ | **已解除**（2026-09-13）：重启 Docker Desktop 即恢复，Linux 验证已执行并 QA PASS |
+| **Docker 引擎恢复（再次阻塞，2026-09-14）** | 用户 | 处置选项：① 释放宿主磁盘（建议 ≥60 GiB）；② 调低 Docker disk image size；③ Troubleshoot → Clean/Purge data（破坏性，需明确同意）；④ 外部 Linux 机器跑 `scripts/linux-musl.sh`。恢复后由 rd 补 Linux 取证，再交 QA 回合 31 |
 | T23 凭据与预算 | 用户 | 无授权则 T23 记 BLOCKED，不伪造真实链路结论 |
 | UI-032 / cameraPose / OB-16 措辞张力 | PM | 需在 PRD/合同留痕或裁定，不由 RD 自行扩大 |
-| BUG-013 归属与修法（测试侧 settle vs 产品侧提前注册） | RD 评估 → 协调者确认 | 测试侧修不改变发布二进制；产品侧修触发两平台 T22 证据重跑。项目已有 `storage.rs:1817` 同源先例 |
+| ~~BUG-013 归属与修法~~ | ~~RD 评估 → 协调者确认~~ | **已裁定（2026-09-14）**：归属 T22 收尾；取测试侧 settle（ADR-037，产品二进制不变）。修复效果待 QA 回合 31 认定 |
 | OB-18「原生」措辞精度、OB-19 样例备份身份、OB-20/21/22 脚本失败路径、OB-23 未知路径断言并入 `xtask smoke` | PM/协调者 | QA 回合 30 记录的非阻断观察，待裁定是否立小卡 |
 | 物理 x86_64 硬件证据（如需） | 用户 | 本机为 Rosetta 翻译；需要时用同一参数化脚本在真机重跑 |
 
 ## 8. 工作区状态
 
-- **仓库历史已被压缩为单个提交**：HEAD = `39e202d init`（本次会话核验；上一版快照提到的 `3138496` / `cb69afb` 已不存在）。T01–T22 的代码均在该提交内。
-- **未提交改动**（本次会话末）：`scripts/linux-musl.sh`、`scripts/container-linux-musl.sh`、`xtask/src/dist.rs`、`.github/workflows/ci.yml`、`docs/operations.md`、`llmdoc/{decisions,validation-release}.md`、`llmdoc/requirements/web-mvp/{implementation,state,progress-summary,qa-report}.md`，以及未跟踪的 `artifacts/web-mvp/t22-rd/linux/`、`artifacts/web-mvp/t22-qa/`。**`crates/**`、`apps/web/**`、`contracts/**`、PRD 未改。未推送。**
-- 本轮实测回归（Linux 容器内）：`file`/`ldd` 静态链接通过、`smoke` 7 步通过、`--network none` 离线 smoke 通过、`dist --check-reproducible` 同哈希；`cargo xtask check` 因 BUG-013 红灯（见 §4）。
+- **仓库历史已被压缩**：HEAD = `73b2b04 feat: 完成部分工作`（2026-09-14 核验；上一版快照提到的 `39e202d init` 为其父提交）。T01–T22 的代码均在此线内。
+- **未提交改动**（2026-09-14 暂停时）：`crates/server/tests/{common/mod.rs,backup_restore.rs,config_cli.rs}`（BUG-013 测试侧修复）、`llmdoc/{README.md,decisions.md,validation-release.md}`、`llmdoc/requirements/web-mvp/implementation.md`，以及未跟踪的 `artifacts/web-mvp/t22-rd/{macos-rerun,bug013}/`。**产品代码（`crates/server/src/**`、`xtask/src/dist.rs`、`apps/web/**`、`contracts/**`）、PRD 未改。未提交、未推送。**
+- 本轮实测（macOS 宿主，现行代码）：`dist --check-reproducible` 哈希与已录证据逐字节一致、`smoke` 7/7、`smoke-bootstrap` 通过、`cargo xtask check` 7/7、`cargo test --workspace` 558/0/2。Linux 侧本轮未跑（Docker 不可用），按回合 30 结论沿用。
 
 ## 9. 证据索引
 
 - 协调状态与切片账：`llmdoc/requirements/web-mvp/state.yaml`
 - 验收报告（回合 1–30，含缺陷全文）：`llmdoc/requirements/web-mvp/qa-report.md`（回合 30 见第 3676 行起）
 - 实现记录（§T01–§T22 与各修复轮，Linux 轮见 §T22-13）：`llmdoc/requirements/web-mvp/implementation.md`
-- 决策与非代码知识（ADR-001~036 + 各回合验收知识）：`llmdoc/decisions.md`
+- 决策与非代码知识（ADR-001~037 + 各回合验收知识）：`llmdoc/decisions.md`
 - Linux 构建证据：`artifacts/web-mvp/t22-rd/linux/`（`build-file-ldd.log`、`smoke-console.log`、`offline/`、`regression/`、`dist-x86_64-unknown-linux-musl/`）
+- macOS 复跑证据（2026-09-14）：`artifacts/web-mvp/t22-rd/macos-rerun/`（`everything-manual`、`SHA256SUMS`、`build-info.json`、`dist-macos-rerun.log`、`xtask-check.log`、`cargo-test-workspace.log`、`smoke-macos-rerun.log`）
+- BUG-013 修复与阻塞证据（2026-09-14）：`artifacts/web-mvp/t22-rd/bug013/`（`rd-fix.diff`、`macos-exact-test.log`、`docker-engine-blocked.txt`、`bug013-evidence.sh`）
 - QA 回合 30 证据（16 件）：`artifacts/web-mvp/t22-qa/`（含裸容器冷启动脚本、可复现轮日志、SIGTERM 窗口实验、离线 smoke、全量测试枚举）
 - 原始证据：`artifacts/web-mvp/<卡或回合>/`（日志、截图、可复跑脚本）

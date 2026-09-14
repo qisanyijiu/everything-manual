@@ -1,0 +1,60 @@
+{
+  "binary": {
+    "bytes": 25112080,
+    "file": "everything-manual",
+    "sha256": "ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333"
+  },
+  "builtAt": "2026-09-13T16:03:43.915907Z",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+  "crossCompiled": false,
+  "deployment": {
+    "boundary": "仅支持 loopback，或位于显式受信反向代理之后（代理负责 TLS 终止）",
+    "dataDir": "用户数据在独立 data-dir；单二进制不等于无数据目录（ADR-002）",
+    "runtimeRequirements": "操作系统系统库（macOS）/ 无额外动态库（Linux musl 静态）；不需要 Node/Python/外部数据库/PDF 程序",
+    "tls": "无内置 TLS 监听（MVP，PRD §5.6 / A-15）；配置 tls.* 时拒绝启动（fail-closed）"
+  },
+  "dynamicDependencies": {
+    "collected": true,
+    "file": "dynamic-dependencies.txt",
+    "host": "aarch64-apple-darwin",
+    "onlySystemLibraries": true,
+    "samePlatformAsBuild": true,
+    "staticLinked": null,
+    "target": "aarch64-apple-darwin"
+  },
+  "features": [
+    "embedded-ui"
+  ],
+  "git": {
+    "commit": "73b2b0475bb9895f68b346745fda2bd145fc17eb",
+    "dirty": true
+  },
+  "host": "aarch64-apple-darwin",
+  "isolation": {
+    "forbiddenPatterns": [
+      "/Users/qsyj/Code/rust/everything-manual",
+      "/Users/qsyj/Code/rust/everything-manual/apps/web/dist",
+      "/Users/qsyj/Code/rust/everything-manual/apps/web/node_modules",
+      "/Users/qsyj"
+    ],
+    "hits": 0,
+    "nodeModulesLiteralHits": 0,
+    "note": "二进制中不含仓库根 / apps/web/dist / node_modules 目录 / 用户主目录的绝对路径；编译期路径已被 --remap-path-prefix 归一化为 /build/repo 与 /build/home（命中次数见 remapped*PathHits）。nodeModulesLiteralHits 只是文本串出现次数（压缩 JS 或依赖元数据里的字面量），不代表携带构建环境。",
+    "remappedHomePathHits": 651,
+    "remappedRepoPathHits": 0,
+    "scannedBytes": 25112080
+  },
+  "node": "v26.0.0",
+  "npm": "11.12.1",
+  "product": "everything-manual",
+  "profile": "release",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "schemaVersion": 2,
+  "signature": {
+    "notarized": false,
+    "note": "未做代码签名与公证：macOS 签名/公证需要用户账号授权（validation-release §6）。分发到其他机器时需在系统设置中按 Gatekeeper 提示放行，或由所有者用自有证书签名。",
+    "signed": false
+  },
+  "target": "aarch64-apple-darwin",
+  "version": "0.1.0"
+}

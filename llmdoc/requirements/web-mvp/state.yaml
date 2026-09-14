@@ -82,6 +82,12 @@ blocked_episode:
     attempted: ["重启应用", "docker desktop stop/start", "POST /engine/start", "diagnose", "docker desktop start（CLI）", "完整退出后重启"]
     unblock_condition: "Docker 引擎恢复（可能需用户执行 Troubleshoot → Clean/Purge data，属破坏性需用户授权），或改在外部 Linux 机器执行 scripts/linux-musl.sh；恢复后由 rd 补 Linux 构建+容器内 smoke+离线验证，再交 QA 补 T22 结论"
     resolution: "2026-09-13 恢复会话：磁盘已有 356 GiB 可用，未做任何破坏性清理，仅 `open -a Docker` 重新启动应用即恢复。主协调实测 `docker ps` 正常，server 29.3.1（Docker Desktop / aarch64 宿主），阻塞解除。"
+  - reason: "T22 收尾（BUG-013 修复复验）第三次尝试：Docker Desktop 引擎无法启动（VM 引导成功后约 1.5 s 被宿主 engines 组件 POST /shutdown → ExitBadState，与 ADR-035 §5 同一签名；backend/vm 日志无显式磁盘告警，异常信息为空）"
+    blocked_on: environment
+    attempted: ["等待轮询 15 min（10 s 间隔）", "docker desktop restart", "docker desktop stop + open -a Docker", "docker desktop start（CLI）", "backend IPC POST /engine/start", "完整退出后重启（进程归零复核）", "错误对话框 recovery action", "主协调 open -a Docker 后 240 s 轮询"]
+    unblock_condition: "任一：① 宿主释放磁盘（建议 ≥60 GiB；当前 /System/Volumes/Data 剩约 13 GiB，Docker diskSizeMiB=61035=59.6 GiB）；② Docker Desktop 中把 disk image size 调低到小于可用空间后重启引擎；③ Troubleshoot → Clean/Purge data（破坏性，需用户明确同意）；④ 在外部 Linux 机器执行 scripts/linux-musl.sh。恢复后由 rd 执行上述「Linux 证据缺口」三条命令，再交 QA 回合 31。"
+    correlation: "同一故障首次出现在宿主 ENOSPC 之后、并在「356 GiB 可用」的会话重新启动应用即恢复；本次宿主剩 13 GiB 复现。相关性成立但未被独立验证（日志无显式磁盘告警）。"
+    resolution: null
 coordinator_corrections:
   - "2026-09-13：qa_round 由 28 更正为 29（qa_history 与 accepted_tasks 中 T21 已用回合 29，原值滞后会导致下一回合号冲突）。T22 的 QA 回合从 30 起。"
 pause_history:
@@ -100,10 +106,26 @@ pause_history:
   - at: "2026-09-13"
     by: user
     reason: "用户要求：QA 回合 30 验证完成后把结论写入 llmdoc，然后暂停"
-    resolved: null
+    resolved: "2026-09-14 用户执行 /team web-mvp 恢复；按 rd_fixing 精确派发 rd，两项工作（修 BUG-013 + 现行 dist.rs 下复跑 macOS dist）已执行，结果见本文件 2026-09-14 条目。"
     resume_phase: rd_fixing
     resume_entry: "/team web-mvp → 按 next_action 派 rd（修 BUG-013 + 现行 dist.rs 下复跑 macOS dist），再交 QA 回合 31"
+  - at: "2026-09-14"
+    by: user
+    reason: "用户要求：写入 llmdoc 后暂停退出（RD 修复回合已完成 macOS 复跑与 BUG-013 修复实现；Linux 容器取证被 Docker 引擎故障阻塞，环境处置需用户决定）"
+    resolved: null
+    resume_phase: rd_fixing
+    resume_entry: "/team web-mvp → 先按 blocked_episode 第三条的 unblock_condition 处置 Docker，再派 rd 续做 T22 ①（容器内 3× 精确用例 + workspace 全量 + Linux dist 哈希比对），随后交 QA 回合 31 复核 T22 整卡"
+    state_left: "宿主工作树含未提交改动：crates/server/tests/{common/mod.rs,backup_restore.rs,config_cli.rs}（BUG-013 测试侧修复，产品代码零改动）、llmdoc/{README.md,decisions.md,validation-release.md}、llmdoc/requirements/web-mvp/implementation.md；未跟踪 artifacts/web-mvp/t22-rd/{macos-rerun,bug013}/。未提交、未推送。target/ 约 6.4 GiB（macOS 复跑重建）。Docker Desktop 引擎不可用、无残留容器；/tmp 下容器缓存（em-linux-musl-*、t22-probe）均不存在，恢复后需重建。恢复脚本已留存：/tmp/em-bug013/bug013-evidence.sh 与其副本 artifacts/web-mvp/t22-rd/bug013/bug013-evidence.sh。"
+    rd_partial_findings:
+      - "② macOS 复跑完成：现行 xtask/src/dist.rs 下 cargo xtask dist --target aarch64-apple-darwin --check-reproducible，sha256 恒为 ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333（25 112 080 B），与已录证据逐字节一致；同二进制 smoke 7/7、smoke-bootstrap 通过、cargo xtask check 7/7、cargo test --workspace 558/0/2 → macOS 侧证据在现行代码下仍有效，不需整轮重验。"
+      - "① BUG-013 修复已实现、未取得运行证据：取测试侧 settle（ADR-037），crates/server/tests/common/mod.rs 新增 settle_after_listening_line()（300 ms，与 storage.rs:1817 先例同口径），backup_restore.rs/config_cli.rs 在读完 listening on 行后调用；断言/阈值/#[ignore] 均未动（diff 存 artifacts/web-mvp/t22-rd/bug013/rd-fix.diff）。产品代码零改动。"
+      - "Linux 证据缺口（本轮未执行，不得推断为已通过）：容器内精确用例 ×≥3、容器内 cargo test --workspace --no-fail-fast 应为 558/0/2（回合 30 为 557/1/2）、容器内 dist 哈希应仍为 77b38c91327c4d5c697c1fccb48054a827034ee088167cb38ad3249a3d338246（28 236 728 B）。macOS 上该用例修复前后均通过，不能作为修复证据。"
+      - "构建环境知识（已入 ADR-037，恢复时避免重复踩坑）：CARGO_SOURCE_* env 镜像机制在本机 cargo 1.98.1 实测不生效；官方源实测 8–28 KB/s；cargo 索引目录名（index.crates.io-<hash>）是产物哈希敏感输入；macOS 复跑靠预取缓存 + CARGO_NET_OFFLINE=true 完成。"
 coordinator_rulings:
+  - at: "2026-09-14"
+    by: coordinator
+    subject: "BUG-013 归属与修法（QA 回合 30 留「归属由协调者/PM 裁定」）"
+    ruling: "归属 T22 收尾，不新立卡：该缺陷阻断发布门禁与 Linux 侧 cargo xtask check，修法落在 T22 允许范围内。协调者接受 RD 选择的「测试侧 settle」（ADR-037）：与 storage.rs:1817 同源先例一致、不改发布二进制、不作废两平台已录证据；产品侧窄窗口（50–100 ms、窗口内无在途写入）登记为已知可接受行为，将来若消除须另立任务并重跑两平台证据，不借 P3 修复夹带。修复效果待 QA 回合 31 独立认定，协调者不预先签发。"
   - at: "2026-09-13"
     by: coordinator
     subject: "QA 回合 30 提出「BUG-013 是否阻断 T22 切片」的口径裁决请求"
@@ -112,4 +134,4 @@ coordinator_rulings:
     by: coordinator
     subject: "T22 整卡为何未直接标记 accepted"
     ruling: "T22 记 needs_retest：(1) 本轮只验了 Linux 半边，macOS 半边尚无 QA 独立回合；(2) xtask/src/dist.rs 是在 macOS 证据产出之后才改的（新增 host/target/samePlatformAsBuild 字段、动态依赖判据由 target==host 改为 same_arch_and_os、readelf 改全文），故 macOS 侧已录证据相对当前代码过期，需在现行代码下复跑确认。"
-next_action: "已按用户要求暂停（2026-09-13）。恢复入口：派 RD 处理两项——① 修 BUG-013（QA 已定性为「测试侧启动竞态为主 + 产品侧 50–100 ms 窄窗口」；项目在 crates/server/tests/storage.rs:1817 已有同源判定『不是产品缺陷』并用 300 ms settle 规避，backup_restore.rs / config_cli.rs 缺该 settle；测试侧修不改变发布二进制，产品侧修则触发两平台 T22 证据重跑，由 RD 评估后择一并写明理由）；② 在现行 dist.rs 下复跑 macOS dist，比对二进制 sha256 是否仍为 ab693cc3c881a6ee355fd969d24a419c6221b010aeb20a296c19b6553d198333，据此判定 macOS 证据是否需整轮重验。两项完成后交 QA（回合 31）复核 T22 整卡。随后 T23（需用户凭据与预算授权）。"
+next_action: "已按用户要求暂停（2026-09-14）。① macOS 复跑与 ② BUG-013 修复实现均已完成并留证据；唯一缺口是 BUG-013 的 Linux 容器取证，被 Docker 引擎故障阻塞（非仓库问题，见 blocked_episode 第三条与 artifacts/web-mvp/t22-rd/bug013/docker-engine-blocked.txt，含所需的四种用户动作）。恢复入口：先按 unblock_condition 处置环境（用户动作，或用户明确授权后由 rd 尝试调低 Docker 磁盘设置/清理可再生缓存），Docker 可用后派 rd 执行容器内 3× 精确用例 + workspace 全量（应 558/0/2）+ Linux dist 哈希比对（应仍为 77b38c91…），然后交 QA 回合 31 复核 T22 整卡。随后 T23（需用户凭据与预算授权）。"

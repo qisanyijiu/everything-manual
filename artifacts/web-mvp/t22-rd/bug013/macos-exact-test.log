@@ -1,0 +1,43 @@
+== macOS 侧精确用例 ×3（回归证据，非 BUG-013 修复证据）==
+-------- 第 1 次 --------
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+   Compiling reqwest v0.13.5
+   Compiling test-support v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/test-support)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 19.03s
+     Running tests/backup_restore.rs (target/debug/deps/backup_restore-32aa263c9b0de75d)
+
+running 1 test
+test legacy_schema_backup_restores_and_migrates_automatically ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 1.97s
+
+EXIT=0
+-------- 第 2 次 --------
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.28s
+     Running tests/backup_restore.rs (target/debug/deps/backup_restore-32aa263c9b0de75d)
+
+running 1 test
+test legacy_schema_backup_restores_and_migrates_automatically ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 1.74s
+
+EXIT=0
+-------- 第 3 次 --------
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running tests/backup_restore.rs (target/debug/deps/backup_restore-32aa263c9b0de75d)
+
+running 1 test
+test legacy_schema_backup_restores_and_migrates_automatically ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 1.65s
+
+EXIT=0

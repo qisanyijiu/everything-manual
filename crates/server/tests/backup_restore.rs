@@ -184,6 +184,11 @@ impl ServeProcess {
             }
         };
 
+        // `listening on` 打印在 SIGTERM 处理器注册之前（见 common::settle_after_listening_line
+        // 与 BUG-013）：在把句柄交给调用方之前先 settle，使后续任何 SIGTERM 都不会命中
+        // "信号处理器尚未安装"的启动竞态。只加等待，不改任何断言。
+        common::settle_after_listening_line();
+
         Self {
             child,
             addr,

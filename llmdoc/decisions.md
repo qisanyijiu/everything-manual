@@ -2361,3 +2361,84 @@ ADR-xxx — 简短结论
 - 相关代码／证据：`crates/server/src/config/commands.rs`、`crates/server/tests/{backup_restore,storage,config_cli}.rs`、
   `xtask/src/{dist,smoke}.rs`、`scripts/{linux-musl,container-linux-musl}.sh`、`artifacts/web-mvp/t22-qa/**`、
   `artifacts/web-mvp/t22-rd/linux/**`；实现记录：`requirements/web-mvp/implementation.md` §T22-13。
+
+## ADR-037 — BUG-013 取"测试侧 settle"修法（不把信号注册提前进产品），与它对发布证据的影响
+
+- 状态：implemented（2026-09-14，RD T22 修复回合；待 QA 回合 31 复验后由 QA 决定 CLOSE）。
+  缺陷：BUG-013（P3，回合 30 开出；不阻断 T22 切片，阻断发布门禁）。
+- 日期／作者角色：2026-09-14 · RD。
+- 背景与证据：回合 30 定性 = **测试侧启动竞态为主 + 产品侧 50–100 ms 窄窗口**：`run_serve` 先打印
+  `listening on …`（`crates/server/src/config/commands.rs:372`），随后
+  `axum::serve(...).with_graceful_shutdown(shutdown_signal())`（同文件 377–382）才在**首次 poll** 时
+  注册 SIGTERM/SIGINT；窗口内 SIGTERM 走默认动作（退出码 143）。项目内已有同一判定与规避先例：
+  `crates/server/tests/storage.rs:1817-1819`（"不是产品缺陷" + 300 ms settle）。QA 实测窗口见
+  qa-report.md 回合 30 BUG-013 条目（0/1/5/20/50 ms → 143；≥100 ms → 0）。
+  复现（修复前，Linux 容器）：`legacy_schema_backup_restores_and_migrates_automatically`
+  panic 于 `backup_restore.rs:2390`，`left:-1 / right:0`，3/3 必现。
+- 结论与原因（**取测试侧**，理由逐项）：
+  1. **是否改变发布二进制**：测试侧修法**不改** `crates/**` 的生产代码 → 已交付二进制与其证据继续有效；
+     产品侧修法（把 SIGTERM/SIGINT 注册提前到打印协议行之前）会改 `commands.rs` → **两平台 T22 产物证据
+     作废**（Linux `77b38c91…`、macOS `ab693cc3…` 均需重跑，含 `--check-reproducible`、§7 smoke、
+     AC-064/AC-002/AC-059 全部重验），成本远大于收益。
+  2. **与既有先例的一致性**：`storage.rs:1817` 已把同一时序判为"不是产品缺陷"并 settle；把同一判据
+     扩大到另外两个测试文件是**口径统一**，不是新发明。settle 量级沿用 300 ms（= 实测窗口上限 3 倍）。
+  3. **数据安全影响**：窗口内没有在途写入（服务尚未开始接受请求）；SQLite 锁由内核在进程退出时释放；
+     执行器租约 120 s 到期自恢复——更坏的 SIGKILL 情形已由 T21 崩溃断点矩阵覆盖。数据面影响可忽略。
+  4. **长期正确性**：不修产品时序意味着"启动瞬间的 SIGTERM 走默认动作"这一属性**仍然存在**。本 ADR 明确：
+     它是**已知且可接受**的行为（窄窗口、无在途状态、与 SIGKILL 等价），不是被测试掩盖的缺陷；
+     若将来要"关闭"它（例如把信号注册提前，或让 `serve` 在协议行之前先安装处理器），那是一次
+     **产品行为变更**，必须显式走"改产品 → 重跑两平台证据"的路径，不能借 P3 测试修复夹带。
+  5. **不做的事**（防止把缺陷"修掉"而非修好）：不放宽/删除断言、不加 `#[ignore]`、不给产品代码塞
+     sleep、不改退出码期望值；只加"读到协议行后、发信号前"的等待。
+  6. **同模式隐患一并处理**：`config_cli.rs` 的 `ServeProcess::start` 同样"读到协议行即可发信号"，
+     既有用例恰好在 terminate 前先做了 HTTP 交互而未命中（回合 30 已注明）→ 按同一方式补 settle，
+     避免用例顺序/负载变化后复现。
+  7. **公共 helper 的落点**：settle 定义在 `crates/server/tests/common/mod.rs`
+     （`settle_after_listening_line()`，`#![allow(dead_code)]` 的共享测试模块），`backup_restore.rs`
+     与 `config_cli.rs` 共用一份定义；`storage.rs` 保留其 1817 行内联写法不动（它是"先例锚点"，
+     且本轮允许清单未含该文件）——三处各写一份的问题由此避免，代价是 `storage.rs` 仍是第二份定义，
+     属可接受的过渡状态（后续清理项）。
+- 影响：① BUG-013 修复**不改变**发布产物 → 现行代码下 macOS 二进制哈希应与已录证据一致
+  （本轮复跑比对，见 implementation.md §R30）；Linux 侧因容器环境阻塞未复跑（同 §R30 记录）；
+  ② 新增测试纪律：**任何"读到 `listening on` 即发信号"的用例必须先 settle**（跨卡复用，写入测试模块注释）；
+  ③ 若 QA/PM 认为必须消除产品侧窗口，应新开任务走产品变更 + 两平台证据重跑，不在本缺陷内解决。
+- 未验证边界：Linux 容器内的修复取证（3/3 精确用例 + workspace 全量）本轮因 Docker 引擎故障**未完成**
+  （见 `artifacts/web-mvp/t22-rd/bug013/docker-engine-blocked.txt`），必须先补齐再谈 CLOSE。
+- 相关代码／证据：`crates/server/tests/common/mod.rs`、`crates/server/tests/{backup_restore,config_cli}.rs`
+  （diff 存档：`artifacts/web-mvp/t22-rd/bug013/rd-fix.diff`）；实现记录：
+  `requirements/web-mvp/implementation.md` §R30；缺陷原始定性：`requirements/web-mvp/qa-report.md` 回合 30。
+
+### 构建环境知识（追加，2026-09-14；T22 macOS 复跑时实测，跨卡可复用）
+
+- 状态：verified（本机实测；与 ADR-010 第 5 条、ADR-036 第 3 条的"镜像"叙述有出入，以下为实测更正）。
+- **`CARGO_SOURCE_*` 环境变量镜像机制在本机 cargo 1.98.1 实测不生效**：按 ADR-010/ADR-036 的写法
+  （`CARGO_SOURCE_CRATES_IO_REPLACE_WITH=rsproxy` + `CARGO_SOURCE_RSPROXY_REGISTRY=sparse+https://rsproxy.cn/index/`）
+  设置后，cargo 仍访问 `index.crates.io`（实测：缓存目录名仍是 `index.crates.io-1949cf8c6b5b557f`、
+  连接对端是 Fastly IP）。**判定实验**：把 `CARGO_SOURCE_CRATES_IO_REPLACE_WITH` 设为**不存在的源名**
+  （`nonexistent-src`）后 cargo **不报错**（若键被解析会报 "no source defined for …"）→ 键名映射不匹配，
+  变量被忽略。**推论**：容器/CI 之前"镜像可用"的表象，实际来自宿主 `~/.cargo/registry` 被 rsync 进
+  容器缓存（`scripts/linux-musl.sh` 第 159–162 行），不是 env 机制；脚本注释里"crates 走 rsproxy"的说法
+  应按此更正（或改用 `$CARGO_HOME/config.toml` 写源替换，那是真生效的路径）。
+- **本机直连官方源的速度（冷缓存实测，2026-09-13/14）**：`static.crates.io` ≈ 8 KB/s；
+  `index.crates.io` 单流 ≈ 12–28 KB/s（`web-sys` 单文件 4.4 MB 20 min 只拉到 1.5 MB）；
+  `rsproxy.cn`：.crate ≈ 1.7 MB/s、sparse 索引 ≈ 3.7–10.5 MB/s。**冷缓存直连官方源构建不可行**
+  （仅 xtask 依赖就要几十分钟）。
+- **索引目录名是哈希敏感输入（重要）**：`registry/src/<index-dir>/<crate>-<ver>/…` 会被依赖的 panic
+  位置写进二进制（本轮实测旧产物内嵌 `registry/src/index.crates.io-1949cf8c6b5b557f/…` **564 处**，
+  经 `--remap-path-prefix` 归一为 `/build/home/...`）。因此**换索引源（改 URL/镜像）会改二进制哈希**——
+  复现既有产物必须保持官方 `sparse+https://index.crates.io/` 索引；`.crate` 只换下载通道不影响产物
+  （内容由 Cargo.lock 的 sha256 校验）。
+- **冷缓存下的可用做法（本轮采用，脚本存档）**：① 用镜像并行预取全部 `.crate` 进
+  `~/.cargo/registry/cache/index.crates.io-1949cf8c6b5b557f/` 并逐个比对 Cargo.lock 的 sha256
+  （`artifacts/web-mvp/t22-rd/macos-rerun/seed-crate-cache.py`，294 个包 0 失败）；
+  ② 并行补齐 sparse 索引缓存（内容取自官方 `index.crates.io`，缓存文件格式按 cargo 源码
+  `sources/registry/index/cache.rs`：`03` + u32le(2) + `index_version\0` + 逐条 `vers\0JSON\0`，
+  index_version 用响应头 `etag: "…"`），`artifacts/web-mvp/t22-rd/macos-rerun/seed-index-cache.py`；
+  ③ 之后用 `CARGO_NET_OFFLINE=true` 构建，cargo 不再发索引请求（**离线模式只是"不访问网络"，
+  内容仍由 Cargo.lock 校验，不改变编译结果**）。
+- 已知例外：`web-sys` 官方索引条目下载过慢，本轮改用 rsproxy 条目写入缓存，但**校验了被锁定版本
+  `0.3.105` 的 cksum 与 Cargo.lock 一致**；web-sys 是 wasm32-only，不参与 macOS/Linux 目标编译，
+  且最终 sha256 比对会兜底任何偏差。后续冷缓存复跑时建议先按同一脚本补齐官方条目。
+- 缓存格式与键位的权威来源：`cargo` crate（0.98.0，即 1.98.1 的同一源码）`src/cargo/sources/registry/`
+  （`index/cache.rs` 的 `CURRENT_CACHE_VERSION=3`、`INDEX_V_MAX=2`；`http_remote.rs` 的
+  `is_fresh()`：`--offline` 时直接使用本地缓存条目）。

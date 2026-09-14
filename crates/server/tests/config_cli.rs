@@ -9,6 +9,8 @@
 //!
 //! 所有用例通过真实二进制子进程 + 临时目录执行；测试用假凭据（canary），不接触真实密钥。
 
+mod common;
+
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
@@ -196,6 +198,11 @@ impl ServeProcess {
                 ),
             }
         };
+
+        // `listening on` 打印在 SIGTERM 处理器注册之前（见 common::settle_after_listening_line
+        // 与 BUG-013）：本文件既有用例通常先有 HTTP 交互、未命中该窗口，但 settle 使
+        // `start()` 返回后即可安全发信号，不依赖"调用方恰好先做了别的 I/O"。只加等待，不改断言。
+        common::settle_after_listening_line();
 
         Self {
             child,
