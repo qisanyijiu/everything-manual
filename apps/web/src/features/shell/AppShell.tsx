@@ -8,7 +8,7 @@
  * 任何计数，避免用假数字冒充。
  */
 
-import { Link, Outlet, useLocation, useMatch, useNavigate } from "react-router";
+import { Link, NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { describeError } from "../../api/client";
@@ -17,6 +17,7 @@ import { useNotify } from "../../components/notifications";
 import { getItem } from "../../api/endpoints";
 import { itemKeys } from "../library/items";
 import { useLogout } from "../auth/session";
+import { Icon } from "../../components/Icon";
 
 export function AppShell() {
   const location = useLocation();
@@ -30,7 +31,7 @@ export function AppShell() {
   const itemQuery = useQuery({
     queryKey: itemKeys.detail(itemId ?? ""),
     queryFn: () => getItem(itemId ?? ""),
-    enabled: itemId !== undefined && itemId !== "",
+    enabled: itemId !== undefined && itemId !== "" && itemId !== "new",
     retry: false,
   });
 
@@ -47,11 +48,30 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main">跳到主要内容</a>
+      <aside className="app-sidebar" aria-label="应用导航">
+        <Link to="/" className="sidebar-brand" aria-label="万物说明书">
+          <span className="brand-symbol"><Icon name="book" size={25} /></span>
+          <span>万物说明书<small>EVERYTHING MANUAL</small></span>
+        </Link>
+        <p className="sidebar-label">我的工作空间</p>
+        <nav className="sidebar-nav" aria-label="主导航">
+          <NavLink to="/" end className={({ isActive }) => isActive || location.pathname.startsWith("/items") ? "active" : ""}><Icon name="grid" /><span>资料库</span></NavLink>
+          <NavLink to="/jobs"><Icon name="activity" /><span>任务中心</span></NavLink>
+          <NavLink to="/settings"><Icon name="settings" /><span>设置</span></NavLink>
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="sidebar-note"><Icon name="shield" size={22} /><p>你的物品，你的资料。<small>自托管 · 本地保存</small></p></div>
+          <button className="sidebar-account" type="button" aria-label={logoutMutation.isPending ? "登出中…" : "登出"} onClick={() => void handleLogout()} disabled={logoutMutation.isPending}>
+            <span className="account-avatar">我</span><span>管理员<small>{logoutMutation.isPending ? "登出中…" : "登出"}</small></span><Icon name="logout" size={17} />
+          </button>
+        </div>
+      </aside>
       <header className="top-bar">
         <div className="top-bar__left">
-          <Link to="/" className="top-bar__brand">
-            万物说明书
-          </Link>
+          <Link to="/" className="top-bar__brand">工作空间</Link>
+          <Icon name="chevron" size={13} />
+          <span className="top-bar__page">{location.pathname.startsWith("/jobs") ? "任务中心" : location.pathname.startsWith("/settings") ? "设置" : "资料库"}</span>
           {itemQuery.data !== undefined && (
             <p className="top-bar__context">
               {itemQuery.data.data.name}
@@ -59,14 +79,7 @@ export function AppShell() {
             </p>
           )}
         </div>
-        <nav className="top-bar__nav" aria-label="主导航">
-          <Link to="/">资料库</Link>
-          <Link to="/jobs">任务中心</Link>
-          <Link to="/settings">设置</Link>
-          <button type="button" onClick={() => void handleLogout()} disabled={logoutMutation.isPending}>
-            {logoutMutation.isPending ? "登出中…" : "登出"}
-          </button>
-        </nav>
+        <div className="top-bar__utilities"><span className="workspace-badge"><span />个人资料库</span><button className="mobile-logout" type="button" aria-label="退出登录" onClick={() => void handleLogout()} disabled={logoutMutation.isPending}><Icon name="logout" size={17} /></button></div>
       </header>
       {/* tabIndex=-1：作为程序化焦点目标（会话恢复后焦点落回页面主体），不进入 Tab 顺序。 */}
       <main className="app-shell__content" id="main" tabIndex={-1}>

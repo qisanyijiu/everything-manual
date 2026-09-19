@@ -139,17 +139,17 @@ export function ReleaseReaderPage() {
   };
 
   return (
-    <div>
-      <h1>已发布说明书</h1>
+    <div className="page reader-page">
+      <header className="page__header"><div><p className="eyebrow">THE INTERACTIVE MANUAL</p><h1>已发布说明书</h1></div><Link className="button" to={`/items/${itemId}/releases`}>返回版本列表</Link></header>
+      <p className="page-subtitle">旋转模型探索部件，跟随步骤查看说明，随时对照原文。</p>
       {release !== undefined && (
+        <details className="reader-version"><summary>已发布 · 草稿 r{release.draftRevision} · 查看版本信息</summary>
         <p className="page-note" data-testid="release-context">
           发布版本 {release.id} · 草稿 r{release.draftRevision} · 模型 {release.modelRevisionId} ·
           manifest {release.manifestSha256.slice(0, 12)}…（不可变）
         </p>
+        <p>内容保留发布时的版本，之后修改草稿不会影响这里。</p></details>
       )}
-      <p className="page-subtitle">
-        本页内容来自发布时的冻结 manifest；之后对草稿的修改不会改变这里。3D 只作增强，文字与原文始终可用。
-      </p>
       {missing.length > 0 && (
         <section className="notice-panel" aria-label="发布内容说明">
           <h2>发布内容说明</h2>
@@ -386,7 +386,7 @@ export function ReleaseReaderPage() {
         )}
         <p className="page-note" data-testid="reader-context">
           页码 {pageNumber}
-          {pageCount !== null ? ` / ${pageCount}` : ""}（1-based） · 模型资产{" "}
+          {pageCount !== null ? ` / ${pageCount}` : ""} · 模型文件{" "}
           <a href={model !== null ? assetContentUrl(model.assetId) : "#"}>本地 GLB</a>
         </p>
       </PageLayout>

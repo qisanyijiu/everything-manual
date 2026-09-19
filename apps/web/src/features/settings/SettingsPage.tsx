@@ -31,9 +31,10 @@ export function SettingsPage() {
 
   return (
     <section className="page settings-page" aria-labelledby="settings-title">
+      <p className="eyebrow">WORKSPACE SETTINGS</p>
       <h1 id="settings-title">设置与状态</h1>
       <p className="page__lead">
-        本页只展示服务端配置状态，不显示也不接受任何密钥；密钥由服务端配置文件或环境注入。
+        查看服务连接、存储限制与运行状态。密钥由服务端管理。
       </p>
 
       <section className="panel" aria-labelledby="providers-title">

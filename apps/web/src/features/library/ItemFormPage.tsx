@@ -332,7 +332,7 @@ function ItemForm({
       )}
 
       <p className="item-form__note">
-        物品不保存来源链接：出处链接在「绑定说明书原件」时记录（仅作出处，服务器不会访问该地址）。
+        说明书的出处链接，可在下一步上传原件时填写。
       </p>
 
       <button type="submit" className="button-primary" disabled={missingRequired || pending || disabled}>

@@ -283,15 +283,9 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     expect(Object.keys(createdBody).sort()).toEqual(["brand", "model", "name", "variant"]);
     expect(JSON.stringify(createdBody)).not.toContain("sourceUrl");
 
-    // (d2) 物品概览：未交付能力如实说明，不留假装可用的入口。
-    // 事实更新（QA 回合 21，T17 已交付）：原断言"任务中心（T17）与阅读器（T18/T19）尚未交付"
-    // 已不成立；现在只有阅读器未交付，任务入口指向真实任务中心。守卫不变：未交付能力没有可用入口。
-    await expect(page.getByText("阅读器（T18/T19）尚未交付")).toBeVisible();
-    await expect(page.getByRole("link", { name: "本物品的任务" })).toHaveAttribute(
-      "href",
-      /\/jobs\?itemId=/,
-    );
-    await expect(page.getByRole("link", { name: /查看任务|打开说明书/ })).toHaveCount(0);
+    // 阅读器现已交付：入口进入真实版本列表，未发布的物品显示空态。
+    await expect(page.getByRole("link", { name: "打开说明书" })).toHaveAttribute("href", /\/releases$/);
+    await expect(page.getByRole("link", { name: "本物品的任务" })).toHaveAttribute("href", /\/jobs\?itemId=/);
 
     // (e) 第 2 步：未绑定说明书时「下一步」禁用并说明缺什么（UI-019）。
     const newItemId = new URL(page.url()).pathname.split("/").pop() ?? "";
@@ -309,15 +303,13 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
       "href",
       /\/import\/prepare$/,
     );
-    // 事实更新（QA 回合 21，T17 已交付）：「查看任务」现在是可用的真实入口（按物品过滤）；
-    // 「打开说明书」（T18/T19）仍禁用并写明原因——守卫不变：未交付能力不假装可用。
     const viewJobs = row.getByRole("link", { name: "查看任务" });
-    const openManual = row.getByRole("button", { name: "打开说明书" });
+    const openManual = row.getByRole("link", { name: "打开说明书" });
     await expect(viewJobs).toHaveAttribute("href", /\/jobs\?itemId=/);
-    await expect(openManual).toBeDisabled();
-    await expect(openManual).toHaveAttribute("title", /T18/);
-    await expect(row.locator(".item-row__note")).toContainText("尚未交付");
-    await captureTo("t16-qa", page, "04-library-row-disabled");
+    await expect(openManual).toHaveAttribute("href", /\/releases$/);
+    await openManual.click();
+    await expect(page.getByText(/还没有发布版本/)).toBeVisible();
+
   });
 
   test("QA-2 第 2/3/5 步刷新不丢资料、URL 即步骤、零重复上传（AC-026 / REQ-016）", async ({
@@ -1015,7 +1007,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
           gridTemplateColumns: getComputedStyle(node).gridTemplateColumns,
           identity: pick(".item-row__identity"),
           actions: pick(".item-row__actions"),
-          note: pick(".item-row__note"),
+          readerLink: pick(".item-row__open"),
         };
       });
       measurements[String(width)] = {
@@ -1025,7 +1017,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
         status: await measure(".item-row__status"),
         time: await measure(".item-row__time"),
         actions: await measure(".item-row__actions"),
-        note: await measure(".item-row__note"),
+        readerLink: await measure(".item-row__open"),
         styles,
       };
       if (width === 1280) {

@@ -5,7 +5,7 @@
  * 行内四列 grid 的末端 `auto` 轨道按说明文字 max-content 定宽，把身份列挤到 0px
  * （1280/1366px 下名称逐字换行、单行高 358px，QA 回合 18 BUG-005）。修复后本文件固化：
  * - 桌面 1024/1280/1366/1440/1600/1920px：名称列宽 ≥ 120px、行高 ≤ 140px，
- *   说明文字独占整行（不参与列宽竞争）；
+ *   阅读器入口保持可见、操作区不溢出；
  * - 窄屏 767/375px（<768px）：行仍为单列堆叠、名称可读、摘要抽屉可开可关（不回退）。
  *
  * 阈值与 QA 的 `qa-t16-independent.spec.ts` QA-10 一致（名称 ≥120px）；本文件是 RD 侧守卫，
@@ -56,7 +56,7 @@ async function measureRow(row: import("@playwright/test").Locator): Promise<RowG
         status: pick(".item-row__status"),
         time: pick(".item-row__time"),
         actions: pick(".item-row__actions"),
-        note: pick(".item-row__note"),
+        readerLink: pick(".item-row__open"),
       },
     };
   });
@@ -74,7 +74,7 @@ async function resizeTo(
   return measureRow(row);
 }
 
-test("RD-ROW-1 桌面 1024–1920px：身份列可读、行高正常、说明独占整行（BUG-005 守卫）", async ({
+test("RD-ROW-1 桌面 1024–1920px：身份列可读、行高正常、阅读入口不溢出（BUG-005 守卫）", async ({
   page,
   request,
 }) => {
@@ -92,7 +92,7 @@ test("RD-ROW-1 桌面 1024–1920px：身份列可读、行高正常、说明独
     const { row: rowBox, parts } = geometry;
     const name = parts.name;
     const identity = parts.identity;
-    const note = parts.note;
+    const readerLink = parts.readerLink;
 
     // 身份列与名称必须获得真实宽度（BUG-005 修复前：身份列 0px、名称 22.8px）。
     expect(
@@ -107,11 +107,9 @@ test("RD-ROW-1 桌面 1024–1920px：身份列可读、行高正常、说明独
       rowBox.height,
       `${width}px：行高 ${rowBox.height}px（阈值 ≤${MAX_ROW_HEIGHT}）`,
     ).toBeLessThanOrEqual(MAX_ROW_HEIGHT);
-    // 说明文字独占整行：宽度≈行内容宽，位于操作行之下（不参与四列竞争）。
-    expect(note?.width ?? 0, `${width}px：说明行宽 ${note?.width}px`).toBeGreaterThanOrEqual(
-      rowBox.width - 32,
-    );
-    expect(note?.y ?? 0, `${width}px：说明行未落到操作行之下`).toBeGreaterThan(rowBox.y + 20);
+    // 阅读入口已开放，操作区应完整落在行内，不能挤压名称或溢出。
+    expect(readerLink).not.toBeNull();
+    expect((readerLink?.x ?? 0) + (readerLink?.width ?? 0)).toBeLessThanOrEqual(rowBox.x + rowBox.width);
     // 四列轨道都在（未退化为逐字换行的单字列）。
     expect(geometry.gridTemplateColumns.trim().split(/\s+/).length, `${width}px 轨道数`).toBe(4);
   }
@@ -151,8 +149,9 @@ test("RD-ROW-2 窄屏 <768px：行单列堆叠、名称可读、摘要抽屉可�
     ).toBe(1);
     const name = geometry.parts.name;
     expect(name?.width ?? 0, `${width}px：名称列宽 ${name?.width}px`).toBeGreaterThanOrEqual(200);
-    const note = geometry.parts.note;
-    expect(note?.width ?? 0, `${width}px：说明行宽 ${note?.width}px`).toBeGreaterThanOrEqual(200);
+    const readerLink = row.getByRole("link", { name: "打开说明书" });
+    await expect(readerLink).toBeVisible();
+    await expect(readerLink).toHaveAttribute("href", /\/releases$/);
   }
   const outDir = path.join(
     path.resolve(import.meta.dirname, "../../../../artifacts/web-mvp/t16-rd-fix"),

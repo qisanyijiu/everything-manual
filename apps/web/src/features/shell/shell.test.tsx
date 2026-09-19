@@ -435,7 +435,7 @@ describe("412 并发冲突恢复（UI-008）", () => {
 
 describe("错误边界（§6.1.1）", () => {
   it("渲染异常显示可读文案 + requestId + 返回资料库，不显示堆栈", async () => {
-    // 合同违约载荷（documents 缺 sourceSha256）触发渲染异常，验证真实路由上的边界。
+    // 合同违约载荷（文档标题为对象而不是字符串）触发 React 渲染异常，验证真实路由上的边界。
     vi.spyOn(console, "error").mockImplementation(() => {});
     stubFetch((url) => {
       if (url === "/api/v1/auth/session") {
@@ -452,12 +452,11 @@ describe("错误边界（§6.1.1）", () => {
                 id: "doc-1",
                 itemId: "item-1",
                 sourceAssetId: "asset-1",
-                title: "说明书",
+                title: { invalid: "不是文本" },
                 createdAt: "2026-09-11T00:00:00Z",
                 updatedAt: "2026-09-11T00:00:00Z",
                 sourceUrl: null,
-                // 合同违约：sourceSha256 必须存在（触发渲染异常，验证真实路由上的边界）。
-                sourceSha256: null,
+                sourceSha256: "a".repeat(64),
               },
             ],
             nextCursor: null,

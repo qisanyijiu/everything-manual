@@ -14,8 +14,9 @@ import { EmptyState } from "../../components/EmptyState";
 import { PageLayout } from "../shell/PageLayout";
 import { Skeleton } from "../../components/Skeleton";
 import { formatLocalDateTime } from "../../lib/format";
-import { ITEMS_PAGE_SIZE, useItemList } from "./items";
+import { useItemList } from "./items";
 import type { ItemDto } from "../../api/endpoints";
+import { Icon, ManualArtwork } from "../../components/Icon";
 
 export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,32 +53,37 @@ export function LibraryPage() {
   }
 
   return (
+    <div className="library-home">
+      <div className="library-heading">
+        <div><p className="eyebrow">YOUR PERSONAL COLLECTION</p><h1 id="library-title">资料库<span className="heading-dot" aria-hidden="true">.</span></h1><p className="page__lead">收藏物品的每一份资料，让了解与使用更简单。</p></div>
+        <Link className="button-primary" to="/items/new"><Icon name="plus" size={18} />新建物品</Link>
+      </div>
+      <section className="library-hero" aria-label="资料库介绍">
+        <div className="library-hero__copy"><span className="hero-kicker"><span />从一份说明书开始</span><h2>熟悉你的物品，<br />发现更多可能。</h2><p>说明书、照片与 3D 模型，妥善收在一起。<br />从每一个部件，读懂每一个使用步骤。</p><Link to="/items/new">为物品建立说明书 <Icon name="arrow" size={17} /></Link></div>
+        <ManualArtwork />
+      </section>
     <PageLayout
       aside={{ id: "summary", label: "资料库摘要", content: <LibrarySummary loadedCount={loadedItems.length} archived={archived} /> }}
     >
       <section className="page library-page" aria-labelledby="library-title">
-        <header className="page__header">
-          <h1 id="library-title">资料库</h1>
-          <Link className="button-primary" to="/items/new">
-            新建物品
-          </Link>
-        </header>
+        <header className="collection-heading"><h2>我的物品 <span>{loadedItems.length}</span></h2><span>{archived ? "已归档收藏" : "使用中的收藏"}</span></header>
 
         <form className="library-toolbar" role="search" onSubmit={(event) => event.preventDefault()}>
-          <div className="field">
-            <label className="field__label" htmlFor="library-search">
+          <div className="field library-search">
+            <label className="visually-hidden" htmlFor="library-search">
               搜索
             </label>
-            <input
+            <Icon name="search" size={18} /><input
               id="library-search"
               className="field__input"
               type="search"
+              placeholder="搜索物品名称、型号…"
               value={search}
               aria-describedby="library-search-hint"
               onChange={(event) => updateParams({ q: event.target.value })}
             />
             <p className="field__hint" id="library-search-hint">
-              在当前已加载的 {loadedItems.length} 条中按名称/型号筛选（首版无全文检索，A-06）。
+              搜索当前已加载的 {loadedItems.length} 件物品。
             </p>
           </div>
           <div className="library-toolbar__toggle">
@@ -153,13 +159,14 @@ export function LibraryPage() {
                   {query.isFetchingNextPage ? "正在加载…" : "加载更多"}
                 </button>
               ) : (
-                <p className="empty-note">已显示全部 {loadedItems.length} 条（每页 {ITEMS_PAGE_SIZE} 条）。</p>
+                <p className="empty-note">已显示全部 {loadedItems.length} 件物品</p>
               )}
             </div>
           </>
         )}
       </section>
     </PageLayout>
+    </div>
   );
 }
 
@@ -177,6 +184,7 @@ function ItemRow({ item }: { item: ItemDto }) {
   return (
     <li className="item-row">
       <div className="item-row__identity">
+        <span className="item-row__art"><Icon name="cube" size={31} /></span><div>
         <Link to={`/items/${item.id}`} className="item-row__name">
           {item.name}
         </Link>
@@ -185,65 +193,43 @@ function ItemRow({ item }: { item: ItemDto }) {
           {item.brand !== null && item.brand !== undefined && ` · ${item.brand}`}
           {item.variant !== null && item.variant !== undefined && ` · ${item.variant}`}
         </p>
+        </div>
       </div>
       <div className="item-row__status">
         <span className="status-label">
           {item.archivedAt !== null && item.archivedAt !== undefined ? "已归档" : "使用中"}
         </span>
-        <span className="item-row__revision">r{item.revision}</span>
       </div>
       <div className="item-row__time">
         <span className="item-row__time-label">更新于</span>
         <time dateTime={item.updatedAt}>{formatLocalDateTime(item.updatedAt)}</time>
       </div>
       <div className="item-row__actions">
-        {/* 行内入口按当前后端能力落地：不可用的入口明确禁用并给原因（不假装可用）。 */}
         <Link to={`/items/${item.id}/import/prepare`}>继续准备</Link>
-        {/* 任务中心已交付（T17）：按物品过滤是该列表接口支持的查询（contracts §3）。 */}
         <Link to={`/jobs?itemId=${encodeURIComponent(item.id)}`}>查看任务</Link>
-        <button
-          type="button"
-          disabled
-          aria-describedby={`item-row-unavailable-${item.id}`}
-          title="发布与阅读器（T18/T19）尚未交付"
-        >
-          打开说明书
-        </button>
-        <Link to={`/items/${item.id}`} className="item-row__open">
-          打开
-        </Link>
+        <Link to={`/items/${item.id}/releases`} className="item-row__open">打开说明书 <Icon name="arrow" size={15} /></Link>
       </div>
-      {/* 禁用原因常驻（REQ-039/AC-060：不假装可用）——放在四列之外独占整行，
-          避免长句把 grid 的 `auto` 轨道撑开、挤压名称列（BUG-005）。 */}
-      <span id={`item-row-unavailable-${item.id}`} className="item-row__note">
-        发布与阅读器（T18/T19）尚未交付：「打开说明书」保持禁用。
-      </span>
     </li>
   );
 }
 
-/**
- * 右栏摘要：只呈现真实计数与入口。
- * PRD §6.1.2 里的「最近使用/进行中任务」摘要需要服务端排序键或任务接口
- * （T15/T17），当前不伪造这些数字。
- */
+/** 摘要仅统计本次已加载的物品，不把分页计数冒充全库总数。 */
 function LibrarySummary({ loadedCount, archived }: { loadedCount: number; archived: boolean }) {
   return (
-    <div className="summary-panel">
+    <div className="summary-panel library-summary">
+      <span className="eyebrow">AT A GLANCE</span>
       <h2 className="summary-panel__title">资料库摘要</h2>
       <dl className="summary-panel__list">
         <div>
           <dt>已加载</dt>
-          <dd>{loadedCount} 条</dd>
+          <dd className="summary-count">{loadedCount}<small>件物品</small></dd>
         </div>
         <div>
           <dt>当前范围</dt>
           <dd>{archived ? "仅已归档" : "仅使用中"}</dd>
         </div>
       </dl>
-      <p className="empty-note">
-        进行中任务摘要需要任务中心接口（T15/T17），本页暂不显示该数字。
-      </p>
+      <div className="summary-guide"><Icon name="book" size={23} /><h3>让资料变得有用</h3><p>上传原版说明书与不同角度的照片，生成后复核知识、校准热点，即可发布交互说明书。</p><Link to="/jobs">前往任务中心 <Icon name="arrow" size={16} /></Link></div>
     </div>
   );
 }

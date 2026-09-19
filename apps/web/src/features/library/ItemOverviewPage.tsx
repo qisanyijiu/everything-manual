@@ -3,8 +3,7 @@
  *
  * T08 实现范围：物品身份与版本（GET /items/{id}）、资料清单只读（documents/photos，
  * T07 已交付的读取侧路由）、归档/恢复（PATCH + If-Match + 412 恢复路径）、下一步入口。
- * 上传、准备、报价与生成、草稿与发布分别在 T09/T16/T19 交付，这里只给明确的未实现说明，
- * 不用 mock 数据假装可用。
+ * 上传、准备、报价与生成通过向导进入；阅读入口连接真实发布版本列表。
  */
 
 import { useState } from "react";
@@ -20,6 +19,7 @@ import { formatLocalDateTime } from "../../lib/format";
 import { readCurrentRevision } from "../../components/form";
 import { JobSnapshotNotice } from "./JobSnapshotNotice";
 import { useItemDetail, useItemDocuments, useItemPhotos, usePatchItem } from "./items";
+import { Icon } from "../../components/Icon";
 
 export function ItemOverviewPage() {
   const { itemId } = useParams();
@@ -102,6 +102,7 @@ export function ItemOverviewPage() {
     <section className="page item-overview" aria-labelledby="item-title">
       <header className="page__header">
         <div>
+          <p className="eyebrow">OBJECT DETAILS</p>
           <h1 id="item-title">{item.name}</h1>
           <p className="page__lead">
             {item.model}
@@ -110,6 +111,7 @@ export function ItemOverviewPage() {
           </p>
         </div>
         <div className="page__actions">
+          <Link className="button-primary" to={`/items/${item.id}/releases`}><Icon name="book" size={17} />打开说明书</Link>
           <Link className="button" to={`/items/${item.id}/edit`}>
             编辑
           </Link>
@@ -176,9 +178,10 @@ export function ItemOverviewPage() {
               <li key={document.id}>
                 <span className="entity-list__title">{document.title}</span>
                 <span className="entity-list__meta">
-                  原件 sha256 {document.sourceSha256.slice(0, 12)}… · 绑定于{" "}
+                  添加于{" "}
                   {formatLocalDateTime(document.createdAt)}
                 </span>
+                <details className="asset-details"><summary>文件校验信息</summary><code>SHA256 {document.sourceSha256}</code></details>
                 {document.sourceUrl !== null && document.sourceUrl !== undefined && (
                   <span className="entity-list__meta">
                     出处链接：{document.sourceUrl}（仅记录，服务器不访问）
@@ -239,10 +242,9 @@ export function ItemOverviewPage() {
           </li>
         </ul>
         <EmptyNote>
-          阅读器（T18/T19）尚未交付：「打开说明书」入口暂时不可用；
-          生成后的任务状态与恢复入口见
+          生成完成后，可从
           <Link to={`/jobs?itemId=${encodeURIComponent(item.id)}`}>本物品的任务</Link>
-          （或顶栏「任务中心」）。
+          进入草稿复核与热点校准。发布后的说明书可随时阅读。
         </EmptyNote>
       </section>
 

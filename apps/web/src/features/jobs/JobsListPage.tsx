@@ -82,9 +82,10 @@ export function JobsListPage() {
   return (
     <PageLayout aside={{ id: "job-filter", label: "状态筛选", content: filterPanel }}>
     <section className="page jobs-page" aria-labelledby="jobs-title">
+      <p className="eyebrow">GENERATION ACTIVITY</p>
       <h1 id="jobs-title">任务中心</h1>
       <p className="page__lead">
-        任务阶段、费用与恢复入口都以此页与服务端为准；生成完成不等于已发布，草稿需要人工复核。
+        查看每一次生成的进度与费用。生成后的草稿，经你复核后再发布。
       </p>
 
       {itemId !== null && (
@@ -218,4 +219,3 @@ export function JobsListPage() {
     </PageLayout>
   );
 }
-

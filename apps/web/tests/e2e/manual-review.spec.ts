@@ -812,6 +812,7 @@ test("T19-6 发布（真实链路）→ 阅读器可读；修改草稿不改变�
   await api.context.dispose();
 
   await spaNavigate(page, readerPath(draft, releaseId));
+  await page.locator(".reader-version summary").click();
   await expect(page.getByTestId("release-context")).toBeVisible();
   const releaseContextAfter = (await page.getByTestId("release-context").textContent()) ?? "";
   expect(releaseContextAfter, "发布后修改草稿不得改变已发布版本").toBe(releaseContextBefore);
