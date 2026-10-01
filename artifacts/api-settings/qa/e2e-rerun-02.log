@@ -1,0 +1,24 @@
+(node:92860) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m(node:92888) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  VITE v8.3.0  ready in 148 ms
+[2m[WebServer] [22m
+[2m[WebServer] [22m  ➜  Local:   http://127.0.0.1:15186/
+
+Running 1 test using 1 worker
+
+(node:92913) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:92913) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:92913) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/api-settings-qa.spec.ts:100:1 › AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/UI006） (4.9s)
+
+  1 passed (6.0s)

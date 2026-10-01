@@ -1,0 +1,22 @@
+[
+  {
+    "width": 375,
+    "scrollWidth": 375,
+    "checkbox": false
+  },
+  {
+    "width": 768,
+    "scrollWidth": 768,
+    "checkbox": false
+  },
+  {
+    "width": 1024,
+    "scrollWidth": 1024,
+    "checkbox": false
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "checkbox": false
+  }
+]

@@ -1,0 +1,31 @@
+
+> everything-manual-web@0.1.0 build
+> tsc --noEmit && vite build
+
+  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 163 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                    0.53 kB │ gzip:   0.34 kB
+dist/assets/pdf.worker.min-Dswkl-cV.mjs        1,265.41 kB
+dist/assets/index-MWDI3SP_.css                    41.49 kB │ gzip:   8.74 kB
+dist/assets/ReleaseListPage-BqSYwdAM.js            2.15 kB │ gzip:   1.12 kB
+dist/assets/OriginalDocumentPanel-C-DsxPJf.js      3.33 kB │ gzip:   1.53 kB
+dist/assets/ReleaseReaderPage-wLv8g5aL.js          7.89 kB │ gzip:   3.04 kB
+dist/assets/jsx-runtime-D3jfb0Ew.js                8.90 kB │ gzip:   3.38 kB
+dist/assets/PreparePage-CbBMORfQ.js                9.78 kB │ gzip:   3.61 kB
+dist/assets/ViewerPanel-BGN0JswP.js               12.18 kB │ gzip:   4.61 kB
+dist/assets/ReviewWorkspacePage-DaoADoyx.js       30.09 kB │ gzip:   9.64 kB
+dist/assets/index-BeJWv8yy.js                    418.09 kB │ gzip: 127.14 kB
+dist/assets/prepare-CzhsbSP0.js                  432.92 kB │ gzip: 130.28 kB
+dist/assets/ViewerStage-BKdiYvbL.js              969.77 kB │ gzip: 258.65 kB
+
+✓ built in 343ms
+[plugin em-pdfjs-vendor]   vendor/pdfjs 已写入 dist/vendor/pdfjs（cmaps=169 standard_fonts=16 wasm=13 iccs=2）
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.

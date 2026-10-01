@@ -2442,3 +2442,23 @@ ADR-xxx — 简短结论
 - 缓存格式与键位的权威来源：`cargo` crate（0.98.0，即 1.98.1 的同一源码）`src/cargo/sources/registry/`
   （`index/cache.rs` 的 `CURRENT_CACHE_VERSION=3`、`INDEX_V_MAX=2`；`http_remote.rs` 的
   `is_fresh()`：`--offline` 时直接使用本地缓存条目）。
+
+## ADR-038 — 网页 API 配置：私有覆盖、重启生效与不可复用的配置代次
+
+- 日期：2026-09-21；状态：verified，2026-09-22 [api-settings 独立 QA 回合 1 全量 PASS](requirements/api-settings/qa-report.md)。依据：最新用户请求及 [PRD revision 1 / UI revision 1](requirements/api-settings/prd.md)。替代旧“网页不输入密钥、设置只读”的范围限制；不改变全部上游请求经 Rust、无自动收费验证的边界。
+- 配置取舍：`Settings` 和 StageRegistry 都是启动快照，保存只修改下一次启动配置。新增独立 ProviderConfigStore，不给现有 Settings 的几十个构造点添加字段。serve 在 data-dir 排他锁后加载私有文件，然后为 HTTP 和 worker 装配同一配置；check 也验证覆盖文件。无文件沿用部署规则，损坏或不安全权限拒绝加载。
+- 持久化：data-dir/provider-overrides.json 仅保存明确网页覆盖和随机 revision，Unix 文件 0600、拒绝符号链接，临时文件 sync 后原子 rename。整体校验两家后一次落盘，失败不发布内存新状态。网页值 > 环境 > TOML > 默认；keep 延续当前选择，未覆盖时引用部署密钥而不复制；clear 显式屏蔽部署密钥；restore 删除该家覆盖但保留修订文件。服务端比较密钥实际值决定 pending，不公开摘要。Settings 没有字段级部署 provenance，UI 统一标“部署配置（含默认值）”，不按值猜来源。
+- 并发和版本：保存写锁与报价、确认、建单、重试、对账的读锁覆盖完整业务动作。保存拒绝非终态 job、intent/submitting/unknown attempt、终态父任务遗留的可运行供应商阶段、unknown 账务。新随机代次进入 quote.providerConfig.configRevision、输入指纹和不可变 snapshot；恢复到运行配置可结束 pending，但不恢复旧报价或旧任务重试资格。同键同 body 重放先返回已记录的结果，不建立新动作。worker 执行前也核对代次，防止恢复库自动使用另一端点/账号。
+- 秘密边界：GET/PUT 成功响应仅含地址、模型、来源类别、密钥存在标记并 no-store。写入 DTO 不实现 Debug/Serialize，秘密入口 JSON 结构错误使用固定消息，避免 serde 引用恶意枚举值/字段名；部署 URL 展示剥离 userinfo/query/fragment。新密钥只在当前表单内存与 password live value 中存在，不设置 DOM value 属性，不入浏览器持久存储；成功/离开/切换操作后移除。现有 SQLite/备份/导出白名单不扩展私有配置。
+- 运维边界：上述原子性与切换门禁保证网页保存路径；不声称识别部署者离线修改环境、TOML、私有文件的意图。备份迁移不带密钥，需重新配置；带旧网页代次的活动快照只能进入缺项处理，不能自动跨配置发送。未做真实收费、任意兼容服务或连接探测保证。
+- 验证与限制见 [AS-01 implementation](requirements/api-settings/implementation.md) 与 [QA 报告](requirements/api-settings/qa-report.md)：持久化、恢复部署、字段/结构脱敏、并发及旧报价/重试回归、真实本机 fixture 重启消费与移动端键盘均已验证；不代表真实收费供应商或发行平台矩阵通过。
+
+
+## ADR-039 — API 密钥 AEAD 存储与独立主钥
+
+- 日期：2026-10-01；状态：implemented，独立 QA 待验。依据：[encrypted-secrets PRD revision 2](requirements/encrypted-secrets/prd.md)，沿用 ADR-038 的优先级、重启与任务门禁。
+- 使用已锁定、离线可用的 ring 0.17.14 AES-256-GCM / zeroize 1.9.0；macOS security-framework 3.7.0 原生 Keychain create-only，不使用 upsert 或 shell 密钥参数。固定本机凭据跨 data-dir 共用；并发首次创建 duplicate 读既有赢家，已有密文缺钥不生成。非 macOS 必须显式主钥环境注入；不写明文主钥文件，不自动发现 .env/TOML 主钥。
+- 网页磁盘 DTO 与内存秘密分离；用途 AAD 区分两家与外部文件。只在 serve 排他锁后迁移完整合法的旧 overlay，保持原业务 revision。check 只读；外部旧明文需 CLI 显式转到新路径并手工更新引用，原文件不自动擦除。环境 API key keep 继续引用部署值，不复制落盘。
+- 写入预检与提交分界遵循 PRD §3.4：发布前错误不改变状态，原子 rename/link 后是已提交状态，目录同步失败只安全告警并维持内存/磁盘一致。此边界不承诺异常存储设备或掉电后的持久性。不会为恢复操作重新产生明文临时文件。
+- 在 provider client 边界处理已知 key 的原文和 JSON 解码反射；外层 JSON 不可解析时同样整体丢弃，避免可恢复的 Unicode 转义绕过检查（BUG-ES-001）。成功数据含 key 宁可按既有未知提交/异常协议语义停止，也不污染业务 ID、日志、诊断和备份。保持 429、5xx、4xx、Tripo 非零业务 code 的分类。不承诺任意编码检测、历史数据清理、全部资产加密或完整内存消除。
+- 实现和实际测试见 [ES-01 implementation](requirements/encrypted-secrets/implementation.md)。真实 Keychain / 浏览器与重启消费由独立 QA 验证，不以内存 fake 代替平台结论。

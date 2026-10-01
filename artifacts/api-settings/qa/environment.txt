@@ -1,0 +1,6 @@
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+v26.0.0
+cargo 1.98.1 (797e8a9bc 2026-08-05)
+Google Chrome for Testing 148.0.7778.96

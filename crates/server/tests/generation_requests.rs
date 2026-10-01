@@ -36,6 +36,212 @@ use tower::ServiceExt;
 
 const PASSWORD: &str = "test-password-gen-4b71";
 
+async fn api_settings_write(
+    app: &TestApp,
+    cookie: &str,
+    csrf: &str,
+    restore: bool,
+) -> TestResponse {
+    let view = app
+        .call(Method::GET, "/api/v1/settings/providers")
+        .cookie(cookie)
+        .send()
+        .await
+        .json();
+    let body = if restore {
+        json!({"revision":view["data"]["revision"],"tripo":{"action":"restore"},"manualAi":{"action":"restore"}})
+    } else {
+        json!({"revision":view["data"]["revision"],"tripo":{"action":"update","baseUrl":"http://127.0.0.1:19998/v3","model":TRIPO_MODEL,"keyAction":"keep"},"manualAi":{"action":"restore"}})
+    };
+    app.call(Method::PUT, "/api/v1/settings/providers")
+        .cookie(cookie)
+        .csrf(csrf)
+        .json(&body)
+        .send()
+        .await
+}
+
+#[tokio::test]
+async fn api_settings_epoch_invalidates_quotes_and_failed_retry_but_preserves_job_replay() {
+    let (app, cookie, csrf) = logged_in_generation_app("api-epoch", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "api-epoch").await;
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    let unused = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    assert_eq!(
+        confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    assert_eq!(
+        confirm_quote(&app, &cookie, &csrf, &inputs.item, &unused.id)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    let body = job_body(
+        &quote.id,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        (quote.tripo_upper, quote.manual_ai_upper),
+    );
+    let created = create_job(&app, &cookie, &csrf, &inputs.item, "api-original", &body).await;
+    assert_eq!(created.status, StatusCode::ACCEPTED);
+    let job = created.json()["data"]["id"].as_str().unwrap().to_owned();
+    assert_eq!(
+        api_settings_write(&app, &cookie, &csrf, false).await.json()["error"]["details"]["reason"],
+        "providerConfigBusy"
+    );
+    sqlx::query("UPDATE job_stages SET status='failed' WHERE job_id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    sqlx::query("UPDATE jobs SET status='failed' WHERE id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    assert_eq!(
+        api_settings_write(&app, &cookie, &csrf, false).await.status,
+        StatusCode::OK
+    );
+    assert_eq!(
+        confirm_quote(&app, &cookie, &csrf, &inputs.item, &unused.id)
+            .await
+            .json()["error"]["details"]["reason"],
+        "providerConfigPending"
+    );
+    let replay = create_job(&app, &cookie, &csrf, &inputs.item, "api-original", &body).await;
+    assert_eq!(replay.status, StatusCode::ACCEPTED);
+    assert_eq!(replay.json()["data"]["id"], job);
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM jobs").await, 1);
+    assert_eq!(
+        api_settings_write(&app, &cookie, &csrf, true).await.status,
+        StatusCode::OK
+    );
+    let unused_body = job_body(
+        &unused.id,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        (unused.tripo_upper, unused.manual_ai_upper),
+    );
+    assert_eq!(
+        create_job(
+            &app,
+            &cookie,
+            &csrf,
+            &inputs.item,
+            "api-old-quote",
+            &unused_body
+        )
+        .await
+        .json()["error"]["details"]["reason"],
+        "providerConfigChanged"
+    );
+    let stage: String = sqlx::query_scalar(
+        "SELECT id FROM job_stages WHERE job_id=? AND stage_kind='tripo_upload'",
+    )
+    .bind(&job)
+    .fetch_one(pool(&app))
+    .await
+    .unwrap();
+    let retry = app
+        .call(Method::POST, &format!("/api/v1/jobs/{job}/retry"))
+        .cookie(&cookie)
+        .csrf(&csrf)
+        .header("if-match", "\"r1\"")
+        .header("idempotency-key", "api-retry")
+        .json(&json!({"stageId":stage}))
+        .send()
+        .await;
+    assert_eq!(
+        retry.json()["error"]["details"]["reason"],
+        "providerConfigChanged"
+    );
+    let detail = app
+        .call(Method::GET, &format!("/api/v1/jobs/{job}"))
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(detail.status, StatusCode::OK);
+    assert!(
+        detail.json()["data"]["stages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|s| s["retry"]["allowed"] == false)
+    );
+    let fresh = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    assert_ne!(fresh.id, unused.id);
+    // 模拟备份/恢复库中旧快照又可领取：生产 worker 自己也必须在处理器之前拦截。
+    sqlx::query(
+        "UPDATE job_stages SET status='succeeded' WHERE job_id=? AND stage_kind='freeze_inputs'",
+    )
+    .bind(&job)
+    .execute(pool(&app))
+    .await
+    .unwrap();
+    sqlx::query("UPDATE job_stages SET status='queued' WHERE id=?")
+        .bind(&stage)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    sqlx::query("UPDATE jobs SET status='queued' WHERE id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let worker = everything_manual::jobs::JobExecutor::with_provider_config(
+        pool(&app).clone(),
+        everything_manual::jobs::ExecutorConfig::default(),
+        everything_manual::jobs::StageRegistry::new(),
+        app.state().provider_config_handle(),
+    );
+    let report = worker.tick().await.unwrap();
+    assert!(matches!(
+        report,
+        everything_manual::jobs::TickOutcome::Executed(_)
+    ));
+    let status: String = sqlx::query_scalar("SELECT status FROM job_stages WHERE id=?")
+        .bind(&stage)
+        .fetch_one(pool(&app))
+        .await
+        .unwrap();
+    assert_eq!(status, "needs_input");
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+}
+
+#[tokio::test]
+async fn api_settings_save_and_job_creation_share_one_admission_boundary() {
+    let (app, cookie, csrf) = logged_in_generation_app("api-concurrent", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "api-concurrent").await;
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id).await;
+    let body = job_body(
+        &quote.id,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        (quote.tripo_upper, quote.manual_ai_upper),
+    );
+    let (saved, created) = tokio::join!(
+        api_settings_write(&app, &cookie, &csrf, false),
+        create_job(&app, &cookie, &csrf, &inputs.item, "api-race", &body)
+    );
+    assert!(
+        (saved.status == StatusCode::OK && created.status == StatusCode::UNPROCESSABLE_ENTITY)
+            || (saved.status == StatusCode::UNPROCESSABLE_ENTITY
+                && created.status == StatusCode::ACCEPTED)
+    );
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+}
+
 /// 测试价格目录（与仓库根的示例同价：Tripo 30 credits；说明书 AI 按示例单价）。
 const TEST_CATALOG: &str = r#"
 version = "2026-09-11"

@@ -45,6 +45,8 @@ pub enum Command {
     Backup(BackupArgs),
     /// 从备份恢复到新 data-dir（目标必须不存在或为空；校验 hash/外键/引用后写入）
     Restore(RestoreArgs),
+    /// 将受限明文 API 密钥文件转换为新密文文件（不覆盖、不删除源文件）
+    EncryptApiKey(EncryptApiKeyArgs),
 }
 
 /// 各子命令共用的非密钥选项。
@@ -168,4 +170,29 @@ mod tests {
         let error = parse(&["backup", "--data-dir", "/tmp/x"]).expect_err("--out 必填");
         assert_eq!(error.exit_code(), 2);
     }
+}
+
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum KeyProvider {
+    Tripo,
+    ManualAi,
+}
+impl KeyProvider {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Tripo => "tripo",
+            Self::ManualAi => "manual-ai",
+        }
+    }
+}
+#[derive(Debug, Args)]
+pub struct EncryptApiKeyArgs {
+    #[arg(long, value_enum)]
+    pub provider: KeyProvider,
+    /// 受限明文文件；密钥不得放在命令行参数中
+    #[arg(long, value_name = "FILE")]
+    pub input: PathBuf,
+    /// 不存在的新密文路径；推荐 .api-key.enc 后缀
+    #[arg(long, value_name = "FILE")]
+    pub output: PathBuf,
 }

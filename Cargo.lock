@@ -580,7 +580,9 @@ dependencies = [
  "libc",
  "manual-core",
  "reqwest",
+ "ring",
  "rust-embed",
+ "security-framework",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -594,6 +596,7 @@ dependencies = [
  "tracing-subscriber",
  "utoipa",
  "uuid",
+ "zeroize",
 ]
 
 [[package]]

@@ -1445,7 +1445,7 @@ async fn incomplete_truncated_malformed_and_schema_violations_never_become_knowl
         server.assert_no_script_problems();
     }
 
-    // 200 但不是 JSON：信封不可解析 → 诊断路径（仍不产生知识，且不算"未持久化响应"）。
+    // ES BUG-001：200 非 JSON 无法安全检查，不落原始诊断，按未持久化响应保留 unknown。
     let server = responses_server(vec![respond_text(200, "<html>not json</html>")]);
     let (app, cookie, csrf) = logged_in_app("t14-envelope", &manual_ai_base_url(&server)).await;
     let inputs = build_ready_inputs(
@@ -1468,26 +1468,23 @@ async fn incomplete_truncated_malformed_and_schema_violations_never_become_knowl
         &clock,
         &job_id,
         0,
-        JobStatus::NeedsInput,
+        JobStatus::SubmissionUnknown,
         10,
     )
     .await;
-    let result = read_batch_result(&app, &cookie, &stage).await;
-    assert_eq!(result.outcome, BatchOutcome::EnvelopeInvalid);
-    assert_eq!(
-        result.error_code.as_deref(),
-        Some("manual_ai_envelope_invalid")
+    assert!(stage.result_asset_id.is_none());
+    let attempt = attempt_of(&db, &stage.id).await.expect("attempt");
+    assert_eq!(attempt.submit_state.as_str(), "unknown");
+    assert!(
+        !stage
+            .last_error
+            .as_deref()
+            .unwrap_or_default()
+            .contains("<html>")
     );
-    assert!(result.diagnostic_sha256.is_some());
-    assert_eq!(
-        std::fs::read(everything_manual::assets::blob_path(
-            app.dir(),
-            result.diagnostic_sha256.as_ref().unwrap()
-        ))
-        .unwrap(),
-        b"<html>not json</html>",
-        "原始响应字节必须原样保留（受限诊断路径）"
-    );
+    run_ticks(&executor, &clock, 3, 60_000).await;
+    server.assert_called_once("POST", "/v1/responses");
+    server.assert_no_script_problems();
 }
 
 /// 引用不存在的页（含 0-based 误用）→ 服务端拒绝该批。

@@ -1,0 +1,11 @@
+{
+  "scope": "QA-generated fake-key pattern; no key values recorded",
+  "redactions": [
+    {
+      "path": "playwright-output/api-settings-qa-AS-QA-02-未保存导航与刷新取消-丢弃，密钥不缓存（AC013-UI006）-chromium/error-context.md",
+      "redactedMatches": 1
+    }
+  ],
+  "traceFiles": 0,
+  "harFiles": 0
+}

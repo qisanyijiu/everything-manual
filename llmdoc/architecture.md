@@ -26,11 +26,24 @@ flowchart LR
 
 - 开发：Vite `127.0.0.1:5173`，Rust `127.0.0.1:8080`；Vite 代理 `/api`，默认不开放宽泛 CORS。
 - 生产：一个 Rust 进程监听 HTTP／HTTPS，同源提供 `/api/v1/*` 与 SPA；任务 worker 同进程，不依赖 Redis。
-- 浏览器只持会话 cookie，不接触 Tripo／说明书 AI 密钥；全部外部 API 从 Rust 调用。
+- 浏览器持会话 cookie；2026-09-21 api-settings 修订允许管理员在设置页瞬时输入新的 Tripo／说明书 AI 密钥，读取从不回显，浏览器不持久化。全部供应商调用仍从 Rust 发起。
 - 前后端只能通过公开 DTO／HTTP 合同耦合；Rust 不读取 React 内部状态，React 不接触 SQLite。
 - 构建可以需要 Node、Rust、C 编译器与平台 SDK；运行不要求 Node、Python、PDFium、Tesseract、Chromium、外部数据库或容器。
 
 ## 3. 固定技术基线
+
+网页供应商配置（AS-01，2026-09-21）：`provider-overrides.json` 为 data-dir 下独立私有文件，Unix 0600，临时文件同步后原子替换。仅显式网页覆盖的供应商字段优先于环境变量、TOML、默认值；keep 保留网页选择或继续引用部署密钥，clear 显式屏蔽，restore 撤销该供应商覆盖。无文件沿用部署行为，损坏文件拒绝启动，不静默回退。HTTP 与 worker 在启动时消费同一应用后的 Settings，网页保存后等待重启。
+
+ES-01 加密扩展（2026-10-01）：网页私有文件的业务 revision 与磁盘 formatVersion 分开；仅密钥使用 `ring 0.17.14` AES-256-GCM 信封，32 字节主钥、每次 OS 随机 12 字节 nonce，AAD 绑定格式、版本、算法和用途/供应商。`provider-overrides.json` 不再序列化内存 SecretString。API 外部密钥文件统一使用相同 AEAD reader，但 AAD 的 `api-key-file:*` 与 `overlay:*` 不可交换。受限文件最大 256 KiB，单密钥最多 4096 字符，hex 膨胀计入限额。
+
+主钥不进入仓库或 data-dir。macOS 默认系统 Keychain（固定 service `org.everything-manual.secrets.v1` / account `master`，create-only，duplicate 读赢家，不云同步）；所有平台可显式 `EM_SECRETS_MASTER_KEY` 注入恰好 64 位 hex，非法显式值不回退。非 macOS 无隐式主钥文件。读取密文只能取既有主钥；同进程使用过的主钥丢失或替换后，后续保存（包括 clear/restore）拒绝覆盖。SecretString、主钥和临时明文缓冲在可控边界 zeroize；不承诺消除运行库、内核和请求缓冲的全部副本。
+
+生产 serve 在 data-dir 排他锁后、HTTP/worker 前完整验证并原子迁移旧网页明文，保持原 revision、有效值和报价/任务代次；check 只读并给出迁移指引。外部旧 api_key_file 必须通过 `encrypt-api-key --provider tripo|manual-ai --input <受限文件> --output <新路径>` 显式转换，再手工更新引用；不会覆盖或删除原文件。纯 AppState/ProviderConfigStore 构造无隐式凭据库 IO，测试通过 Secrets::fixed/unavailable/with_source 注入，专用 native 测试只用独立服务/账号。
+
+写入先预检父目录 open/sync，密文临时文件写入并 fsync 后 rename（CLI 新建用原子 hard-link，拒绝覆盖）。发布前失败保留旧字节和内存代次；rename/link 是提交点，其后目录同步失败记录不含输入的告警并保持已提交内存/文件一致，不误报“未保存”。供应商响应在客户端边界检测已知 key 的直接和 JSON 解码反射；无法解析的外层 JSON 无法证明安全，整体丢弃：错误保留 HTTP/业务分类但丢弃敏感消息，成功结构含 key 则安全拒绝，永不送入诊断资产。部署 URL 和客户端构造统一拒绝 userinfo，错误不复述输入。
+
+
+AppState 的 ProviderConfigStore 共用读写锁：接受报价/确认/建单/重试/对账与保存互斥；保存先检查非终态任务、未决 attempts、遗留供应商阶段和 unknown 账务。不可逆失效的随机配置代次进入报价指纹与冻结快照，禁止旧报价或旧任务跨配置发送；worker 在执行前同样核对恢复的快照。恢复部署配置保留新代次。私有文件不进现有备份/导出白名单；迁移后重新配置，旧任务需重新报价建立新任务。此保证针对网页路径，不承诺检测部署者离线修改环境变量、TOML 或私有文件。
 
 下列是系列选择与核对日快照。T01 必须解析可用版本、实际编译并提交锁文件，不使用 `latest`，不把下表误作已通过的组合测试。
 

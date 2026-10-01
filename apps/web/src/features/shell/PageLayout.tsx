@@ -8,7 +8,7 @@
  * 布局切换由 CSS 媒体查询与 [`useBreakpoint`] 共同驱动，两者使用同一断点。
  */
 
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Drawer } from "./Drawer";
 import { useBreakpoint } from "./useBreakpoint";
@@ -150,6 +150,18 @@ function NarrowLayout({ panels, children }: { panels: PanelSpec[]; children: Rea
 /** 面板堆叠：单个面板直接渲染；多个面板用标签页切换（mid 侧栏）。 */
 function PanelStack({ panels }: { panels: PanelSpec[] }) {
   const [activeId, setActiveId] = useState(panels[0]?.id ?? "");
+  const tabRefs = useRef(new Map<string, HTMLButtonElement>());
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [hasFocusableContent, setHasFocusableContent] = useState(false);
+  const active = panels.find((panel) => panel.id === activeId) ?? panels[0];
+  useEffect(() => {
+    const focusable = panelRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]',
+    );
+    setHasFocusableContent(
+      Array.from(focusable ?? []).some((element) => element.tabIndex >= 0 && !element.closest("[hidden]")),
+    );
+  }, [active]);
   const first = panels[0];
   if (first === undefined) {
     return null;
@@ -157,7 +169,7 @@ function PanelStack({ panels }: { panels: PanelSpec[] }) {
   if (panels.length === 1) {
     return <>{first.content}</>;
   }
-  const active = panels.find((panel) => panel.id === activeId) ?? first;
+  const selected = active ?? first;
   return (
     <div className="panel-stack">
       <div role="tablist" aria-label="侧栏内容" className="panel-stack__tabs">
@@ -166,18 +178,42 @@ function PanelStack({ panels }: { panels: PanelSpec[] }) {
             key={panel.id}
             type="button"
             role="tab"
+            ref={(element) => {
+              if (element === null) tabRefs.current.delete(panel.id);
+              else tabRefs.current.set(panel.id, element);
+            }}
             id={`panel-tab-${panel.id}`}
-            aria-selected={panel.id === active.id}
+            aria-selected={panel.id === selected.id}
             aria-controls={`panel-${panel.id}`}
-            tabIndex={panel.id === active.id ? 0 : -1}
+            tabIndex={panel.id === selected.id ? 0 : -1}
             onClick={() => setActiveId(panel.id)}
+            onKeyDown={(event) => {
+              const index = panels.findIndex((candidate) => candidate.id === panel.id);
+              const nextIndex =
+                event.key === "ArrowRight" ? (index + 1) % panels.length
+                  : event.key === "ArrowLeft" ? (index + panels.length - 1) % panels.length
+                    : event.key === "Home" ? 0
+                      : event.key === "End" ? panels.length - 1 : null;
+              if (nextIndex === null) return;
+              event.preventDefault();
+              const next = panels[nextIndex];
+              if (next === undefined) return;
+              setActiveId(next.id);
+              tabRefs.current.get(next.id)?.focus();
+            }}
           >
             {panel.label}
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`panel-${active.id}`} aria-labelledby={`panel-tab-${active.id}`}>
-        {active.content}
+      <div
+        ref={panelRef}
+        role="tabpanel"
+        id={`panel-${selected.id}`}
+        aria-labelledby={`panel-tab-${selected.id}`}
+        tabIndex={hasFocusableContent ? -1 : 0}
+      >
+        {selected.content}
       </div>
     </div>
   );

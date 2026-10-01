@@ -1,0 +1,16 @@
+crates/server/src/config/provider_overrides.rs: OK
+crates/server/src/config/commands.rs: OK
+crates/server/src/http/settings.rs: OK
+crates/server/src/http/state.rs: OK
+crates/server/src/http/dto/settings.rs: OK
+crates/server/src/http/jobs.rs: OK
+crates/server/src/http/estimates.rs: OK
+crates/server/src/generation/jobs.rs: OK
+crates/server/src/generation/estimate.rs: OK
+crates/server/src/jobs/control.rs: OK
+crates/server/src/jobs/executor.rs: OK
+apps/web/src/features/settings/ProviderSettingsForm.tsx: OK
+apps/web/src/features/settings/SettingsPage.tsx: OK
+apps/web/src/features/import/ConfirmStepPage.tsx: OK
+apps/web/src/api/generated.ts: OK
+apps/web/src/theme.css: OK

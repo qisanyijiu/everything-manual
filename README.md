@@ -98,8 +98,10 @@ llmdoc/              为什么这样做：架构、合同、决策、任务卡�
 ## 配置
 
 - 示例：`config.example.toml`（服务/限制/并发/供应商）、`price-catalog.example.toml`（价格快照）。
-- 优先级：CLI 非密钥项 > 环境变量（`EM_*` 白名单）> TOML > 默认；**未知配置键报错**而不是忽略。
-- 密钥只从环境注入或 0600 受限文件读取，不进入前端、日志、导出包与备份 manifest。
+- 供应商地址、模型和密钥可在「设置 → API 配置」中保存，**重启服务后生效**；操作说明见 [网页 API 配置](docs/api-settings.md)。
+- 供应商字段优先级：网页覆盖 > 环境变量（`EM_*` 白名单）> TOML > 默认。其它字段仍遵循 CLI > 环境变量 > TOML > 默认；**未知配置键报错**而不是忽略。
+- 网页密钥与部署 `api_key_file` 使用 AES-256-GCM 加密存储，密文文件权限为 0600；macOS 主密钥默认放在系统钥匙串，其它系统通过 `EM_SECRETS_MASTER_KEY` 独立注入。环境变量 API key 只在内存中使用。旧文件迁移、主密钥保管与验收状态见 [加密存储说明](docs/api-settings.md#密钥加密存储)。
+- 已保存密钥不回传前端，私有密钥配置与主密钥不进入导出包和备份；应用在持久化供应商回复前处理已知密钥的直接及 JSON 转义回显。
 - **未配置 Provider 时**：站点可正常浏览已有资料，生成/报价返回 409「供应商未配置」，不会回退 mock。
 
 ## 部署与安全要点
@@ -118,6 +120,9 @@ llmdoc/              为什么这样做：架构、合同、决策、任务卡�
 | 文档 | 内容 |
 | --- | --- |
 | [llmdoc/README.md](llmdoc/README.md) | 项目知识总索引（阅读顺序） |
+| [交互体验改进方案](docs/interaction-experience-improvement-plan.md) | 流程连续性、准备恢复、复核与阅读、可访问性及分阶段验收（建议方案） |
+| [交互改进 · 切片 A](llmdoc/requirements/interaction-a/prd.md) | 创建跳转、生成确认、键盘操作与可读性已实现；[独立验收通过](llmdoc/requirements/interaction-a/qa-report.md)（2026-09-20） |
+| [网页 API 配置](docs/api-settings.md) | Tripo / 说明书 AI 设置、AES-256-GCM 密钥存储、迁移及故障处理；[网页配置验收](llmdoc/requirements/api-settings/state.yaml)、[加密升级验收](llmdoc/requirements/encrypted-secrets/qa-report.md) |
 | [progress-summary.md](llmdoc/requirements/web-mvp/progress-summary.md) | 进度与实现总结（切片账、缺陷闭环、未完成项、证据索引） |
 | [prd.md](llmdoc/requirements/web-mvp/prd.md) | PRD（需求、验收条件、UI 交互合同） |
 | [implementation.md](llmdoc/requirements/web-mvp/implementation.md) | 各卡实现记录与实际命令结果 |

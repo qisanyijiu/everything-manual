@@ -118,7 +118,7 @@ export function generationGaps(input: GenerationGapsInput): MissingItem[] {
     gaps.push({
       code: "generationUnavailable",
       message:
-        "生成能力未就绪：服务端未配置 Tripo／说明书 AI 密钥或价格目录（设置页只显示状态，密钥由部署者配置）。",
+        "生成能力未就绪：请在设置页检查 Tripo／说明书 AI 的密钥与模型；价格目录仍由部署配置管理。",
       actionHref: "/settings",
       actionLabel: "查看服务状态",
     });

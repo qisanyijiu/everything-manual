@@ -1,0 +1,42 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test interaction-a-qa.spec.ts -g IA-QA-03|IA-QA-06 --output=../../artifacts/interaction-a/qa/playwright-rerun
+
+(node:49529) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m(node:49557) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  VITE v8.3.0  ready in 135 ms
+[2m[WebServer] [22m
+[2m[WebServer] [22m  ➜  Local:   http://127.0.0.1:15182/
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.34s
+data-dir 已初始化：/private/tmp/everything-manual-interaction-a-qa/data
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/tmp
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/logs
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/blobs
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/lock
+数据库：已创建并迁移（/private/tmp/everything-manual-interaction-a-qa/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /private/tmp/everything-manual-interaction-a-qa/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 2 tests using 1 worker
+
+(node:49635) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49635) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:49635) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/interaction-a-qa.spec.ts:198:1 › IA-QA-03 确认延迟/取消/失败、低预算及同键显式重试（AC-005/006/007/008） (3.2s)
+  ✓  2 [chromium] › tests/e2e/interaction-a-qa.spec.ts:354:1 › IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012） (5.4s)
+
+  2 passed (12.0s)

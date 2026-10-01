@@ -1,0 +1,4 @@
+captured_at=2026-10-02T00:01:59.325464+08:00
+platform=macOS-26.6.2-arm64-arm-64bit-Mach-O
+v26.0.0
+cargo 1.98.1 (797e8a9bc 2026-08-05)

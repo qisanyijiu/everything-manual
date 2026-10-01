@@ -30,7 +30,11 @@ restored-data/
 *.sqlite3-wal
 *.sqlite3-shm
 
-# 本地配置与密钥（密钥只应来自环境注入或 0600 受限文件，不进入版本控制）
+# 本地配置与密钥（含网页配置的 0600 私有文件，不进入版本控制）
+provider-overrides.json
+*.api-key.enc
+*.api-key.*.tmp
+provider-overrides.*.tmp
 .env
 .env.*
 *.local

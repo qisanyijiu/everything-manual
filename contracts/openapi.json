@@ -342,6 +342,15 @@
         ],
         "type": "string"
       },
+      "ConfigSource": {
+        "enum": [
+          "web",
+          "deployment",
+          "default",
+          "unconfigured"
+        ],
+        "type": "string"
+      },
       "ConfirmationDto": {
         "description": "一次云端发送确认（写入 `audit_events`，随报价冻结）。",
         "properties": {
@@ -1519,6 +1528,14 @@
         ],
         "type": "object"
       },
+      "KeyEditAction": {
+        "enum": [
+          "keep",
+          "replace",
+          "clear"
+        ],
+        "type": "string"
+      },
       "LimitsStatus": {
         "description": "生效限制（字节数与页数；均为公开参数，不含路径与密钥）。",
         "properties": {
@@ -2212,6 +2229,13 @@
       "ProviderConfigDto": {
         "description": "非密钥的供应商配置快照。",
         "properties": {
+          "configRevision": {
+            "description": "非秘密配置代次；历史报价缺省为部署配置，网页变更后不可复用。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "manualAi": {
             "$ref": "#/components/schemas/ManualAiConfigDto"
           },
@@ -2225,6 +2249,54 @@
         ],
         "type": "object"
       },
+      "ProviderEdit": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ProviderEditAction"
+          },
+          "apiKey": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "writeOnly": true
+          },
+          "baseUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "keyAction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/KeyEditAction"
+              }
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "type": "object"
+      },
+      "ProviderEditAction": {
+        "enum": [
+          "update",
+          "restore"
+        ],
+        "type": "string"
+      },
       "ProviderKeyDto": {
         "description": "供应商维度（线上取值 `tripo` / `manual_ai`）。",
         "enum": [
@@ -2232,6 +2304,110 @@
           "manual_ai"
         ],
         "type": "string"
+      },
+      "ProviderSettingsData": {
+        "properties": {
+          "active": {
+            "$ref": "#/components/schemas/ProviderViews"
+          },
+          "pending": {
+            "type": "boolean"
+          },
+          "revision": {
+            "description": "不透明的已保存修订；保存时原样回传。",
+            "type": "string"
+          },
+          "saved": {
+            "$ref": "#/components/schemas/ProviderViews"
+          }
+        },
+        "required": [
+          "revision",
+          "pending",
+          "active",
+          "saved"
+        ],
+        "type": "object"
+      },
+      "ProviderSettingsResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProviderSettingsData"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ProviderSettingsWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "manualAi": {
+            "$ref": "#/components/schemas/ProviderEdit"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "tripo": {
+            "$ref": "#/components/schemas/ProviderEdit"
+          }
+        },
+        "required": [
+          "revision",
+          "tripo",
+          "manualAi"
+        ],
+        "type": "object"
+      },
+      "ProviderView": {
+        "description": "只包含可公开配置及来源，不含密钥字符、摘要或路径。",
+        "properties": {
+          "baseUrl": {
+            "type": "string"
+          },
+          "baseUrlSource": {
+            "$ref": "#/components/schemas/ConfigSource"
+          },
+          "keyConfigured": {
+            "type": "boolean"
+          },
+          "keySource": {
+            "$ref": "#/components/schemas/ConfigSource"
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modelSource": {
+            "$ref": "#/components/schemas/ConfigSource"
+          }
+        },
+        "required": [
+          "baseUrl",
+          "keyConfigured",
+          "baseUrlSource",
+          "modelSource",
+          "keySource"
+        ],
+        "type": "object"
+      },
+      "ProviderViews": {
+        "properties": {
+          "manualAi": {
+            "$ref": "#/components/schemas/ProviderView"
+          },
+          "tripo": {
+            "$ref": "#/components/schemas/ProviderView"
+          }
+        },
+        "required": [
+          "tripo",
+          "manualAi"
+        ],
+        "type": "object"
       },
       "ProvidersConfigured": {
         "properties": {
@@ -2912,12 +3088,17 @@
             "$ref": "#/components/schemas/PriceCatalogStatus",
             "description": "价格目录状态（T11；只说配置与否与版本，不含路径与内容）。"
           },
+          "providerConfigPending": {
+            "description": "额外的配置切换门禁；原有字段仍表示当前运行配置。",
+            "type": "boolean"
+          },
           "providersConfigured": {
             "$ref": "#/components/schemas/ProvidersConfigured",
             "description": "各供应商是否具备发起真实请求的全部配置（密钥 + 模型）。"
           }
         },
         "required": [
+          "providerConfigPending",
           "providersConfigured",
           "priceCatalog",
           "limits",
@@ -5969,6 +6150,124 @@
         "summary": "导出发布版自包含包（ZIP：原件 / GLB / manifest / 哈希）",
         "tags": [
           "releases"
+        ]
+      }
+    },
+    "/api/v1/settings/providers": {
+      "get": {
+        "operationId": "get_providers",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSettingsResponse"
+                }
+              }
+            },
+            "description": "当前与已保存供应商配置；无密钥，no-store"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "tags": [
+          "settings"
+        ]
+      },
+      "put": {
+        "operationId": "put_providers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderSettingsWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSettingsResponse"
+                }
+              }
+            },
+            "description": "整体保存；重启生效，无任何供应商请求"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "配置修订冲突"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "字段无效或尚有未决任务"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "持久化失败"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "tags": [
+          "settings"
         ]
       }
     },

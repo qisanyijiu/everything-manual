@@ -1,0 +1,30 @@
+{
+  "reflected": 2,
+  "observations": [
+    {
+      "mode": "unicode",
+      "state": "submission_unknown",
+      "requestsStable": true
+    },
+    {
+      "mode": "mixed",
+      "state": "submission_unknown",
+      "requestsStable": true
+    }
+  ],
+  "scans": {
+    "data": {
+      "filesScanned": 10,
+      "directMatches": 0,
+      "jsonEscapedMatches": 0,
+      "symlinksSkipped": 0
+    },
+    "backup": {
+      "filesScanned": 8,
+      "directMatches": 0,
+      "jsonEscapedMatches": 0,
+      "symlinksSkipped": 0
+    }
+  },
+  "authMatches": true
+}

@@ -1,0 +1,30 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.39s
+     Running tests/api_settings_rd.rs (target/debug/deps/api_settings_rd-ed61fc3adbaf3074)
+
+running 4 tests
+test loaded_bad_files_fail_closed_and_deployment_url_credentials_are_never_readable ... ok
+test authentication_csrf_and_secret_structure_errors_do_not_echo ... ok
+test validation_and_disk_failure_keep_both_providers_and_revision_unchanged ... ok
+test keep_clear_restore_persist_without_copying_deployment_secret_and_revert_keeps_epoch ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.73s
+
+     Running tests/encrypted_secrets_rd.rs (target/debug/deps/encrypted_secrets_rd-784f3a83f2e21d64)
+
+running 9 tests
+test known_key_reflection_detects_direct_and_decoded_json_without_url_echo ... ok
+test previously_used_master_disappearing_never_recreates ... ok
+test aead_random_nonce_authenticated_metadata_and_wrong_key_fail_closed ... ok
+test locked_migration_preserves_revision_and_read_only_check_changes_nothing ... ok
+test external_files_convert_without_overwriting_source_and_reject_plaintext ... ok
+test failed_or_malformed_migration_leaves_original_bytes ... ok
+test lost_master_prevents_keep_clear_restore_from_overwriting_saved_ciphertext ... ok
+test web_save_encrypts_both_and_restart_retains_epoch_at_maximum_size ... ok
+test cli_uses_explicit_master_and_never_accepts_plaintext_as_argument ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s
+

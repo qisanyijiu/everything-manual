@@ -78,7 +78,8 @@
 | POST /auth/login | password → cookie、CSRF token | Origin 校验、限速，不记录 body |
 | GET /auth/session | admin、csrfToken | 供刷新页面恢复；Cache-Control: no-store |
 | POST /auth/logout | 204 | 撤销会话、清 cookie |
-| GET /settings/status | providersConfigured、limits、capabilities | 不返回密钥或完整配置；首版配置在服务端 |
+| GET /settings/status | providersConfigured、limits、capabilities、providerConfigPending | 原字段仍描述当前运行基础配置；不代表模型有价格或连接已验证；pending 另加生成门禁 |
+| GET/PUT /settings/providers | revision、active/saved、pending；两家 update/restore 与 keep/replace/clear | 已认证、写入CSRF/Origin；no-store；只返回密钥存在与来源类别；整体私有持久化，重启生效 |
 | GET/POST /items | 查询／名称品牌型号配置 → item | 创建 201；服务端校验长度与空白 |
 | GET/PATCH /items/{id} | item／变更 → item | PATCH If-Match；归档不物理删除被引用资产 |
 | POST /items/{id}/assets | multipart file+purpose → asset | 流式上传；purpose 指定 document/photo/pageImage/pageText |
@@ -106,6 +107,11 @@
 `[/{...}]` 在表中表示两个明确路由，OpenAPI 中展开，不实际实现方括号 URL。归档通过 PATCH archived 字段；MVP 不暴露永久删除或任意磁盘浏览 API。备份恢复用 CLI，不开放高风险网页管理接口。
 
 ## 4. 输入快照与费用合同
+
+AS-01 配置切换补充（2026-09-21）：providers PUT 以 body 中不透明 revision 做 CAS，冲突 409 `REVISION_CONFLICT` / reason=`providerConfigConflict`；字段错误 422，包含秘密的结构错误不复述原输入。存在非终态任务或遗留未决动作时 422 `providerConfigBusy`，待重启下新报价/确认/生成/恢复返回 `providerConfigPending`。`quote.providerConfig.configRevision` 是非秘密随机代次并进入输入指纹、冻结快照；历史缺省视为 `deployment`。代次不一致返回 `providerConfigChanged`，必须重新报价确认；网页变更再恢复也不恢复旧报价。已存在的同键同 body 建单/重试重放仍只返回既有业务结果，不创建新动作。GET 既有资料与任务可用。
+
+ES-01（2026-10-01）不改变 HTTP DTO：GET/PUT 仍只返回地址、模型、来源、keyConfigured、revision/pending；密文、nonce、主钥标识不进浏览器。磁盘 formatVersion=1 与业务 revision 无关，Replace 使用 `encrypted` 信封（format=everything-manual-secret，version=1，algorithm=AES-256-GCM，purpose=overlay:tripo/overlay:manual-ai，nonce/ciphertext 为 hex，ciphertext 含认证 tag）。外部文件 purpose 为 api-key-file:tripo/api-key-file:manual-ai。未知格式、篡改、错主钥、用途不符、不安全文件均拒绝，绝不回退明文。网页错误使用固定安全消息并保留编辑；丢失运行中已使用的主钥也不能以 clear/restore 覆盖既有密文。AEAD 存储格式迁移不变更业务代次，真实字段变更仍执行 AS-01 全部门禁。文件原子发布之后的目录 fsync 失败属已提交状态加安全告警，不能返回“本次未保存”。
+
 
 生成前必须：名称／型号非空；PDF preparation ready；至少 front 加 left/back/right 之一；图片同物品、每视图唯一；Tripo 与 ManualAi 配置存在；有效价格快照；用户同意将选定资料发给相应供应商。
 
@@ -193,7 +199,7 @@ Rust 接口建议分离 `upload_image / submit_multiview / get_task / download_m
 
 OpenAI 参考请求由代码构造：`model` 来自配置，`input` 包含 input_text 和必要 input_image；`text.format.type=json_schema`、name=manual_extract_v1、strict=true、schema 使用全部 required 和 additionalProperties=false，可选值用 nullable。限制 max_output_tokens，按支持情况关闭远端响应存储；隐私选项不等于供应商完全零留存承诺。
 
-服务器再次校验 JSON schema、字符串长度、总实体数、所有引用页集合和部件引用关系。refusal/incomplete/格式错不产生正式知识；保留短错误摘要及原始响应的受限诊断路径。不能把模型 confidence 当作已经验真的概率。依据：[Responses Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)。
+服务器再次校验 JSON schema、字符串长度、总实体数、所有引用页集合和部件引用关系。refusal/incomplete/格式错不产生正式知识；保留短错误摘要及已通过已知 API key 反射检查的原始响应受限诊断路径；直接或 JSON 解码反射凭据、以及外层 JSON 无法安全解析的响应在客户端边界丢弃；ManualAI 不返回 RawResponse、不写诊断，按未持久化响应保留 submission_unknown 且不自动重发。不能把模型 confidence 当作已经验真的概率。依据：[Responses Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)。
 
 Mock 与真实 Provider 共用领域接口但初始化显式互斥；生产启动禁止无配置时回退 mock。真实 HTTP 适配器必须先用本地 fixture 验证字节协议，不能只测一个永远返回成功的 fake trait。
 

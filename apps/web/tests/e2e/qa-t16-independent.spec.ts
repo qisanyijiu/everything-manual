@@ -278,17 +278,19 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await form.getByLabel("名称").fill("QA 资料库行内入口");
     await form.getByLabel("准确型号").fill("QA-T16-ROW");
     await form.getByRole("button", { name: "创建并继续" }).click();
-    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}\/import\/document$/);
+    const newItemId = new URL(page.url()).pathname.split("/")[2] ?? "";
+    await expect(page.getByRole("heading", { name: "说明书原件" })).toBeVisible();
     const createdBody = JSON.parse(createPosts[0]?.postData() ?? "{}") as Record<string, unknown>;
     expect(Object.keys(createdBody).sort()).toEqual(["brand", "model", "name", "variant"]);
     expect(JSON.stringify(createdBody)).not.toContain("sourceUrl");
 
     // 阅读器现已交付：入口进入真实版本列表，未发布的物品显示空态。
+    await page.goto(`/items/${newItemId}`);
     await expect(page.getByRole("link", { name: "打开说明书" })).toHaveAttribute("href", /\/releases$/);
     await expect(page.getByRole("link", { name: "本物品的任务" })).toHaveAttribute("href", /\/jobs\?itemId=/);
 
     // (e) 第 2 步：未绑定说明书时「下一步」禁用并说明缺什么（UI-019）。
-    const newItemId = new URL(page.url()).pathname.split("/").pop() ?? "";
     await page.goto(`/items/${newItemId}/import/document`);
     const nextToViews = page.getByRole("button", { name: /下一步：视图排列/ });
     await expect(nextToViews).toBeDisabled();
@@ -626,8 +628,8 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await page.getByLabel("名称").fill("QA 全流程相机");
     await page.getByLabel("准确型号").fill("QA-T16-FLOW");
     await page.getByRole("button", { name: "创建并继续" }).click();
-    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
-    const itemId = new URL(page.url()).pathname.split("/").pop() ?? "";
+    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}\/import\/document$/);
+    const itemId = new URL(page.url()).pathname.split("/")[2] ?? "";
 
     await page.goto(`/items/${itemId}/import/document`);
     await page.getByLabel("选择 PDF 文件").setInputFiles(fixturePath("sample-manual-text.pdf"));
@@ -869,7 +871,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await expect(page.getByTestId("quote-error")).toHaveCount(0);
   });
 
-  test("QA-9 窄屏抽屉与桌面并排：同一 URL 切换无需刷新（AC-060 前端侧 / UI-062）", async ({
+  test("QA-9 确认主流程跨尺寸可达：同一 URL 切换无需刷新（interaction-a AC-003）", async ({
     page,
     request,
   }) => {
@@ -887,39 +889,26 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await loginViaUi(page, "", password());
     await setPreparationPointer(page, seed.itemId, preparationId);
 
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1440, height: 900 });
     await openConfirmWithQuote(page, seed.itemId);
-    // 桌面：两栏面板同时在 DOM 中可见（并排）。
-    const rail = page.locator(".page-layout__rail");
-    const aside = page.locator(".page-layout__aside");
-    await expect(rail).toBeVisible();
-    await expect(aside).toBeVisible();
-    const railBox = await rail.boundingBox();
-    const asideBox = await aside.boundingBox();
-    expect(railBox!.x + railBox!.width).toBeLessThanOrEqual(asideBox!.x + 1);
-    await captureTo("t16-qa", page, "20-desktop-two-columns");
-
-    // 窄屏：同一 URL、不刷新 → 面板进入抽屉，触发按钮在顶栏下方。
-    await page.setViewportSize({ width: 375, height: 812 });
-    await expect(rail).toHaveCount(0);
-    await expect(aside).toHaveCount(0);
-    const railTrigger = page.getByRole("button", { name: "报价与预算" });
-    const asideTrigger = page.getByRole("button", { name: "将发送的资料与确认" });
-    await expect(railTrigger).toBeVisible();
-    await expect(asideTrigger).toBeVisible();
-    await railTrigger.click();
-    const drawer = page.getByRole("dialog", { name: "报价与预算" });
-    await expect(drawer).toBeVisible();
-    await expect(drawer.getByTestId("quote-panel")).toBeVisible();
-    await captureTo("t16-qa", page, "21-narrow-drawer");
-    await page.keyboard.press("Escape");
-    await expect(drawer).toHaveCount(0);
-
-    // 拉宽回桌面：无需刷新即恢复并排。
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await expect(page.locator(".page-layout__aside")).toBeVisible();
-    await expect(page.getByRole("button", { name: "报价与预算" })).toHaveCount(0);
-    await expect(page.getByTestId("quote-panel")).toBeVisible();
+    const originalUrl = page.url();
+    for (const width of [1440, 1024, 768, 375]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(page.getByTestId("quote-panel")).toBeVisible();
+      await expect(page.getByTestId("send-scope")).toBeVisible();
+      await expect(page.getByTestId("confirmation-box")).toBeVisible();
+      await expect(page.getByTestId("generate-button")).toHaveCount(1);
+      await expect(page.locator(".page-layout__panel-bar")).toHaveCount(0);
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      expect(page.url()).toBe(originalUrl);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      const quote = await page.getByTestId("quote-panel").boundingBox();
+      const scope = await page.getByTestId("send-scope").boundingBox();
+      const consent = await page.getByTestId("confirmation-box").boundingBox();
+      expect(quote!.y + quote!.height).toBeLessThanOrEqual(scope!.y);
+      expect(scope!.y + scope!.height).toBeLessThanOrEqual(consent!.y);
+    }
+    await captureTo("t16-qa", page, "21-narrow-confirm-flow");
   });
 
   test("QA-12 磁盘满 413（insufficientStorage）文案：所需/可用字节 + 清理提示（UI-009）", async ({

@@ -1,7 +1,7 @@
 //! 设置/能力状态 DTO（REQ-007、AC-012）。
 //!
-//! 边界：只暴露**配置状态与公开限制**——不返回密钥、密钥来源、文件路径、
-//! 完整配置或供应商凭据（PRD §5.7）。未配置时如实返回 `false`，不存在 mock 回退。
+//! status 保留运行状态与公开限制；providers 新增脱敏配置读取与私有覆盖写入。
+//! 读取不返回密钥字符、环境变量名或路径；写入 DTO 不实现 Debug/Serialize。
 
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -15,6 +15,8 @@ pub struct SettingsStatusResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsStatusData {
+    /// 额外的配置切换门禁；原有字段仍表示当前运行配置。
+    pub provider_config_pending: bool,
     /// 各供应商是否具备发起真实请求的全部配置（密钥 + 模型）。
     pub providers_configured: ProvidersConfigured,
     /// 价格目录状态（T11；只说配置与否与版本，不含路径与内容）。
@@ -67,4 +69,91 @@ pub struct CapabilitiesStatus {
     /// 生成能力：Tripo 与说明书 AI **都**已配置、且价格目录可用时才为 true。
     /// 未满足前置条件时 estimate/jobs 返回明确错误（不返回 0 费用假成功）。
     pub generation: bool,
+}
+
+/// 只包含可公开配置及来源，不含密钥字符、摘要或路径。
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderView {
+    pub base_url: String,
+    pub model: Option<String>,
+    pub key_configured: bool,
+    pub base_url_source: ConfigSource,
+    pub model_source: ConfigSource,
+    pub key_source: ConfigSource,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum ConfigSource {
+    Web,
+    Deployment,
+    Default,
+    Unconfigured,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderViews {
+    pub tripo: ProviderView,
+    pub manual_ai: ProviderView,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderSettingsData {
+    /// 不透明的已保存修订；保存时原样回传。
+    pub revision: String,
+    pub pending: bool,
+    pub active: ProviderViews,
+    pub saved: ProviderViews,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ProviderSettingsResponse {
+    pub data: ProviderSettingsData,
+}
+
+// 不派生 Debug/Serialize：写入 DTO 只用于瞬时输入，不可进入日志或读取响应。
+#[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ProviderSettingsWrite {
+    pub revision: String,
+    pub tripo: ProviderEdit,
+    pub manual_ai: ProviderEdit,
+}
+
+#[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ProviderEdit {
+    pub action: ProviderEditAction,
+    pub base_url: Option<String>,
+    pub model: Option<String>,
+    pub key_action: Option<KeyEditAction>,
+    #[schema(write_only)]
+    pub api_key: Option<String>,
+}
+
+impl Drop for ProviderEdit {
+    fn drop(&mut self) {
+        use zeroize::Zeroize;
+        if let Some(key) = &mut self.api_key {
+            key.zeroize();
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, ToSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum ProviderEditAction {
+    Update,
+    Restore,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, ToSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum KeyEditAction {
+    Keep,
+    Replace,
+    Clear,
 }

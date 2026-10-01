@@ -68,7 +68,7 @@ function CreateItemForm() {
     try {
       const created = await createMutation.mutateAsync(toCreateRequest(values));
       notify(`已创建物品「${created.data.name}」`);
-      navigate(`/items/${created.data.id}`);
+      navigate(`/items/${created.data.id}/import/document`);
     } catch (error) {
       const errors = isApiError(error) ? readFieldErrors(error.details) : [];
       const info = describeError(error);

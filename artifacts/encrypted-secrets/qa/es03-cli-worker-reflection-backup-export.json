@@ -1,0 +1,28 @@
+{
+  "convertedProviders": 2,
+  "reflectedReplies": 1,
+  "providerChecks": {
+    "tripoRequests": 8,
+    "manualRequests": 2,
+    "authMatches": true,
+    "modelMatches": true,
+    "unknownRequests": 0
+  },
+  "exportBytes": 14857,
+  "exportLeak": false,
+  "sourcePreserved": true,
+  "scans": {
+    "data": {
+      "filesScanned": 14,
+      "directMatches": 0,
+      "jsonEscapedMatches": 0,
+      "symlinksSkipped": 0
+    },
+    "backup": {
+      "filesScanned": 12,
+      "directMatches": 0,
+      "jsonEscapedMatches": 0,
+      "symlinksSkipped": 0
+    }
+  }
+}

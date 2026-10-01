@@ -1,0 +1,35 @@
+work_id: encrypted-secrets
+phase: done
+request_revision: 1
+prd_revision: 2
+ui_revision: 2
+current_tasks: []
+accepted_tasks:
+  - task_id: ES-01
+    prd_revision: 2
+    qa_round: 2
+    report: qa-report.md
+    accepted_ac_ids: [AC-ES-001, AC-ES-002, AC-ES-003, AC-ES-004, AC-ES-005, AC-ES-006, AC-ES-007, AC-ES-008, AC-ES-009, AC-ES-010, AC-ES-011, AC-ES-012]
+    status: accepted
+qa_history:
+  - round: 1
+    scope: full
+    task_ids: [ES-01]
+    prd_revision: 2
+    result: FAIL
+    report: qa-report.md
+  - round: 2
+    scope: full
+    task_ids: [ES-01]
+    prd_revision: 2
+    result: PASS
+    report: qa-report.md
+qa_round: 2
+qa_scope: full
+qa_result: PASS
+open_defects: []
+blocked_reason: null
+resume_phase: null
+blocked_on: null
+unblock_condition: null
+next_action: "ES-01 全部 12 AC 独立验收 PASS，BUG-ES-001 已关闭；正常 embedded-ui 二进制已更新本地预览，健康、原密码登录与脱敏设置读取验证通过。保存配置仍需重启生效，历史明文副本和真实供应商验证不在本批完成范围"

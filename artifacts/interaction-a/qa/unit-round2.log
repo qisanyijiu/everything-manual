@@ -1,0 +1,17 @@
+
+> everything-manual-web@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  21 passed (21)
+      Tests  147 passed (147)
+   Start at  00:05:28
+   Duration  6.46s (environment 58%, tests 22%, transform 9%, setup 7%, import 3%, worker 1%)
+
+Environment  jsdom was created 21 times · 22.30s total, 58% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+

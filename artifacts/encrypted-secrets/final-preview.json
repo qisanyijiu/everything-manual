@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-02",
+  "binary_features": [
+    "embedded-ui"
+  ],
+  "job_failpoints_enabled": false,
+  "binary_sha256": "b51358ceffc50b00924c932d8814d3e13657577e188616e90dd99b9981b332f4",
+  "checks": {
+    "web_status": 200,
+    "live_status": 200,
+    "ready_status": 200,
+    "login_status": 200,
+    "session_status": 200,
+    "settings_status": 200,
+    "settings_no_store": true,
+    "configuration_pending": false,
+    "providers_unconfigured": true,
+    "logout_status": 204,
+    "session_after_logout_status": 401,
+    "plaintext_overlay_created": false
+  }
+}

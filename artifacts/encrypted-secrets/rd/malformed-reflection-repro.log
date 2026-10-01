@@ -1,0 +1,14 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.50s
+     Running tests/encrypted_secrets_rd.rs (target/debug/deps/encrypted_secrets_rd-784f3a83f2e21d64)
+
+running 1 test
+valid_detected=true malformed_detected=false tripo_error_recoverable=true manual_raw_recoverable=true
+valid_detected=true malformed_detected=false tripo_error_recoverable=true manual_raw_recoverable=true
+test malformed_json_escaped_reflection_reproduction ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.02s
+

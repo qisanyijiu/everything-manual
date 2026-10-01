@@ -100,6 +100,9 @@ pub struct PageRangeDto {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ProviderConfigDto {
+    /// 非秘密配置代次；历史报价缺省为部署配置，网页变更后不可复用。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config_revision: Option<String>,
     pub tripo: TripoParametersDto,
     pub manual_ai: ManualAiConfigDto,
 }

@@ -133,6 +133,8 @@ pub struct StageRunReport {
 
 /// 持久任务执行器。
 pub struct JobExecutor {
+    provider_config:
+        Option<Arc<tokio::sync::RwLock<crate::config::provider_overrides::ProviderConfigStore>>>,
     pool: SqlitePool,
     config: ExecutorConfig,
     registry: Arc<StageRegistry>,
@@ -158,6 +160,22 @@ impl JobExecutor {
         )
     }
 
+    /// 生产执行前核对配置代次；恢复的快照不能被发送到另一运行配置。
+    pub fn with_provider_config(
+        pool: SqlitePool,
+        config: ExecutorConfig,
+        registry: StageRegistry,
+        provider_config: Arc<
+            tokio::sync::RwLock<crate::config::provider_overrides::ProviderConfigStore>,
+        >,
+    ) -> Arc<Self> {
+        let mut executor = Self::new(pool, config, registry);
+        Arc::get_mut(&mut executor)
+            .expect("新建 executor 尚未共享")
+            .provider_config = Some(provider_config);
+        executor
+    }
+
     /// 注入时钟与 jitter（测试用：[`super::ManualClock`] + [`FixedJitter`]）。
     pub fn with_runtime(
         pool: SqlitePool,
@@ -167,6 +185,7 @@ impl JobExecutor {
         jitter: Arc<dyn Jitter>,
     ) -> Arc<Self> {
         Arc::new(Self {
+            provider_config: None,
             pool,
             config,
             registry,
@@ -416,12 +435,22 @@ impl JobExecutor {
     /// 执行一个已领取的阶段：准备上下文 → 续约任务 → 处理器 → 冲突归一化 → 推进。
     async fn execute(&self, stage: JobStage) -> Result<StageRunReport, JobError> {
         let now = self.now();
+        // 锁顺序与 HTTP 一致：配置锁在数据库连接之前，避免连接池耗尽时互等。
+        let config = match &self.provider_config {
+            Some(config) => Some(config.read().await),
+            None => None,
+        };
         let mut conn = self.pool.acquire().await?;
         let job = repo::jobs::get(&mut conn, &stage.job_id)
             .await?
             .ok_or_else(|| JobError::handler(&stage.id, format!("job 不存在：{}", stage.job_id)))?;
         let attempt = repo::attempts::latest_for_stage(&mut conn, &stage.id).await?;
+        let config_error = match &config {
+            Some(config) => config.ensure_job(&mut conn, &stage.job_id).await.err(),
+            None => None,
+        };
         drop(conn);
+        drop(config);
 
         let guard = LeaseGuard {
             stage_id: stage.id.clone(),
@@ -429,6 +458,19 @@ impl JobExecutor {
             epoch: stage.lease_epoch,
         };
         let resume = resume_hint(attempt.as_ref());
+        if let Some(error) = config_error {
+            return self
+                .apply(
+                    &stage,
+                    &guard,
+                    attempt.as_ref(),
+                    StageOutcome::NeedsInput {
+                        items: vec![MissingItem::new("provider_config_changed", error.message)],
+                    },
+                    now,
+                )
+                .await;
+        }
 
         // 未决事实：不调用处理器，也不产生任何新请求。
         if let ResumeHint::SubmissionUnknown { reason, .. } = &resume {

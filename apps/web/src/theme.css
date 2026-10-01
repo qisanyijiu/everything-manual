@@ -312,3 +312,97 @@ input[type="file"]::file-selector-button { background: #edf1e7; color: var(--tex
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Interaction A: one reading path for budget, disclosure, and explicit consent. */
+.confirm-step { width: 100%; max-width: 960px; }
+.confirm-panel, .confirm-step .summary-panel, .confirm-box { padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-top: 24px; }
+.confirm-panel > h2, .confirm-step .summary-panel__title { font-size: 18px; margin: 0 0 20px; }
+.confirm-step .amount-list, .confirm-budget-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.confirm-step .amount-list > div { min-width: 0; border-radius: 8px; background: #f1f4eb; padding: 18px; }
+.confirm-step .amount-list dd > span:first-child { font-size: 22px; }
+.confirm-step .amount-list__label { display: block; margin: 2px 0; }
+.confirm-step .meta-list { padding: 16px 0; border: 0; box-shadow: none; gap: 16px; }
+.confirm-step .meta-list dd, .confirm-step code { overflow-wrap: anywhere; }
+.confirm-budget-fields .field { min-width: 0; }
+.confirm-step .scope-list li { margin-bottom: 8px; }
+.confirm-step .checkbox-row { align-items: center; }
+.confirm-step .checkbox-row input { flex-shrink: 0; width: 20px; height: 20px; margin: 0; }
+.confirm-step .checkbox-row label { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+.confirm-step .confirm-actions { margin-top: 24px; }
+.confirm-step .confirm-actions > .button-primary { padding: 12px 22px; }
+
+/* Keep required text readable after the more specific reader/mobile rules above. */
+.field__label, .field__input, .item-form-page .page__lead,
+.confirm-step .page__lead, .confirm-step .scope-list, .confirm-step .checkbox-row label,
+.reader-page .entity-list p, .reader-page .step-detail li { font-size: 14px; line-height: 1.65; }
+.item-form__note, .field__hint, .field__error, .field__warning,
+.confirm-step .meta-list dt, .confirm-step .amount-list__label, .confirm-step .amount-list__secondary,
+.confirm-step .scope-list code, .confirm-actions__reason, .confirm-step .error-panel__meta,
+.viewer-panel__status, .viewer-panel__notice, .original-panel__text summary,
+.original-panel__text pre, .step-nav, .original-panel__nav,
+.reader-page .page-note, .reader-page .status-label { font-size: 12px; }
+.reader-page .entity-list button, .viewer-panel__toolbar button, .original-panel__nav button,
+.step-nav button, .page__actions .button, .page__actions button,
+.library-heading > .button-primary, .wizard-steps, .wizard-nav a,
+.page-layout__panel-bar button, .panel-stack__tabs button, .drawer__header button { font-size: 12px; }
+.reader-page .step-detail, .reader-page .entity-list p { overflow-wrap: anywhere; }
+.original-panel__nav, .step-nav, .viewer-panel__toolbar { flex-wrap: wrap; }
+.panel-stack__tabs { flex-wrap: wrap; }
+
+@media (max-width: 767px) {
+  html { scroll-padding-bottom: 88px; }
+  .app-shell__content { padding-bottom: 48px; }
+  .confirm-panel, .confirm-step .summary-panel, .confirm-box { padding: 20px; }
+  .confirm-step .amount-list, .confirm-budget-fields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .confirm-step .confirm-actions, .confirm-step .confirm-actions > .button-primary { width: 100%; }
+  .confirm-step .confirm-actions > .button-primary { white-space: normal; }
+  .button-primary, .button, .item-form button[type="submit"], .confirm-step button,
+  .library-heading > .button-primary, .page__actions .button, .page__actions button,
+  .wizard-nav a, .wizard-nav button, .wizard-steps a,
+  .page-layout__panel-bar button, .panel-stack__tabs button, .drawer__header button,
+  .reader-page .entity-list button, .viewer-panel__toolbar button, .viewer-panel__message button,
+  .step-nav button, .original-panel__nav button, .step-evidence button {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 12px;
+  }
+  .wizard-steps a { display: inline-flex; align-items: center; }
+  .reader-page button { white-space: normal; }
+  .drawer { padding: 20px; }
+}
+.provider-settings { max-width: 1080px; min-width: 0; }
+.api-provider-card { margin: 20px 0; padding: 26px; }
+.api-card-heading, .api-save-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.api-card-heading { justify-content: space-between; }
+.api-card-heading h3 { margin: 0; font-size: 20px; }
+.api-provider-card h4 { font-size: 14px; margin: 26px 0 12px; }
+.api-form-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.api-current-values { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 18px; border-bottom: 1px solid var(--border, #d8dfd7); padding-bottom: 20px; }
+.api-current-values > div { min-width: 0; }
+.api-current-values dt, .provider-settings .field-hint { font-size: 12px; line-height: 1.6; color: #64746a; }
+.api-current-values dd { margin: 6px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+.api-editor-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; }
+.api-editor-grid > div { min-width: 0; }
+.provider-settings input:not([type=radio]) { width: 100%; min-width: 0; min-height: 44px; box-sizing: border-box; font-size: 14px; }
+.provider-settings label { font-size: 14px; }
+.api-key-options { border: 0; padding: 0; margin: 18px 0 8px; display: flex; gap: 24px; flex-wrap: wrap; }
+.api-key-options legend { font-size: 14px; font-weight: 600; }
+.api-key-options label { display: inline-flex; gap: 8px; align-items: center; min-height: 44px; }
+.api-key-options input { min-height: 0; width: 18px; height: 18px; }
+.api-config-status, .api-restart-note, .api-restore-note { padding: 18px 22px; border-radius: 10px; background: #eef3e9; margin: 16px 0; font-size: 14px; }
+.api-config-status > span { margin-left: 20px; color: #64746a; }
+.api-restart-note, .api-impact { color: #765326; }
+.api-restart-note { background: #fbf1df; }
+.provider-settings button, .settings-leave-dialog button { min-height: 44px; min-width: 44px; font-size: 14px; }
+.provider-settings .error-panel { overflow-wrap: anywhere; }
+.provider-settings .api-save-row { margin: 24px 0; }
+.settings-leave-dialog { width: min(440px, calc(100vw - 32px)); box-sizing: border-box; max-height: calc(100dvh - 32px); overflow: auto; padding: 26px; border: 1px solid #c9d4c6; border-radius: 16px; background: #fffef9; }
+.settings-leave-dialog::backdrop { background: rgb(24 40 29 / 48%); }
+.settings-leave-dialog .form-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+@media (max-width: 640px) {
+  .api-provider-card { padding: 18px; }
+  .api-current-values, .api-editor-grid { grid-template-columns: 1fr; gap: 14px; }
+  .api-key-options { gap: 14px; }
+  .api-config-status > span { display: block; margin: 8px 0 0; }
+  .api-save-row > button { width: 100%; }
+}

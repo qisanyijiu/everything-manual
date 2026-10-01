@@ -2,10 +2,12 @@
 #
 # 使用方法（优先级：CLI 非密钥项 > 环境变量 > 本文件 > 内置默认）：
 #   1. 复制为 <data-dir>/config.toml（自动加载）或任意路径后用 --config 指定；
-#   2. 本文件**不得包含任何真实密钥**：密钥只经环境变量（api_key_env 指向变量名）
-#      或受限文件（api_key_file，权限 0600）注入；
+#   2. 本文件**不得包含任何真实密钥**：部署密钥经环境变量（api_key_env 指向变量名）
+#      或受限密文文件（encrypt-api-key 产出，api_key_file，权限 0600）注入；
 #   3. 未知配置键会导致启动/检查失败（不静默忽略），键名以本示例与
 #      crates/server/src/config/file.rs 的 schema 为准。
+#   4. 网页显式保存的供应商覆盖优先于部署值，保存在独立私有文件并于重启生效。
+#      网页「清除密钥」屏蔽本文件来源；「恢复部署配置」撤销对应供应商网页覆盖。
 
 # data-dir 路径（也可用 --data-dir 或环境变量 EM_DATA_DIR 提供）
 data_dir = "./manual-data"
@@ -35,7 +37,7 @@ listen = "127.0.0.1:8080"
 # model = "v3.1-20260211"                       # 默认值（H 系列多视图带纹理）
 # 密钥（二选一；均不写入本文件）：
 api_key_env = "TRIPO_API_KEY"
-# api_key_file = "/etc/everything-manual/tripo.key"   # 受限文件，chmod 600
+# api_key_file = "/etc/everything-manual/tripo.api-key.enc" # 受限密文文件；旧明文需显式转换
 
 [providers.manual_ai]
 # base_url = "https://api.openai.com/v1"        # 默认值（OpenAI Responses 参考适配器）
@@ -43,7 +45,7 @@ api_key_env = "TRIPO_API_KEY"
 # 视为“未配置”，生成能力返回未配置（不回落 mock）。
 # model = "<按供应商文档填写>"
 api_key_env = "MANUAL_AI_API_KEY"
-# api_key_file = "/etc/everything-manual/manual-ai.key"
+# api_key_file = "/etc/everything-manual/manual-ai.api-key.enc"
 
 # 输入限制（默认值即 PRD §5.3；单位：字节）
 [limits]

@@ -1,0 +1,7 @@
+{
+  "nativeDialogType": "beforeunload",
+  "dismissPreservedForm": true,
+  "acceptedReloadDiscardedEdits": true,
+  "discardedSecretNotRestored": true,
+  "browserStorageLeak": false
+}

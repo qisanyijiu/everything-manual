@@ -1,0 +1,49 @@
+(node:4749) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m(node:4777) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  VITE v8.3.0  ready in 163 ms
+[2m[WebServer] [22m
+[2m[WebServer] [22m  ➜  Local:   http://127.0.0.1:15187/
+
+Running 3 tests using 1 worker
+
+(node:4789) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4789) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:4789) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/encrypted-secrets-qa.spec.ts:125:1 › ES-QA-02 真实写盘失败保持编辑，显式重试与375布局（AC008/010/012） (2.6s)
+  ✓  2 [chromium] › tests/e2e/encrypted-secrets-qa.spec.ts:168:1 › ES-QA-03 外部文件CLI→重启→真实worker→反射诊断/备份/导出无泄漏（AC007/010/011） (3.2s)
+  ✘  3 [chromium] › tests/e2e/encrypted-secrets-qa.spec.ts:308:1 › ES-QA-05 真实serve迁移保留旧报价代次，check只读（AC005/006/010） (1.6s)
+
+
+  1) [chromium] › tests/e2e/encrypted-secrets-qa.spec.ts:308:1 › ES-QA-05 真实serve迁移保留旧报价代次，check只读（AC005/006/010） 
+
+    Error: check supplies migration guidance
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mtrue[39m
+    Received: [31mfalse[39m
+
+      333 |   });
+      334 |   expect(check.status).not.toBe(0);
+    > 335 |   expect(check.stderr.toString("utf8").includes("serve"), "check supplies migration guidance").toBe(true);
+          |                                                                                                ^
+      336 |   expect(secretPresence(Buffer.concat([check.stdout, check.stderr]), secrets()).leaked).toBe(false);
+      337 |   expect(fs.readFileSync(file).equals(legacy), "check did not rewrite legacy input").toBe(true);
+      338 |   await backend.start();
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/encrypted-secrets-qa.spec.ts:335:96
+
+    Error Context: ../../artifacts/encrypted-secrets/qa/playwright-harness-corrected/encrypted-secrets-qa-ES-QA-0c862-报价代次，check只读（AC005-006-010）-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/encrypted-secrets-qa.spec.ts:308:1 › ES-QA-05 真实serve迁移保留旧报价代次，check只读（AC005/006/010） 
+  2 passed (10.1s)

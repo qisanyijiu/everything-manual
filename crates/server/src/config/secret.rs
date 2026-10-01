@@ -8,10 +8,17 @@
 //! - [`redact_text`] 用于对已构建好的文本做兜底替换：把已知密钥字面量替换为 `[redacted]`。
 
 use std::fmt;
+use zeroize::Zeroize;
 
 /// 敏感的字符串（密码、API 密钥）。不实现 `Serialize`；`Debug` 恒为 `[redacted]`。
 #[derive(Clone, PartialEq, Eq)]
 pub struct SecretString(String);
+
+impl Drop for SecretString {
+    fn drop(&mut self) {
+        self.0.zeroize();
+    }
+}
 
 impl SecretString {
     pub fn new(value: impl Into<String>) -> Self {
@@ -60,6 +67,49 @@ pub fn redact_text(text: &str, secrets: &[&SecretString]) -> String {
         }
     }
     output
+}
+
+/// Reject output containing a known key or JSON that cannot be safely inspected.
+/// On parse failure, escaped strings may still carry credentials: never retain the raw body.
+/// JSON values/property names are decoded once; arbitrary encoding recovery is out of scope.
+pub fn response_requires_discard(bytes: &[u8], key: &SecretString) -> bool {
+    let secret = key.expose();
+    let direct = !secret.is_empty()
+        && bytes
+            .windows(secret.len())
+            .any(|window| window == secret.as_bytes());
+    fn visit(value: &mut serde_json::Value, secret: &str) -> bool {
+        match value {
+            serde_json::Value::String(value) => {
+                let found = !secret.is_empty() && value.contains(secret);
+                value.zeroize();
+                found
+            }
+            serde_json::Value::Array(values) => {
+                let mut found = false;
+                // Do not short-circuit: every temporary decoded string must be zeroized.
+                for value in values {
+                    found = visit(value, secret) || found;
+                }
+                found
+            }
+            serde_json::Value::Object(values) => {
+                std::mem::take(values)
+                    .into_iter()
+                    .fold(false, |found, (mut key, mut value)| {
+                        let hit = !secret.is_empty() && key.contains(secret);
+                        key.zeroize();
+                        visit(&mut value, secret) || hit || found
+                    })
+            }
+            _ => false,
+        }
+    }
+    let unsafe_json = match serde_json::from_slice::<serde_json::Value>(bytes) {
+        Ok(mut value) => visit(&mut value, secret),
+        Err(_) => true,
+    };
+    direct || unsafe_json
 }
 
 #[cfg(test)]

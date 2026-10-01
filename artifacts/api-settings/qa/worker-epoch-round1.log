@@ -1,0 +1,12 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running tests/generation_requests.rs (target/debug/deps/generation_requests-73e2f6e763b58d1e)
+
+running 2 tests
+test api_settings_save_and_job_creation_share_one_admission_boundary ... ok
+test api_settings_epoch_invalidates_quotes_and_failed_retry_but_preserves_job_replay ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 25 filtered out; finished in 0.92s
+

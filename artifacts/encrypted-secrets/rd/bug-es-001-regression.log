@@ -1,0 +1,256 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 23.68s
+     Running unittests src/lib.rs (target/debug/deps/everything_manual-7fe8f2fcf0ac06db)
+
+running 179 tests
+test assets::glb::download::tests::local_fixture_requires_both_config_flag_and_test_build ... ok
+test assets::glb::download::tests::policy_defaults_reject_everything ... ok
+test assets::blob_store::tests::space_probe_fixed_is_deterministic ... ok
+test assets::glb::download::tests::loopback_is_allowed_only_with_the_test_fixture_gate ... ok
+test assets::blob_store::tests::insufficient_space_message_mentions_both_numbers ... ok
+test assets::glb::download::tests::error_codes_and_retry_classification ... ok
+test assets::blob_store::tests::blob_path_is_derived_from_hash_only ... ok
+test assets::glb::tests::error_codes_are_stable ... ok
+test assets::glb::tests::budget_defaults_match_the_contract ... ok
+test assets::maintenance::tests::scan_report_emptiness ... ok
+test assets::blob_store::tests::statvfs_reports_some_space_for_temp_dir ... ok
+test assets::maintenance::tests::sha256_shape_predicate ... ok
+test assets::glb::download::tests::private_and_reserved_addresses_are_classified ... ok
+test assets::pdf::tests::object_header_is_recognised ... ok
+test assets::pdf::tests::last_integer_after_uses_last_startxref ... ok
+test assets::range::tests::range_length_is_inclusive ... ok
+test assets::glb::tests::image_dimensions_read_png_and_jpeg_headers ... ok
+test assets::pdf::tests::find_integer_reads_count ... ok
+test assets::pdf::tests::find_ref_requires_full_token_and_reference_shape ... ok
+test assets::range::tests::multi_range_and_broken_syntax_fall_back_to_full ... ok
+test assets::range::tests::unsatisfiable_ranges_are_reported ... ok
+test assets::range::tests::single_range_forms_are_satisfiable ... ok
+test assets::pdf::tests::count_refs_counts_array_entries ... ok
+test assets::validate::tests::crc32_matches_known_value ... ok
+test assets::upload::tests::purpose_wire_values_are_camel_case ... ok
+test assets::range::tests::conditional_headers_compare_strong_etags ... ok
+test assets::upload::tests::original_name_never_keeps_path_components ... ok
+test assets::validate::tests::purpose_limits_follow_the_purpose ... ok
+test backup::create::tests::overlap_detection_covers_nesting_both_ways ... ok
+test backup::error::tests::integrity_errors_are_classified_for_exit_code_7 ... ok
+test backup::export::tests::export_constants_are_relative_paths ... ok
+test assets::validate::tests::pixel_budget_is_enforced_with_details ... ok
+test assets::validate::tests::photo_purpose_rejects_unknown_magic ... ok
+test assets::validate::tests::non_pdf_for_document_purpose_is_unsupported_type ... ok
+test assets::pdf::tests::probe_rejects_non_pdf_bytes ... ok
+test backup::manifest::tests::unsafe_paths_are_rejected ... ok
+test backup::restore::tests::overlap_detection_covers_nesting_both_ways ... ok
+test backup::export::tests::generated_export_fields_must_not_contain_urls ... ok
+test assets::validate::tests::text_purpose_rejects_invalid_utf8 ... ok
+test backup::manifest::tests::unknown_schema_version_is_rejected ... ok
+test backup::manifest::tests::manifest_round_trips_and_paths_are_relative ... ok
+test backup::manifest::tests::unknown_fields_are_rejected ... ok
+test backup::zip::tests::crc32_matches_standard_vectors ... ok
+test backup::zip::tests::unsafe_entry_names_are_rejected ... ok
+test backup::zip::tests::parser_rejects_corrupted_payload ... ok
+test config::cli::tests::unknown_subcommand_is_a_usage_error ... ok
+test config::commands::tests::backup_error_mapping_is_stable ... ok
+test config::cli::tests::bad_listen_value_is_reported ... ok
+test config::cli::tests::missing_required_backup_out_fails ... ok
+test config::cli::tests::password_is_never_a_command_line_option ... ok
+test config::cli::tests::dispatches_all_subcommands ... ok
+test config::commands::tests::unknown_subcommand_maps_to_usage_error ... ok
+test config::datadir::tests::verify_reports_missing_structure ... ok
+test config::commands::tests::help_exits_zero_without_error ... ok
+test config::commands::tests::backup_and_restore_fail_with_documented_codes_without_side_effects ... ok
+test config::error::tests::exit_codes_are_stable_contract_values ... ok
+test config::error::tests::helpers_set_expected_codes ... ok
+test config::datadir::tests::ensures_and_verifies_layout ... ok
+test config::file::tests::malformed_toml_is_reported_with_source ... ok
+test config::datadir::tests::lock_excludes_second_holder_in_process ... ok
+test config::logging::tests::log_file_path_is_under_data_dir ... ok
+test config::logging::tests::level_from_env_defaults_to_info ... ok
+test config::file::tests::unknown_keys_are_errors_at_every_level ... ok
+test config::file::tests::parses_minimal_and_full_config ... ok
+test config::file::tests::example_config_file_matches_schema ... ok
+test config::provider_overrides::tests::urls_reject_unsafe_forms_and_allow_explicit_loopback ... ok
+test config::password::tests::validation_boundaries ... ok
+test config::provider_overrides::tests::secret_format_is_checked_without_echoing ... ok
+test config::secret::tests::expose_and_char_count_are_explicit ... ok
+test config::secret::tests::redact_text_replaces_known_secrets_only ... ok
+test config::secret::tests::secret_debug_never_prints_plaintext ... ok
+test config::secret::tests::redact_url_query_strips_query_and_fragment ... ok
+test config::password::tests::accepts_restricted_file_and_trims_trailing_newline ... ok
+test config::tests::cidr_parse_and_contains ... ok
+test config::tests::provider_status_reports_missing_without_secret ... ok
+test config::tests::origin_like_validation ... ok
+test config::tests::settings_debug_does_not_leak_api_key ... ok
+test config::password::tests::rejects_missing_empty_and_short_passwords ... ok
+test config::password::tests::rejects_world_readable_file ... ok
+test drafts::aggregate::tests::model_review_requires_loaded_then_confirmation_and_server_stamps_time ... ok
+test drafts::aggregate::tests::direct_pick_confirms_and_model_change_marks_stale ... ok
+test drafts::aggregate::tests::unbound_hotspot_requires_null_anchor_and_teleport_placeholder_is_rejected ... ok
+test drafts::knowledge::tests::completeness_follows_missing_items ... ok
+test drafts::aggregate::tests::entity_edits_cannot_touch_supplier_snapshot_and_text_only_needs_review ... ok
+test drafts::aggregate::tests::confirmed_hotspot_with_stale_sha_is_rejected_and_finite_values_enforced ... ok
+test generation::catalog::tests::catalog_defaults_follow_architecture_section_5_3 ... ok
+test drafts::knowledge::tests::envelope_round_trips_and_tolerates_new_fields ... ok
+test generation::catalog::tests::example_catalog_parses_and_matches_architecture_defaults ... ok
+test http::auth::limiter::tests::success_clears_failures_and_ips_are_isolated ... ok
+test http::auth::limiter::tests::blocks_after_limit_within_window_and_recovers_after_it ... ok
+test generation::catalog::tests::catalog_rejects_unknown_keys_and_bad_money ... ok
+test http::auth::limiter::tests::window_restarts_after_expiry_and_zero_limits_are_clamped ... ok
+test http::auth::password::tests::broken_stored_hash_is_an_error_not_a_match ... ok
+test http::auth::tests::client_ip_resolution_ignores_untrusted_forwarded_headers ... ok
+test http::auth::tests::cookie_parsing_matches_exact_name_only ... ok
+test http::auth::tests::origin_allowed_uses_public_origin_or_same_host ... ok
+test http::auth::tests::origin_missing_passes_but_bad_origin_fails ... ok
+test http::auth::limiter::tests::millisecond_window_is_deterministic_with_injected_clock ... ok
+test http::auth::tests::csrf_check_requires_matching_header ... ok
+test http::auth::tests::session_cookie_attributes_include_secure_only_when_requested ... ok
+test http::auth::tests::tls_config_alone_marks_cookies_secure ... ok
+test http::auth::tokens::tests::constant_time_equality_behaves_like_equality ... ok
+test http::auth::tokens::tests::csrf_is_derived_from_session_token_and_hashed_separately ... ok
+test http::auth::tokens::tests::hashes_are_sha256_hex_and_stable ... ok
+test http::auth::tokens::tests::session_tokens_are_unique_hex_of_expected_length ... ok
+test http::jobs::tests::attempt_dto_redacts_historical_signed_urls ... ok
+test http::error::tests::render_uses_supplied_request_id_and_extra_headers ... ok
+test http::error::tests::not_found_response_uses_contract_error_shape ... ok
+test http::error::tests::conflict_error_exposes_current_revision_only_in_details ... ok
+test http::jobs::tests::stage_dto_keeps_every_needs_input_item_when_one_contains_url ... ok
+test http::jobs::tests::stage_dto_redacts_historical_signed_urls ... ok
+test backup::files::tests::fingerprint_matches_known_sha256_and_crc32 ... ok
+test backup::zip::tests::written_zip_round_trips_through_independent_parser ... ok
+test http::openapi::tests::openapi_declares_auth_settings_and_items_routes ... ok
+test http::openapi::tests::openapi_declares_asset_upload_and_content_routes ... ok
+test http::pagination::tests::cursor_round_trips_and_binds_scope ... ok
+test http::pagination::tests::list_params_reject_unknown_duplicate_and_bad_limit ... ok
+test http::pagination::tests::malformed_cursors_report_the_cursor_field ... ok
+test http::precondition::tests::accepts_quoted_and_bare_revisions ... ok
+test http::precondition::tests::etag_format_matches_contract ... ok
+test http::precondition::tests::missing_header_is_precondition_required_428 ... ok
+test http::precondition::tests::wildcard_weak_list_and_garbage_are_rejected_422 ... ok
+test jobs::control::tests::branches_are_isolated_for_pause_semantics ... ok
+test jobs::recover::tests::refused_batch_result_fact_reverts_to_needs_input_not_success ... ok
+test jobs::tests::manual_clock_and_jitter_are_deterministic ... ok
+test providers::manual_ai::client::tests::client_rejects_invalid_base_urls ... ok
+test providers::manual_ai::client::tests::error_classification_separates_provable_refusals_from_unknowns ... ok
+test providers::manual_ai::client::tests::redacted_errors_never_expose_keys_or_signing_urls ... ok
+test providers::manual_ai::dto::base64_encode::tests::base64_matches_rfc4648_vectors ... ok
+test providers::manual_ai::dto::tests::request_bytes_use_text_format_not_response_format ... ok
+test providers::manual_ai::dto::tests::response_parsing_reads_output_text_and_refusal_separately ... ok
+test providers::manual_ai::prompt::tests::malicious_page_text_is_embedded_verbatim_as_data ... ok
+test providers::manual_ai::prompt::tests::prompt_frames_pages_as_data_and_lists_image_pages_in_order ... ok
+test providers::tests::configured_manual_ai_registers_extract_and_merge_independently ... ok
+test providers::tests::configured_provider_registers_five_tripo_stages ... ok
+test providers::tests::provider_without_model_is_not_configured ... ok
+test providers::tests::unconfigured_provider_registers_no_handlers ... ok
+test providers::tripo::client::tests::client_rejects_invalid_base_urls ... ok
+test providers::tripo::client::tests::envelope_errors_are_mapped_by_status ... ok
+test providers::tripo::client::tests::error_classification_separates_provable_refusals_from_unknowns ... ok
+test providers::tripo::client::tests::opaque_task_id_is_percent_encoded_as_a_single_path_segment ... ok
+test http::openapi::tests::openapi_declares_release_export_route ... ok
+test providers::tripo::client::tests::redacted_errors_never_expose_signing_urls_or_keys ... ok
+test providers::tripo::dto::tests::billing_parses_exactly_and_reports_problems_without_guessing ... ok
+test providers::tripo::dto::tests::envelope_requires_code_and_ignores_unknown_fields ... ok
+test providers::tripo::dto::tests::opaque_strings_are_preserved_verbatim ... ok
+test providers::tripo::dto::tests::submit_request_body_has_no_v2_shape_and_skips_missing_views ... ok
+test providers::tripo::dto::tests::task_data_keeps_raw_status_and_optional_output ... ok
+test providers::tripo::dto::tests::upload_and_submit_data_parse_candidate_fields ... ok
+test providers::tripo::handlers::tests::confirmed_inputs_has_front_and_token_lookup ... ok
+test providers::tripo::handlers::tests::stage_endpoints_match_the_frozen_paths ... ok
+test providers::tripo::handlers::tests::task_usage_keeps_raw_and_normalized_status ... ok
+test providers::tripo::handlers::tests::task_usage_redacts_temporary_urls_to_summary ... ok
+test providers::tripo::handlers::tests::upload_facts_roundtrip_and_tolerate_corruption ... ok
+test providers::tripo::links::tests::bounded_eviction_and_debug_hides_urls ... ok
+test providers::tripo::links::tests::remember_get_and_overwrite ... ok
+test providers::tripo::status::tests::known_statuses_map_and_raw_is_preserved ... ok
+test providers::tripo::status::tests::unknown_statuses_are_kept_verbatim_and_never_guessed ... ok
+test redaction::tests::first_url_like_detects_and_reports ... ok
+test redaction::tests::json_redaction_keep_strings_never_changes_value_type ... ok
+test redaction::tests::json_redaction_keeps_sentence_strings_intact ... ok
+test redaction::tests::json_redaction_replaces_urls_anywhere_and_keeps_other_facts ... ok
+test redaction::tests::redact_text_urls_is_the_unified_idempotent_entry ... ok
+test redaction::tests::redacting_serialized_json_text_keeps_it_parseable ... ok
+test redaction::tests::summary_keeps_host_and_irreversible_digest_only ... ok
+test redaction::tests::serialized_json_text_redaction_parses_or_falls_back_to_text ... ok
+test http::openapi::tests::openapi_declares_t07_item_document_and_photo_routes ... ok
+test redaction::tests::text_redaction_keeps_adjacent_non_url_text ... ok
+test redaction::tests::text_redaction_strips_url_runs_and_counts ... ok
+test redaction::tests::whole_url_detection_requires_exactly_one_url_segment ... ok
+test storage::error::tests::conflict_message_carries_current_revision ... ok
+test storage::error::tests::schema_too_new_message_is_readable_and_actionable ... ok
+test storage::repo::photos::tests::view_parsing_rejects_unknown_values ... ok
+test storage::migrations::tests::embedded_migrations_are_ordered_and_versioned ... ok
+test http::openapi::tests::openapi_error_responses_use_contract_shape ... ok
+test http::openapi::tests::openapi_is_3_1_and_declares_health_paths ... ok
+test http::openapi::tests::openapi_export_is_deterministic ... ok
+test http::auth::password::tests::salt_is_random_per_hash ... ok
+test http::auth::password::tests::hash_is_argon2id_phc_and_verifies ... ok
+
+test result: ok. 179 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.84s
+
+     Running tests/encrypted_secrets_rd.rs (target/debug/deps/encrypted_secrets_rd-784f3a83f2e21d64)
+
+running 10 tests
+test known_key_reflection_detects_direct_and_decoded_json_without_url_echo ... ok
+test aead_random_nonce_authenticated_metadata_and_wrong_key_fail_closed ... ok
+test previously_used_master_disappearing_never_recreates ... ok
+test malformed_json_escaped_response_is_discarded_and_classification_preserved ... ok
+test locked_migration_preserves_revision_and_read_only_check_changes_nothing ... ok
+test external_files_convert_without_overwriting_source_and_reject_plaintext ... ok
+test failed_or_malformed_migration_leaves_original_bytes ... ok
+test lost_master_prevents_keep_clear_restore_from_overwriting_saved_ciphertext ... ok
+test web_save_encrypts_both_and_restart_retains_epoch_at_maximum_size ... ok
+test cli_uses_explicit_master_and_never_accepts_plaintext_as_argument ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.58s
+
+     Running tests/manual_ai_contract.rs (target/debug/deps/manual_ai_contract-92b66557c1a2dff5)
+
+running 20 tests
+test extract_request_uses_responses_text_format_with_strict_schema_and_image_data_url ... ok
+test batch_result_marks_scan_page_evidence_as_derived_and_keeps_server_provenance ... ok
+test evidence_referencing_pages_outside_the_batch_input_is_rejected ... ok
+test batches_outside_the_frozen_plan_are_never_requested ... ok
+test batch_without_persisted_response_is_unknown_and_pauses_the_branch ... ok
+test merge_deduplicates_same_facts_and_keeps_provenance_from_both_batches ... ok
+test provider_registration_is_explicit_and_mutually_exclusive ... ok
+test merge_is_blocked_when_plan_pages_are_not_covered ... ok
+test page_text_instructions_cannot_change_budget_or_trigger_actions ... ok
+test begin_intent_survives_active_writer_contention ... ok
+test merge_reuses_existing_result_without_duplicating_assets ... ok
+test persisted_response_is_advanced_on_recovery_without_repaying ... ok
+test provider_text_signed_url_never_reaches_batch_artifacts ... ok
+test refusal_produces_no_official_knowledge_and_locks_merge ... ok
+test transport_failure_after_request_is_unknown_and_never_resent ... ok
+test step_referencing_unknown_part_is_rejected ... ok
+test retry_after_needs_input_clears_stale_result_before_new_attempt ... ok
+test seven_pages_split_into_batches_cover_all_pages_and_merge_dedups_with_conflicts ... ok
+test rate_limit_is_retryable_and_client_error_is_actionable ... ok
+test incomplete_truncated_malformed_and_schema_violations_never_become_knowledge ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.28s
+
+     Running tests/tripo_contract.rs (target/debug/deps/tripo_contract-ca39da982dc1d743)
+
+running 18 tests
+test default_base_url_is_official_https_and_paths_are_frozen ... ok
+test client_guards_against_non_fixture_targets ... ok
+test http_200_with_nonzero_code_is_business_failure ... ok
+test submit_body_matches_frozen_parameters_without_v2_fields ... ok
+test credits_are_parsed_exactly_and_raw_literal_is_kept ... ok
+test submit_without_task_id_is_unexpected_and_not_provable_success ... ok
+test task_query_encodes_opaque_task_id_as_single_path_segment ... ok
+test http_statuses_are_classified_for_retry_policy ... ok
+test task_query_keeps_raw_status_and_requires_model_for_success ... ok
+test unconfigured_provider_registers_no_handlers_and_never_calls_the_fixture ... ok
+test upload_sends_multipart_with_file_field_and_keeps_token_verbatim ... ok
+test stale_lease_cannot_overwrite_remote_observation ... ok
+test paid_post_disconnect_is_never_resent ... ok
+test upload_reuses_content_hash_cache_on_rerun ... ok
+test fixture_end_to_end_reaches_poll_success_with_billing_settled ... ok
+test unknown_remote_status_is_kept_verbatim_and_waits ... ok
+test poll_transient_failures_retry_without_changing_the_purchase_fact ... ok
+test success_without_model_is_not_success_and_does_not_repurchase ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.60s
+

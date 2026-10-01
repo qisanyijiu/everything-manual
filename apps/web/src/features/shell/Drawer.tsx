@@ -13,8 +13,28 @@ const FOCUSABLE_SELECTOR = [
   "input:not([disabled])",
   "select:not([disabled])",
   "textarea:not([disabled])",
+  "summary",
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
+
+/** Match the browser's visible tab stops, including the first summary of closed details. */
+function isTabStop(element: HTMLElement): boolean {
+  if (
+    element.tabIndex < 0 || element.matches(':disabled, input[type="hidden"]') ||
+    element.closest("[hidden], [inert]") !== null
+  ) return false;
+  const visibility = window.getComputedStyle(element).visibility;
+  if (visibility === "hidden" || visibility === "collapse") return false;
+
+  for (let ancestor: HTMLElement | null = element; ancestor !== null; ancestor = ancestor.parentElement) {
+    if (window.getComputedStyle(ancestor).display === "none") return false;
+    if (ancestor instanceof HTMLDetailsElement && !ancestor.open) {
+      const summary = Array.from(ancestor.children).find((child) => child.tagName === "SUMMARY");
+      if (!summary?.contains(element)) return false;
+    }
+  }
+  return true;
+}
 
 export interface DrawerProps {
   readonly open: boolean;
@@ -39,9 +59,7 @@ export function Drawer({ open, onClose, title, children, returnFocus }: DrawerPr
     const activeBeforeOpen = document.activeElement;
 
     const focusable = (): HTMLElement[] =>
-      Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-        (element) => element.tabIndex !== -1,
-      );
+      Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(isTabStop);
 
     const first = focusable()[0];
     (first ?? panel).focus();

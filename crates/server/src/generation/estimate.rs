@@ -54,12 +54,24 @@ pub async fn create_estimate(
     request: &EstimateRequest,
     now: Timestamp,
 ) -> Result<QuoteRecord, GenerationError> {
+    create_estimate_with_revision(settings, conn, item_id, request, now, None).await
+}
+
+pub async fn create_estimate_with_revision(
+    settings: &Settings,
+    conn: &mut SqliteConnection,
+    item_id: &str,
+    request: &EstimateRequest,
+    now: Timestamp,
+    config_revision: Option<&str>,
+) -> Result<QuoteRecord, GenerationError> {
     // 1) 字段级形状（缺字段一次性列全，不给库层猜）。
     let (preparation_id, photo_ids, model_preset) = validate_estimate_request(request)?;
 
     // 2) 供应商与价格配置（缺 → 409，明确缺项；不回落 mock）。
     let pricing = resolve_pricing(settings, &model_preset)?;
-    let provider_config = pricing.provider_config.clone();
+    let mut provider_config = pricing.provider_config.clone();
+    provider_config.config_revision = config_revision.map(str::to_owned);
 
     // 3) 物品与准备记录（归属不符与不存在同为 404）。
     let item = items::get(conn, item_id)
@@ -517,6 +529,7 @@ fn resolve_pricing(
     };
 
     let provider_config = ProviderConfigDto {
+        config_revision: None,
         tripo: TripoParametersDto::new(&preset.key, &preset.parameters),
         manual_ai: ManualAiConfigDto {
             model: manual_ai_model.to_owned(),

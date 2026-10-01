@@ -12,6 +12,9 @@
 6. [决策记录](decisions.md)：代码不能表达的约束、取舍和变更原因。
 7. [当前初始需求](requirements/web-mvp/request.md)：由 PM 在开始工作时扩展为明细 PRD。
 8. [当前进度与实现总结](requirements/web-mvp/progress-summary.md)：切片账、已实现内容、缺陷闭环、未完成项与证据索引（暂停交接快照）。
+9. [交互体验改进方案](../docs/interaction-experience-improvement-plan.md)：体验评审、优先级、实施切片与验收标准；[切片 A](requirements/interaction-a/prd.md) 于 2026-09-20 完成并通过 [独立 QA](requirements/interaction-a/qa-report.md)，B/C/D 待实施。
+10. [网页 API 配置](../docs/api-settings.md)：Tripo 与说明书 AI 的地址、模型、密钥设置已实现，保存后重启服务生效；2026-09-22 全部 15 项 AC 通过 [独立 QA](requirements/api-settings/qa-report.md)。该请求替代旧版仅只读、禁止网页输入密钥的范围限制，未改变 T22/T23 的验收状态。
+11. [API 密钥加密存储](requirements/encrypted-secrets/prd.md)：2026-10-02 已交付并更新本地预览；网页与部署密钥文件认证加密、独立主密钥、安全迁移及供应商回显保护，[全部 12 AC 独立验收通过](requirements/encrypted-secrets/qa-report.md)，状态见 [协调记录](requirements/encrypted-secrets/state.yaml)。
 
 ## llmdoc 记录规则
 

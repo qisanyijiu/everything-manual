@@ -59,6 +59,8 @@ use super::{
         auth::session,
         auth::logout,
         settings::status,
+        settings::get_providers,
+        settings::put_providers,
         items::list_items,
         items::create_item,
         items::get_item,

@@ -1,0 +1,19 @@
+{
+  "checkReadOnly": true,
+  "sameRevision": true,
+  "pending": false,
+  "preMigrationQuoteConsumed": true,
+  "providerChecks": {
+    "tripoRequests": 4,
+    "manualRequests": 1,
+    "authMatches": true,
+    "modelMatches": true,
+    "unknownRequests": 0
+  },
+  "scanned": {
+    "filesScanned": 14,
+    "directMatches": 0,
+    "jsonEscapedMatches": 0,
+    "symlinksSkipped": 0
+  }
+}

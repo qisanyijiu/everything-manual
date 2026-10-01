@@ -1,0 +1,7 @@
+25fe5ea412fa13c6885869541711d611f407599722412f4a4512974b9bb4100a  apps/web/src/features/library/ItemFormPage.tsx
+dae647743128800fc28c3e38d3a1ce015d57d3d581ce7df68d5c03dfd6ec212d  apps/web/src/features/import/ConfirmStepPage.tsx
+5a211a62f240fc46fdeeb40033ef6f5bb13c9d916a48a0b10f1da9a200cfba13  apps/web/src/features/shell/PageLayout.tsx
+be312d14ce0d11b98ce8084f4657f0c4d2f119304f94226325f2a837a68982f9  apps/web/src/features/shell/Drawer.tsx
+dd37bbed4c719ddc3c39879eabc93af09b92b0edadf483ffda462996359f96a5  apps/web/src/theme.css
+65d94ece54097d2459bd13e2f9229dcdf218469e72d6f94d43d0bbc29337e9c5  apps/web/tests/e2e/interaction-a-qa.spec.ts
+4f828245bfe9979ac5881d52822a4e761b731963b5d51dea3cf81bd0adc2e78f  apps/web/src/features/shell/interaction-a-qa.test.tsx

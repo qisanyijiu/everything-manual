@@ -423,6 +423,32 @@ pub async fn retry_stage(
     body_hash: &str,
     now: Timestamp,
 ) -> Result<RetryReport, JobControlError> {
+    retry_stage_with_config(
+        pool,
+        admin_id,
+        job_id,
+        expected_revision,
+        stage_id,
+        idempotency_key,
+        body_hash,
+        now,
+        None,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn retry_stage_with_config(
+    pool: &SqlitePool,
+    admin_id: &str,
+    job_id: &str,
+    expected_revision: i64,
+    stage_id: &str,
+    idempotency_key: &str,
+    body_hash: &str,
+    now: Timestamp,
+    config: Option<&crate::config::provider_overrides::ProviderConfigStore>,
+) -> Result<RetryReport, JobControlError> {
     // 1) 幂等键与重放检查（真正的并发竞争由唯一键兜底）。
     let key = validate_idempotency_key(idempotency_key)?;
     let mut conn = pool.acquire().await?;
@@ -438,6 +464,19 @@ pub async fn retry_stage(
         return replay_retry(&mut conn, record, body_hash, now).await;
     }
 
+    if let Some(config) = config {
+        config
+            .ensure_job(&mut conn, job_id)
+            .await
+            .map_err(|error| {
+                let reason = if config.pending() {
+                    "providerConfigPending"
+                } else {
+                    "providerConfigChanged"
+                };
+                JobControlError::not_allowed(reason, error.message, json!({}))
+            })?;
+    }
     // 2) 父 job 前置：存在、revision、未取消。
     let job = require_job(&mut conn, job_id).await?;
     if job.revision != expected_revision {

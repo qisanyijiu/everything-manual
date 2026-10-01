@@ -628,6 +628,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_providers"];
+        put: operations["put_providers"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings/status": {
         parameters: {
             query?: never;
@@ -798,6 +814,8 @@ export interface components {
          * @enum {string}
          */
         CheckStatus: "ok" | "fail";
+        /** @enum {string} */
+        ConfigSource: "web" | "deployment" | "default" | "unconfigured";
         /** @description 一次云端发送确认（写入 `audit_events`，随报价冻结）。 */
         ConfirmationDto: {
             confirmedAt: string;
@@ -1203,6 +1221,8 @@ export interface components {
             status: string;
             updatedAt: string;
         };
+        /** @enum {string} */
+        KeyEditAction: "keep" | "replace" | "clear";
         /** @description 生效限制（字节数与页数；均为公开参数，不含路径与密钥）。 */
         LimitsStatus: {
             /** Format: int64 */
@@ -1478,14 +1498,53 @@ export interface components {
         };
         /** @description 非密钥的供应商配置快照。 */
         ProviderConfigDto: {
+            /** @description 非秘密配置代次；历史报价缺省为部署配置，网页变更后不可复用。 */
+            configRevision?: string | null;
             manualAi: components["schemas"]["ManualAiConfigDto"];
             tripo: components["schemas"]["TripoParametersDto"];
         };
+        ProviderEdit: {
+            action: components["schemas"]["ProviderEditAction"];
+            apiKey?: string | null;
+            baseUrl?: string | null;
+            keyAction?: null | components["schemas"]["KeyEditAction"];
+            model?: string | null;
+        };
+        /** @enum {string} */
+        ProviderEditAction: "update" | "restore";
         /**
          * @description 供应商维度（线上取值 `tripo` / `manual_ai`）。
          * @enum {string}
          */
         ProviderKeyDto: "tripo" | "manual_ai";
+        ProviderSettingsData: {
+            active: components["schemas"]["ProviderViews"];
+            pending: boolean;
+            /** @description 不透明的已保存修订；保存时原样回传。 */
+            revision: string;
+            saved: components["schemas"]["ProviderViews"];
+        };
+        ProviderSettingsResponse: {
+            data: components["schemas"]["ProviderSettingsData"];
+        };
+        ProviderSettingsWrite: {
+            manualAi: components["schemas"]["ProviderEdit"];
+            revision: string;
+            tripo: components["schemas"]["ProviderEdit"];
+        };
+        /** @description 只包含可公开配置及来源，不含密钥字符、摘要或路径。 */
+        ProviderView: {
+            baseUrl: string;
+            baseUrlSource: components["schemas"]["ConfigSource"];
+            keyConfigured: boolean;
+            keySource: components["schemas"]["ConfigSource"];
+            model?: string | null;
+            modelSource: components["schemas"]["ConfigSource"];
+        };
+        ProviderViews: {
+            manualAi: components["schemas"]["ProviderView"];
+            tripo: components["schemas"]["ProviderView"];
+        };
         ProvidersConfigured: {
             /** @description 说明书 AI 是否已配置。 */
             manualAi: boolean;
@@ -1732,6 +1791,8 @@ export interface components {
             limits: components["schemas"]["LimitsStatus"];
             /** @description 价格目录状态（T11；只说配置与否与版本，不含路径与内容）。 */
             priceCatalog: components["schemas"]["PriceCatalogStatus"];
+            /** @description 额外的配置切换门禁；原有字段仍表示当前运行配置。 */
+            providerConfigPending: boolean;
             /** @description 各供应商是否具备发起真实请求的全部配置（密钥 + 模型）。 */
             providersConfigured: components["schemas"]["ProvidersConfigured"];
         };
@@ -3884,6 +3945,104 @@ export interface operations {
             };
             /** @description 发布版本不存在 */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    get_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 当前与已保存供应商配置；无密钥，no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSettingsResponse"];
+                };
+            };
+            /** @description 未登录 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    put_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderSettingsWrite"];
+            };
+        };
+        responses: {
+            /** @description 整体保存；重启生效，无任何供应商请求 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSettingsResponse"];
+                };
+            };
+            /** @description 未登录 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description CSRF/Origin 校验失败 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 配置修订冲突 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 字段无效或尚有未决任务 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 持久化失败 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

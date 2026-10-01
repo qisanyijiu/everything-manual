@@ -1,0 +1,13 @@
+
+> everything-manual-web@0.1.0 test
+> vitest run --run src/features/settings/ProviderSettingsForm.test.tsx src/features/import/ConfirmStepPage.test.tsx
+
+
+ RUN  v5.0.0 /Users/qsyj/Code/rust/everything-manual/apps/web
+
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  00:00:49
+   Duration  3.13s (tests 45%, environment 27%, transform 18%, setup 5%, import 4%)
+

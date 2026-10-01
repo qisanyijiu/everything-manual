@@ -202,16 +202,8 @@ impl TripoClient {
         api_key: SecretString,
         timeouts: TripoTimeouts,
     ) -> Result<Self, String> {
-        let base_url = base_url.trim().trim_end_matches('/');
-        if base_url.is_empty() {
-            return Err("base_url 为空".to_owned());
-        }
-        if !(base_url.starts_with("http://") || base_url.starts_with("https://")) {
-            return Err(format!("base_url 必须是 http(s):// 地址：{base_url}"));
-        }
-        if base_url.contains(['?', '#']) || base_url.contains(char::is_whitespace) {
-            return Err(format!("base_url 不允许包含空白、查询串或片段：{base_url}"));
-        }
+        let base_url =
+            crate::config::validate_origin_like("base_url", base_url).map_err(|e| e.message)?;
         let http = reqwest::Client::builder()
             .connect_timeout(timeouts.connect)
             .timeout(timeouts.request)
@@ -304,7 +296,8 @@ impl TripoClient {
             .get(RETRY_AFTER)
             .and_then(|value| value.to_str().ok())
             .and_then(|value| value.trim().parse::<u64>().ok());
-        let body = read_body_capped(response, MAX_RESPONSE_BYTES).await?;
+        let body = zeroize::Zeroizing::new(read_body_capped(response, MAX_RESPONSE_BYTES).await?);
+        let discard_body = crate::config::secret::response_requires_discard(&body, &self.api_key);
 
         if (300..400).contains(&status) {
             return Err(TripoError::Redirected { status });
@@ -319,15 +312,41 @@ impl TripoClient {
         }
         if !(200..300).contains(&status) {
             // 4xx：尽量读取业务信封的 message/suggestion（脱敏）；不保留原始响应体。
-            let (code, message, suggestion) = match parse_envelope(&body) {
-                Ok(envelope) => (Some(envelope.code), envelope.message, envelope.suggestion),
-                Err(_) => (None, bounded_hint(&body), None),
+            let (code, message, suggestion) = if discard_body {
+                (
+                    serde_json::from_slice::<serde_json::Value>(&body)
+                        .ok()
+                        .and_then(|v| v.get("code").and_then(serde_json::Value::as_i64)),
+                    Some("供应商响应包含敏感凭据或无法安全解析，内容已丢弃".into()),
+                    None,
+                )
+            } else {
+                match parse_envelope(&body) {
+                    Ok(envelope) => (Some(envelope.code), envelope.message, envelope.suggestion),
+                    Err(_) => (None, bounded_hint(&body), None),
+                }
             };
             return Err(TripoError::Business {
                 http_status: status,
                 code,
                 message,
                 suggestion,
+            });
+        }
+        if discard_body {
+            let code = serde_json::from_slice::<serde_json::Value>(&body)
+                .ok()
+                .and_then(|v| v.get("code").and_then(serde_json::Value::as_i64));
+            return Err(match code {
+                Some(code) if code != 0 => TripoError::Business {
+                    http_status: status,
+                    code: Some(code),
+                    message: Some("供应商响应包含敏感凭据或无法安全解析，内容已丢弃".into()),
+                    suggestion: None,
+                },
+                _ => TripoError::Unexpected {
+                    detail: "供应商响应包含敏感凭据或无法安全解析，内容已丢弃".into(),
+                },
             });
         }
         let envelope = parse_envelope(&body).map_err(|detail| TripoError::Unexpected { detail })?;

@@ -97,13 +97,12 @@ test.describe("资料库与新建向导（T16）", () => {
     await page.getByLabel("名称").fill("T16 联调相机");
     await page.getByLabel("准确型号").fill("X100V-T16");
     await page.getByRole("button", { name: "创建并继续" }).click();
-    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
-    const itemId = new URL(page.url()).pathname.split("/").pop() ?? "";
+    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}\/import\/document$/);
+    const itemId = new URL(page.url()).pathname.split("/")[2] ?? "";
     expect(itemId).not.toBe("");
     await captureTo("t16-rd", page, "01-item-created");
 
     // --- 第 2 步：说明书（上传 PDF + 绑定 document） ---------------------------
-    await page.getByRole("link", { name: "绑定说明书原件（向导第 2 步）" }).click();
     await expect(page.getByRole("heading", { name: "说明书原件" })).toBeVisible();
     await page.getByLabel("选择 PDF 文件").setInputFiles(fixturePath("sample-manual-text.pdf"));
     await expect(page.getByText("待绑定文件：sample-manual-text.pdf", { exact: false })).toBeVisible();
@@ -432,17 +431,16 @@ test.describe("资料库与新建向导（T16）", () => {
       })
       .toBe(true);
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
-    const itemId = new URL(page.url()).pathname.split("/").pop() ?? "";
+    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}\/import\/document$/);
     await captureTo("t16-rd", page, "14-narrow-keyboard-create");
 
     // 窄屏抽屉：面板触发按钮键盘可达，打开后焦点进入抽屉，Esc 关闭并归还焦点。
-    await openStep(page, itemId, "confirm", "预算与隐私确认");
-    const trigger = page.getByRole("button", { name: "将发送的资料与确认" });
+    await page.goto("/");
+    const trigger = page.getByRole("button", { name: "资料库摘要" });
     await expect(trigger).toBeVisible();
     await trigger.focus();
     await page.keyboard.press("Enter");
-    const drawer = page.getByRole("dialog", { name: "将发送的资料与确认" });
+    const drawer = page.getByRole("dialog", { name: "资料库摘要" });
     await expect(drawer).toBeVisible();
     const focusInside = await drawer.evaluate((node) => node.contains(document.activeElement));
     expect(focusInside, "抽屉打开后焦点应在抽屉内").toBe(true);

@@ -4,8 +4,8 @@
 //! 管理员运行合同、architecture.md §6/§7。
 //!
 //! 关键规则：
-//! - 配置优先级：**CLI 非密钥项 > 环境变量 > TOML > 默认**；未知配置键报错，不静默忽略；
-//! - 密钥不进配置文件：`api_key_env`（环境变量名）或 `api_key_file`（受限文件，0600）二选一；
+//! - 部署配置优先级：CLI 非密钥项 > 环境变量 > TOML > 默认；网页供应商显式覆盖优先于部署值。
+//! - TOML 不存密钥；网页替换密钥仅进独立 0600 私有覆盖文件（provider_overrides），重启生效。
 //! - 缺密钥不影响启动（可浏览已有资料），但配置状态如实标注“未配置”，**不存在 mock 回退**
 //!   （T02 尚没有任何 Provider 实现，这是构造性保证；T12/T14 接入时必须保持显式互斥）；
 //! - 非 loopback 监听必须配置内置 TLS 或可信反向代理，否则拒绝启动（§7）；
@@ -14,10 +14,12 @@
 pub mod cli;
 pub mod commands;
 pub mod datadir;
+pub mod encrypted_secrets;
 pub mod error;
 pub mod file;
 pub mod logging;
 pub mod password;
+pub mod provider_overrides;
 pub mod secret;
 
 pub use error::{CliError, ExitCode};
@@ -492,6 +494,8 @@ impl Settings {
         let concurrency = resolve_concurrency(&config)?;
         let jobs = resolve_jobs(&config)?;
         let session = resolve_session(&config)?;
+        let _secrets = encrypted_secrets::Secrets::from_environment()
+            .map_err(|e| CliError::config(e.to_string()))?;
         let providers = resolve_providers(&cwd, &config)?;
         let download = resolve_download(&config)?;
 
@@ -706,9 +710,18 @@ fn resolve_provider(
             None => (None, None),
         },
         (None, Some(path)) => {
-            let secret = password::read_restricted_file(&path, "密钥文件").map_err(|error| {
-                CliError::config(format!("{key}.api_key_file 不可用：{}", error.message))
-            })?;
+            let secret = encrypted_secrets::Secrets::from_environment()
+                .and_then(|secrets| {
+                    secrets.read_api_key(
+                        &path,
+                        if name == "tripo" {
+                            "tripo"
+                        } else {
+                            "manual-ai"
+                        },
+                    )
+                })
+                .map_err(|e| CliError::config(e.to_string()))?;
             (Some(secret), Some(format!("受限文件 {}", path.display())))
         }
         _ => (None, None),
@@ -962,23 +975,19 @@ fn resolve_jobs(config: &FileConfig) -> Result<Jobs, CliError> {
 }
 
 /// 校验并规范化 `http(s)://host[:port][/path]` 形式的值（拒绝查询串与空白）。
-fn validate_origin_like(key: &str, value: &str) -> Result<String, CliError> {
+pub(crate) fn validate_origin_like(key: &str, value: &str) -> Result<String, CliError> {
     let value = value.trim();
-    let rest = value
-        .strip_prefix("https://")
-        .or_else(|| value.strip_prefix("http://"))
-        .ok_or_else(|| {
-            CliError::config(format!(
-                "{key} 必须是 http:// 或 https:// 开头的地址：{value}"
-            ))
-        })?;
-    let host = rest.split(['/', '?', '#']).next().unwrap_or_default();
-    if host.is_empty() {
-        return Err(CliError::config(format!("{key} 缺少主机名：{value}")));
-    }
-    if value.contains(char::is_whitespace) || value.contains('?') || value.contains('#') {
+    let safe = reqwest::Url::parse(value).ok().filter(|url| {
+        matches!(url.scheme(), "http" | "https")
+            && url.host_str().is_some()
+            && url.username().is_empty()
+            && url.password().is_none()
+            && url.query().is_none()
+            && url.fragment().is_none()
+    });
+    if safe.is_none() || value.chars().any(|c| c.is_whitespace() || c.is_control()) {
         return Err(CliError::config(format!(
-            "{key} 不允许包含空白、查询串或片段：{value}"
+            "{key} 必须是包含主机名的 HTTP(S) 地址，且不得含用户名、密码、空白、查询串或片段"
         )));
     }
     Ok(value.trim_end_matches('/').to_owned())

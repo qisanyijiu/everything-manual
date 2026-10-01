@@ -1,0 +1,146 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+     Running tests/api_settings_rd.rs (target/debug/deps/api_settings_rd-ed61fc3adbaf3074)
+
+running 4 tests
+test loaded_bad_files_fail_closed_and_deployment_url_credentials_are_never_readable ... ok
+test authentication_csrf_and_secret_structure_errors_do_not_echo ... ok
+test validation_and_disk_failure_keep_both_providers_and_revision_unchanged ... ok
+test keep_clear_restore_persist_without_copying_deployment_secret_and_revert_keeps_epoch ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.67s
+
+     Running tests/config_cli.rs (target/debug/deps/config_cli-028a7df6dc8f8a48)
+
+running 12 tests
+test init_requires_password_source_and_rejects_argv_password ... ok
+test example_config_is_accepted_and_no_key_material_inside ... ok
+test init_creates_structure_and_never_leaks_password ... ok
+test backup_and_restore_smoke_with_stable_exit_codes ... ok
+test usage_errors_are_readable_and_nonzero ... ok
+test logs_never_contain_secrets_or_query_strings ... ok
+test non_loopback_listen_requires_tls_or_trusted_proxy ... ok
+test missing_provider_keys_start_without_mock_fallback ... ok
+test config_precedence_cli_env_toml_default ... ok
+test unknown_config_keys_are_rejected_at_any_level ... ok
+test check_and_serve_startup_make_no_external_http_requests ... ok
+test second_process_on_same_data_dir_fails_fast ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.72s
+
+     Running tests/generation_requests.rs (target/debug/deps/generation_requests-70926b462c9b2244)
+
+running 27 tests
+test decimal_boundary_prices_round_up_never_down ... ok
+test estimate_lists_specific_precondition_gaps ... ok
+test budget_below_server_upper_bound_is_rejected_and_frontend_fees_are_not_accepted ... ok
+test api_settings_save_and_job_creation_share_one_admission_boundary ... ok
+test api_settings_epoch_invalidates_quotes_and_failed_retry_but_preserves_job_replay ... ok
+test cross_item_references_and_unknown_ids_are_rejected_as_404 ... ok
+test concurrent_submissions_never_create_duplicate_jobs_or_reservations ... ok
+test estimate_rejects_unsupported_preset_and_catalog_without_model_price ... ok
+test estimate_without_price_catalog_returns_409_price_catalog_missing ... ok
+test estimate_without_provider_configuration_returns_409 ... ok
+test estimate_returns_itemized_amounts_and_writes_no_cost_or_attempt_records ... ok
+test expired_quote_is_rejected_and_requires_a_new_estimate ... ok
+test get_estimate_reflects_confirmation_and_consumption_from_database ... ok
+test generation_routes_require_authentication_and_csrf ... ok
+test get_expired_quote_reports_status_facts_but_stays_unusable ... ok
+test interrupted_creation_transaction_leaves_no_half_reservation ... ok
+test price_version_change_invalidates_the_quote ... ok
+test job_creation_builds_the_stage_dag_with_batches ... ok
+test missing_idempotency_key_is_rejected ... ok
+test same_key_same_body_replayed_twenty_times_creates_single_job_and_reservation ... ok
+test multi_batch_estimate_and_stage_dependencies_cover_all_batches ... ok
+test ledger_settlement_release_and_unknown_keep_reservations_intact ... ok
+test input_changes_after_estimate_are_rejected_without_creating_jobs ... ok
+test same_key_with_different_body_returns_409_and_keeps_single_job ... ok
+test snapshot_freezes_photo_ids_hashes_and_provider_config_without_secrets ... ok
+test unconfirmed_submission_is_rejected_and_confirmation_is_audited_once ... ok
+test settings_status_reports_price_catalog_and_generation_capability ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.55s
+
+     Running tests/jobs_recovery.rs (target/debug/deps/jobs_recovery-e7e0af04fcd64146)
+
+running 25 tests
+test child_worker_entry ... ok
+test executor_config_defaults_and_validation ... ok
+test failpoints_are_available_only_in_test_builds ... ok
+test insufficient_inputs_go_to_needs_input_with_actionable_items ... ok
+test cancel_marks_only_unsubmitted_stages_and_keeps_submitted_or_unknown ... ok
+test expired_worker_receipt_is_saved_but_cannot_advance_or_unlock ... ok
+test concurrent_claims_yield_exactly_one_winner_with_new_epoch ... ok
+test dag_persists_batches_and_only_unlocks_satisfied_dependencies ... ok
+test failed_branch_does_not_block_independent_branch_and_job_status_is_aggregated ... ok
+test persisted_result_without_checkpoint_is_advanced_on_recovery_without_repaying ... ok
+test remote_task_id_conflict_is_recorded_never_overwrites_and_pauses_branch ... ok
+test poll_pace_ramps_from_three_to_fifteen_seconds ... ok
+test manual_batch_without_persisted_response_becomes_unknown_and_sync_branch_has_no_attach ... ok
+test paid_post_without_response_becomes_submission_unknown_and_never_repurchases ... ok
+test remote_wait_budget_turns_poll_into_needs_input_and_keeps_task_id ... ok
+test concurrency_limits_allow_two_manual_batches_and_two_remote_stages ... ok
+test retry_after_is_respected_and_capped ... ok
+test failpoint_breakpoints_recover_without_duplicate_remote_requests ... ok
+test transient_failures_back_off_2_4_8_16_32_then_fail_and_respect_retry_after ... ok
+test wait_budget_covers_downstream_remote_stages_via_submit_anchor ... ok
+test wait_budget_anchor_does_not_leak_across_jobs ... ok
+test wait_budget_triggers_on_real_chain_shape_without_poll_attempt ... ok
+test lease_renewal_keeps_stage_alive_and_unregistered_handler_defers_without_retries ... ok
+test sigkill_during_paid_post_makes_submission_unknown_without_repurchasing ... ok
+test sigkill_during_poll_resumes_with_known_remote_task_and_never_resubmits ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.19s
+
+     Running tests/manual_ai_contract.rs (target/debug/deps/manual_ai_contract-92b66557c1a2dff5)
+
+running 20 tests
+test extract_request_uses_responses_text_format_with_strict_schema_and_image_data_url ... ok
+test batch_result_marks_scan_page_evidence_as_derived_and_keeps_server_provenance ... ok
+test evidence_referencing_pages_outside_the_batch_input_is_rejected ... ok
+test batches_outside_the_frozen_plan_are_never_requested ... ok
+test batch_without_persisted_response_is_unknown_and_pauses_the_branch ... ok
+test merge_deduplicates_same_facts_and_keeps_provenance_from_both_batches ... ok
+test begin_intent_survives_active_writer_contention ... ok
+test provider_registration_is_explicit_and_mutually_exclusive ... ok
+test persisted_response_is_advanced_on_recovery_without_repaying ... ok
+test merge_is_blocked_when_plan_pages_are_not_covered ... ok
+test provider_text_signed_url_never_reaches_batch_artifacts ... ok
+test page_text_instructions_cannot_change_budget_or_trigger_actions ... ok
+test merge_reuses_existing_result_without_duplicating_assets ... ok
+test refusal_produces_no_official_knowledge_and_locks_merge ... ok
+test transport_failure_after_request_is_unknown_and_never_resent ... ok
+test step_referencing_unknown_part_is_rejected ... ok
+test rate_limit_is_retryable_and_client_error_is_actionable ... ok
+test retry_after_needs_input_clears_stale_result_before_new_attempt ... ok
+test seven_pages_split_into_batches_cover_all_pages_and_merge_dedups_with_conflicts ... ok
+test incomplete_truncated_malformed_and_schema_violations_never_become_knowledge ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.50s
+
+     Running tests/tripo_contract.rs (target/debug/deps/tripo_contract-ca39da982dc1d743)
+
+running 18 tests
+test default_base_url_is_official_https_and_paths_are_frozen ... ok
+test client_guards_against_non_fixture_targets ... ok
+test credits_are_parsed_exactly_and_raw_literal_is_kept ... ok
+test http_200_with_nonzero_code_is_business_failure ... ok
+test submit_body_matches_frozen_parameters_without_v2_fields ... ok
+test http_statuses_are_classified_for_retry_policy ... ok
+test submit_without_task_id_is_unexpected_and_not_provable_success ... ok
+test task_query_encodes_opaque_task_id_as_single_path_segment ... ok
+test task_query_keeps_raw_status_and_requires_model_for_success ... ok
+test unconfigured_provider_registers_no_handlers_and_never_calls_the_fixture ... ok
+test upload_sends_multipart_with_file_field_and_keeps_token_verbatim ... ok
+test fixture_end_to_end_reaches_poll_success_with_billing_settled ... ok
+test stale_lease_cannot_overwrite_remote_observation ... ok
+test unknown_remote_status_is_kept_verbatim_and_waits ... ok
+test upload_reuses_content_hash_cache_on_rerun ... ok
+test poll_transient_failures_retry_without_changing_the_purchase_fact ... ok
+test success_without_model_is_not_success_and_does_not_repurchase ... ok
+test paid_post_disconnect_is_never_resent ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.71s
+

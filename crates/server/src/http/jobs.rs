@@ -104,6 +104,7 @@ pub async fn create_job(
     headers: HeaderMap,
     JsonBody(body): JsonBody<JobCreateRequest>,
 ) -> Response {
+    let config = state.provider_config().read().await;
     let idempotency_key = headers
         .get(IDEMPOTENCY_KEY_HEADER)
         .and_then(|value| value.to_str().ok())
@@ -113,7 +114,7 @@ pub async fn create_job(
         Ok(connection) => connection,
         Err(error) => return error.render(&request_id),
     };
-    match jobs_service::create_job(
+    match jobs_service::create_job_with_config(
         state.settings(),
         &mut connection,
         &item_id,
@@ -121,6 +122,7 @@ pub async fn create_job(
         idempotency_key,
         &session.admin_id,
         Timestamp::now(),
+        Some(&config),
     )
     .await
     {
@@ -276,6 +278,7 @@ pub async fn get_job(
     request_id: RequestId,
     Path(job_id): Path<String>,
 ) -> Response {
+    let config = state.provider_config().read().await;
     let mut connection = match acquire(&state).await {
         Ok(connection) => connection,
         Err(error) => return error.render(&request_id),
@@ -287,7 +290,7 @@ pub async fn get_job(
         }
         Err(error) => return ApiError::from_storage(error).render(&request_id),
     };
-    match load_job_detail(&mut connection, &job).await {
+    match load_job_detail(&mut connection, &job, &config).await {
         Ok(detail) => job_response(detail, StatusCode::OK),
         Err(error) => error.render(&request_id),
     }
@@ -327,6 +330,7 @@ pub async fn cancel_job(
     Path(job_id): Path<String>,
     headers: HeaderMap,
 ) -> Response {
+    let config = state.provider_config().read().await;
     let expected_revision = match parse_if_match(&headers) {
         Ok(revision) => revision,
         Err(error) => return error.render(&request_id),
@@ -354,7 +358,7 @@ pub async fn cancel_job(
         Ok(connection) => connection,
         Err(error) => return error.render(&request_id),
     };
-    match load_job_detail(&mut connection, &report.job).await {
+    match load_job_detail(&mut connection, &report.job, &config).await {
         Ok(detail) => Json(CancelResponse {
             data: CancelResultDto {
                 job: detail,
@@ -412,6 +416,7 @@ pub async fn retry_job(
     headers: HeaderMap,
     JsonBody(body): JsonBody<RetryRequest>,
 ) -> Response {
+    let config = state.provider_config().read().await;
     let expected_revision = match parse_if_match(&headers) {
         Ok(revision) => revision,
         Err(error) => return error.render(&request_id),
@@ -441,7 +446,7 @@ pub async fn retry_job(
             .as_bytes(),
     );
 
-    let report = match control_service::retry_stage(
+    let report = match control_service::retry_stage_with_config(
         state.database().pool(),
         &session.admin_id,
         &job_id,
@@ -450,6 +455,7 @@ pub async fn retry_job(
         &idempotency_key,
         &body_hash,
         Timestamp::now(),
+        Some(&config),
     )
     .await
     {
@@ -460,7 +466,7 @@ pub async fn retry_job(
         Ok(connection) => connection,
         Err(error) => return error.render(&request_id),
     };
-    let detail = match load_job_detail(&mut connection, &report.job).await {
+    let detail = match load_job_detail(&mut connection, &report.job, &config).await {
         Ok(detail) => detail,
         Err(error) => return error.render(&request_id),
     };
@@ -525,6 +531,15 @@ pub async fn reconcile_job(
     headers: HeaderMap,
     JsonBody(body): JsonBody<ReconcileRequestDto>,
 ) -> Response {
+    let config = state.provider_config().read().await;
+    let mut config_connection = match acquire(&state).await {
+        Ok(c) => c,
+        Err(e) => return e.render(&request_id),
+    };
+    if let Err(error) = config.ensure_job(&mut config_connection, &job_id).await {
+        return error.render(&request_id);
+    }
+    drop(config_connection);
     let expected_revision = match parse_if_match(&headers) {
         Ok(revision) => revision,
         Err(error) => return error.render(&request_id),
@@ -598,7 +613,7 @@ pub async fn reconcile_job(
         Ok(connection) => connection,
         Err(error) => return error.render(&request_id),
     };
-    match load_job_detail(&mut connection, &report.job).await {
+    match load_job_detail(&mut connection, &report.job, &config).await {
         Ok(detail) => Json(ReconcileResponse {
             data: ReconcileResultDto {
                 job: detail,
@@ -694,7 +709,12 @@ fn stage_summary(statuses: impl Iterator<Item = JobStatus>) -> JobStageSummaryDt
 }
 
 /// 详情（阶段、尝试、费用、草稿）。
-async fn load_job_detail(conn: &mut SqliteConnection, job: &Job) -> Result<JobDetailDto, ApiError> {
+async fn load_job_detail(
+    conn: &mut SqliteConnection,
+    job: &Job,
+    config: &crate::config::provider_overrides::ProviderConfigStore,
+) -> Result<JobDetailDto, ApiError> {
+    let config_error = config.ensure_job(conn, &job.id).await.err();
     let item = repo::items::get(conn, &job.item_id)
         .await
         .map_err(ApiError::from_storage)?
@@ -724,7 +744,20 @@ async fn load_job_detail(conn: &mut SqliteConnection, job: &Job) -> Result<JobDe
         revision: job.revision,
         stages: stages
             .iter()
-            .map(|stage| stage_dto(stage, job.status, &stages, &reservations))
+            .map(|stage| {
+                let mut dto = stage_dto(stage, job.status, &stages, &reservations);
+                if let Some(error) = &config_error {
+                    dto.retry.allowed = false;
+                    dto.retry.reason = error
+                        .details
+                        .as_ref()
+                        .and_then(|d| d.get("reason"))
+                        .and_then(serde_json::Value::as_str)
+                        .map(str::to_owned);
+                    dto.retry.message = Some(error.message.clone());
+                }
+                dto
+            })
             .collect(),
         attempts: attempts.iter().map(attempt_dto).collect(),
         reservations: reservations

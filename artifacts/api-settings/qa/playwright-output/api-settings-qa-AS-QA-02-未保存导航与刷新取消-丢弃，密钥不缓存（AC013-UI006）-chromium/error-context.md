@@ -1,0 +1,227 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: api-settings-qa.spec.ts >> AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/UI006）
+- Location: tests/e2e/api-settings-qa.spec.ts:100:1
+
+# Error details
+
+```
+Test timeout of 120000ms exceeded.
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - link "跳到主要内容" [ref=e4] [cursor=pointer]:
+      - /url: "#main"
+    - complementary "应用导航" [ref=e5]:
+      - link "万物说明书" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img [ref=e8]
+        - generic [ref=e10]:
+          - text: 万物说明书
+          - generic [ref=e11]: EVERYTHING MANUAL
+      - paragraph [ref=e12]: 我的工作空间
+      - navigation "主导航" [ref=e13]:
+        - link "资料库" [active] [ref=e14] [cursor=pointer]:
+          - /url: /
+          - img [ref=e15]
+          - generic [ref=e17]: 资料库
+        - link "任务中心" [ref=e18] [cursor=pointer]:
+          - /url: /jobs
+          - img [ref=e19]
+          - generic [ref=e21]: 任务中心
+        - link "设置" [ref=e22] [cursor=pointer]:
+          - /url: /settings
+          - img [ref=e23]
+          - generic [ref=e25]: 设置
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - img [ref=e28]
+          - paragraph [ref=e30]:
+            - text: 你的物品，你的资料。
+            - generic [ref=e31]: 自托管 · 本地保存
+        - button "登出" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]: 我
+          - generic [ref=e34]:
+            - text: 管理员
+            - generic [ref=e35]: 登出
+          - img [ref=e36]
+    - banner [ref=e38]:
+      - generic [ref=e39]:
+        - link "工作空间" [ref=e40] [cursor=pointer]:
+          - /url: /
+        - img [ref=e41]
+        - generic [ref=e43]: 设置
+      - generic [ref=e45]: 个人资料库
+    - main [ref=e47]:
+      - region "设置与状态" [ref=e48]:
+        - paragraph [ref=e49]: WORKSPACE SETTINGS
+        - heading "设置与状态" [level=1] [ref=e50]
+        - paragraph [ref=e51]: 配置 Tripo 与说明书 AI。保存后需重启服务生效；保存不会验证连接或发起生成。
+        - region "API 配置" [ref=e52]:
+          - heading "API 配置" [level=2] [ref=e53]
+          - generic [ref=e54]:
+            - status [ref=e55]:
+              - strong [ref=e56]: 当前运行配置已生效
+              - text: 连接未验证
+              - paragraph [ref=e57]: 有未保存修改
+            - group [ref=e58]:
+              - region "Tripo · 模型生成" [ref=e59]:
+                - generic [ref=e60]:
+                  - heading "Tripo · 模型生成" [level=3] [ref=e61]
+                  - generic [ref=e62]: Tripo v3
+                - heading "当前运行配置" [level=4] [ref=e63]
+                - generic [ref=e64]:
+                  - generic [ref=e65]:
+                    - term [ref=e66]: 地址 · 部署配置（含默认值）
+                    - definition [ref=e67]: http://127.0.0.1:49189/v3
+                  - generic [ref=e68]:
+                    - term [ref=e69]: 模型 · 部署配置（含默认值）
+                    - definition [ref=e70]: qa-tripo-a
+                  - generic [ref=e71]:
+                    - term [ref=e72]: 密钥 · 部署配置（含默认值）
+                    - definition [ref=e73]: 已配置
+                - heading "下次启动配置" [level=4] [ref=e74]
+                - generic [ref=e75]:
+                  - generic [ref=e76]:
+                    - text: Tripo Base URL
+                    - textbox "Tripo Base URL" [ref=e77]: http://127.0.0.1:49189/v3
+                    - paragraph [ref=e78]: 填写兼容 Tripo v3 的基础地址，不是某个生成接口的完整地址。
+                  - generic [ref=e79]:
+                    - text: Tripo 模型
+                    - textbox "Tripo 模型" [ref=e80]: qa-unsaved-model
+                    - paragraph [ref=e81]: 可留空；生成仍要求模型与服务端价格目录匹配。保存不会验证模型或余额。
+                - paragraph [ref=e82]: 已保存来源：地址 部署配置（含默认值）；模型 部署配置（含默认值）；密钥 部署配置（含默认值）（已配置）。
+                - group "Tripo 密钥操作" [ref=e83]:
+                  - generic [ref=e84]: Tripo 密钥操作
+                  - generic [ref=e85]:
+                    - radio "保留现有" [ref=e86]
+                    - text: 保留现有
+                  - generic [ref=e87]:
+                    - radio "替换" [checked] [ref=e88]
+                    - text: 替换
+                  - generic [ref=e89]:
+                    - radio "清除" [ref=e90]
+                    - text: 清除
+                - generic [ref=e91]:
+                  - text: 新的 Tripo 密钥
+                  - textbox "新的 Tripo 密钥" [ref=e92]: [REDACTED_QA_SECRET]
+                  - paragraph [ref=e93]: 仅保存这次输入的新密钥，已保存密钥不会回显。
+                - button "恢复部署配置" [ref=e94] [cursor=pointer]
+              - region "说明书 AI" [ref=e95]:
+                - generic [ref=e96]:
+                  - heading "说明书 AI" [level=3] [ref=e97]
+                  - generic [ref=e98]: Responses 协议
+                - heading "当前运行配置" [level=4] [ref=e99]
+                - generic [ref=e100]:
+                  - generic [ref=e101]:
+                    - term [ref=e102]: 地址 · 部署配置（含默认值）
+                    - definition [ref=e103]: http://127.0.0.1:49189/v1
+                  - generic [ref=e104]:
+                    - term [ref=e105]: 模型 · 部署配置（含默认值）
+                    - definition [ref=e106]: qa-manual-a
+                  - generic [ref=e107]:
+                    - term [ref=e108]: 密钥 · 部署配置（含默认值）
+                    - definition [ref=e109]: 已配置
+                - heading "下次启动配置" [level=4] [ref=e110]
+                - generic [ref=e111]:
+                  - generic [ref=e112]:
+                    - text: 说明书 AI Base URL
+                    - textbox "说明书 AI Base URL" [ref=e113]: http://127.0.0.1:49189/v1
+                    - paragraph [ref=e114]: 填写兼容 Responses 的基础地址，不要填写完整的 /responses 接口地址。
+                  - generic [ref=e115]:
+                    - text: 说明书 AI 模型
+                    - textbox "说明书 AI 模型" [ref=e116]: qa-manual-a
+                    - paragraph [ref=e117]: 可留空；生成仍要求模型与服务端价格目录匹配。保存不会验证模型或余额。
+                - paragraph [ref=e118]: 已保存来源：地址 部署配置（含默认值）；模型 部署配置（含默认值）；密钥 部署配置（含默认值）（已配置）。
+                - group "说明书 AI 密钥操作" [ref=e119]:
+                  - generic [ref=e120]: 说明书 AI 密钥操作
+                  - generic [ref=e121]:
+                    - radio "保留现有" [checked] [ref=e122]
+                    - text: 保留现有
+                  - generic [ref=e123]:
+                    - radio "替换" [ref=e124]
+                    - text: 替换
+                  - generic [ref=e125]:
+                    - radio "清除" [ref=e126]
+                    - text: 清除
+                - paragraph [ref=e127]: 保留已保存的密钥选择与来源。
+                - button "恢复部署配置" [ref=e128] [cursor=pointer]
+            - paragraph [ref=e129]: 使用 HTTPS；本机 localhost、127.0.0.1 或 [::1] 可使用 HTTP。地址不能带账号密码、查询参数或片段。网页设置优先；恢复部署配置后使用部署侧设置。
+            - generic [ref=e130]:
+              - button "保存配置" [ref=e131] [cursor=pointer]
+              - status
+            - paragraph [ref=e132]: 备份与导出不包含 API 密钥；迁移服务后需重新配置。
+        - region "供应商配置" [ref=e133]:
+          - heading "供应商配置" [level=2] [ref=e134]
+          - list [ref=e135]:
+            - listitem [ref=e136]:
+              - generic [ref=e137]: Tripo（模型生成）
+              - generic [ref=e138]: 已配置
+            - listitem [ref=e139]:
+              - generic [ref=e140]: 说明书 AI
+              - generic [ref=e141]: 已配置
+            - listitem [ref=e142]:
+              - generic [ref=e143]: 生成能力
+              - generic [ref=e144]: 基础配置齐备，仍需报价校验
+        - region "生效的输入限制" [ref=e145]:
+          - heading "生效的输入限制" [level=2] [ref=e146]
+          - generic [ref=e147]:
+            - generic [ref=e148]:
+              - term [ref=e149]: 原 PDF 大小
+              - definition [ref=e150]: 50 MiB
+            - generic [ref=e151]:
+              - term [ref=e152]: 原 PDF 页数
+              - definition [ref=e153]: 100 页
+            - generic [ref=e154]:
+              - term [ref=e155]: 照片单文件
+              - definition [ref=e156]: 20 MiB
+            - generic [ref=e157]:
+              - term [ref=e158]: GLB 模型
+              - definition [ref=e159]: 150 MiB
+            - generic [ref=e160]:
+              - term [ref=e161]: 物品累计
+              - definition [ref=e162]: 500 MiB
+            - generic [ref=e163]:
+              - term [ref=e164]: JSON 请求体
+              - definition [ref=e165]: 1 MiB
+        - region "健康检查" [ref=e166]:
+          - heading "健康检查" [level=2] [ref=e167]
+          - paragraph [ref=e168]:
+            - text: 存活探针
+            - code [ref=e169]: /health/live
+            - text: ：
+            - generic [ref=e170]: ok
+          - paragraph [ref=e171]:
+            - text: 就绪探针
+            - code [ref=e172]: /health/ready
+            - text: ：
+            - generic [ref=e173]: ready
+          - list [ref=e174]:
+            - listitem [ref=e175]:
+              - generic [ref=e176]: process
+              - generic [ref=e177]: ok
+            - listitem [ref=e178]:
+              - generic [ref=e179]: data_directory
+              - generic [ref=e180]: ok
+            - listitem [ref=e181]:
+              - generic [ref=e182]: database
+              - generic [ref=e183]: ok
+            - listitem [ref=e184]:
+              - generic [ref=e185]: migrations
+              - generic [ref=e186]: ok
+          - paragraph [ref=e187]: 就绪检查只覆盖本机数据层（进程、数据目录、数据库、迁移）；云端供应商不可达不会使就绪失败。
+        - region "部署边界" [ref=e188]:
+          - heading "部署边界" [level=2] [ref=e189]
+          - paragraph [ref=e190]: 本服务默认监听回环地址；对外暴露需要位于显式受信的反向代理之后并由代理终止 TLS。 本页不提供证书、TLS 或监听配置入口（MVP 不包含内置 TLS 监听）。
+  - generic "全局通知"
+```

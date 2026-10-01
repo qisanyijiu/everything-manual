@@ -1,0 +1,57 @@
+(node:92361) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m(node:92389) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  VITE v8.3.0  ready in 131 ms
+[2m[WebServer] [22m
+[2m[WebServer] [22m  ➜  Local:   http://127.0.0.1:15186/
+
+Running 9 tests using 1 worker
+
+(node:92391) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:92391) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:92391) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › tests/e2e/api-settings-qa.spec.ts:64:1 › AS-QA-01 运行配置、375/1440布局与键盘标签（AC001/014/015） (3.3s)
+  ✘  2 [chromium] › tests/e2e/api-settings-qa.spec.ts:100:1 › AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/UI006） (2.0m)
+(node:92584) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:92584) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:92584) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  3 [chromium] › tests/e2e/api-settings-qa.spec.ts:176:1 › AS-QA-03 浏览器保存B→刷新→真实重启→worker消费B（AC003/006/008/009/012） (3.3s)
+  ✓  4 [chromium] › tests/e2e/api-settings-qa.spec.ts:240:1 › AS-QA-04 真实HTTP认证/CSRF、写入失败与旧修订冲突（AC002/004/005） (762ms)
+  ✓  5 [chromium] › tests/e2e/api-settings-qa.spec.ts:272:1 › AS-QA-05 密钥清除屏蔽部署，单家恢复，缺配置不冒充可生成（AC006/007/015） (1.1s)
+  ✓  6 [chromium] › tests/e2e/api-settings-qa.spec.ts:306:1 › AS-QA-06 待重启门禁/旧报价失效/目录外模型与断网（AC011/012/015） (2.2s)
+  ✓  7 [chromium] › tests/e2e/api-settings-qa.spec.ts:342:1 › AS-QA-07 保存与真实建单竞争只有一方受理（AC010/011） (1.1s)
+  ✓  8 [chromium] › tests/e2e/api-settings-qa.spec.ts:362:1 › AS-QA-08 读取失败/重复提交/字段错误/写失败/冲突重读（AC001/005） (2.1s)
+  ✓  9 [chromium] › tests/e2e/api-settings-qa.spec.ts:428:1 › AS-QA-09 手机密钥空替换/切换清空、取消恢复、清除与单家恢复（AC006/007/014） (2.0s)
+
+
+  1) [chromium] › tests/e2e/api-settings-qa.spec.ts:100:1 › AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/UI006） 
+
+    [31mTest timeout of 120000ms exceeded.[39m
+
+    Error: expect.toHaveValue: Target page, context or browser has been closed
+
+      117 |   await native.dismiss();
+      118 |   await reload;
+    > 119 |   await expect(page.getByLabel("Tripo 模型", { exact: true })).toHaveValue("qa-unsaved-model");
+          |                                                              ^
+      120 |   await page.getByRole("link", { name: "资料库", exact: true }).first().click();
+      121 |   await dialog.getByRole("button", { name: "丢弃并离开", exact: true }).click();
+      122 |   await expect(page).not.toHaveURL(/\/settings$/);
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/api-settings-qa.spec.ts:119:62
+
+    Error Context: ../../artifacts/api-settings/qa/playwright-output/api-settings-qa-AS-QA-02-未保存导航与刷新取消-丢弃，密钥不缓存（AC013-UI006）-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/e2e/api-settings-qa.spec.ts:100:1 › AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/UI006） 
+  8 passed (2.3m)

@@ -70,16 +70,21 @@ pub async fn create_estimate(
     Path(item_id): Path<String>,
     JsonBody(body): JsonBody<EstimateRequest>,
 ) -> Response {
+    let config = state.provider_config().read().await;
+    if let Err(error) = config.ensure_available() {
+        return error.render(&request_id);
+    }
     let mut connection = match acquire(&state).await {
         Ok(connection) => connection,
         Err(error) => return error.render(&request_id),
     };
-    match estimate_service::create_estimate(
+    match estimate_service::create_estimate_with_revision(
         state.settings(),
         &mut connection,
         &item_id,
         &body,
         Timestamp::now(),
+        Some(config.revision()),
     )
     .await
     {
@@ -182,10 +187,23 @@ pub async fn confirm_estimate(
     axum::Extension(session): axum::Extension<SessionContext>,
     Path((item_id, quote_id)): Path<(String, String)>,
 ) -> Response {
+    let config = state.provider_config().read().await;
+    if let Err(error) = config.ensure_available() {
+        return error.render(&request_id);
+    }
     let mut connection = match acquire(&state).await {
         Ok(connection) => connection,
         Err(error) => return error.render(&request_id),
     };
+    match crate::storage::repo::quotes::get(&mut connection, &quote_id).await {
+        Ok(Some(quote)) if quote.item_id == item_id => {
+            if let Err(error) = config.ensure_revision(&quote.provider_config) {
+                return error.render(&request_id);
+            }
+        }
+        Ok(_) => {}
+        Err(error) => return ApiError::from_storage(error).render(&request_id),
+    }
     match estimate_service::confirm_quote(
         &mut connection,
         &item_id,

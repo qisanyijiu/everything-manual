@@ -44,6 +44,9 @@ export type ItemList = OkBody<"list_items">;
 export type DocumentList = OkBody<"list_documents">;
 export type PhotoList = OkBody<"list_photos">;
 export type SettingsStatusData = OkData<"status">;
+export type ProviderSettingsData = OkData<"get_providers">;
+export type ProviderSettingsWrite = JsonRequest<"put_providers">;
+export type ProviderView = components["schemas"]["ProviderView"];
 export type LivenessData = OkData<"live">;
 export type ReadinessData = OkData<"ready">;
 export type ReadinessCheck = components["schemas"]["ReadinessCheck"];
@@ -106,6 +109,13 @@ export async function fetchReadiness(): Promise<ReadinessData> {
 
 export function fetchSettingsStatus(): Promise<ApiResource<SettingsStatusData>> {
   return requestData<SettingsStatusData>(`${API_PREFIX}/settings/status`);
+}
+
+export function fetchProviderSettings(): Promise<ApiResource<ProviderSettingsData>> {
+  return requestData<ProviderSettingsData>(`${API_PREFIX}/settings/providers`, { cache: "no-store" });
+}
+export function saveProviderSettings(body: ProviderSettingsWrite): Promise<ApiResource<ProviderSettingsData>> {
+  return requestData<ProviderSettingsData>(`${API_PREFIX}/settings/providers`, { method: "PUT", body, cache: "no-store" });
 }
 
 // --- items ---

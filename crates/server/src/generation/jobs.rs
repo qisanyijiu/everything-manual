@@ -77,6 +77,30 @@ pub async fn create_job(
     admin_id: &str,
     now: Timestamp,
 ) -> Result<JobCreation, GenerationError> {
+    create_job_with_config(
+        settings,
+        conn,
+        item_id,
+        request,
+        idempotency_key,
+        admin_id,
+        now,
+        None,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn create_job_with_config(
+    settings: &Settings,
+    conn: &mut SqliteConnection,
+    item_id: &str,
+    request: &JobCreateRequest,
+    idempotency_key: &str,
+    admin_id: &str,
+    now: Timestamp,
+    config: Option<&crate::config::provider_overrides::ProviderConfigStore>,
+) -> Result<JobCreation, GenerationError> {
     // 1) 字段级校验 + body_hash（键的作用域 = 管理员 + 方法 + 路由 + key）。
     let validated = validate_job_request(request)?;
     let key = validate_idempotency_key(idempotency_key)?;
@@ -96,6 +120,11 @@ pub async fn create_job(
         .filter(|quote| quote.item_id == item_id)
         .ok_or_else(|| GenerationError::not_found(format!("报价不存在：{}", validated.quote_id)))?;
     let payload = quote_payload(&quote).await?;
+    if let Some(config) = config {
+        config
+            .ensure_revision(&quote.provider_config)
+            .map_err(config_gate_error)?;
+    }
 
     if let Err(error) = check_quote_state(&quote, &payload, &validated, now) {
         // 并发同键竞争窗口：另一请求可能已消费该报价并写下幂等记录 → 按重放返回。
@@ -202,6 +231,23 @@ pub async fn create_job(
         }
         Err(CreateTransactionError::Generation(error)) => Err(error),
     }
+}
+
+fn config_gate_error(error: crate::http::error::ApiError) -> GenerationError {
+    let pending = error
+        .details
+        .as_ref()
+        .and_then(|d| d.get("reason"))
+        .and_then(serde_json::Value::as_str)
+        == Some("providerConfigPending");
+    GenerationError::unprocessable(
+        if pending {
+            "providerConfigPending"
+        } else {
+            "providerConfigChanged"
+        },
+        error.message,
+    )
 }
 
 // ---------------------------------------------------------------------------

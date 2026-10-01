@@ -1,0 +1,9 @@
+{
+  "envelopeCount": 2,
+  "permissions": "0600",
+  "restartEffective": true,
+  "filesScanned": 6,
+  "directMatches": 0,
+  "jsonEscapedMatches": 0,
+  "symlinksSkipped": 0
+}

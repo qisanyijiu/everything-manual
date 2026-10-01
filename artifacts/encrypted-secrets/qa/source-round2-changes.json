@@ -1,0 +1,8 @@
+{
+  "changedSinceRound1": [
+    "crates/server/src/config/secret.rs",
+    "crates/server/src/providers/tripo/client.rs",
+    "crates/server/src/providers/manual_ai/client.rs"
+  ],
+  "unmodifiedCoreCryptoNativeFileMigration": true
+}

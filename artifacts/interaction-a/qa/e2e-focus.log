@@ -1,0 +1,84 @@
+
+> everything-manual-web@0.1.0 test:e2e
+> playwright test interaction-a-qa.spec.ts -g IA-QA-05 --output=../../artifacts/interaction-a/qa/playwright-focus
+
+(node:50524) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2m[WebServer] [22m
+[2m[WebServer] [22m> everything-manual-web@0.1.0 dev
+[2m[WebServer] [22m> vite
+[2m[WebServer] [22m
+[2m[WebServer] [22m(node:50552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m  pdfjs-dist 6.3.289 本地资源：cmaps=169 standard_fonts=16 wasm=13 iccs=2
+[2m[WebServer] [22m
+[2m[WebServer] [22m  VITE v8.3.0  ready in 131 ms
+[2m[WebServer] [22m
+[2m[WebServer] [22m  ➜  Local:   http://127.0.0.1:15182/
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.14s
+data-dir 已初始化：/private/tmp/everything-manual-interaction-a-qa/data
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/tmp
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/logs
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/blobs
+  - 已创建：/private/tmp/everything-manual-interaction-a-qa/data/lock
+数据库：已创建并迁移（/private/tmp/everything-manual-interaction-a-qa/data/manual.sqlite3，schema v7；迁移随二进制内嵌，WAL / synchronous=FULL / foreign_keys=ON）
+管理员凭据：已创建（admins 表；Argon2id v19、m=19456 KiB、t=2、p=1、16 字节盐；无默认密码）。
+密码来源：受限文件 /private/tmp/everything-manual-interaction-a-qa/password.txt；明文不落盘、不进入日志与 shell history。
+
+Running 1 test using 1 worker
+
+(node:50632) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:50632) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:50632) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m11:59:32 PM [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+[2m[WebServer] [22m11:59:34 PM [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+  ✘  1 [chromium] › tests/e2e/interaction-a-qa.spec.ts:305:1 › IA-QA-05 阅读器键盘标签/抽屉与手机触控（AC-009/010/011/012） (20.9s)
+
+
+  1) [chromium] › tests/e2e/interaction-a-qa.spec.ts:305:1 › IA-QA-05 阅读器键盘标签/抽屉与手机触控（AC-009/010/011/012） 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeFocused[2m([22m[2m)[22m failed
+
+    Locator:  getByRole('dialog', { name: '步骤与原文' }).getByTestId('original-text').locator('summary')
+    Expected: focused
+    Received: inactive
+    Timeout:  15000ms
+
+    Call log:
+    [2m  - Expect "toBeFocused" with timeout 15000ms[22m
+    [2m  - waiting for getByRole('dialog', { name: '步骤与原文' }).getByTestId('original-text').locator('summary')[22m
+    [2m    34 × locator resolved to <summary>本页文字（PDF 文字层）</summary>[22m
+    [2m       - unexpected value "inactive"[22m
+
+
+      345 |   await dialog.getByRole("button", { name: "下一页", exact: true }).focus();
+      346 |   await page.keyboard.press("Tab");
+    > 347 |   await expect(textLayer.locator("summary")).toBeFocused();
+          |                                              ^
+      348 |   const close = dialog.getByRole("button", { name: "关闭", exact: true });
+      349 |   await close.focus();
+      350 |   await page.keyboard.press("Shift+Tab");
+        at /Users/qsyj/Code/rust/everything-manual/apps/web/tests/e2e/interaction-a-qa.spec.ts:347:46
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../artifacts/interaction-a/qa/playwright-focus/interaction-a-qa-IA-QA-05--4e827-抽屉与手机触控（AC-009-010-011-012）-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../artifacts/interaction-a/qa/playwright-focus/interaction-a-qa-IA-QA-05--4e827-抽屉与手机触控（AC-009-010-011-012）-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../artifacts/interaction-a/qa/playwright-focus/interaction-a-qa-IA-QA-05--4e827-抽屉与手机触控（AC-009-010-011-012）-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../artifacts/interaction-a/qa/playwright-focus/interaction-a-qa-IA-QA-05--4e827-抽屉与手机触控（AC-009-010-011-012）-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests/e2e/interaction-a-qa.spec.ts:305:1 › IA-QA-05 阅读器键盘标签/抽屉与手机触控（AC-009/010/011/012） 

@@ -1,0 +1,9 @@
+listening on http://127.0.0.1:18182
+{"timestamp":"2026-09-19T16:05:26.469523Z","level":"WARN","fields":{"message":"图片上传失败","event":"tripo_upload_failed","jobId":"01a0ba6a-56ab-7172-9d66-5825258e00d8","stageId":"01a0ba6a-56ac-7673-960d-66b31b393d05","view":"front","errorCode":"transport","detail":"传输失败：连接失败：error sending request"},"target":"everything_manual::providers::tripo::handlers"}
+{"timestamp":"2026-09-19T16:05:26.472514Z","level":"ERROR","fields":{"message":"已发出请求但没有持久化完整响应：该批 submission_unknown（不重发，等待对账）","event":"manual_extract_submission_unknown","jobId":"01a0ba6a-56ab-7172-9d66-5825258e00d8","stageId":"01a0ba6a-56ac-7673-960d-66b1fd6f9e31","detail":"传输失败：连接失败：error sending request","ledger":"预留保留为 unknown（Applied）"},"target":"everything_manual::providers::manual_ai::handlers"}
+{"timestamp":"2026-09-19T16:05:28.568698Z","level":"WARN","fields":{"message":"图片上传失败","event":"tripo_upload_failed","jobId":"01a0ba6a-56ab-7172-9d66-5825258e00d8","stageId":"01a0ba6a-56ac-7673-960d-66b31b393d05","view":"front","errorCode":"transport","detail":"传输失败：连接失败：error sending request"},"target":"everything_manual::providers::tripo::handlers"}
+{"timestamp":"2026-09-19T16:05:32.648311Z","level":"WARN","fields":{"message":"图片上传失败","event":"tripo_upload_failed","jobId":"01a0ba6a-56ab-7172-9d66-5825258e00d8","stageId":"01a0ba6a-56ac-7673-960d-66b31b393d05","view":"front","errorCode":"transport","detail":"传输失败：连接失败：error sending request"},"target":"everything_manual::providers::tripo::handlers"}
+{"timestamp":"2026-09-19T16:05:42.833061Z","level":"WARN","fields":{"message":"图片上传失败","event":"tripo_upload_failed","jobId":"01a0ba6a-56ab-7172-9d66-5825258e00d8","stageId":"01a0ba6a-56ac-7673-960d-66b31b393d05","view":"front","errorCode":"transport","detail":"传输失败：连接失败：error sending request"},"target":"everything_manual::providers::tripo::handlers"}
+已停止：data-dir 排他锁已释放。
+
+[e2e] server exited with code 0

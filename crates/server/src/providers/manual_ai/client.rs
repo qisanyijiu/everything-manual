@@ -61,7 +61,7 @@ pub enum ManualAiError {
         http_status: u16,
         message: Option<String>,
     },
-    /// 2xx 但响应不是 JSON 对象（**原始响应已完整收到**，由调用方保留为诊断）。
+    /// 2xx 但响应无法安全保留或不符合协议。客户端拒绝的 body 不进入诊断。
     Unexpected { detail: String },
 }
 
@@ -170,16 +170,8 @@ impl ManualAiClient {
         api_key: SecretString,
         timeouts: ManualAiTimeouts,
     ) -> Result<Self, String> {
-        let base_url = base_url.trim().trim_end_matches('/');
-        if base_url.is_empty() {
-            return Err("base_url 为空".to_owned());
-        }
-        if !(base_url.starts_with("http://") || base_url.starts_with("https://")) {
-            return Err(format!("base_url 必须是 http(s):// 地址：{base_url}"));
-        }
-        if base_url.contains(['?', '#']) || base_url.contains(char::is_whitespace) {
-            return Err(format!("base_url 不允许包含空白、查询串或片段：{base_url}"));
-        }
+        let base_url =
+            crate::config::validate_origin_like("base_url", base_url).map_err(|e| e.message)?;
         let http = reqwest::Client::builder()
             .connect_timeout(timeouts.connect)
             .timeout(timeouts.request)
@@ -226,7 +218,8 @@ impl ManualAiClient {
             .get(RETRY_AFTER)
             .and_then(|value| value.to_str().ok())
             .and_then(|value| value.trim().parse::<u64>().ok());
-        let body = read_body_capped(response, MAX_RESPONSE_BYTES).await?;
+        let body = zeroize::Zeroizing::new(read_body_capped(response, MAX_RESPONSE_BYTES).await?);
+        let discard_body = crate::config::secret::response_requires_discard(&body, &self.api_key);
 
         if (300..400).contains(&status) {
             return Err(ManualAiError::Redirected { status });
@@ -240,15 +233,26 @@ impl ManualAiClient {
             return Err(ManualAiError::ServerError { status });
         }
         if !(200..300).contains(&status) {
-            // 4xx：尽量读取 message（脱敏、截断）；不保留原始响应体作为诊断？
-            // 4xx 是**完整响应**：原始字节仍由调用方保留（诊断路径）。
-            let message = extract_error_message(&body);
+            // 4xx：保持明确拒绝分类；无法安全检查的 body 不返回，也不作为诊断。
+            let message = if discard_body {
+                Some("供应商响应包含敏感凭据或无法安全解析，内容已丢弃".into())
+            } else {
+                extract_error_message(&body)
+            };
             return Err(ManualAiError::Business {
                 http_status: status,
                 message,
             });
         }
-        Ok(RawResponse { status, body })
+        if discard_body {
+            return Err(ManualAiError::Unexpected {
+                detail: "供应商响应包含敏感凭据或无法安全解析，内容已丢弃".into(),
+            });
+        }
+        Ok(RawResponse {
+            status,
+            body: body.to_vec(),
+        })
     }
 
     /// 解析 2xx 响应（信封不可解析 → `Unexpected`；原始字节由调用方保留）。

@@ -1,11 +1,9 @@
 /**
  * 设置与状态（PRD §6.2 UI-003；`GET /settings/status` + `/health/live` + `/health/ready`）。
  *
- * - 只读状态：providersConfigured、limits、capabilities、存活与就绪自检；
- * - 未配置项标注「未配置」并说明「生成与报价不可用，已有资料仍可读」；
- * - **不提供**网页填写密钥的输入框，也不提供 TLS/证书/监听配置入口
- *   （部署边界＝回环或受信反向代理，D-4/A-15）；页面不含任何密钥字符；
- * - 失败：「无法读取服务状态」+ requestId + 重试；状态不只靠颜色表达。
+ * API 配置允许管理员编辑地址、模型与密钥动作，受服务端认证/CSRF保护，重启生效。
+ * 当前/已保存/本地编辑分别表达；密钥仅瞬时输入，不回显、不持久化到浏览器。
+ * 输入限制、本机健康与部署边界保持独立读取；没有连接测试或网页重启。
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +12,7 @@ import { describeError } from "../../api/client";
 import { fetchHealthLive, fetchReadiness, fetchSettingsStatus } from "../../api/endpoints";
 import { Skeleton } from "../../components/Skeleton";
 import { formatBytes } from "../../lib/format";
+import { ProviderSettingsForm } from "./ProviderSettingsForm";
 
 export function SettingsPage() {
   const statusQuery = useQuery({
@@ -34,9 +33,10 @@ export function SettingsPage() {
       <p className="eyebrow">WORKSPACE SETTINGS</p>
       <h1 id="settings-title">设置与状态</h1>
       <p className="page__lead">
-        查看服务连接、存储限制与运行状态。密钥由服务端管理。
+        配置 Tripo 与说明书 AI。保存后需重启服务生效；保存不会验证连接或发起生成。
       </p>
 
+      <ProviderSettingsForm />
       <section className="panel" aria-labelledby="providers-title">
         <h2 id="providers-title">供应商配置</h2>
         {statusQuery.isPending && <Skeleton label="正在读取服务状态…" rows={2} />}
@@ -70,7 +70,7 @@ export function SettingsPage() {
             <li>
               <span className="status-list__name">生成能力</span>
               <span className="status-label">
-                {statusQuery.data.data.capabilities.generation ? "可用" : "不可用"}
+                {statusQuery.data.data.providerConfigPending ? "待重启，生成暂停" : statusQuery.data.data.capabilities.generation ? "基础配置齐备，仍需报价校验" : "基础配置缺项"}
               </span>
             </li>
           </ul>

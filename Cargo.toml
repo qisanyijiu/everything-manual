@@ -57,6 +57,8 @@ sqlx = { version = "0.9", default-features = false, features = [
 # 随机数取 OS 熵源（getrandom，uuid v7 已传递依赖，这里显式声明）。
 argon2 = "0.5"
 getrandom = "0.4"
+ring = "0.17.14"
+zeroize = "1.9.0"
 
 # xtask（工程命令）依赖
 anyhow = "1"

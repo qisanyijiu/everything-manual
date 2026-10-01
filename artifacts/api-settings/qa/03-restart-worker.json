@@ -1,0 +1,21 @@
+{
+  "pendingBeforeRestart": true,
+  "pendingAfterRestart": false,
+  "permissions": "0600",
+  "a": {
+    "tripoRequests": 0,
+    "manualRequests": 0,
+    "authMatches": true,
+    "modelMatches": true,
+    "unknownRequests": 0
+  },
+  "b": {
+    "tripoRequests": 4,
+    "manualRequests": 1,
+    "authMatches": true,
+    "modelMatches": true,
+    "unknownRequests": 0
+  },
+  "bPaidSubmissions": 1,
+  "idempotentReplaySameJob": true
+}

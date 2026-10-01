@@ -1,0 +1,29 @@
+work_id: api-settings
+phase: done
+request_revision: 1
+prd_revision: 1
+ui_revision: 1
+current_tasks: []
+accepted_tasks:
+  - task_id: AS-01
+    prd_revision: 1
+    qa_round: 1
+    report: qa-report.md
+    accepted_ac_ids: [AC-AS-001, AC-AS-002, AC-AS-003, AC-AS-004, AC-AS-005, AC-AS-006, AC-AS-007, AC-AS-008, AC-AS-009, AC-AS-010, AC-AS-011, AC-AS-012, AC-AS-013, AC-AS-014, AC-AS-015]
+    status: accepted
+qa_history:
+  - round: 1
+    scope: full
+    task_ids: [AS-01]
+    prd_revision: 1
+    result: PASS
+    report: qa-report.md
+qa_round: 1
+qa_scope: full
+qa_result: PASS
+open_defects: []
+blocked_reason: null
+resume_phase: null
+blocked_on: null
+unblock_condition: null
+next_action: "AS-01 全部 15 AC 独立验收 PASS，网页 API 配置已交付并运行于本地预览；保存后重启服务生效，真实供应商验证与原 T22/T23 状态不变"

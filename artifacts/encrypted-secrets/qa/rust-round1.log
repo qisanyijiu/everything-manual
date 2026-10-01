@@ -1,0 +1,37 @@
+warning: `/Users/qsyj/.cargo/config` is deprecated in favor of `config.toml`
+  |
+  = help: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling everything-manual v0.1.0 (/Users/qsyj/Code/rust/everything-manual/crates/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.87s
+     Running tests/api_settings_qa.rs (target/debug/deps/api_settings_qa-ff96f89d45fa845c)
+
+running 7 tests
+test as_qa_legacy_deployment_url_userinfo_never_reads_back ... ok
+test as_qa_http_auth_no_store_and_secret_free_read ... ok
+test as_qa_validation_matrix_and_decode_errors_are_atomic_and_redacted ... ok
+test as_qa_write_failure_and_revision_conflict_never_publish_half_config ... ok
+test as_qa_save_retry_race_is_exclusive_and_old_retry_stays_invalid_after_restore ... ok
+test as_qa_three_key_actions_restore_and_load_fail_closed ... ok
+test as_qa_all_nonterminal_jobs_and_terminal_leftovers_block_change ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.68s
+
+     Running tests/encrypted_secrets_qa.rs (target/debug/deps/encrypted_secrets_qa-df9d9a3ed103faa8)
+
+running 13 tests
+test es_qa_03_native_keychain_cross_process ... ignored, explicit AC003 native Keychain integration; never ordinary unit CI
+test es_qa_04_missing_or_denied_master_never_regenerates_on_read ... ok
+test es_qa_02_tamper_wrong_key_and_cross_purpose_fail_closed ... ok
+test es_qa_01_aead_random_nonce_and_purpose_roundtrip ... ok
+test es_qa_08_unsafe_files_and_failed_output_are_rejected ... ok
+test es_qa_native_keychain_child ... ignored, child-only helper for explicit AC003
+test es_qa_06_check_and_failed_migration_leave_source_unchanged ... ok
+test es_qa_07_file_conversion_preserves_source_and_refuses_clobber ... ok
+test es_qa_05_legacy_conversion_keeps_revision_sources_and_epoch ... ok
+test es_qa_09_keep_injected_keys_does_not_persist_them_or_require_master ... ok
+test es_qa_10_directory_sync_before_and_after_commit_preserves_truth ... ok
+test es_qa_11_deployment_url_credentials_are_rejected_without_echo ... ok
+test es_qa_07_cli_conversion_env_validation_and_plaintext_guidance ... ok
+
+test result: ok. 11 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1.52s
+

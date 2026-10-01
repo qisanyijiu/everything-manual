@@ -41,6 +41,17 @@ where
         Command::Check(args) => run_check(&args).await,
         Command::Backup(args) => run_backup(&args).await,
         Command::Restore(args) => run_restore(&args).await,
+        Command::EncryptApiKey(args) => {
+            super::encrypted_secrets::Secrets::from_environment()
+                .and_then(|secrets| {
+                    secrets.encrypt_api_key_file(&args.input, &args.output, args.provider.name())
+                })
+                .map_err(|e| CliError::config(e.to_string()))?;
+            println!(
+                "已创建加密 API 密钥文件；请更新 api_key_file 引用并验证。原明文文件未修改，请在验证后自行安全处理。"
+            );
+            Ok(())
+        }
     }
 }
 
@@ -196,7 +207,7 @@ pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
 /// schema**（库比程序新则拒绝打开，退出码 4）→ 绑定监听 → 服务。
 /// 锁在进程退出（含被 Kill）时由操作系统释放。
 pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
-    let settings = Settings::load(&overrides_from(&args.common, args.listen))?;
+    let mut settings = Settings::load(&overrides_from(&args.common, args.listen))?;
     let mode = settings.evaluate_listen_security()?;
     if mode == SecurityMode::TrustedProxy {
         // 不默认相信任意 X-Forwarded-*：T04 起按 trusted_proxy_cidrs 判定来源后才使用转发头。
@@ -217,6 +228,13 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
     datadir::verify(&settings.data_dir)?;
     logging::init(Some(&settings.data_dir.join("logs")))?;
     let lock = datadir::DirLock::acquire(&settings.data_dir)?;
+
+    let provider_config = super::provider_overrides::ProviderConfigStore::load_from(
+        &mut settings,
+        super::encrypted_secrets::Secrets::from_environment()
+            .map_err(|e| CliError::config(e.to_string()))?,
+        true,
+    )?;
 
     // 数据库：自动检测并迁移到程序支持版本；库比程序新 → 拒绝打开（不修改数据）。
     let (database, migration) = Database::open_and_migrate_reporting(&settings.data_dir)
@@ -314,8 +332,14 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
              组装阶段不依赖 Provider，仍正常注册"
         );
     }
-    let executor =
-        crate::jobs::JobExecutor::new(database.pool().clone(), executor_config.clone(), registry);
+    let state = crate::http::state::AppState::new(database.clone(), settings.clone())
+        .with_provider_config(provider_config);
+    let executor = crate::jobs::JobExecutor::with_provider_config(
+        database.pool().clone(),
+        executor_config.clone(),
+        registry,
+        state.provider_config_handle(),
+    );
     tracing::info!(
         event = "job_executor_start",
         owner = executor.owner(),
@@ -372,8 +396,6 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
     println!("listening on http://{addr}");
 
     // 应用状态：数据库（clone 共享连接池）+ 配置（限速/TTL/cookie Secure 判定）。
-    let state = crate::http::state::AppState::new(database.clone(), settings.clone());
-
     axum::serve(
         listener,
         build_app(state).into_make_service_with_connect_info::<SocketAddr>(),
@@ -429,7 +451,8 @@ async fn shutdown_signal() {
 /// 数据库检查是**只读**的（[`crate::storage::db::inspect`]）：不创建数据库、不应用迁移；
 /// 旧 schema 只报告"待迁移"，实际迁移发生在 `init`/`serve`。库比程序新 → 退出码 4。
 pub async fn run_check(args: &CheckArgs) -> Result<(), CliError> {
-    let settings = Settings::load(&overrides_from(&args.common, args.listen))?;
+    let mut settings = Settings::load(&overrides_from(&args.common, args.listen))?;
+    let _provider_config = super::provider_overrides::ProviderConfigStore::load(&mut settings)?;
 
     println!("有效配置（脱敏）：");
     for line in settings.summary_lines() {

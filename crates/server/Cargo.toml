@@ -19,6 +19,8 @@ argon2.workspace = true
 axum.workspace = true
 clap.workspace = true
 getrandom.workspace = true
+ring.workspace = true
+zeroize.workspace = true
 libc.workspace = true
 manual-core = { path = "../core" }
 # T12 起：Provider HTTP 客户端（架构 §3 的 reqwest 0.13 + rustls；生产依赖，
@@ -37,6 +39,9 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 utoipa.workspace = true
 uuid.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = "3.7.0"
 
 [features]
 default = []

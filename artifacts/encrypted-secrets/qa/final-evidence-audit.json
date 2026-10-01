@@ -1,0 +1,64 @@
+{
+  "qaTextFilesScanned": 49,
+  "randomApiCanaryPatternMatches": 0,
+  "matchingFiles": [],
+  "errorContexts": [
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-rerun-harness/encrypted-secrets-qa-ES-QA-48224-射诊断-备份-导出无泄漏（AC007-010-011）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    },
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-rerun-harness/encrypted-secrets-qa-ES-QA-0c862-报价代次，check只读（AC005-006-010）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    },
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-rerun-harness/encrypted-secrets-qa-ES-QA-71967-辑，显式重试与375布局（AC008-010-012）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    },
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-output/encrypted-secrets-qa-ES-QA-48224-射诊断-备份-导出无泄漏（AC007-010-011）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    },
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-output/encrypted-secrets-qa-ES-QA-0c862-报价代次，check只读（AC005-006-010）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    },
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-output/encrypted-secrets-qa-ES-QA-71967-辑，显式重试与375布局（AC008-010-012）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    },
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-check-diagnostic/encrypted-secrets-qa-ES-QA-0c862-报价代次，check只读（AC005-006-010）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    },
+    {
+      "path": "artifacts/encrypted-secrets/qa/playwright-harness-corrected/encrypted-secrets-qa-ES-QA-0c862-报价代次，check只读（AC005-006-010）-chromium/error-context.md",
+      "pageSnapshot": false,
+      "passwordDOM": false
+    }
+  ],
+  "gitIgnored": {
+    "provider-overrides.json": true,
+    "private/tripo.api-key.enc": true,
+    "private/tripo.api-key.123.tmp": true,
+    "private/provider-overrides.123.tmp": true
+  },
+  "trackedPrivateFileCount": 0,
+  "productionChangesSinceRound2Start": [],
+  "traceHARVideoEnabled": false,
+  "passwordScreenshotsMasked": true,
+  "perTestExactApiKeyAndMasterScans": "all ES browser scenarios passed direct + JSON escaped output/log/DB/blob/backup/Git assertions; binary raw master absent in encrypted overlay; exact values never persisted to evidence",
+  "errorContextCleanup": {
+    "removedSourceOnlyFiles": 8,
+    "retainedSecretBearingContexts": 0,
+    "reason": "No page snapshots or secrets were present; remove redundant auto-generated source context and retain complete original runner logs."
+  },
+  "qaTestListener15187": false
+}

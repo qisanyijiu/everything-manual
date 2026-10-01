@@ -19,6 +19,8 @@ pub struct AppState {
     settings: Arc<Settings>,
     login_limiter: Arc<LoginRateLimiter>,
     assets: AssetStore,
+    provider_config:
+        Arc<tokio::sync::RwLock<crate::config::provider_overrides::ProviderConfigStore>>,
 }
 
 impl AppState {
@@ -37,6 +39,9 @@ impl AppState {
         );
         Self {
             database,
+            provider_config: Arc::new(tokio::sync::RwLock::new(
+                crate::config::provider_overrides::ProviderConfigStore::deployment(&settings),
+            )),
             settings: Arc::new(settings),
             login_limiter: Arc::new(login_limiter),
             assets,
@@ -49,6 +54,26 @@ impl AppState {
 
     pub fn settings(&self) -> &Settings {
         &self.settings
+    }
+
+    /// 显式装配已加载的配置；HTTP 与 worker 必须使用同一份应用后的 Settings。
+    pub fn with_provider_config(
+        mut self,
+        config: crate::config::provider_overrides::ProviderConfigStore,
+    ) -> Self {
+        self.provider_config = Arc::new(tokio::sync::RwLock::new(config));
+        self
+    }
+
+    pub fn provider_config(
+        &self,
+    ) -> &tokio::sync::RwLock<crate::config::provider_overrides::ProviderConfigStore> {
+        &self.provider_config
+    }
+    pub fn provider_config_handle(
+        &self,
+    ) -> Arc<tokio::sync::RwLock<crate::config::provider_overrides::ProviderConfigStore>> {
+        self.provider_config.clone()
     }
 
     pub fn login_limiter(&self) -> &LoginRateLimiter {

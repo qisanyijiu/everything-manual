@@ -75,7 +75,7 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-story"><p className="eyebrow">A LITTLE MORE UNDERSTANDING</p><h2>每一件物品，<br />都值得好好了解。</h2><p>把零散的资料，变成随手可查的知识。</p><ManualArtwork /></div>
+      <div className="login-story"><p className="eyebrow">A LITTLE MORE UNDERSTANDING</p><h2>用过无数次，<br />第一次看懂。</h2><p>把零散的资料，变成随手可查的知识。</p><ManualArtwork /></div>
       <main className="login-card" aria-labelledby="login-title">
         <span className="brand-symbol"><Icon name="book" size={28} /></span>
         <h1 id="login-title">万物说明书</h1>

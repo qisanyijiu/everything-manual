@@ -59,7 +59,7 @@ interface SubmissionError {
   /** 已有任务时给出 job id（可链接到任务中心）。 */
   readonly existingJobId: string | null;
   /** 报价过期/输入变化时建议重新报价或回向导。 */
-  readonly recovery: "requote" | "rewizard" | "none";
+  readonly recovery: "requote" | "rewizard" | "settings" | "none";
 }
 
 export function ConfirmStepPage() {
@@ -98,6 +98,9 @@ export function ConfirmStepPage() {
   /** 服务端已判定"该操作已存在任务"时锁住生成入口（UI-026：不新建第二份）。 */
   const [lockedJobId, setLockedJobId] = useState<string | null>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
+  const quoteRequestRef = useRef(false);
+  const confirmationAttemptRef = useRef(0);
+  const submissionRef = useRef(false);
   const requestedRef = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
@@ -108,6 +111,7 @@ export function ConfirmStepPage() {
     detail: preparationQuery.data,
   });
   const capability = statusQuery.data?.data.capabilities.generation ?? null;
+  const providerConfigPending = statusQuery.data?.data.providerConfigPending ?? false;
 
   const loading =
     itemQuery.isPending ||
@@ -119,7 +123,7 @@ export function ConfirmStepPage() {
   const gaps = loading
     ? []
     : generationGaps({ itemId: id, preparationState, photos, generationCapability: capability });
-  const blocked = gaps.length > 0;
+  const blocked = gaps.length > 0 || providerConfigPending;
 
   // 报价倒计时：每秒重算剩余时间（过期后生成按钮禁用，需显式重新报价）。
   useEffect(() => {
@@ -131,9 +135,17 @@ export function ConfirmStepPage() {
   }, [quote]);
 
   const requestQuote = useCallback(async (): Promise<void> => {
-    if (preparationPointer === null) {
+    if (preparationPointer === null || quoteRequestRef.current || submissionRef.current) {
       return;
     }
+    quoteRequestRef.current = true;
+    // 换报价即使旧确认仍在途也立即失效；晚返回的响应不得确认新报价。
+    confirmationAttemptRef.current += 1;
+    setQuote(null);
+    setConfirmedAt(null);
+    setConfirmChecked(false);
+    setConfirming(false);
+    setConfirmError(null);
     setQuoting(true);
     setQuoteError(null);
     setQuoteGaps([]);
@@ -186,6 +198,7 @@ export function ConfirmStepPage() {
         setQuoteError({ message: info.message, hint: null, existingJobId: null, recovery: "none" });
       }
     } finally {
+      quoteRequestRef.current = false;
       setQuoting(false);
     }
   }, [id, photoIds, preparationPointer]);
@@ -211,16 +224,20 @@ export function ConfirmStepPage() {
     expiresAtMs !== null && Number.isFinite(expiresAtMs)
       ? Math.max(0, Math.round((expiresAtMs - now) / 1000))
       : null;
-  const budgetBelow =
-    quote !== null &&
-    tripoParsed.ok &&
-    usdParsed.ok &&
-    (tripoParsed.minor < quote.amounts.tripo.upperBoundMinor ||
-      usdParsed.minor < quote.amounts.manualAi.upperBoundMinor);
+  const tripoBelow =
+    quote !== null && tripoParsed.ok && tripoParsed.minor < quote.amounts.tripo.upperBoundMinor;
+  const usdBelow =
+    quote !== null && usdParsed.ok && usdParsed.minor < quote.amounts.manualAi.upperBoundMinor;
+  const budgetBelow = tripoBelow || usdBelow;
   const budgetInvalid = !tripoParsed.ok || !usdParsed.ok;
   const canGenerate =
     quote !== null &&
+    !loading &&
+    !blocked &&
+    !quoting &&
     !expired &&
+    confirmChecked &&
+    !confirming &&
     confirmedAt !== null &&
     !budgetInvalid &&
     !budgetBelow &&
@@ -232,13 +249,21 @@ export function ConfirmStepPage() {
     if (lockedJobId !== null) {
       return "该操作已存在一个任务：不会新建第二份；请打开已有任务查看状态。";
     }
+    if (loading) return "正在读取资料与视图，请稍候。";
+    if (providerConfigPending) return "API 配置待重启生效，请前往设置。";
+    if (blocked) return gaps[0]?.message ?? "请先处理上方缺项。";
+    if (quoting) return "正在获取报价，请稍候再确认。";
+    if (submitting) return "正在创建任务，请等待本次提交结果。";
     if (quote === null) {
       return "还没有报价：先完成资料准备与视图，然后获取报价。";
     }
     if (expired) {
       return "报价已过期，请重新获取报价。";
     }
-    if (confirmedAt === null) {
+    if (confirming) {
+      return "正在保存确认，请稍候再开始生成。";
+    }
+    if (!confirmChecked || confirmedAt === null) {
       return "需要先勾选确认「将发送给供应商的资料」。";
     }
     if (budgetInvalid) {
@@ -251,22 +276,31 @@ export function ConfirmStepPage() {
   })();
 
   async function checkConfirmation(checked: boolean): Promise<void> {
-    if (quote === null) {
+    if (
+      quote === null || expired || quoting || confirming || submitting ||
+      acceptedJob !== null || lockedJobId !== null
+    ) {
       return;
     }
     if (!checked) {
+      confirmationAttemptRef.current += 1;
       setConfirmChecked(false);
+      setConfirmedAt(null);
       return;
     }
     // 乐观勾选：勾选是用户动作，服务端确认在后台写入；失败时回退并给出原因
     // （不能"点了没反应"——那会让用户无法判断是否已确认发送范围）。
     setConfirmChecked(true);
+    setConfirmedAt(null);
     setConfirming(true);
     setConfirmError(null);
+    const attempt = ++confirmationAttemptRef.current;
     try {
       const confirmation = await confirmEstimate(id, quote.id);
+      if (confirmationAttemptRef.current !== attempt) return;
       setConfirmedAt(confirmation.data.confirmedAt);
     } catch (error) {
+      if (confirmationAttemptRef.current !== attempt) return;
       setConfirmChecked(false);
       setConfirmedAt(null);
       const info = describeError(error);
@@ -275,14 +309,15 @@ export function ConfirmStepPage() {
         reason === "quoteExpired" ? "报价已过期：请重新获取报价后再确认。" : info.message,
       );
     } finally {
-      setConfirming(false);
+      if (confirmationAttemptRef.current === attempt) setConfirming(false);
     }
   }
 
   async function submit(): Promise<void> {
-    if (quote === null || !canGenerate || !tripoParsed.ok || !usdParsed.ok) {
+    if (quote === null || !canGenerate || !tripoParsed.ok || !usdParsed.ok || submissionRef.current) {
       return;
     }
+    submissionRef.current = true;
     // 一次操作一个幂等键：断线/失败重试复用同一键（服务端按 key 去重，不产生第二份生成单）。
     idempotencyKeyRef.current ??= randomKey();
     setSubmitting(true);
@@ -317,6 +352,7 @@ export function ConfirmStepPage() {
         setLockedJobId(failure.existingJobId);
       }
     } finally {
+      submissionRef.current = false;
       setSubmitting(false);
     }
   }
@@ -325,15 +361,15 @@ export function ConfirmStepPage() {
   const documents = documentsQuery.data?.documents ?? [];
 
   const quotePanel = (
-    <div className="confirm-panel">
-      <h2 className="summary-panel__title">报价与预算</h2>
+    <section className="confirm-panel" aria-labelledby="quote-section-title">
+      <h2 id="quote-section-title">报价与预算</h2>
       {quote === null && quoting && <Skeleton label="正在获取报价…" rows={4} />}
       {quote === null && !quoting && (
         <p className="empty-note" data-testid="quote-missing">
           {blocked
             ? "资料未齐：补齐缺项后自动获取报价。"
             : quoteError !== null
-              ? "报价获取失败：见主栏错误说明。"
+              ? "报价获取失败：请查看上方错误说明。"
               : "尚未获取报价。"}
         </p>
       )}
@@ -393,26 +429,28 @@ export function ConfirmStepPage() {
           <p className="field__hint" id="budget-hint">
             默认等于服务端计算的保守上界；低于上界会被服务端拒绝（不自动降质量、不换模型）。
           </p>
-          <BudgetField
-            id="budget-tripo"
-            label="Tripo credits"
-            value={tripoBudget}
-            onChange={setTripoBudget}
-            error={tripoParsed.ok ? null : tripoParsed.message}
-            hint={budgetBelow && tripoParsed.ok ? "低于服务端上界" : null}
-          />
-          <BudgetField
-            id="budget-manual"
-            label="说明书 AI USD"
-            value={usdBudget}
-            onChange={setUsdBudget}
-            error={usdParsed.ok ? null : usdParsed.message}
-            hint={budgetBelow && usdParsed.ok ? "低于服务端上界" : null}
-          />
+          <div className="confirm-budget-fields">
+            <BudgetField
+              id="budget-tripo"
+              label="Tripo credits"
+              value={tripoBudget}
+              onChange={setTripoBudget}
+              error={tripoParsed.ok ? null : tripoParsed.message}
+              hint={tripoBelow ? "低于服务端上界" : null}
+            />
+            <BudgetField
+              id="budget-manual"
+              label="说明书 AI USD"
+              value={usdBudget}
+              onChange={setUsdBudget}
+              error={usdParsed.ok ? null : usdParsed.message}
+              hint={usdBelow ? "低于服务端上界" : null}
+            />
+          </div>
           <p className="field__hint">{quote.budgetNotice}</p>
         </div>
       )}
-    </div>
+    </section>
   );
 
   const disclosurePanel = (
@@ -426,21 +464,21 @@ export function ConfirmStepPage() {
               id="send-scope-confirm"
               type="checkbox"
               checked={confirmChecked}
-              disabled={confirming || expired}
+              disabled={confirming || expired || quoting || submitting || acceptedJob !== null || lockedJobId !== null}
               aria-describedby="send-scope-confirm-hint"
               onChange={(event) => void checkConfirmation(event.target.checked)}
             />
             <label htmlFor="send-scope-confirm">我已阅读并确认将上述资料发送给对应供应商</label>
           </div>
           <p className="field__hint" id="send-scope-confirm-hint">
-            默认不勾选；勾选动作写入服务端审计事件（audit_events），未确认的提交会被拒绝。
+            请核对资料与接收方。确认保存成功后，才能按本次授权上限开始生成。
           </p>
           {confirming && (
             <p role="status" className="empty-note">
-              正在记录确认…
+              正在保存确认…
             </p>
           )}
-          {confirmedAt !== null && (
+          {confirmedAt !== null && confirmChecked && !confirming && (
             <p role="status" className="status-note" data-testid="confirmed-at">
               已确认发送范围（{formatLocalDateTime(confirmedAt)}）
             </p>
@@ -456,7 +494,7 @@ export function ConfirmStepPage() {
   );
 
   return (
-    <PageLayout rail={{ id: "quote", label: "报价与预算", content: quotePanel }} aside={{ id: "scope", label: "将发送的资料与确认", content: disclosurePanel }}>
+    <PageLayout>
       <section className="page confirm-step" aria-labelledby="confirm-step-title">
         <WizardSteps currentSegment="import/confirm" itemId={id} />
         <h1 id="confirm-step-title">预算与隐私确认</h1>
@@ -484,7 +522,7 @@ export function ConfirmStepPage() {
           />
         )}
 
-        {!loading && gaps.length > 0 && quoteGaps.length > 0 && (
+        {!loading && quoteGaps.length > 0 && (
           <ul className="missing-list__items" role="alert" data-testid="server-gaps">
             {quoteGaps.map((gap) => (
               <li key={gap.code}>
@@ -508,6 +546,11 @@ export function ConfirmStepPage() {
             </div>
           </div>
         )}
+
+        {providerConfigPending && <div className="error-panel" role="alert"><p>API 配置待重启生效；新报价、确认与生成暂不可用。</p><Link to="/settings">前往设置</Link></div>}
+
+        {quotePanel}
+        {disclosurePanel}
 
         {acceptedJob !== null ? (
           <div className="accepted-panel" role="status" data-testid="job-accepted">
@@ -546,7 +589,7 @@ export function ConfirmStepPage() {
                 type="button"
                 data-testid="requote-button"
                 onClick={() => void requestQuote()}
-                disabled={quoting}
+                disabled={quoting || submitting}
               >
                 {quoting ? "重新获取中…" : "重新获取报价"}
               </button>
@@ -569,6 +612,7 @@ export function ConfirmStepPage() {
                   {submitError.recovery === "rewizard" && (
                     <Link to={`/items/${id}/import/views`}>返回检查视图与资料</Link>
                   )}
+                  {submitError.recovery === "settings" && <Link to="/settings">前往设置</Link>}
                 </div>
               </div>
             )}
@@ -756,6 +800,9 @@ export function describeSubmitFailure(error: unknown): SubmissionError {
         : typeof details?.jobId === "string"
           ? details.jobId
           : null;
+    if (reason === "providerConfigPending" || reason === "providerConfigChanged") {
+      return { message: error.message, hint: reason === "providerConfigPending" ? "请前往设置，按指引重启服务后重新报价。" : "请重新获取报价并明确确认发送资料。", existingJobId: null, recovery: reason === "providerConfigPending" ? "settings" : "requote" };
+    }
     if (reason === "quoteExpired" || error.code === "QUOTE_EXPIRED") {
       return {
         message: "报价已过期：请重新获取报价后再提交。",
@@ -799,7 +846,7 @@ export function describeSubmitFailure(error: unknown): SubmissionError {
     if (reason === "confirmationRequired") {
       return {
         message: "需要先确认「将发送给供应商的资料」。",
-        hint: "请在右侧确认区勾选后再提交。",
+        hint: "请在上方发送确认区勾选，等待确认保存后再提交。",
         existingJobId: null,
         recovery: "none",
       };

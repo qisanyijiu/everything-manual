@@ -1,0 +1,35 @@
+work_id: interaction-a
+phase: done
+request_revision: 1
+prd_revision: 1
+ui_revision: 1
+current_tasks: []
+accepted_tasks:
+  - task_id: IA-01
+    prd_revision: 1
+    qa_round: 2
+    report: qa-report.md
+    accepted_ac_ids: [AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, AC-011, AC-012]
+    status: accepted
+qa_history:
+  - round: 1
+    scope: full
+    task_ids: [IA-01]
+    prd_revision: 1
+    result: FAIL
+    report: qa-report.md
+  - round: 2
+    scope: full
+    task_ids: [IA-01]
+    prd_revision: 1
+    result: PASS
+    report: qa-report.md
+qa_round: 2
+qa_scope: full
+qa_result: PASS
+open_defects: []
+blocked_reason: null
+resume_phase: null
+blocked_on: null
+unblock_condition: null
+next_action: "本批 IA-01 已交付；原方案 B/C/D 仍待实施，下一批按 B 的复核待办定位与原文唤起建立独立需求，不修改 T22/T23 状态"

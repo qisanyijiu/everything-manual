@@ -4,7 +4,7 @@
 //! - 配置键为 snake_case；**未知键是错误**（每个层级 `deny_unknown_fields`），不静默忽略；
 //! - 优先级：CLI 非密钥项 > 环境变量 > TOML > 默认（本模块负责“环境变量 > TOML”一层）；
 //! - 密钥不写入配置文件：`api_key_env` 指向承载密钥的环境变量名，
-//!   `api_key_file` 指向受限权限文件（二选一，见 `mod.rs::resolve_provider`）。
+//!   `api_key_file` 指向受限权限密文文件（二选一，见 `mod.rs::resolve_provider`）。
 //!
 //! 环境变量名表是**显式白名单**：只识别下表中列出的变量，其他 `EM_*` 变量一律忽略，
 //! 避免外部环境（CI、shell 配置）意外改变服务行为。命名规则：`EM_` + 键路径大写，
@@ -112,7 +112,7 @@ pub struct ProvidersSection {
 }
 
 /// 单个供应商配置。密钥本体不在文件里：`api_key_env` 给出环境变量名，
-/// `api_key_file` 给出受限文件路径（二选一）。
+/// `api_key_file` 给出 encrypt-api-key 产出的受限密文文件路径（二选一）。
 #[derive(Debug, Default, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct ProviderSection {

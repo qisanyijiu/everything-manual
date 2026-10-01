@@ -1,0 +1,13 @@
+(node:93227) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Listing tests:
+  [chromium] › api-settings-qa.spec.ts:64:1 › AS-QA-01 运行配置、375/1440布局与键盘标签（AC001/014/015）
+  [chromium] › api-settings-qa.spec.ts:100:1 › AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/UI006）
+  [chromium] › api-settings-qa.spec.ts:189:1 › AS-QA-03 浏览器保存B→刷新→真实重启→worker消费B（AC003/006/008/009/012）
+  [chromium] › api-settings-qa.spec.ts:253:1 › AS-QA-04 真实HTTP认证/CSRF、写入失败与旧修订冲突（AC002/004/005）
+  [chromium] › api-settings-qa.spec.ts:285:1 › AS-QA-05 密钥清除屏蔽部署，单家恢复，缺配置不冒充可生成（AC006/007/015）
+  [chromium] › api-settings-qa.spec.ts:319:1 › AS-QA-06 待重启门禁/旧报价失效/目录外模型与断网（AC011/012/015）
+  [chromium] › api-settings-qa.spec.ts:355:1 › AS-QA-07 保存与真实建单竞争只有一方受理（AC010/011）
+  [chromium] › api-settings-qa.spec.ts:375:1 › AS-QA-08 读取失败/重复提交/字段错误/写失败/冲突重读（AC001/005）
+  [chromium] › api-settings-qa.spec.ts:441:1 › AS-QA-09 手机密钥空替换/切换清空、取消恢复、清除与单家恢复（AC006/007/014）
+Total: 9 tests in 1 file
