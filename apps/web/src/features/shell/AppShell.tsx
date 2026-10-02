@@ -1,11 +1,12 @@
+import { JobActivityLink } from "../jobs/JobActivityLink";
+import { useWorkProtection } from "./work-protection";
 /**
  * 应用外壳（PRD §6.1.1 顶栏 + 每路由错误边界）：
  * - 顶栏：产品名、当前物品名·型号（无当前物品时隐藏）、任务中心、设置、登出；
  *   顶栏不承载业务提交按钮；
  * - 每个路由挂错误边界（渲染异常显示可读文案 + requestId + 返回资料库，不显示堆栈）。
  *
- * 任务中心徽标（进行中任务计数）需要 `/jobs` 服务端接口（T15/T17），尚未实现前不显示
- * 任何计数，避免用假数字冒充。
+ * 任务计数使用全库有界汇总，失败不以0替代；本地倒计时不增加请求。
  */
 
 import { Link, NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-router";
@@ -20,6 +21,7 @@ import { useLogout } from "../auth/session";
 import { Icon } from "../../components/Icon";
 
 export function AppShell() {
+  const { request, bypass, memory } = useWorkProtection();
   const location = useLocation();
   const navigate = useNavigate();
   const notify = useNotify();
@@ -42,7 +44,8 @@ export function AppShell() {
       const info = describeError(error);
       notify(`登出请求失败：${info.message}`, { kind: "alert", requestId: info.requestId });
     } finally {
-      navigate("/login", { replace: true });
+      memory.clear();
+      bypass(() => navigate("/login", { replace: true }));
     }
   }
 
@@ -62,7 +65,7 @@ export function AppShell() {
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-note"><Icon name="shield" size={22} /><p>你的物品，你的资料。<small>自托管 · 本地保存</small></p></div>
-          <button className="sidebar-account" type="button" aria-label={logoutMutation.isPending ? "登出中…" : "登出"} onClick={() => void handleLogout()} disabled={logoutMutation.isPending}>
+          <button className="sidebar-account" type="button" aria-label={logoutMutation.isPending ? "登出中…" : "登出"} onClick={() => request(() => { void handleLogout(); })} disabled={logoutMutation.isPending}>
             <span className="account-avatar">我</span><span>管理员<small>{logoutMutation.isPending ? "登出中…" : "登出"}</small></span><Icon name="logout" size={17} />
           </button>
         </div>
@@ -79,7 +82,7 @@ export function AppShell() {
             </p>
           )}
         </div>
-        <div className="top-bar__utilities"><span className="workspace-badge"><span />个人资料库</span><button className="mobile-logout" type="button" aria-label="退出登录" onClick={() => void handleLogout()} disabled={logoutMutation.isPending}><Icon name="logout" size={17} /></button></div>
+        <div className="top-bar__utilities"><JobActivityLink /><button className="mobile-logout" type="button" aria-label="退出登录" onClick={() => request(() => { void handleLogout(); })} disabled={logoutMutation.isPending}><Icon name="logout" size={17} /></button></div>
       </header>
       {/* tabIndex=-1：作为程序化焦点目标（会话恢复后焦点落回页面主体），不进入 Tab 顺序。 */}
       <main className="app-shell__content" id="main" tabIndex={-1}>

@@ -18,6 +18,7 @@ pub mod encrypted_secrets;
 pub mod error;
 pub mod file;
 pub mod logging;
+pub mod model_guard;
 pub mod password;
 pub mod provider_overrides;
 pub mod secret;
@@ -186,7 +187,7 @@ pub struct Providers {
 
 /// 单个供应商的解析结果。`api_key` 为 None 表示“未配置”——生成能力不可用，
 /// 但服务仍可启动浏览已有资料（REQ-007）；**不存在任何 mock 回退分支**。
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ProviderSettings {
     pub name: &'static str,
     pub base_url: String,
@@ -197,10 +198,35 @@ pub struct ProviderSettings {
     pub key_source: Option<String>,
 }
 
+impl std::fmt::Debug for ProviderSettings {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ProviderSettings")
+            .field("name", &self.name)
+            .field("base_url", &self.base_url)
+            .field(
+                "model",
+                &if self.model_issue() {
+                    Some("[hidden]")
+                } else {
+                    self.model.as_deref()
+                },
+            )
+            .field("api_key", &self.api_key)
+            .field("key_source", &self.key_source)
+            .finish()
+    }
+}
+
 impl ProviderSettings {
     /// 是否具备发起真实请求的全部条件（密钥 + 模型）。
     pub fn configured(&self) -> bool {
-        self.api_key.is_some() && self.model.is_some()
+        self.api_key.is_some() && self.model.is_some() && !self.model_issue()
+    }
+
+    pub fn model_issue(&self) -> bool {
+        self.model
+            .as_deref()
+            .is_some_and(model_guard::suspected_credential)
     }
 
     /// 缺失项（用于可行动的错误说明；不返回密钥本身）。
@@ -211,6 +237,9 @@ impl ProviderSettings {
         }
         if self.model.is_none() {
             missing.push("model");
+        }
+        if self.model_issue() {
+            missing.push("model（疑似误填密钥，需修正）");
         }
         missing
     }

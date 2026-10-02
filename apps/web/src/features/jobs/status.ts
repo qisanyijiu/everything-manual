@@ -153,6 +153,10 @@ export function stageKindLabel(kind: string, batchIndex: number): string {
  */
 export function retryDeniedHint(reason: string | null): string {
   switch (reason) {
+    case "providerModelInvalid":
+      return "模型配置需要修正；请前往设置修正并重启服务，再重新获取报价。";
+    case "quoteModelInvalid":
+      return "此报价的模型信息不可用，请重新获取报价；如配置仍需修正，请前往设置。";
     case "budgetNotHolding":
       return "该分支的预留已结算或释放：重试会重新请求供应商，需要重新获取报价并确认预算（或新建任务）。";
     case "branchSubmissionUnknown":

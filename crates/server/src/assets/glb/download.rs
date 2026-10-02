@@ -336,6 +336,16 @@ impl ModelDownloader {
     ///
     /// 只接受 HTTPS + 允许域 + 通过地址校验的目标；逐跳验证重定向。
     pub async fn download(&self, url: &str) -> Result<DownloadedModel, DownloadError> {
+        self.download_with_gate(url, None).await
+    }
+
+    /// Optional restricted-runner authorization is rechecked before every
+    /// request, including redirects. Accepted response bytes may finish saving.
+    pub async fn download_with_gate(
+        &self,
+        url: &str,
+        gate: Option<std::sync::Arc<dyn crate::jobs::scope::CallGate>>,
+    ) -> Result<DownloadedModel, DownloadError> {
         let mut current = Url::parse(url).map_err(|error| DownloadError::InvalidUrl {
             detail: error.to_string(),
         })?;
@@ -343,6 +353,13 @@ impl ModelDownloader {
         loop {
             let target = self.validate_target(&current).await?;
             let client = self.build_client(&target)?;
+            if let Some(gate) = &gate {
+                gate.check()
+                    .await
+                    .map_err(|code| DownloadError::InvalidUrl {
+                        detail: code.to_owned(),
+                    })?;
+            }
             let response = client
                 .get(target.url.clone())
                 .send()
@@ -459,7 +476,7 @@ impl ModelDownloader {
 
     /// 构造本跳的 client：pin 到已校验 IP、不跟随重定向、显式关闭默认重试层。
     fn build_client(&self, target: &ValidatedTarget) -> Result<reqwest::Client, DownloadError> {
-        reqwest::Client::builder()
+        let builder = reqwest::Client::builder()
             .connect_timeout(self.policy.connect_timeout)
             .timeout(self.policy.request_timeout)
             // 不自动跟随重定向：由本模块逐跳校验（避免把请求带到未校验的地址）。
@@ -469,11 +486,15 @@ impl ModelDownloader {
             .retry(reqwest::retry::never())
             // 连接 pin 到已校验 IP；URL 的 hostname（Host 头与 TLS SNI）保持不变，
             // 因此不存在"校验后再解析一次"的 DNS 重绑定窗口。
-            .resolve_to_addrs(&target.host, &[SocketAddr::new(target.addr, 0)])
-            .build()
-            .map_err(|error| DownloadError::Io {
-                detail: format!("构造下载客户端失败：{error}"),
-            })
+            .resolve_to_addrs(&target.host, &[SocketAddr::new(target.addr, 0)]);
+        let builder = if target.addr.is_loopback() {
+            builder.no_proxy()
+        } else {
+            builder
+        };
+        builder.build().map_err(|error| DownloadError::Io {
+            detail: format!("构造下载客户端失败：{error}"),
+        })
     }
 
     /// 流式落盘：边下边计数与 sha256（不整文件入内存）→ fsync → 原子 rename。

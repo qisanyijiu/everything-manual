@@ -1,0 +1,44 @@
+work_id: prd-completion
+phase: qa_running
+request_revision: 1
+prd_revision: 2
+ui_revision: 2
+current_tasks: [FULL-VALIDATION]
+accepted_tasks:
+  - {task_id: PC-01, prd_revision: 1, qa_round: 1, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC-001, AC-PC-002, AC-PC-003, AC-PC-004, AC-PC-005, AC-PC-006, AC-PC-007, AC-PC-008, AC-PC-009, AC-PC-010], status: accepted}
+  - {task_id: PC-06, prd_revision: 2, qa_round: 15, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC6-001, AC-PC6-002, AC-PC6-003, AC-PC6-004, AC-PC6-005, AC-PC6-006, AC-PC6-007, AC-PC6-008, AC-PC6-009, AC-PC6-010], status: accepted}
+  - {task_id: PC-02A, prd_revision: 2, qa_round: 6, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC2-001, AC-PC2-002, AC-PC2-003, AC-PC2-004], status: accepted}
+  - {task_id: PC-03A, prd_revision: 2, qa_round: 5, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC3-001, AC-PC3-002, AC-PC3-003, AC-PC3-004, AC-PC3-005], status: accepted}
+  - {task_id: PC-02B, prd_revision: 2, qa_round: 12, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC2-005, AC-PC2-006, AC-PC2-007, AC-PC2-008], status: accepted}
+  - {task_id: PC-03B, prd_revision: 2, qa_round: 18, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC3-006, AC-PC3-007, AC-PC3-008, AC-PC3-009], status: accepted}
+  - {task_id: PC-04, prd_revision: 2, qa_round: 9, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC4-001, AC-PC4-002, AC-PC4-003, AC-PC4-004, AC-PC4-005, AC-PC4-006, AC-PC4-007], status: accepted}
+  - {task_id: PC-05A, prd_revision: 2, qa_round: 18, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC5-001, AC-PC5-002, AC-PC5-003], status: accepted}
+  - {task_id: PC-05B, prd_revision: 2, qa_round: 15, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC5-004, AC-PC5-005], status: accepted}
+  - {task_id: PC-05C, prd_revision: 2, qa_round: 13, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC5-006, AC-PC5-007, AC-PC5-008], status: accepted}
+qa_history:
+  - {round: 1, scope: slice, task_ids: [PC-01], prd_revision: 1, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 2, scope: slice, task_ids: [PC-06], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 3, scope: slice, task_ids: [PC-02A], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 4, scope: slice, task_ids: [PC-03A], prd_revision: 2, result: FAIL, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 5, scope: slice, task_ids: [PC-03A], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 6, scope: slice, task_ids: [PC-02B, PC-02A], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 7, scope: slice, task_ids: [PC-03B], prd_revision: 2, result: FAIL, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 8, scope: slice, task_ids: [PC-03B], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 9, scope: slice, task_ids: [PC-04], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 10, scope: slice, task_ids: [PC-05A], prd_revision: 2, result: FAIL, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 11, scope: slice, task_ids: [PC-05A], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 12, scope: slice, task_ids: [PC-05B, PC-02B], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 13, scope: slice, task_ids: [PC-05C, PC-05B, PC-06], prd_revision: 2, result: PASS, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 14, scope: full, task_ids: [FULL-VALIDATION], prd_revision: 2, result: FAIL, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 15, scope: full, task_ids: [FULL-VALIDATION], prd_revision: 2, result: FAIL, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 16, scope: full, task_ids: [FULL-VALIDATION], prd_revision: 2, result: FAIL, report: llmdoc/requirements/prd-completion/qa-report.md}
+  - {round: 17, scope: full, task_ids: [FULL-VALIDATION], prd_revision: 2, result: FAIL, report: llmdoc/requirements/prd-completion/qa-report.md}
+qa_round: 18
+qa_scope: full
+qa_result: null
+open_defects: []
+blocked_reason: null
+resume_phase: null
+blocked_on: null
+unblock_condition: null
+next_action: "QA18 Chrome受影响回归、Edge138、normal T22三浏览器、AC061/bootstrap及AC062同会话100页+十切换已通过。Firefox原库存134目标已通过含9wire及4新增nativeZIP等价，2视口失败/1串行跳过定向重验，heap/zoom工具语义诊断中；新增PC05等浏览器覆盖仍待补。66AC台账5单项完整通过，非fullPASS。T23价格预算、Linux环境仍阻塞；新普通包尚未部署用户预览。"

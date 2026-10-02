@@ -15,6 +15,9 @@
  *   本函数负责在结束时 `destroy()`；调用方每次运行都重新读取原件字节。
  */
 
+import { isApiError } from "../../../api/client";
+import { readReason } from "../../../components/form";
+
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
 import { putPreparationPage, uploadPageAsset } from "../api";
@@ -208,6 +211,7 @@ export async function preparePages(options: PrepareOptions): Promise<PrepareSumm
         if (isCancelled(error) || signal?.aborted === true) {
           throw new PrepareCancelledError();
         }
+        if (isPreparationConflict(error)) throw error;
         failedPages.push(pageNumber);
         options.onPageFailed?.({
           pageNumber,
@@ -267,4 +271,9 @@ export function missingPageNumbers(
     }
   }
   return missing;
+}
+
+/** A concurrent writer must be re-read, never retried as an overwrite. */
+export function isPreparationConflict(error: unknown): boolean {
+  return isApiError(error) && (error.status === 412 || error.status === 428 || readReason(error.details) === "preparationReady");
 }

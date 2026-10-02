@@ -172,14 +172,25 @@ impl ManualAiClient {
     ) -> Result<Self, String> {
         let base_url =
             crate::config::validate_origin_like("base_url", base_url).map_err(|e| e.message)?;
-        let http = reqwest::Client::builder()
+        let builder = reqwest::Client::builder()
             .connect_timeout(timeouts.connect)
             .timeout(timeouts.request)
             // 不跟随重定向：3xx 归入"未被处理"，且不把 Authorization 转发到别的地址。
             .redirect(Policy::none())
             // 显式关闭 reqwest 0.13 的默认重试层（ADR-023 第 9 条）：同步批次的
             // "能否重发"只允许由上层按"能否证明未被接受"决定，客户端不得自行重发。
-            .retry(reqwest::retry::never())
+            .retry(reqwest::retry::never());
+        // Literal loopback fixtures must never use an ambient outbound proxy.
+        let builder = if reqwest::Url::parse(&base_url)
+            .ok()
+            .and_then(|url| url.host_str().map(str::to_owned))
+            .is_some_and(|host| matches!(host.as_str(), "127.0.0.1" | "[::1]"))
+        {
+            builder.no_proxy()
+        } else {
+            builder
+        };
+        let http = builder
             .build()
             .map_err(|error| format!("构造 HTTP 客户端失败：{error}"))?;
         Ok(Self {

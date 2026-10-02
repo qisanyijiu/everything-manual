@@ -26,6 +26,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// 受限授权文件控制的具名本地验证；先 --plan 核对，执行需独立授权。
+    /// 仅引用已初始化的专用实例及已上传/准备资料，复用现有安全供应商配置。
+    /// 本地实例访问权是此停服命令的管理边界；不创建网页登录会话。
+    #[command(
+        after_help = "计划：cargo xtask test-live --plan --case <案例.json>\n执行：cargo xtask test-live --case <案例.json> --budget-file <授权.json>\n授权文件须0600，creditMinor/usdMicros分别核对；不要把密码、API key或cookie放入命令、案例或授权。\n同一授权重跑恢复原任务；unknown仅对账，不自动重购。命令不确认知识/热点或发布。\n合同与示例：llmdoc/test-live.md。真实供应商调用仍须独立用户授权。"
+    )]
+    TestLive {
+        #[arg(long)]
+        case: PathBuf,
+        #[arg(long)]
+        budget_file: Option<PathBuf>,
+        /// 只计算绑定资料的同源计划，不执行、不调用供应商
+        #[arg(long)]
+        plan: bool,
+    },
     /// 从 Rust DTO 生成 contracts/openapi.json 与 apps/web/src/api/generated.ts
     Contracts {
         /// 只比较不写入：临时生成后与工作树比较，有差异非零退出
@@ -71,9 +86,31 @@ enum Command {
 }
 
 fn main() -> ExitCode {
-    let cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(error)
+            if std::env::args_os()
+                .nth(1)
+                .is_some_and(|arg| arg == "test-live")
+                && !matches!(
+                    error.kind(),
+                    clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion
+                ) =>
+        {
+            eprintln!(
+                "未执行：命令参数无效。使用 cargo xtask test-live --help 核对参数；不要传递凭据值。未发起供应商请求。"
+            );
+            return ExitCode::FAILURE;
+        }
+        Err(error) => error.exit(),
+    };
 
     let result = match cli.command {
+        Command::TestLive {
+            case,
+            budget_file,
+            plan,
+        } => return test_live(case, budget_file, plan),
         Command::Contracts { check } => contracts::run(check),
         Command::Check => check::run(),
         Command::Dist {
@@ -103,6 +140,55 @@ fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("\nxtask 失败: {error:#}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn test_live(case: PathBuf, budget_file: Option<PathBuf>, plan: bool) -> ExitCode {
+    let runtime = match tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+    {
+        Ok(runtime) => runtime,
+        Err(_) => {
+            eprintln!("未执行：本地运行环境不可用；未发起供应商请求。");
+            return ExitCode::FAILURE;
+        }
+    };
+    match runtime.block_on(everything_manual::test_live::run(
+        everything_manual::test_live::RunOptions {
+            case,
+            budget_file,
+            plan,
+        },
+    )) {
+        Ok(result) => {
+            println!(
+                "{}\n{}",
+                result.title,
+                serde_json::to_string_pretty(&result.data).expect("report JSON serializes")
+            );
+            if result.success {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            }
+        }
+        Err(error) => {
+            if error.execution_started {
+                eprintln!(
+                    "执行未完成：{} [{}]。保留授权记录；用同一授权核对已有成果。",
+                    error.message(),
+                    error.code
+                );
+            } else {
+                eprintln!(
+                    "未执行：{} [{}]。未发起供应商请求。",
+                    error.message(),
+                    error.code
+                );
+            }
             ExitCode::FAILURE
         }
     }

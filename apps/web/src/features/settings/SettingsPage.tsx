@@ -58,13 +58,13 @@ export function SettingsPage() {
             <li>
               <span className="status-list__name">Tripo（模型生成）</span>
               <span className="status-label">
-                {statusQuery.data.data.providersConfigured.tripo ? "已配置" : "未配置"}
+                {statusQuery.data.data.providerModelIssues?.tripo ? "模型需修正，暂不能生成" : statusQuery.data.data.providersConfigured.tripo ? "已配置" : "未配置"}
               </span>
             </li>
             <li>
               <span className="status-list__name">说明书 AI</span>
               <span className="status-label">
-                {statusQuery.data.data.providersConfigured.manualAi ? "已配置" : "未配置"}
+                {statusQuery.data.data.providerModelIssues?.manualAi ? "模型需修正，暂不能生成" : statusQuery.data.data.providersConfigured.manualAi ? "已配置" : "未配置"}
               </span>
             </li>
             <li>

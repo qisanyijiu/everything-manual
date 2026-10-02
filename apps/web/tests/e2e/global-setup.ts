@@ -29,9 +29,11 @@ import {
 const PASSWORD = "e2e-t09-password-6b31";
 
 export default async function globalSetup(): Promise<void> {
-  const binary = serverBinary();
+  // An explicit prebuilt fixture binary avoids rebuilding/overwriting another QA candidate.
+  const prebuilt = process.env.EM_E2E_SERVER_BINARY;
+  const binary = prebuilt ?? serverBinary();
   // 1) 构建后端（debug；e2e 用测试构建，正式包由 T22 验证）。
-  execFileSync("cargo", ["build", "-p", "everything-manual"], {
+  if (prebuilt === undefined) execFileSync("cargo", ["build", "-p", "everything-manual"], {
     cwd: path.resolve(import.meta.dirname, "../../../.."),
     stdio: "inherit",
   });

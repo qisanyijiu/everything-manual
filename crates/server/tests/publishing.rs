@@ -26,6 +26,8 @@
 //! 测试构建 + 显式配置才放行回环模型下载、零真实外网、零真实付费。
 
 mod common;
+#[path = "support/test_live_cases.rs"]
+mod test_live_cases;
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -1741,6 +1743,7 @@ async fn publish_is_transactional_idempotent_and_immutable() {
         .await
         .unwrap();
     let fixture_calls_before = tripo.request_total() + manual.request_total() + cdn.request_total();
+    assert_summary(&chain, "reviewDraft", &draft_id, None).await;
 
     // 缺 If-Match → 428（无副作用）。
     let response = chain
@@ -1800,6 +1803,9 @@ async fn publish_is_transactional_idempotent_and_immutable() {
     );
     let published_body = published.json();
     let release_id = published_body["data"]["id"].as_str().unwrap().to_owned();
+    // BUG-PC3-002: a real publish increments draft revision while freezing the
+    // previous content revision. The primary entry must now read that release.
+    assert_summary(&chain, "readRelease", &release_id, Some(&release_id)).await;
     assert_eq!(
         published_body["data"]["draftRevision"],
         json!(publishable_revision),
@@ -1827,6 +1833,64 @@ async fn publish_is_transactional_idempotent_and_immutable() {
         .as_i64()
         .expect("发布响应必须给出草稿新 revision");
     assert_eq!(after_publish, publishable_revision + 1);
+    assert_summary(&chain, "readRelease", &release_id, Some(&release_id)).await;
+
+    // Historical/malformed audit metadata is not evidence of publication and
+    // must not turn a bounded batch summary into a 500. Restore the real fact
+    // before continuing the normal HTTP publish/edit/re-publish lifecycle.
+    let audit_id: String = sqlx::query_scalar(
+        "SELECT id FROM audit_events WHERE entity_type='manual_release' AND entity_id=? AND action='release_published'",
+    )
+    .bind(&release_id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    let original_metadata: String =
+        sqlx::query_scalar("SELECT metadata_json FROM audit_events WHERE id=?")
+            .bind(&audit_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let original_value: Value = serde_json::from_str(&original_metadata).unwrap();
+    let mut wrong_id = original_value.clone();
+    wrong_id["draftId"] = json!("another-draft");
+    let mut wrong_type = original_value.clone();
+    wrong_type["draftRevisionAfterPublish"] = json!(after_publish.to_string());
+    let mut edited_version = original_value.clone();
+    edited_version["draftRevisionAfterPublish"] = json!(after_publish - 1);
+    for invalid in [
+        "{".to_owned(),
+        "null".to_owned(),
+        "{}".to_owned(),
+        wrong_id.to_string(),
+        wrong_type.to_string(),
+        edited_version.to_string(),
+    ] {
+        let mut conn = pool.acquire().await.unwrap();
+        sqlx::query("PRAGMA ignore_check_constraints=ON")
+            .execute(&mut *conn)
+            .await
+            .unwrap();
+        sqlx::query("UPDATE audit_events SET metadata_json=? WHERE id=?")
+            .bind(invalid)
+            .bind(&audit_id)
+            .execute(&mut *conn)
+            .await
+            .unwrap();
+        sqlx::query("PRAGMA ignore_check_constraints=OFF")
+            .execute(&mut *conn)
+            .await
+            .unwrap();
+        drop(conn);
+        assert_summary(&chain, "reviewDraft", &draft_id, Some(&release_id)).await;
+    }
+    sqlx::query("UPDATE audit_events SET metadata_json=? WHERE id=?")
+        .bind(original_metadata)
+        .bind(&audit_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+    assert_summary(&chain, "readRelease", &release_id, Some(&release_id)).await;
     // 同 key 不同 body（不同 If-Match）→ 409。
     let different_body = publish(
         &chain,
@@ -1908,6 +1972,7 @@ async fn publish_is_transactional_idempotent_and_immutable() {
     )
     .await;
     assert!(!modified.etag.is_empty());
+    assert_summary(&chain, "reviewDraft", &draft_id, Some(&release_id)).await;
 
     let after = chain
         .app
@@ -1951,9 +2016,85 @@ async fn publish_is_transactional_idempotent_and_immutable() {
     assert_eq!(list["data"][0]["id"], release_id.as_str());
     assert_eq!(list["data"][0]["modelRevisionId"], revision_id.as_str());
 
+    // After a real content/review edit, re-publication requires a new explicit
+    // review and publish action; its audit receipt becomes the new exact target.
+    let reviewed_again = patch_ok(
+        &chain,
+        &draft_id,
+        &modified,
+        json!({ "entities": { parts[0].clone(): { "reviewStatus": "confirmed" } } }),
+    )
+    .await;
+    assert_summary(&chain, "reviewDraft", &draft_id, Some(&release_id)).await;
+    let published_again = publish(&chain, &draft_id, &reviewed_again.etag, "t19-pub-key-3").await;
+    assert_eq!(
+        published_again.status,
+        StatusCode::CREATED,
+        "{}",
+        published_again.text()
+    );
+    let second_release = published_again.json()["data"]["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    assert_ne!(second_release, release_id);
+    assert_summary(
+        &chain,
+        "readRelease",
+        &second_release,
+        Some(&second_release),
+    )
+    .await;
+    assert_eq!(
+        tripo.request_total() + manual.request_total() + cdn.request_total(),
+        fixture_calls_before
+    );
+
     cdn.shutdown();
     tripo.shutdown();
     manual.shutdown();
+}
+
+async fn assert_summary(chain: &Chain, action: &str, target: &str, release: Option<&str>) {
+    let response = chain
+        .app
+        .call(
+            Method::GET,
+            &format!("/api/v1/items/summaries?ids={}", chain.inputs.item),
+        )
+        .cookie(&chain.cookie)
+        .send()
+        .await;
+    assert_eq!(response.status, StatusCode::OK, "{}", response.text());
+    let value = response.json();
+    let summary = &value["data"][0];
+    assert_eq!(summary["action"], action, "{summary}");
+    assert_eq!(summary["targetId"], target, "{summary}");
+    assert_eq!(summary["latestReleaseId"], json!(release), "{summary}");
+    if let Some(release_id) = release {
+        let published = chain
+            .app
+            .call(
+                Method::GET,
+                &format!("/api/v1/items/{}/releases/{release_id}", chain.inputs.item),
+            )
+            .cookie(&chain.cookie)
+            .send()
+            .await;
+        assert_eq!(published.status, StatusCode::OK);
+        let published = published.json();
+        assert_eq!(
+            summary["latestReleaseDraftRevision"],
+            published["data"]["draftRevision"]
+        );
+        assert_eq!(
+            summary["latestReleaseCreatedAt"],
+            published["data"]["createdAt"]
+        );
+    } else {
+        assert!(summary["latestReleaseDraftRevision"].is_null());
+        assert!(summary["latestReleaseCreatedAt"].is_null());
+    }
 }
 
 // ===========================================================================

@@ -1,6 +1,6 @@
 /** AS-01 QA 的隔离设施。密钥只在内存/临时私有文件，证据仅写匹配布尔值。 */
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import net from "node:net";
@@ -19,6 +19,19 @@ export const QA_WEB_BASE = `http://127.0.0.1:${QA_WEB_PORT}`;
 export const QA_DIR = process.env.EM_AS_QA_ARTIFACT_DIR
   ?? path.join(REPO_ROOT, "artifacts", "api-settings", "qa");
 export const QA_PASSWORD = "api-settings-qa-local-password";
+
+/** Frozen affected-suite runs override the historical baseline binary explicitly. */
+function checkedServerBinary(): string {
+  const file = process.env.EM_AS_QA_BINARY;
+  if (!file) {
+    if (process.env.EM_PC05B_QA_WEB_ROOT) throw new Error("PC05B AS regression requires copied binary; target fallback forbidden");
+    return serverBinary();
+  }
+  const sha = process.env.EM_AS_QA_BINARY_SHA256;
+  if (!sha || !/^[a-f0-9]{64}$/.test(sha)) throw new Error("AS copied binary SHA required");
+  if (!fs.realpathSync(file).startsWith(path.join(REPO_ROOT, "var") + path.sep)) throw new Error("AS frozen binary must be an owned repo/var copy");
+  expect(createHash("sha256").update(fs.readFileSync(file)).digest("hex")).toBe(sha); return file;
+}
 
 export async function freePort(): Promise<number> {
   const server = net.createServer();
@@ -151,13 +164,13 @@ export class ApiSettingsQaBackend {
         'model = "qa-toml-manual"', 'api_key_env = "EM_API_SETTINGS_QA_MANUAL"',
         "[download]", 'allowed_hosts = ["127.0.0.1"]', 'allow_local_fixture = true', "",
       ].join("\n"));
-      execFileSync(serverBinary(), ["init", "--data-dir", this.dataDir, "--password-file", passwordFile], {
+      execFileSync(checkedServerBinary(), ["init", "--data-dir", this.dataDir, "--password-file", passwordFile], {
         cwd: this.workDir, env: this.environment(), stdio: "pipe",
       });
       this.initialized = true;
     }
     this.log = fs.createWriteStream(this.logPath, { flags: "a", mode: 0o600 });
-    const child = spawn(serverBinary(), ["serve", "--data-dir", this.dataDir, "--listen", `127.0.0.1:${this.port}`], {
+    const child = spawn(checkedServerBinary(), ["serve", "--data-dir", this.dataDir, "--listen", `127.0.0.1:${this.port}`], {
       cwd: this.workDir, env: this.environment(), stdio: ["ignore", "pipe", "pipe"],
     });
     child.stdout?.pipe(this.log, { end: false });
@@ -199,6 +212,7 @@ export class ApiSettingsQaBackend {
 
   async cleanup(): Promise<void> {
     await this.stop();
+    if (process.env.EM_AS_QA_BINARY) checkedServerBinary();
     fs.rmSync(this.workDir, { recursive: true, force: true });
   }
 }

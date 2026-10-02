@@ -132,9 +132,9 @@ export function JobDetailPage() {
           {detail === null ? "任务详情" : `${detail.item.name}${detail.item.model !== "" ? ` · ${detail.item.model}` : ""}`}
         </h1>
 
-        {networkError && (
+        {jobQuery.isError && (
           <p className="notice-inline" role="status" data-testid="network-notice">
-            网络连接异常，正在自动重试（本地状态未变；下面显示的是最后一次读到的服务端状态）。
+            {networkError ? "网络连接异常" : "此次读取未完成"}，正在自动重试（本地状态未变；下面显示的是最后一次读到的服务端状态）。
           </p>
         )}
 
@@ -144,7 +144,7 @@ export function JobDetailPage() {
           <div className="error-panel" role="alert" data-testid="job-load-error">
             <h2>{networkError ? "无法连接服务" : "无法读取任务详情"}</h2>
             <p>{describeError(jobQuery.error).message}</p>
-            {networkError && (
+            {jobQuery.isError && (
               <p className="error-panel__meta">
                 这是网络/进程问题，不是任务失败：任务状态以服务端数据库为准。
               </p>

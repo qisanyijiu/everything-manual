@@ -100,7 +100,10 @@ fn supplier_fact_table_writes_live_only_in_repo_layer() {
 fn write_functions_either_redact_or_are_exempt() {
     const EXEMPT: [(&str, &str); 10] = [
         ("insert", "page_set 是本地计划页号；其余文本列写 NULL"),
-        ("claim_next", "只写 lease_owner（worker 身份）与状态"),
+        (
+            "claim_next_for_job",
+            "只写系统 worker lease_owner、状态/epoch/时间与 NULL；job_id 仅用于候选 WHERE",
+        ),
         ("renew_lease", "只续租约时间"),
         (
             "reset_result_fact",

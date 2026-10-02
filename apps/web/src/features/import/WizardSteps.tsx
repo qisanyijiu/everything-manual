@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 /**
  * 向导五步导航（PRD §6.1.2 / §6.2 UI-019）。
  *
@@ -9,10 +10,12 @@
  * - 前置未满足时「下一步」保持可见但禁用，原因通过 `aria-describedby` 关联（可朗读）。
  */
 
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
+import { useItemSummaries } from "../library/workflow";
+import type { ItemSummaryDto } from "../../api/endpoints";
 
 export interface WizardStepSpec {
-  readonly key: string;
+  readonly key: keyof ItemSummaryDto["steps"];
   readonly label: string;
   readonly segment: string;
 }
@@ -29,8 +32,10 @@ export function wizardStepIndex(currentSegment: string): number {
   return WIZARD_STEPS.findIndex((step) => step.segment === currentSegment);
 }
 
-export function wizardStepHref(itemId: string, segment: string): string {
-  return segment === "edit" ? `/items/${itemId}/edit` : `/items/${itemId}/${segment}`;
+export function wizardStepHref(itemId: string, segment: string, context?: URLSearchParams): string {
+  const kept = new URLSearchParams();
+  for (const key of ["documentId", "preparationId", "quoteId"]) { const value = context?.get(key); if (value) kept.set(key, value); }
+  return `/items/${itemId}/${segment}${kept.size ? `?${kept}` : ""}`;
 }
 
 export interface WizardStepsProps {
@@ -42,11 +47,19 @@ export interface WizardStepsProps {
 /** 五步步骤条：当前步 `aria-current="step"`；可导航步骤是链接（键盘可达）。 */
 export function WizardSteps({ currentSegment, itemId }: WizardStepsProps) {
   const params = useParams();
+  const [search] = useSearchParams();
   const effectiveItemId = itemId !== undefined ? itemId : (params.itemId ?? null);
+  const summaries = useItemSummaries(effectiveItemId ? [effectiveItemId] : [], search.get("documentId"));
+  const [now, setNow] = useState(() => Date.now());
+  const expiration = summaries.data?.[0]?.quoteExpiresAt;
+  useEffect(() => { if (!expiration) return; const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, [expiration]);
+  const steps = summaries.isError ? undefined : summaries.data?.[0]?.steps;
   return (
-    <ol className="wizard-steps" aria-label="新建向导步骤">
+    <><ol className="wizard-steps" aria-label="新建向导步骤">
       {WIZARD_STEPS.map((step) => {
         const active = step.segment === currentSegment;
+        const state = !effectiveItemId ? "missing" : steps && step.key === "confirm" && expiration && now >= Date.parse(expiration) ? "needsReview" : steps?.[step.key];
+        const label = state === "complete" ? "已完成" : state === "missing" ? "待补充" : state === "needsReview" ? "需重新检查" : "状态未读取";
         return (
           <li
             key={step.key}
@@ -62,12 +75,16 @@ export function WizardSteps({ currentSegment, itemId }: WizardStepsProps) {
                 <span className="visually-hidden">（创建物品后可进入）</span>
               </span>
             ) : (
-              <Link to={wizardStepHref(effectiveItemId, step.segment)}>{step.label}</Link>
+              <Link to={wizardStepHref(effectiveItemId, step.segment, search)}>{step.label}</Link>
             )}
+            <small className={`wizard-steps__state wizard-steps__state--${state ?? "unknown"}`}>{label}</small>
+            {state === "needsReview" && <span className="visually-hidden">当前资料或报价条件已改变，请重新核对本步骤</span>}
           </li>
         );
       })}
     </ol>
+    {summaries.isError && <p role="alert">步骤状态未读取。<button type="button" onClick={() => void summaries.refetch()}>重新读取步骤状态</button></p>}
+    {steps && (Object.values(steps).includes("needsReview") || !!expiration && now >= Date.parse(expiration)) && <p className="field__hint">标记「需重新检查」的步骤受当前资料或报价有效期影响；请重新核对、获取报价并确认。已受理任务和已发布版仍保留。</p>}</>
   );
 }
 
@@ -79,6 +96,7 @@ export interface WizardNavProps {
   /** 下一步被禁用的原因（常驻可见 + 与按钮 `aria-describedby` 关联）。 */
   readonly nextDisabledReason?: string | null;
   readonly nextLabel?: string;
+  readonly nextHref?: string;
 }
 
 /**
@@ -92,7 +110,9 @@ export function WizardNav({
   nextDisabled = false,
   nextDisabledReason = null,
   nextLabel,
+  nextHref,
 }: WizardNavProps) {
+  const [search] = useSearchParams();
   const index = wizardStepIndex(currentSegment);
   const previous = index > 0 ? WIZARD_STEPS[index - 1] : undefined;
   const next = index >= 0 && index < WIZARD_STEPS.length - 1 ? WIZARD_STEPS[index + 1] : undefined;
@@ -101,7 +121,7 @@ export function WizardNav({
   return (
     <div className="wizard-nav">
       {previous !== undefined ? (
-        <Link className="button" to={wizardStepHref(itemId, previous.segment)}>
+        <Link className="button" to={wizardStepHref(itemId, previous.segment, search)}>
           上一步：{previous.label}
         </Link>
       ) : (
@@ -114,7 +134,7 @@ export function WizardNav({
               下一步：{nextLabel ?? next.label}
             </button>
           ) : (
-            <Link className="button-primary" to={wizardStepHref(itemId, next.segment)}>
+            <Link className="button-primary" to={nextHref ?? wizardStepHref(itemId, next.segment, search)}>
               下一步：{nextLabel ?? next.label}
             </Link>
           )}

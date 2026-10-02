@@ -4,8 +4,8 @@
  * 背景：T16 在行内 `.item-row__actions` 里新增了常驻禁用原因（`.item-row__note`）后，
  * 行内四列 grid 的末端 `auto` 轨道按说明文字 max-content 定宽，把身份列挤到 0px
  * （1280/1366px 下名称逐字换行、单行高 358px，QA 回合 18 BUG-005）。修复后本文件固化：
- * - 桌面 1024/1280/1366/1440/1600/1920px：名称列宽 ≥ 120px、行高 ≤ 140px，
- *   阅读器入口保持可见、操作区不溢出；
+ * - 桌面 1024/1280/1366/1440/1600/1920px：名称列宽 ≥ 120px，
+ *   当前主操作/历史入口保持可见、44px、操作区不溢出；有发布版才出现阅读入口；
  * - 窄屏 767/375px（<768px）：行仍为单列堆叠、名称可读、摘要抽屉可开可关（不回退）。
  *
  * 阈值与 QA 的 `qa-t16-independent.spec.ts` QA-10 一致（名称 ≥120px）；本文件是 RD 侧守卫，
@@ -24,8 +24,8 @@ const apiBase = (): string => runtime().apiBase;
 
 /** 名称列可读阈值（与 QA-10 相同）。 */
 const MIN_NAME_WIDTH = 120;
-/** 行高上限：两行身份 + 一行说明 + 内边距与间距的合理上界（逐字换行时曾达 358px）。 */
-const MAX_ROW_HEIGHT = 140;
+// Revision 2 adds workflow status/version/actions. Record actual row height and
+// whitespace, rather than applying the old four-block 140px content assumption.
 
 const WIDE_WIDTHS = [1024, 1280, 1366, 1440, 1600, 1920] as const;
 const NARROW_WIDTHS = [767, 375] as const;
@@ -33,6 +33,10 @@ const NARROW_WIDTHS = [767, 375] as const;
 interface RowGeometry {
   readonly gridTemplateColumns: string;
   readonly row: { x: number; y: number; width: number; height: number };
+  readonly content: string;
+  readonly scrollWidth: number;
+  readonly clientWidth: number;
+  readonly verticalWhitespace: number;
   readonly parts: Record<string, { x: number; y: number; width: number; height: number } | null>;
 }
 
@@ -50,13 +54,18 @@ async function measureRow(row: import("@playwright/test").Locator): Promise<RowG
     return {
       gridTemplateColumns: getComputedStyle(node).gridTemplateColumns,
       row: rect(node),
+      content: node.textContent ?? "",
+      scrollWidth: node.scrollWidth,
+      clientWidth: node.clientWidth,
+      verticalWhitespace: rect(node).height - Math.max(...Array.from(node.children).map(child => rect(child).height)),
       parts: {
         identity: pick(".item-row__identity"),
         name: pick(".item-row__name"),
         status: pick(".item-row__status"),
         time: pick(".item-row__time"),
         actions: pick(".item-row__actions"),
-        readerLink: pick(".item-row__open"),
+        primaryAction: pick(".workflow-actions .button-primary"),
+        historyLink: pick('.workflow-actions a[href$="/releases"]'),
       },
     };
   });
@@ -69,12 +78,13 @@ async function resizeTo(
 ): Promise<RowGeometry> {
   await page.setViewportSize({ width, height: 900 });
   await expect(row).toBeVisible();
+  await expect(row.getByRole("link", { name: "补齐资料", exact: true })).toBeVisible();
   // 断点切换会让 PageLayout 重挂载（wide/mid/narrow 三套 DOM），等一帧再量。
   await page.waitForTimeout(100);
   return measureRow(row);
 }
 
-test("RD-ROW-1 桌面 1024–1920px：身份列可读、行高正常、阅读入口不溢出（BUG-005 守卫）", async ({
+test("RD-ROW-1 桌面 1024–1920px：身份列可读、当前操作可达且不溢出（BUG-005 守卫）", async ({
   page,
   request,
 }) => {
@@ -92,7 +102,8 @@ test("RD-ROW-1 桌面 1024–1920px：身份列可读、行高正常、阅读入
     const { row: rowBox, parts } = geometry;
     const name = parts.name;
     const identity = parts.identity;
-    const readerLink = parts.readerLink;
+    const primaryAction = parts.primaryAction;
+    const historyLink = parts.historyLink;
 
     // 身份列与名称必须获得真实宽度（BUG-005 修复前：身份列 0px、名称 22.8px）。
     expect(
@@ -102,16 +113,23 @@ test("RD-ROW-1 桌面 1024–1920px：身份列可读、行高正常、阅读入
     expect(identity?.width ?? 0, `${width}px：身份列宽 ${identity?.width}px`).toBeGreaterThanOrEqual(
       MIN_NAME_WIDTH,
     );
-    // 行高正常（修复前 1280px 达 357.7px）。
-    expect(
-      rowBox.height,
-      `${width}px：行高 ${rowBox.height}px（阈值 ≤${MAX_ROW_HEIGHT}）`,
-    ).toBeLessThanOrEqual(MAX_ROW_HEIGHT);
-    // 阅读入口已开放，操作区应完整落在行内，不能挤压名称或溢出。
-    expect(readerLink).not.toBeNull();
-    expect((readerLink?.x ?? 0) + (readerLink?.width ?? 0)).toBeLessThanOrEqual(rowBox.x + rowBox.width);
-    // 四列轨道都在（未退化为逐字换行的单字列）。
-    expect(geometry.gridTemplateColumns.trim().split(/\s+/).length, `${width}px 轨道数`).toBe(4);
+    // Current layout may wrap the four content groups into two columns. Keep
+    // identity readability, actual control sizes and zero overflow at all six widths.
+    expect([2, 4], `${width}px actual grid ${geometry.gridTemplateColumns}`).toContain(geometry.gridTemplateColumns.trim().split(/\s+/).length);
+    expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+    for (const [label, box] of Object.entries({ primaryAction, historyLink })) {
+      expect(box, `${width}px ${label}`).not.toBeNull();
+      expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+      expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      expect(box?.x ?? -1).toBeGreaterThanOrEqual(rowBox.x - 1);
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(rowBox.x + rowBox.width + 1);
+      expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(rowBox.y + rowBox.height + 1);
+    }
+    await expect(row.getByRole("link", { name: "补齐资料", exact: true })).toHaveAttribute("href", /\/import\/document$/);
+    await expect(row.getByRole("link", { name: "历史版本", exact: true })).toHaveAttribute("href", /\/releases$/);
+    // This real fixture has no published version; never invent a reading entry.
+    await expect(row.getByRole("link", { name: /阅读说明书|阅读已发布版/ })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   }
 
   const outDir = path.join(
@@ -149,9 +167,22 @@ test("RD-ROW-2 窄屏 <768px：行单列堆叠、名称可读、摘要抽屉可�
     ).toBe(1);
     const name = geometry.parts.name;
     expect(name?.width ?? 0, `${width}px：名称列宽 ${name?.width}px`).toBeGreaterThanOrEqual(200);
-    const readerLink = row.getByRole("link", { name: "打开说明书" });
-    await expect(readerLink).toBeVisible();
-    await expect(readerLink).toHaveAttribute("href", /\/releases$/);
+    const primary = row.getByRole("link", { name: "补齐资料", exact: true });
+    const history = row.getByRole("link", { name: "历史版本", exact: true });
+    await expect(primary).toBeVisible();
+    await expect(primary).toHaveAttribute("href", /\/import\/document$/);
+    await expect(history).toBeVisible();
+    await expect(history).toHaveAttribute("href", /\/releases$/);
+    await expect(row.getByRole("link", { name: /阅读说明书|阅读已发布版/ })).toHaveCount(0);
+    for (const link of [primary, history]) {
+      const box = await link.boundingBox();
+      expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+      expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width);
+    }
+    await primary.focus(); await page.keyboard.press("Tab"); await expect(history).toBeFocused();
+    expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   }
   const outDir = path.join(
     path.resolve(import.meta.dirname, "../../../../artifacts/web-mvp/t16-rd-fix"),

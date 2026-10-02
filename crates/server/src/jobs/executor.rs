@@ -133,6 +133,7 @@ pub struct StageRunReport {
 
 /// 持久任务执行器。
 pub struct JobExecutor {
+    scope: Option<super::scope::ExecutionScope>,
     provider_config:
         Option<Arc<tokio::sync::RwLock<crate::config::provider_overrides::ProviderConfigStore>>>,
     pool: SqlitePool,
@@ -149,6 +150,23 @@ pub struct JobExecutor {
 }
 
 impl JobExecutor {
+    pub fn with_scope(mut executor: Arc<Self>, scope: super::scope::ExecutionScope) -> Arc<Self> {
+        Arc::get_mut(&mut executor)
+            .expect("scope must be installed before sharing executor")
+            .scope = Some(scope);
+        executor
+    }
+
+    async fn check_scope(&self) -> Result<(), JobError> {
+        if let Some(scope) = &self.scope {
+            scope
+                .gate
+                .check()
+                .await
+                .map_err(|code| JobError::Authorization { code })?;
+        }
+        Ok(())
+    }
     /// 生产构造：系统时钟 + 系统 jitter + 空处理器注册表（真实适配器由 T12/T14/T15 注册）。
     pub fn new(pool: SqlitePool, config: ExecutorConfig, registry: StageRegistry) -> Arc<Self> {
         Self::with_runtime(
@@ -185,6 +203,7 @@ impl JobExecutor {
         jitter: Arc<dyn Jitter>,
     ) -> Arc<Self> {
         Arc::new(Self {
+            scope: None,
             provider_config: None,
             pool,
             config,
@@ -258,7 +277,13 @@ impl JobExecutor {
     /// 恢复扫描：收敛所有"租约已过期的 running 阶段"（恢复矩阵见 `jobs::recover`）。
     pub async fn recover_expired_leases(&self) -> Result<RecoveryReport, JobError> {
         let now = self.now();
-        let expired = job_stages::expired_running(&self.pool, now).await?;
+        self.check_scope().await?;
+        let expired = job_stages::expired_running_for_job(
+            &self.pool,
+            now,
+            self.scope.as_ref().map(|s| s.job_id.as_str()),
+        )
+        .await?;
         let mut report = RecoveryReport {
             scanned: expired.len(),
             ..RecoveryReport::default()
@@ -422,6 +447,7 @@ impl JobExecutor {
 
     /// 领取一个阶段（SQL 条件更新；并发上限在领取谓词内判定）。
     async fn claim(&self) -> Result<Option<JobStage>, JobError> {
+        self.check_scope().await?;
         let params = ClaimParams {
             owner: self.owner.clone(),
             now: self.now(),
@@ -429,7 +455,12 @@ impl JobExecutor {
             remote_generation_limit: self.config.remote_generation_limit,
             manual_ai_batch_limit: self.config.manual_ai_batch_limit,
         };
-        Ok(job_stages::claim_next(&self.pool, &params).await?)
+        Ok(job_stages::claim_next_for_job(
+            &self.pool,
+            &params,
+            self.scope.as_ref().map(|s| s.job_id.as_str()),
+        )
+        .await?)
     }
 
     /// 执行一个已领取的阶段：准备上下文 → 续约任务 → 处理器 → 冲突归一化 → 推进。
@@ -446,7 +477,31 @@ impl JobExecutor {
             .ok_or_else(|| JobError::handler(&stage.id, format!("job 不存在：{}", stage.job_id)))?;
         let attempt = repo::attempts::latest_for_stage(&mut conn, &stage.id).await?;
         let config_error = match &config {
-            Some(config) => config.ensure_job(&mut conn, &stage.job_id).await.err(),
+            Some(config) => {
+                if crate::config::model_guard::submission_stage(stage.stage_kind)
+                    && matches!(resume_hint(attempt.as_ref()), ResumeHint::Fresh)
+                    && !attempt
+                        .as_ref()
+                        .is_some_and(|a| a.submit_state == SubmitState::Accepted)
+                {
+                    config
+                        .ensure_job_generation(&mut conn, &stage.job_id)
+                        .await
+                        .err()
+                } else {
+                    config.ensure_job(&mut conn, &stage.job_id).await.err()
+                }
+            }
+            None if crate::config::model_guard::submission_stage(stage.stage_kind)
+                && matches!(resume_hint(attempt.as_ref()), ResumeHint::Fresh)
+                && !attempt
+                    .as_ref()
+                    .is_some_and(|a| a.submit_state == SubmitState::Accepted) =>
+            {
+                crate::config::model_guard::ensure_job_models(&mut conn, &stage.job_id)
+                    .await
+                    .err()
+            }
             None => None,
         };
         drop(conn);
@@ -536,7 +591,8 @@ impl JobExecutor {
                 stage.id.clone(),
                 self.owner.clone(),
                 now,
-            ),
+            )
+            .with_call_gate(self.scope.as_ref().map(|s| Arc::clone(&s.gate))),
         };
         let lease_lost = Arc::new(AtomicBool::new(false));
         let renewal = self.spawn_renewal(&guard, Arc::clone(&lease_lost));
@@ -604,6 +660,14 @@ impl JobExecutor {
                 reason: format!("处理器失败且提交结果未知：{error}"),
             };
         }
+        if let JobError::Authorization { code } = error {
+            return StageOutcome::NeedsInput {
+                items: vec![MissingItem::new(
+                    *code,
+                    "执行授权或绑定资料已变化：保留成果，使用原授权核对后恢复",
+                )],
+            };
+        }
         StageOutcome::Retryable {
             reason: format!("处理器失败：{error}"),
             retry_after_seconds: None,
@@ -650,6 +714,24 @@ impl JobExecutor {
         let wait_anchor = match &outcome {
             StageOutcome::WaitingProvider => self.wait_anchor(stage).await?,
             _ => None,
+        };
+        let outcome = if let Some(scope) = &self.scope
+            && matches!(
+                stage.stage_kind,
+                manual_core::domain::StageKind::TripoSubmit
+                    | manual_core::domain::StageKind::ManualExtract
+            )
+            && matches!(outcome, StageOutcome::Retryable { .. })
+            && stage.attempt_count.max(0) as u32 >= scope.safe_retry_limit(stage)
+        {
+            StageOutcome::NeedsInput {
+                items: vec![MissingItem::new(
+                    "live_retry_not_authorized",
+                    "该阶段的额外安全提交重试未获授权或次数已用尽；没有再次购买",
+                )],
+            }
+        } else {
+            outcome
         };
         let (advance, note) = plan_advance(
             stage,

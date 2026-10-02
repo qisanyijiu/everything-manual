@@ -5,29 +5,32 @@
  * - 网络等非 401 失败 → 显示可读错误 + 重试，不自动跳转、不重放已失败请求。
  */
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 import { describeError, isApiError } from "../../api/client";
 import { FullScreenSkeleton } from "../../components/Skeleton";
 import { loginHref } from "../../lib/next-path";
-import { useSession } from "../auth/session";
+import { hasVerifiedSession, useSession } from "../auth/session";
 
 export function RequireSession({ children }: { children: ReactNode }) {
   const session = useSession();
+  const client = useQueryClient();
+  const expired = hasVerifiedSession(client);
   const location = useLocation();
   const navigate = useNavigate();
   const unauthorized = session.isError && isApiError(session.error) && session.error.status === 401;
 
   useEffect(() => {
     if (unauthorized) {
-      navigate(loginHref(location), { replace: true, state: { expired: true } });
+      navigate(loginHref(location), { replace: true, state: { expired } });
     }
-  }, [unauthorized, location, navigate]);
+  }, [unauthorized, location, navigate, expired]);
 
   if (unauthorized) {
     // 正在跳转；保持骨架，避免闪一下受保护内容或登录表单。
-    return <FullScreenSkeleton label="登录已过期，正在跳转登录页…" />;
+    return <FullScreenSkeleton label="正在前往登录页" />;
   }
 
   if (session.isPending) {

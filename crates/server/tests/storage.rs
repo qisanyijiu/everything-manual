@@ -30,6 +30,11 @@ use sqlx::{Row, SqlitePool};
 
 const BIN: &str = env!("CARGO_BIN_EXE_everything-manual");
 
+const MIGRATION_0008: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../migrations/0008_preparation_format.sql"
+));
+
 /// 内嵌迁移的真实文件内容（测试用它构造"旧版本程序"或"坏迁移"的迁移目录；
 /// 内容与生产文件逐字节一致，因此 SQLx checksum 与内嵌迁移相同）。
 const MIGRATION_0001: &str = include_str!(concat!(
@@ -372,11 +377,9 @@ async fn fresh_data_dir_initializes_full_schema_constraints_and_connection_setti
     init_structure(dir.path());
     let database = open(dir.path()).await;
 
-    // 程序 schema 版本 = 内嵌迁移集的最大版本（T19 起为 7：0007_release_manifest）。
-    // 事实更新（T19 交付回合，2026-09-12）：0007 给 assets.purpose 增加
-    // release_manifest 值（发布 manifest 资产）；旧值 6 是 0006 时代的断言。
-    assert_eq!(database.program_schema_version(), 7);
-    assert_eq!(database.applied_schema_version().await.unwrap(), 7);
+    // PC-03A: schema 8 appends a nullable preparation format marker; legacy data is not rewritten.
+    assert_eq!(database.program_schema_version(), 8);
+    assert_eq!(database.applied_schema_version().await.unwrap(), 8);
     // 库文件落在 data-dir 内，且 WAL/SHM 由 SQLite 管理（T20 备份必须处理）。
     assert!(database_path(dir.path()).is_file());
     assert!(
@@ -564,6 +567,7 @@ async fn embedded_migrations_match_repository_files() {
             MIGRATION_0005.to_owned(),
             MIGRATION_0006.to_owned(),
             MIGRATION_0007.to_owned(),
+            MIGRATION_0008.to_owned(),
         ]
     );
 }
@@ -588,16 +592,17 @@ async fn migrations_are_idempotent_across_reopens() {
             "4".to_owned(),
             "5".to_owned(),
             "6".to_owned(),
-            "7".to_owned()
+            "7".to_owned(),
+            "8".to_owned()
         ]
     );
     first.close().await;
 
     let second = open(dir.path()).await;
-    assert_eq!(second.applied_schema_version().await.unwrap(), 7);
+    assert_eq!(second.applied_schema_version().await.unwrap(), 8);
     assert_eq!(
         count(second.pool(), "SELECT COUNT(*) FROM _sqlx_migrations").await,
-        7,
+        8,
         "重复打开不得重复写入迁移记录"
     );
     second.close().await;
@@ -1300,7 +1305,7 @@ async fn future_schema_is_rejected_without_modifying_database_bytes() {
     assert!(error.is_schema_too_new(), "{error}");
     let message = error.to_string();
     assert!(message.contains("v9999"), "{message}");
-    assert!(message.contains("v7"), "{message}");
+    assert!(message.contains("v8"), "{message}");
     assert!(message.contains("拒绝打开"), "{message}");
 
     let after = std::fs::read(database_path(dir.path())).expect("再次读取库文件字节");
@@ -1381,7 +1386,7 @@ async fn older_schema_is_migrated_automatically_and_data_preserved() {
 
     // 程序升级：同一 data-dir 打开即自动迁移到程序版本。
     let database = open(dir.path()).await;
-    assert_eq!(database.applied_schema_version().await.unwrap(), 7);
+    assert_eq!(database.applied_schema_version().await.unwrap(), 8);
     let mut conn = database.pool().acquire().await.unwrap();
     let migrated = repo::items::get(&mut conn, &item_id)
         .await
@@ -1404,7 +1409,7 @@ async fn older_schema_is_migrated_automatically_and_data_preserved() {
     );
     assert_eq!(
         count(database.pool(), "SELECT COUNT(*) FROM _sqlx_migrations").await,
-        7
+        8
     );
 
     database.close().await;
@@ -1454,10 +1459,10 @@ async fn failed_migration_leaves_no_partial_state() {
 
     // 修复后（生产迁移集）可继续升级，且不重复应用 0001。
     let database = open(dir.path()).await;
-    assert_eq!(database.applied_schema_version().await.unwrap(), 7);
+    assert_eq!(database.applied_schema_version().await.unwrap(), 8);
     assert_eq!(
         count(database.pool(), "SELECT COUNT(*) FROM _sqlx_migrations").await,
-        7
+        8
     );
     database.close().await;
 }
@@ -1495,7 +1500,7 @@ async fn check_reports_migration_state_without_creating_or_modifying_database() 
     let pending = run_cli(dir.path(), &["check", "--data-dir", &data_dir]);
     assert_eq!(pending.status, 0, "{pending:?}");
     assert!(pending.stdout.contains("待迁移"), "{pending:?}");
-    assert!(pending.stdout.contains("库 v1 → 程序 v7"), "{pending:?}");
+    assert!(pending.stdout.contains("库 v1 → 程序 v8"), "{pending:?}");
     let pool = connect_raw(&database_path(dir.path()), false).await;
     assert_eq!(
         everything_manual::storage::migrations::applied_schema_version(&pool)
@@ -1512,7 +1517,7 @@ async fn check_reports_migration_state_without_creating_or_modifying_database() 
         .unwrap()
     {
         DatabaseStatus::Pending { applied, program } => {
-            assert_eq!((applied, program), (1, 7));
+            assert_eq!((applied, program), (1, 8));
         }
         other => panic!("期望 Pending，实际：{other:?}"),
     }
@@ -1533,23 +1538,23 @@ async fn init_creates_database_and_check_reports_ready_twice() {
         database_path(&dir.join("data")).is_file(),
         "init 必须创建并迁移数据库（T03）：{init:?}"
     );
-    assert!(init.stdout.contains("schema v7"), "{init:?}");
+    assert!(init.stdout.contains("schema v8"), "{init:?}");
 
     for _ in 0..2 {
         let check = run_cli(dir.path(), &["check", "--data-dir", "data"]);
         assert_eq!(check.status, 0, "{check:?}");
         assert!(
-            check.stdout.contains("数据库 schema：已就绪（v7"),
+            check.stdout.contains("数据库 schema：已就绪（v8"),
             "{check:?}"
         );
         assert!(check.stdout.contains("foreign_keys=ON"), "{check:?}");
     }
 
-    // 幂等：两次 check 后迁移记录不重复（T19 起迁移集为 1/2/3/4/5/6/7）。
+    // 幂等：两次 check 后迁移记录不重复（PC-03A 起迁移集为 1/2/3/4/5/6/7/8）。
     let pool = connect_raw(&database_path(&dir.join("data")), false).await;
     assert_eq!(
         count(&pool, "SELECT COUNT(*) FROM _sqlx_migrations").await,
-        7
+        8
     );
     pool.close().await;
 

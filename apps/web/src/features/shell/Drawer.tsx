@@ -65,6 +65,9 @@ export function Drawer({ open, onClose, title, children, returnFocus }: DrawerPr
     (first ?? panel).focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
+      // A native modal above this drawer owns its keyboard loop and Escape.
+      // Keep the drawer mounted so cancelling can return to the same edit.
+      if (event.target instanceof Element && event.target.closest("dialog[open]")) return;
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();

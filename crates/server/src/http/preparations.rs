@@ -18,7 +18,7 @@
 //! （422 `details.reason=pageLimitExceeded`），避免"客户端绕过限制写入 500 页"。
 
 use axum::Router;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::{Json, routing};
@@ -27,6 +27,7 @@ use manual_core::domain::PreparationState;
 use manual_core::validation::{
     FieldIssue, MAX_PDF_PAGES, validate_page_number, validate_page_viewport,
 };
+use sqlx::Connection;
 
 use crate::storage::error::StorageError;
 use crate::storage::repo::{
@@ -35,8 +36,8 @@ use crate::storage::repo::{
 
 use super::dto::{
     PageDto, PagePutRequest, PageResponse, PreparationCompleteRequest, PreparationCreateRequest,
-    PreparationDetailDto, PreparationDetailResponse, PreparationDto, PreparationResponse,
-    ViewportDto,
+    PreparationDetailDto, PreparationDetailResponse, PreparationDto, PreparationListResponse,
+    PreparationResponse, ViewportDto,
 };
 use super::error::{ApiError, RequestId};
 use super::precondition::{etag_value, parse_if_match};
@@ -47,7 +48,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route(
             "/documents/{id}/preparations",
-            routing::post(create_preparation),
+            routing::get(list_preparations).post(create_preparation),
         )
         .route("/preparations/{id}", routing::get(get_preparation))
         .route(
@@ -122,7 +123,7 @@ pub async fn create_preparation(
     match preps::find_preparing_for_document(&mut connection, &document_id, &document.source_sha256)
         .await
     {
-        Ok(Some(existing)) => {
+        Ok(Some(existing)) if body.create_new != Some(true) => {
             return (
                 StatusCode::OK,
                 Json(PreparationResponse {
@@ -131,7 +132,7 @@ pub async fn create_preparation(
             )
                 .into_response();
         }
-        Ok(None) => {}
+        Ok(_) => {}
         Err(error) => return ApiError::from_storage(error).render(&request_id),
     }
 
@@ -211,7 +212,23 @@ pub async fn get_preparation(
         }
         PreparationState::Preparing => Vec::new(),
     };
-    let dto = PreparationDetailDto::new(&preparation, &pages, missing_pages);
+    let document = match documents::get(&mut connection, &preparation.document_id).await {
+        Ok(Some(document)) => document,
+        Ok(None) => return ApiError::not_found("document 不存在").render(&request_id),
+        Err(error) => return ApiError::from_storage(error).render(&request_id),
+    };
+    let readiness = match crate::preparations::inspect(
+        &mut connection,
+        &document,
+        &id,
+        &state.settings().data_dir,
+    )
+    .await
+    {
+        Ok(value) => value,
+        Err(error) => return ApiError::from_storage(error).render(&request_id),
+    };
+    let dto = PreparationDetailDto::new(&preparation, &pages, missing_pages, readiness);
     let mut response = Json(PreparationDetailResponse { data: dto }).into_response();
     if let Ok(value) = axum::http::HeaderValue::from_str(&etag_value(preparation.revision)) {
         response
@@ -592,4 +609,57 @@ async fn acquire(state: &AppState) -> Result<sqlx::pool::PoolConnection<sqlx::Sq
         tracing::error!(error = %error, "获取数据库连接失败");
         ApiError::internal("服务器内部错误：数据库暂不可用")
     })
+}
+
+/// Read-only discovery with a global recommendation, independent of the requested page.
+#[utoipa::path(
+    get, path = "/api/v1/documents/{id}/preparations", tag = "preparations",
+    params(("id" = String, Path), ("limit" = Option<u32>, Query, description = "Default 20, maximum 100"), ("cursor" = Option<String>, Query)),
+    security(("sessionCookie" = [])),
+    responses((status = 200, body = PreparationListResponse), (status = 401, body = super::dto::ApiErrorResponse), (status = 404, body = super::dto::ApiErrorResponse), (status = 422, body = super::dto::ApiErrorResponse))
+)]
+pub async fn list_preparations(
+    State(state): State<AppState>,
+    request_id: RequestId,
+    Path(id): Path<String>,
+    Query(params): Query<Vec<(String, String)>>,
+) -> Response {
+    let params = match super::pagination::parse_list_params(&params, &[]) {
+        Ok(value) => value,
+        Err(issues) => return ApiError::field_validation(issues).render(&request_id),
+    };
+    let cursor = match params.cursor {
+        Some(value) => {
+            match super::pagination::Cursor::parse(&value, &format!("preparations:{id}")) {
+                Ok(value) => Some(value.into_tuple()),
+                Err(issue) => return ApiError::field_validation(vec![issue]).render(&request_id),
+            }
+        }
+        None => None,
+    };
+    let mut connection = match acquire(&state).await {
+        Ok(value) => value,
+        Err(error) => return error.render(&request_id),
+    };
+    let mut tx = match connection.begin().await {
+        Ok(value) => value,
+        Err(error) => return ApiError::from_storage(error.into()).render(&request_id),
+    };
+    let document = match documents::get(&mut tx, &id).await {
+        Ok(Some(value)) => value,
+        Ok(None) => return ApiError::not_found("document 不存在").render(&request_id),
+        Err(error) => return ApiError::from_storage(error).render(&request_id),
+    };
+    match crate::preparations::discover(
+        &mut tx,
+        &document,
+        &state.settings().data_dir,
+        cursor,
+        params.limit,
+    )
+    .await
+    {
+        Ok(response) => Json(response).into_response(),
+        Err(error) => ApiError::from_storage(error).render(&request_id),
+    }
 }

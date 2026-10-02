@@ -1,3 +1,5 @@
+import { useMemoryEdit, usePageWork, useWorkProtection } from "../shell/work-protection";
+import { useReaderDocuments } from "../viewer/reader-documents";
 /**
  * 校准工作区（T19；路由 `/items/:itemId/drafts/:draftId/review`；PRD §6.1.3/§6.1.4）。
  *
@@ -16,15 +18,15 @@
  * - **无自动发布路径**：发布是显式按钮 + 服务端不变量校验（面板见 `PublishPanel`）。
  */
 
-import { Suspense, lazy, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getDraft } from "../../api/endpoints";
 import { describeError } from "../../api/client";
 import { Skeleton } from "../../components/Skeleton";
 import { EmptyNote } from "../../components/EmptyState";
-import { useItemDocuments } from "../library/items";
+
 import { PageLayout } from "../shell/PageLayout";
 import { useBreakpoint } from "../shell/useBreakpoint";
 import type { CameraPose } from "../viewer/coordinates";
@@ -40,7 +42,8 @@ import {
 } from "../viewer/draft-view";
 import type { ViewerStageApi, ViewerPickResult } from "../viewer/ViewerStage";
 import { ViewerPanel } from "../viewer/ViewerPanel";
-import { KnowledgeReviewPanel } from "./KnowledgeReviewPanel";
+import { KnowledgeReviewPanel, type EditValues } from "./KnowledgeReviewPanel";
+import { reviewTasks, taskDestination, nextReviewTask, type ReviewTask } from "./review-tasks";
 import { PublishPanel } from "./PublishPanel";
 import { useDraftMutations } from "./useDraftMutations";
 import {
@@ -54,14 +57,15 @@ import {
   usableHotspots,
 } from "./review-state";
 
-/** 原文面板单独成 chunk：PDF.js 体积不进 3D chunk，也不进首屏。 */
-const OriginalDocumentPanel = lazy(() =>
-  import("../viewer/OriginalDocumentPanel").then((module) => ({
-    default: module.OriginalDocumentPanel,
-  })),
-);
+import { EvidenceLinks, useDocumentNavigation, type ReaderDocument } from "../viewer/document-navigation";
+import type { DraftEvidence, DraftPart, DraftStep } from "../viewer/draft-view";
 
 export function CalibrationWorkspace() {
+  const params = useParams();
+  return <CalibrationWorkspaceContent key={`${params.itemId}/${params.draftId}`} />;
+}
+
+function CalibrationWorkspaceContent() {
   const params = useParams();
   const itemId = params.itemId ?? "";
   const draftId = params.draftId ?? "";
@@ -71,17 +75,30 @@ export function CalibrationWorkspace() {
     queryKey: ["draft", itemId, draftId],
     queryFn: () => getDraft(itemId, draftId),
     enabled: itemId !== "" && draftId !== "",
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
-  const documentsQuery = useItemDocuments(itemId === "" ? null : itemId);
-  const mutations = useDraftMutations(itemId, draftId);
+  const documentsQuery = useReaderDocuments(itemId === "" ? null : itemId);
 
+  const [local, setLocal, clearLocal] = useMemoryEdit<{ editing: string | null; buffers: Record<string, EditValues>; etag: string | null }>(`draft-edit:${itemId}/${draftId}`, { editing: null, buffers: {}, etag: null });
+  const { editing, buffers } = local;
+  const setEditing = (editing: string | null) => setLocal(previous => ({ ...previous, editing }));
+  const { request, memory } = useWorkProtection();
+  const queryClient = useQueryClient();
+  const [latestDraft, setLatestDraft] = useState<Awaited<ReturnType<typeof getDraft>>["data"] | null>(null);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshLock = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const [readSerial, setReadSerial] = useState(0);
+  const [currentTask, setCurrentTask] = useState<ReviewTask | null>(null);
+  const [processedKey, setProcessedKey] = useState<string | null>(null);
   const [pickMode, setPickMode] = useState(false);
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const [bindingPartId, setBindingPartId] = useState<string | null>(null);
   const [rebindingHotspotId, setRebindingHotspotId] = useState<string | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageCount, setPageCount] = useState<number | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
@@ -89,9 +106,14 @@ export function CalibrationWorkspace() {
   const stageApi = useRef<ViewerStageApi | null>(null);
 
   const draft = draftQuery.data?.data;
-  const etag = draftQuery.data?.etag ?? null;
+  const etag = local.etag ?? draftQuery.data?.etag ?? null;
   const knowledge = draft?.knowledge;
   const model = useMemo(() => readDraftModel(knowledge), [knowledge]);
+  const modelIdentity = model === null ? "" : `${model.revisionId}/${model.sha256}`;
+  const mutations = useDraftMutations(itemId, draftId, modelIdentity);
+  const busy = mutations.pending || mutations.needsRead || refreshing;
+  const dirty = Object.keys(buffers).length > 0;
+  usePageWork({ active: dirty || mutations.pending, message: `${dirty ? "离开将丢弃本页未保存的知识修订。" : ""}已保存内容保留。${mutations.pending ? "正在提交的请求可能已经完成，请核对后再操作。" : ""}`, discard: () => { clearLocal(); memory.delete(`draft-write:${itemId}/${draftId}`); } });
   const parts = useMemo(() => readDraftParts(knowledge), [knowledge]);
   const steps = useMemo(() => readDraftSteps(knowledge), [knowledge]);
   const specs = useMemo(() => readDraftSpecs(knowledge), [knowledge]);
@@ -115,26 +137,11 @@ export function CalibrationWorkspace() {
     [parts, steps, specs, views, review, model],
   );
 
+  const tasks = reviewTasks({ parts, steps, specs, hotspots: views, entityReviews: review.entities,
+    modelReview: review.modelReview, model }, stepPoses);
   const documents = documentsQuery.data?.documents ?? [];
-  const evidenceDocumentId = useMemo(() => {
-    for (const step of steps) {
-      for (const evidence of step.evidence) {
-        if (evidence.documentId !== null) {
-          return evidence.documentId;
-        }
-      }
-    }
-    for (const part of parts) {
-      for (const evidence of part.evidence) {
-        if (evidence.documentId !== null) {
-          return evidence.documentId;
-        }
-      }
-    }
-    return null;
-  }, [parts, steps]);
-  const document =
-    documents.find((entry) => entry.id === evidenceDocumentId) ?? documents[0] ?? null;
+  const original = useDocumentNavigation(documents);
+  const { pageNumber, pageCount } = original;
   const activeStep = steps.find((step) => step.id === activeStepId) ?? null;
 
   const focusParts = useCallback(() => {
@@ -167,39 +174,81 @@ export function CalibrationWorkspace() {
     [views],
   );
 
-  /** 一次人工拾取：新建绑定或（待重新绑定时）把新锚点交给同一热点。 */
-  const handlePick = useCallback(
-    (pick: ViewerPickResult) => {
-      if (model === null || etag === null) {
-        return;
-      }
-      if (rebindingHotspotId !== null) {
-        const partId = partIdOf(rebindingHotspotId, views);
-        mutations.rebindHotspot(etag, {
-          hotspots: {
-            upsert: [hotspotRebindUpsert(rebindingHotspotId, partId, model, pick.local)],
-          },
-        });
-        setRebindingHotspotId(null);
-        setPickMode(false);
-        return;
-      }
-      if (bindingPartId === null) {
-        return;
-      }
-      mutations.createHotspot(etag, {
-        hotspots: { upsert: [hotspotPickUpsert(bindingPartId, model, pick.local)] },
+  const chooseTask = (task: ReviewTask) => {
+    setCurrentTask(task); setProcessedKey(null);
+    if (task.entityKind === "part" && task.entityId) selectPart(task.entityId);
+    if (task.entityKind === "step") setActiveStepId(task.entityId);
+    original.navigate({ ...taskDestination(task, false), narrowFocusId: taskDestination(task, true).focusId });
+  };
+  const readLatest = async (discard: boolean): Promise<boolean> => {
+    if (refreshLock.current || mutations.pending) return false;
+    refreshLock.current = true; setRefreshing(true);
+    try {
+      // Reading for comparison must not silently install a new ETag under old edits.
+      const result = await getDraft(itemId, draftId);
+      if (!mounted.current) return false;
+      if (!discard) { setLatestDraft(result.data); return true; }
+      queryClient.setQueryData(["draft", itemId, draftId], result);
+      setLocal({ editing: null, buffers: {}, etag: null }); setProcessedKey(null); setLatestDraft(null);
+      mutations.clearError(); setErrorNotice(null); setNotice("已读取最新版本，请核对待办与内容。"); setReadSerial(n => n + 1);
+      return true;
+    } catch (error) { if (mounted.current) setErrorNotice(`读取失败，本地编辑仍保留。${describeError(error).message}`); return false; }
+    finally { refreshLock.current = false; if (mounted.current) setRefreshing(false); }
+  };
+  const requestRefresh = async (): Promise<boolean> => {
+    if (dirty) {
+      if (!await readLatest(false) || !mounted.current) return false;
+      request(() => { void readLatest(true); }, { message: "将丢弃本页所有未保存的知识修订；读取成功后加载服务器最新版本。读取失败仍保留输入。", accept: "丢弃本页修改并加载最新版本" });
+      return false;
+    }
+    return readLatest(true);
+  };
+  const perform = async (action: () => Promise<boolean>, message: string, affected: readonly string[] = []): Promise<boolean> => {
+    if (refreshing) return false;
+    setNotice(null); setErrorNotice(null);
+    const target = currentTask?.key ?? null;
+    const ok = await action();
+    if (!mounted.current) return false;
+    if (ok) {
+      setNotice(message);
+      const saved = queryClient.getQueryData<{ etag: string | null }>(["draft", itemId, draftId]);
+      setLocal(previous => ({ ...previous, etag: saved?.etag ?? previous.etag }));
+      if (target !== null && affected.includes(target)) setProcessedKey(target);
+    }
+    return ok;
+  };
+  const latestTask = tasks.find(task => task.key === currentTask?.key);
+  const taskProcessed = currentTask !== null && processedKey === currentTask.key && (latestTask === undefined || latestTask.done);
+  const taskChanged = currentTask !== null && !taskProcessed && (latestTask === undefined || latestTask.entityId !== currentTask.entityId || (latestTask.done && !currentTask.done));
+  const nextTask = currentTask === null ? null : nextReviewTask(tasks, currentTask.key);
+  const progressPanel = (panelId: string) => currentTask !== null && taskDestination(currentTask, narrow).panelId === panelId ? (
+    <section className="review-task-progress notice-panel" aria-label="当前待办" id="review-task-progress" tabIndex={-1}>
+      <p>当前待办：{currentTask.title} · {currentTask.problem}</p>
+      {taskChanged ? <p role="status">此项已变化，请重新读取待办。</p> : taskProcessed ? <>
+        <p role="status">此项已处理</p>
+        {nextTask ? <button type="button" onClick={() => chooseTask(nextTask)}>下一项</button> : <p>待办已处理，可返回发布区核对。</p>}
+      </> : null}
+      <button type="button" onClick={() => original.navigate({ panelId: "main", focusId: "publish-heading" })}>返回发布区</button>
+    </section>
+  ) : null;
+
+  /** Navigation never starts picking; only an explicit binding action enables it. */
+  const handlePick = (pick: ViewerPickResult) => {
+    if (model === null || etag === null || busy || !pickMode || narrow) return;
+    const hotspotId = rebindingHotspotId;
+    const partId = hotspotId !== null ? partIdOf(hotspotId, views) : bindingPartId;
+    if (partId === null) return;
+    const upsert = hotspotId !== null ? hotspotRebindUpsert(hotspotId, partId, model, pick.local) : hotspotPickUpsert(partId, model, pick.local);
+    void perform(() => mutations.createHotspot(etag, { hotspots: { upsert: [upsert] } }), "热点已绑定并读取核对。",
+      [`binding-${partId}`, `rebind-${hotspotId}`]).then(ok => {
+        if (ok) { setBindingPartId(null); setRebindingHotspotId(null); setPickMode(false); }
       });
-      setBindingPartId(null);
-      setPickMode(false);
-    },
-    [bindingPartId, etag, model, mutations, rebindingHotspotId, views],
-  );
+  };
 
   if (draftQuery.isLoading) {
     return <Skeleton label="正在读取草稿…" rows={4} />;
   }
-  if (draftQuery.isError) {
+  if (draftQuery.isError && draft === undefined) {
     const described = describeError(draftQuery.error);
     return (
       <div className="page-error" role="alert">
@@ -229,13 +278,8 @@ export function CalibrationWorkspace() {
             type="button"
             className="link-button"
             data-testid="refresh-draft"
-            onClick={() => {
-              // 刷新 = 重新读取服务端事实（不清空本地表单；412 提示也在这里清除）。
-              mutations.clearError();
-              setNotice(null);
-              setErrorNotice(null);
-              void draftQuery.refetch();
-            }}
+            disabled={refreshing || mutations.pending}
+            onClick={() => void requestRefresh()}
           >
             刷新草稿数据
           </button>
@@ -251,6 +295,8 @@ export function CalibrationWorkspace() {
           </ul>
         </section>
       )}
+      <p role="status" aria-live="polite" id="knowledge-save-status">{mutations.pending ? "正在保存…" : mutations.needsRead || mutationError ? "保存失败，修改仍在本页" : dirty ? "有未保存修改" : notice?.includes("已保存") ? "已保存" : ""}</p>
+      {latestDraft !== null && <section className="notice-panel" aria-label="服务器最新草稿"><h2>服务器最新版本 r{latestDraft.revision}</h2><p>本页编辑和提交基线尚未替换。以下为已保存的人工修订，供核对。</p><ul>{Object.entries(readDraftReview(latestDraft.review).entities).filter(([, entry]) => entry.userEdited !== null).map(([id, entry]) => <li key={id}>{id}：{Object.values(entry.userEdited ?? {}).flat().join("；")}</li>)}</ul></section>}
       {(notice !== null || errorNotice !== null || mutationError !== null) && (
         <div
           className={errorNotice !== null || mutationError !== null ? "page-error" : "notice-panel"}
@@ -262,39 +308,48 @@ export function CalibrationWorkspace() {
           {mutationError !== null && <p>{mutationError}</p>}
         </div>
       )}
-      {mutations.conflictRevision !== null && (
+      {mutations.needsRead && (
         <div className="page-error" role="alert" data-testid="conflict-panel">
           <p>
-            该内容已被其他操作更新（当前 r{mutations.conflictRevision}）：刷新后重试，不会自动覆盖。
+            该内容已被其他操作更新（当前 r{mutations.conflictRevision ?? "待核对"}）：刷新后重试，不会自动覆盖。
           </p>
           <button
             type="button"
-            onClick={() => {
-              mutations.clearError();
-              void draftQuery.refetch();
-            }}
+            disabled={refreshing || mutations.pending}
+            onClick={() => void requestRefresh()}
           >
-            刷新草稿
+            核对最新版本
           </button>
         </div>
       )}
 
       <PageLayout
+        navigation={original.navigation}
+        onOriginalClose={original.returnToSource}
+        original={{ id: "original", label: "原文", content: original.panel }}
         rail={{
           id: "parts",
           label: "部件与热点",
           content: (
             <div ref={partsRef} tabIndex={-1} data-testid="parts-panel">
+              {progressPanel("parts")}
               <PartsPanel
                 parts={parts}
+                documents={documents}
+                onEvidence={(partId, evidence, focusId) => {
+                  selectPart(partId);
+                  original.openEvidence(evidence, { panelId: "parts", focusId });
+                }}
                 views={views}
                 review={review.entities}
                 selectedPartId={selectedPartId}
                 narrow={narrow}
+                busy={busy}
                 pickMode={pickMode}
                 bindingPartId={bindingPartId}
                 onSelect={selectPart}
                 onStartBinding={(partId) => {
+                  selectPart(partId);
                   setBindingPartId(partId);
                   setRebindingHotspotId(null);
                   setPickMode(true);
@@ -304,20 +359,19 @@ export function CalibrationWorkspace() {
                   setPickMode(false);
                 }}
                 onStartRebinding={(hotspotId) => {
+                  selectPart(partIdOf(hotspotId, views));
                   setRebindingHotspotId(hotspotId);
                   setBindingPartId(null);
                   setPickMode(true);
                 }}
                 onUnbind={(hotspotId) => {
                   if (etag !== null) {
-                    setNotice("已解绑热点（部件回到未绑定）");
-                    mutations.createHotspot(etag, { hotspots: hotspotRemove(hotspotId) });
+                    void perform(() => mutations.createHotspot(etag, { hotspots: hotspotRemove(hotspotId) }), "已解绑热点（部件回到未绑定）");
                   }
                 }}
                 onMarkTextOnly={(partId) => {
                   if (etag !== null) {
-                    setNotice("已标记为「仅文本条目」（保留在发布内容并明显标识）");
-                    mutations.updateEntities(etag, { entities: textOnlyPatch(partId) });
+                    void perform(() => mutations.updateEntities(etag, { entities: textOnlyPatch(partId) }), "已标记为「仅文本条目」", [`binding-${partId}`, `fact-${partId}`]);
                   }
                 }}
               />
@@ -329,26 +383,32 @@ export function CalibrationWorkspace() {
           label: "步骤与原文",
           content: (
             <div data-testid="steps-panel">
+              {progressPanel("steps")}
               <StepsPanel
                 steps={steps}
+                documents={documents}
+                onEvidence={(stepId, evidence, focusId) => {
+                  setActiveStepId(stepId);
+                  original.openEvidence(evidence, { panelId: "steps", focusId });
+                }}
                 poses={stepPoses}
                 activeStepId={activeStep?.id ?? null}
                 narrow={narrow}
+                busy={busy}
                 onActivate={(stepId) => setActiveStepId(stepId)}
-                onJumpToPage={(page) => setPageNumber(Math.max(1, page))}
+                onSelectEvidence={original.selectEvidence}
                 onSavePose={(stepId) => {
                   const pose = stageApi.current?.pose() ?? null;
                   if (pose === null || etag === null) {
                     setErrorNotice("当前视角不可用（模型未加载）：无法保存步骤视角");
                     return;
                   }
-                  setNotice("已保存该步骤视角（相对 asset-root；视角是观察位置，不是机械动作）");
-                  mutations.savePose(etag, stepId, {
+                  void perform(() => mutations.savePose(etag, stepId, {
                     positionLocal: [...pose.positionLocal],
                     targetLocal: [...pose.targetLocal],
                     upLocal: [...pose.upLocal],
                     fov: pose.fov,
-                  });
+                  }), "已保存该步骤视角（视角是观察位置，不是机械动作）", [`pose-${stepId}`]);
 
                 }}
                 onApplyPose={(pose) => {
@@ -356,25 +416,10 @@ export function CalibrationWorkspace() {
                 }}
                 onClearPose={(stepId) => {
                   if (etag !== null) {
-                    setNotice("已清除该步骤视角");
-                    mutations.clearPose(etag, stepId);
+                    void perform(() => mutations.clearPose(etag, stepId), "已清除该步骤视角");
                   }
                 }}
               />
-              <Suspense
-                fallback={
-                  <p className="original-panel__message" role="status">
-                    正在加载原文模块…
-                  </p>
-                }
-              >
-                <OriginalDocumentPanel
-                  assetId={document?.sourceAssetId ?? null}
-                  pageNumber={pageNumber}
-                  onPageChange={(next) => setPageNumber(Math.max(1, next))}
-                  onPageCount={setPageCount}
-                />
-              </Suspense>
               <KnowledgeReviewPanel
                 parts={parts}
                 steps={steps}
@@ -383,46 +428,29 @@ export function CalibrationWorkspace() {
                 modelReview={review.modelReview}
                 model={model}
                 modelLoaded={mutations.modelReady}
+                editing={editing} buffers={buffers} busy={busy}
+                saveStatus={mutations.pending ? "正在保存…" : mutations.needsRead || mutationError ? "保存失败，修改仍在本页" : dirty ? "有未保存修改" : ""}
+                onEditing={setEditing}
+                onBuffer={(id, values) => setLocal(previous => { const buffers = { ...previous.buffers }; if (values === null) delete buffers[id]; else buffers[id] = values; return { ...previous, buffers, etag: previous.etag ?? draftQuery.data?.etag ?? null }; })}
                 narrow={narrow}
                 onDeclareModelReady={() => {
-                  if (etag !== null) {
-                    setNotice("已声明：已在浏览器成功打开此模型（服务器记录声明时间）");
-                    mutations.updateModelReview(etag, {
-                      modelReview: {
-                        loaded: true,
-                        userConfirmed: review.modelReview?.userConfirmed === true,
-                      },
-                    });
-                  }
+                  if (etag !== null) void perform(() => mutations.updateModelReview(etag, {
+                    modelReview: { loaded: true, userConfirmed: checklist.modelReview.matches && checklist.modelReview.userConfirmed },
+                  }), "已声明：已在浏览器成功打开此模型", ["modelLoaded"]);
                 }}
                 onDeclareModelConfirmed={() => {
-                  if (etag !== null) {
-                    setNotice("已声明：我已核对模型与资料一致");
-                    mutations.updateModelReview(etag, {
-                      modelReview: { loaded: true, userConfirmed: true },
-                    });
-                  }
+                  if (etag !== null) void perform(() => mutations.updateModelReview(etag, {
+                    modelReview: { loaded: true, userConfirmed: true },
+                  }), "已声明：我已核对模型与资料一致", ["modelConfirmed"]);
                 }}
                 onSetEntityReview={(entityId, decision) => {
-                  if (etag !== null) {
-                    setNotice(
-                      decision === "confirmed"
-                        ? "已确认事实（文字确认，与几何校准分开）"
-                        : "已取消确认",
-                    );
-                    mutations.updateEntities(etag, {
-                      entities: { [entityId]: { reviewStatus: decision } },
-                    });
-                  }
+                  if (etag !== null) void perform(() => mutations.updateEntities(etag, {
+                    entities: { [entityId]: { reviewStatus: decision } },
+                  }), decision === "confirmed" ? "已确认事实（文字确认，与几何校准分开）" : "已取消确认", [`fact-${entityId}`]);
                 }}
-                onSaveEntityEdit={(entityId, fields) => {
-                  if (etag !== null) {
-                    setNotice("已保存人工修订（原文本与出处保留，供应商快照未修改）");
-                    mutations.updateEntities(etag, {
-                      entities: { [entityId]: { reviewStatus: "confirmed", userEdited: fields } },
-                    });
-                  }
-                }}
+                onSaveEntityEdit={(entityId, fields) => etag === null ? Promise.resolve(false) : perform(() => mutations.updateEntities(etag, {
+                  entities: { [entityId]: { reviewStatus: "confirmed", userEdited: fields } },
+                }), "已保存人工修订（原文本与出处保留）", [`fact-${entityId}`])}
               />
             </div>
           ),
@@ -431,7 +459,7 @@ export function CalibrationWorkspace() {
         <ViewerPanel
           model={model}
           hotspots={displayHotspots}
-          pickMode={pickMode && !narrow}
+          pickMode={pickMode && !narrow && !busy}
           selectedHotspotId={selectedHotspotId}
           onPick={handlePick}
           onHotspotSelect={selectHotspot}
@@ -442,7 +470,7 @@ export function CalibrationWorkspace() {
         <PickToolbar
           pickMode={pickMode}
           narrow={narrow}
-          bindingPartId={bindingPartId}
+          bindingPartId={parts.find(part => part.id === (bindingPartId ?? partIdOf(rebindingHotspotId ?? "", views)))?.name ?? bindingPartId}
           rebinding={rebindingHotspotId !== null}
           onToggle={() => setPickMode((value) => !value)}
           onCancel={() => {
@@ -453,6 +481,7 @@ export function CalibrationWorkspace() {
         />
         <PublishPanel
           checklist={checklist}
+          tasks={tasks} onChooseTask={chooseTask} busy={busy} readSerial={readSerial}
           etag={etag}
           itemId={itemId}
           draftId={draftId}
@@ -467,7 +496,7 @@ export function CalibrationWorkspace() {
             void draftQuery.refetch();
           }}
           onIssues={(message) => setErrorNotice(message)}
-          onRefetchRequested={() => void draftQuery.refetch()}
+          onRefetchRequested={requestRefresh}
         />
         <p className="page-note" data-testid="reader-context">
           草稿 {draft?.id ?? ""} · 完备性 {draft?.completeness ?? "?"} · 页码 {pageNumber}
@@ -514,6 +543,7 @@ function PickToolbar({
           取消拾取
         </button>
       )}
+      {bindingPartId !== null && <span role="status">当前绑定部件：{bindingPartId}</span>}
       <span className="pick-toolbar__hint" data-testid="pick-hint">
         {narrow
           ? "热点校准需要在 ≥768px 的桌面窗口完成；此处只能查看只读热点与部件列表。视角保存同样属于校准。"
@@ -533,10 +563,12 @@ function PickToolbar({
 /** 部件列表（3D 热点的文字替代路径；UI-045/UI-046/UI-049）。 */
 function PartsPanel({
   parts,
+  documents,
+  onEvidence,
   views,
   review,
   selectedPartId,
-  narrow,
+  narrow, busy,
   pickMode,
   bindingPartId,
   onSelect,
@@ -546,11 +578,14 @@ function PartsPanel({
   onUnbind,
   onMarkTextOnly,
 }: {
-  parts: readonly { id: string; name: string; description: string }[];
+  parts: readonly DraftPart[];
+  documents: readonly ReaderDocument[];
+  onEvidence: (partId: string, evidence: DraftEvidence, focusId: string) => void;
   views: ReturnType<typeof hotspotViews>;
   review: Readonly<Record<string, { reviewStatus: string | null; userEdited: unknown; textOnly: boolean }>>;
   selectedPartId: string | null;
   narrow: boolean;
+  busy: boolean;
   pickMode: boolean;
   bindingPartId: string | null;
   onSelect: (partId: string) => void;
@@ -563,7 +598,7 @@ function PartsPanel({
   if (parts.length === 0) {
     return <EmptyNote>该草稿没有部件列表（知识分支未完成或未产出部件）。</EmptyNote>;
   }
-  const staleHotspots = views.filter((hotspot) => hotspot.status === "stale");
+  const staleHotspots = views.filter((hotspot) => hotspot.status === "stale" || (!hotspot.usable && hotspot.anchor !== null));
   return (
     <section aria-label="部件列表">
       <h2>部件</h2>
@@ -575,9 +610,10 @@ function PartsPanel({
           const textOnly = entry?.textOnly === true;
           const bound = summary.confirmed > 0;
           return (
-            <li key={part.id} data-testid={`part-row-${part.id}`}>
+            <li key={part.id} id={`review-part-${part.id}`} tabIndex={-1} data-testid={`part-row-${part.id}`}>
               <button
                 type="button"
+                id={`part-select-${part.id}`}
                 aria-current={selectedPartId === part.id}
                 onClick={() => onSelect(part.id)}
               >
@@ -595,11 +631,14 @@ function PartsPanel({
                 {summary.stale > 0 ? `（${summary.stale} 个已失效）` : ""}
               </span>
               {part.description !== "" && <p>{part.description}</p>}
+              <EvidenceLinks entityId={part.id} evidence={part.evidence} documents={documents} onOpen={(evidence, focusId) => onEvidence(part.id, evidence, focusId)} />
+              {narrow && <p id={`geometry-note-${part.id}`} tabIndex={-1}>此项需要在 ≥768px 窗口绑定 / 重新绑定；此处仅查看文字。</p>}
               <div className="row-actions">
                 {!textOnly && !bound && (
                   <button
                     type="button"
-                    disabled={narrow}
+                    id={`bind-${part.id}`}
+                    disabled={narrow || busy}
                     title={narrow ? "热点校准需要在 ≥768px 的桌面窗口完成" : undefined}
                     onClick={() => (bindingPartId === part.id ? onCancelBinding() : onStartBinding(part.id))}
                   >
@@ -609,6 +648,7 @@ function PartsPanel({
                 {!textOnly && !bound && (
                   <button
                     type="button"
+                    disabled={busy}
                     onClick={() => onMarkTextOnly(part.id)}
                     title="保留为文字条目：发布时保留并明显标识（先确认该部件）"
                   >
@@ -621,6 +661,7 @@ function PartsPanel({
                     <button
                       key={hotspot.id}
                       type="button"
+                      disabled={busy}
                       onClick={() => onUnbind(hotspot.id)}
                     >
                       解绑热点
@@ -640,10 +681,12 @@ function PartsPanel({
           <ul className="entity-list">
             {staleHotspots.map((hotspot) => (
               <li key={hotspot.id}>
+                {narrow && <p id={`geometry-note-${hotspot.id}`} tabIndex={-1}>此项需要在 ≥768px 窗口重新绑定。</p>}
                 <span>部件 {hotspot.partId} 的旧绑定（{hotspot.anchor?.modelSha256.slice(0, 8)}…）</span>
                 <button
                   type="button"
-                  disabled={narrow}
+                  id={`rebind-${hotspot.id}`}
+                  disabled={narrow || busy}
                   title={narrow ? "热点校准需要在 ≥768px 的桌面窗口完成" : undefined}
                   onClick={() => onStartRebinding(hotspot.id)}
                 >
@@ -667,47 +710,43 @@ function PartsPanel({
 /** 步骤导航 + 视角（UI-050：保存与回到视角分开、窄屏禁用）。 */
 function StepsPanel({
   steps,
+  documents,
+  onEvidence,
   poses,
   activeStepId,
-  narrow,
+  narrow, busy,
   onActivate,
-  onJumpToPage,
+  onSelectEvidence,
   onSavePose,
   onApplyPose,
   onClearPose,
 }: {
-  steps: readonly {
-    id: string;
-    title: string;
-    orderedActions: readonly string[];
-    partIds: readonly string[];
-    safetyNotes: readonly string[];
-    evidence: readonly { pageNumber: number }[];
-  }[];
+  steps: readonly DraftStep[];
+  documents: readonly ReaderDocument[];
+  onEvidence: (stepId: string, evidence: DraftEvidence, focusId: string) => void;
   poses: Record<string, CameraPose>;
   activeStepId: string | null;
   narrow: boolean;
+  busy: boolean;
   onActivate: (stepId: string) => void;
-  onJumpToPage: (pageNumber: number) => void;
+  onSelectEvidence: (evidence: DraftEvidence) => void;
   onSavePose: (stepId: string) => void;
   onApplyPose: (pose: CameraPose) => void;
   onClearPose: (stepId: string) => void;
 }) {
-  const [index, setIndex] = useState(0);
   if (steps.length === 0) {
     return <EmptyNote>该草稿没有步骤列表（知识分支未完成或未产出步骤）。</EmptyNote>;
   }
-  const safeIndex = Math.min(Math.max(index, 0), steps.length - 1);
+  const safeIndex = Math.max(0, steps.findIndex((step) => step.id === activeStepId));
   const current = steps[safeIndex] as (typeof steps)[number];
   const pose = poses[current.id];
   const go = (next: number) => {
     const bounded = Math.min(Math.max(next, 0), steps.length - 1);
-    setIndex(bounded);
     const target = steps[bounded] as (typeof steps)[number];
     onActivate(target.id);
     const evidence = target.evidence[0];
     if (evidence !== undefined) {
-      onJumpToPage(evidence.pageNumber);
+      onSelectEvidence(evidence);
     }
   };
   return (
@@ -731,11 +770,10 @@ function StepsPanel({
               type="button"
               aria-current={activeStepId === step.id || stepIndex === safeIndex}
               onClick={() => {
-                setIndex(stepIndex);
                 onActivate(step.id);
                 const evidence = step.evidence[0];
                 if (evidence !== undefined) {
-                  onJumpToPage(evidence.pageNumber);
+                  onSelectEvidence(evidence);
                 }
               }}
             >
@@ -760,24 +798,13 @@ function StepsPanel({
                 {step.partIds.length > 0 && (
                   <p className="step-parts">引用部件：{step.partIds.join("、")}</p>
                 )}
-                {step.evidence.length > 0 && (
-                  <p className="step-evidence">
-                    原文：
-                    {step.evidence.map((evidence, evidenceIndex) => (
-                      <button
-                        key={`${step.id}-page-${evidenceIndex}`}
-                        type="button"
-                        onClick={() => onJumpToPage(evidence.pageNumber)}
-                      >
-                        第 {evidence.pageNumber} 页
-                      </button>
-                    ))}
-                  </p>
-                )}
+                <EvidenceLinks entityId={step.id} evidence={step.evidence} documents={documents} onOpen={(evidence, focusId) => onEvidence(step.id, evidence, focusId)} />
+                {narrow && <p id={`geometry-note-${step.id}`} tabIndex={-1}>此项需要在 ≥768px 窗口保存视角。</p>}
                 <div className="row-actions">
                   <button
                     type="button"
-                    disabled={narrow}
+                    id={`pose-${step.id}`}
+                    disabled={narrow || busy}
                     title={narrow ? "视角保存属于校准：需要在 ≥768px 的桌面窗口完成" : undefined}
                     onClick={() => onSavePose(step.id)}
                   >
@@ -788,7 +815,7 @@ function StepsPanel({
                       <button type="button" onClick={() => onApplyPose(pose)}>
                         回到该视角
                       </button>
-                      <button type="button" disabled={narrow} onClick={() => onClearPose(step.id)}>
+                      <button type="button" disabled={narrow || busy} onClick={() => onClearPose(step.id)}>
                         清除视角
                       </button>
                     </>

@@ -280,7 +280,7 @@ export class TestBackend {
   port = 0;
   private process: ChildProcess | null = null;
 
-  constructor(tag: string) {
+  constructor(tag: string, private readonly binary = serverBinary()) {
     this.workDir = fs.mkdtempSync(path.join(os.tmpdir(), `em-t17-${tag}-`));
     this.dataDir = path.join(this.workDir, "data");
     this.logPath = path.join(this.workDir, "server.log");
@@ -318,13 +318,13 @@ export class TestBackend {
           "",
         ].join("\n"),
       );
-      execFileSync(serverBinary(), ["init", "--data-dir", this.dataDir, "--password-file", passwordFile], {
+      execFileSync(this.binary, ["init", "--data-dir", this.dataDir, "--password-file", passwordFile], {
         stdio: "inherit",
       });
     }
     const log = fs.createWriteStream(this.logPath, { flags: "a" });
     const child = spawn(
-      serverBinary(),
+      this.binary,
       [
         "serve",
         "--data-dir",

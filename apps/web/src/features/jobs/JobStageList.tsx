@@ -12,6 +12,7 @@
  * - 重试使用 `If-Match` + 每次操作一个 `Idempotency-Key`（重放不产生第二个 attempt）。
  */
 
+import { RetryCountdown } from "./RetryCountdown";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -30,7 +31,7 @@ import { Drawer } from "../shell/Drawer";
 import { jobKeys, readCurrentRevision, useRetryJob, useReconcileJob } from "./jobs";
 import { formatLocalDateTime } from "../../lib/format";
 import { CREDIT_MINOR_SCALE, USD_MICROS_SCALE, minorToInputString, parseMinorInput } from "../import/money";
-import { retryDeniedHint, stageKindLabel, stageStatusLabel } from "./status";
+import { isTerminalJobStatus, retryDeniedHint, stageKindLabel, stageStatusLabel } from "./status";
 
 export interface JobStageListProps {
   readonly itemId: string;
@@ -102,6 +103,7 @@ function StageRow({
   const queryClient = useQueryClient();
   const retryMutation = useRetryJob();
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [retryModelIssue, setRetryModelIssue] = useState(false);
   const [conflictRevision, setConflictRevision] = useState<number | null>(null);
   const attemptsForStage = attempts.filter((attempt) => attempt.stageId === stage.id);
 
@@ -110,6 +112,7 @@ function StageRow({
       return;
     }
     setRetryError(null);
+    setRetryModelIssue(false);
     setConflictRevision(null);
     try {
       const result = await retryMutation.mutateAsync({
@@ -130,6 +133,7 @@ function StageRow({
         return;
       }
       const info = describeError(error);
+      setRetryModelIssue(isApiError(error) && ["providerModelInvalid", "quoteModelInvalid"].includes(readReason(error.details) ?? ""));
       setRetryError(info.message);
       notify(`重试被拒绝：${info.message}`, { kind: "alert", requestId: info.requestId });
     }
@@ -151,13 +155,15 @@ function StageRow({
           {stage.pageSet !== null && stage.pageSet !== undefined && stage.pageSet.length > 0 && (
             <>页范围：第 {stage.pageSet.join("、")} 页；</>
           )}
-          尝试 {stage.attemptCount} 次
+          安全重试已用 {stage.attemptCount} 次
           {stage.pollCount > 0 && <>；已查询 {stage.pollCount} 次</>}
           {stage.nextRunAt != null && <>；下次运行约 {formatLocalDateTime(stage.nextRunAt)}</>}
           {"；更新于 "}
           {formatLocalDateTime(stage.updatedAt)}
         </p>
       </div>
+
+      {stage.status === "retry_wait" && !isTerminalJobStatus(jobStatus) && jobStatus !== "submission_unknown" && <RetryCountdown safeRetry={stage.safeRetry} nextRunAt={stage.nextRunAt} />}
 
       {stage.lastError !== null && stage.lastError !== undefined && (
         <p className="job-stage__error" role="note" data-testid="job-stage-error">
@@ -196,7 +202,7 @@ function StageRow({
         />
       )}
 
-      {blocked && <RetryEntry stage={stage} ifMatch={ifMatch} retrying={retryMutation.isPending} error={retryError} onRetry={retry} />}
+      {blocked && <RetryEntry stage={stage} ifMatch={ifMatch} retrying={retryMutation.isPending} error={retryError} modelIssue={retryModelIssue} onRetry={retry} />}
 
       {unknown && (
         <ReconcilePanel
@@ -218,12 +224,14 @@ function RetryEntry({
   ifMatch,
   retrying,
   error,
+  modelIssue,
   onRetry,
 }: {
   readonly stage: JobStageDto;
   readonly ifMatch: string | null;
   readonly retrying: boolean;
   readonly error: string | null;
+  readonly modelIssue: boolean;
   readonly onRetry: () => Promise<void>;
 }) {
   if (ifMatch === null) {
@@ -241,6 +249,7 @@ function RetryEntry({
           {stage.retry.message ?? retryDeniedHint(stage.retry.reason ?? null)}
         </p>
         <p className="field__hint">{retryDeniedHint(stage.retry.reason ?? null)}</p>
+        {(stage.retry.reason === "providerModelInvalid" || stage.retry.reason === "quoteModelInvalid") && <Link to="/settings">前往设置修正模型；随后重新报价</Link>}
       </div>
     );
   }
@@ -261,7 +270,7 @@ function RetryEntry({
       </p>
       {error !== null && (
         <p className="field__error" role="alert">
-          {error}
+          {error} {modelIssue && <Link to="/settings">前往设置修正模型；随后重新报价</Link>}
         </p>
       )}
     </div>
@@ -322,6 +331,7 @@ function ReconcilePanel({
   const [acknowledgeMatches, setAcknowledgeMatches] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modelIssue, setModelIssue] = useState(false);
   const [conflictRevision, setConflictRevision] = useState<number | null>(null);
 
   const branchProvider = stage.stageKind === "manual_extract" ? "manual_ai" : "tripo";
@@ -336,6 +346,7 @@ function ReconcilePanel({
       return;
     }
     setError(null);
+    setModelIssue(false);
     setConflictRevision(null);
     try {
       const authorizedMinor = limitParsed.ok ? limitParsed.minor : upperMinor;
@@ -372,6 +383,7 @@ function ReconcilePanel({
       }
       const info = describeError(error_);
       const reason = isApiError(error_) ? readReason(error_.details) : null;
+      setModelIssue(reason === "providerModelInvalid" || reason === "quoteModelInvalid");
       setError(reason === null ? info.message : `${info.message}（原因：${reason}）`);
     }
   }
@@ -507,7 +519,7 @@ function ReconcilePanel({
 
       {error !== null && (
         <p className="field__error" role="alert" data-testid="reconcile-error">
-          {error}
+          {error} {modelIssue && <Link to="/settings">前往设置修正模型；随后重新报价</Link>}
         </p>
       )}
 

@@ -78,8 +78,8 @@ function recordRequests(page: Page): string[] {
 
 async function openPreparePage(page: Page, itemId: string): Promise<void> {
   await page.goto(`/items/${itemId}/import/prepare`);
-  await expect(page.getByRole("heading", { name: "资料准备" })).toBeVisible();
-  await expect(page.getByText("准备需要保持本标签页打开")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "准备说明书资料" })).toBeVisible();
+  await expect(page.getByText(/准备需要保持本标签页打开/)).toBeVisible();
 }
 
 test.describe("PDF 准备与续传（T09）", () => {
@@ -115,7 +115,7 @@ test.describe("PDF 准备与续传（T09）", () => {
 
     await expect(page.getByTestId("prepare-seal")).toBeEnabled({ timeout: 60_000 });
     expect(puts, "页号必须 1-based 且按页序处理").toEqual([1, 2]);
-    await expect(page.getByTestId("prepare-status")).toContainText("已完成 2 / 2 页");
+    await expect(page.getByTestId("prepare-progress")).toContainText("已完成 2/2 页");
     // 不使用与真实页数无关的线性总百分比（PRD §6.3.2 禁用措辞）。
     await expect(page.locator("body")).not.toContainText("总进度");
 
@@ -142,10 +142,10 @@ test.describe("PDF 准备与续传（T09）", () => {
     await page.getByTestId("prepare-seal").click();
     const sealedBlock = page.getByTestId("prepare-sealed");
     await expect(sealedBlock).toBeVisible();
-    await expect(sealedBlock.getByText("准备完成（ready）")).toBeVisible();
+    await expect(page.getByTestId("prepare-sealed")).toBeVisible();
     // 常驻 clientDerived 说明（哈希只证明字节一致，不证明页图来自原 PDF）。
-    await expect(sealedBlock.getByText(/clientDerived/)).toBeVisible();
-    await expect(page.getByTestId("prepare-seal")).toBeDisabled();
+    await expect(page.getByText(/clientDerived/)).toBeVisible();
+    await expect(page.getByTestId("prepare-seal")).toBeHidden();
 
     await capture(page, "03-preparation-ready");
     const sealed = await fetchPreparation(request, apiBase(), preparationId);
@@ -185,18 +185,18 @@ test.describe("PDF 准备与续传（T09）", () => {
     const puts = recordPagePuts(page);
     await openPreparePage(page, seed.itemId);
     await page.getByTestId("prepare-start").click();
-    await expect(page.getByTestId("prepare-failures")).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByTestId("prepare-failures")).toContainText("第 2 页失败");
+    await expect(page.locator(".prepare-failures")).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator(".prepare-failures")).toContainText("第 2 页：");
     expect(puts, "第一轮处理了 1、2 两页（第 2 页失败）").toEqual([1, 2]);
     // 失败页不阻塞其它页：第 1 页已经成功。
-    await expect(page.getByTestId("prepare-status")).toContainText("已完成 1 / 2 页");
+    await expect(page.getByTestId("prepare-progress")).toContainText("已完成 1/2 页");
 
     // 模拟"关闭标签页后重新进入"：刷新页面，再继续准备。
     await page.unroute("**/pages/2");
     await page.reload();
-    await expect(page.getByRole("heading", { name: "资料准备" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "准备说明书资料" })).toBeVisible();
     // 重新进入后先用服务端状态显示进度（尚未解析 PDF，因此总页数在开始后才确认）。
-    await expect(page.getByTestId("prepare-resume-hint")).toContainText("已完成 1 页");
+    await expect(page.getByTestId("prepare-progress")).toContainText("已完成 1 页");
 
     const resumedPuts: number[] = [];
     page.on("request", (request) => {
@@ -208,7 +208,7 @@ test.describe("PDF 准备与续传（T09）", () => {
     await page.getByTestId("prepare-start").click();
     await expect(page.getByTestId("prepare-seal")).toBeEnabled({ timeout: 60_000 });
     expect(resumedPuts, "续传只补缺失页（不重传第 1 页）").toEqual([2]);
-    await expect(page.getByTestId("prepare-status")).toContainText("已完成 2 / 2 页");
+    await expect(page.getByTestId("prepare-progress")).toContainText("已完成 2/2 页");
   });
 
   test("扫描 PDF：没有文字层时按页图上传", async ({ page, request }) => {
@@ -327,7 +327,7 @@ test.describe("PDF 准备与续传（T09）", () => {
     const puts = recordPagePuts(page);
     const preparationRequests: string[] = [];
     page.on("request", (request) => {
-      if (/\/preparations(\/|$)/.test(new URL(request.url()).pathname)) {
+      if (request.method() !== "GET" && /\/preparations(\/|$)/.test(new URL(request.url()).pathname)) {
         preparationRequests.push(`${request.method()} ${new URL(request.url()).pathname}`);
       }
     });
@@ -338,8 +338,7 @@ test.describe("PDF 准备与续传（T09）", () => {
     await expect(
       page.getByText("该 PDF 已加密，首版不支持，请先解除加密后再上传"),
     ).toBeVisible();
-    await expect(page.getByText("没有创建页记录，也没有任何收费请求")).toBeVisible();
-    await expect(page.getByTestId("prepare-seal")).toBeDisabled();
+    await expect(page.getByTestId("prepare-seal")).toBeHidden();
     expect(puts, "加密 PDF 不得上传任何页").toEqual([]);
     expect(
       preparationRequests,
@@ -361,7 +360,7 @@ test.describe("PDF 准备与续传（T09）", () => {
     await page.getByTestId("prepare-start").click();
 
     await expect(page.getByText("PDF 共 101 页，超过 100 页上限")).toBeVisible();
-    await expect(page.getByTestId("prepare-seal")).toBeDisabled();
+    await expect(page.getByTestId("prepare-seal")).toBeHidden();
     expect(puts, "超页数 PDF 不得上传任何页").toEqual([]);
   });
 
@@ -430,11 +429,11 @@ test.describe("PDF 准备与续传（T09）", () => {
     await page.getByTestId("prepare-start").click();
 
     // 进度是「第 n / N 页」与已完成页数；progressbar 的 valuenow 是已完成页数。
-    const status = page.getByTestId("prepare-status");
-    await expect(status).toContainText(/第 \d+ \/ 2 页/, { timeout: 60_000 });
-    const progressbar = page.getByRole("progressbar", { name: "已完成的页数" });
+    const status = page.getByText(/正在处理第 \d+ \/ 2 页/);
+    await expect(status).toBeVisible({ timeout: 60_000 });
+    const progressbar = page.getByRole("progressbar", { name: "已完成页数" });
     await expect(progressbar).toBeVisible();
-    await expect(progressbar).toHaveAttribute("aria-valuemax", "2");
+    await expect(progressbar).toHaveAttribute("max", "2");
 
     // 进行中：注册离开确认（beforeunload）。
     const beforeUnloadPrevented = await page.evaluate(() => {
@@ -449,11 +448,11 @@ test.describe("PDF 准备与续传（T09）", () => {
     // 取消：停止后续上传，已完成页保留。
     const putsBeforeCancel = puts.length;
     await page.getByTestId("prepare-cancel").click();
-    await expect(page.getByTestId("prepare-cancel")).toBeDisabled();
+    await expect(page.getByText("已停止，已完成页已保留。可稍后继续准备。")).toBeVisible();
     await page.waitForTimeout(1200);
     expect(puts.length, "取消后不得继续上传新页").toBeLessThanOrEqual(putsBeforeCancel + 1);
 
-    // 取消后回到未开始状态，仍可继续补齐（服务端保留已完成页）。
+    // 停止后重读已保存状态，仍可继续补齐（不把保留的页当作未开始）。
     await expect(page.getByTestId("prepare-start")).toBeEnabled();
     await page.getByTestId("prepare-start").click();
     await expect(page.getByTestId("prepare-seal")).toBeEnabled({ timeout: 60_000 });

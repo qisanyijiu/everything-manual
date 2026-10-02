@@ -24,6 +24,8 @@ type JsonRequest<Op extends keyof operations> = operations[Op] extends {
 
 type JsonBody<R> = R extends { content: { "application/json": infer C } } ? C : never;
 
+export type PreparationCandidate = components["schemas"]["PreparationCandidateDto"];
+export type PreparationList = components["schemas"]["PreparationListResponse"];
 export type PreparationDto = components["schemas"]["PreparationDto"];
 export type PreparationDetailDto = components["schemas"]["PreparationDetailDto"];
 export type PreparationPageDto = components["schemas"]["PageDto"];
@@ -53,8 +55,9 @@ export interface PreparationResource {
 export async function createOrResumePreparation(
   documentId: string,
   sourceSha256: string,
+  createNew = false,
 ): Promise<PreparationResource> {
-  const body: PreparationCreateRequest = { sourceSha256 };
+  const body: PreparationCreateRequest = { sourceSha256, createNew };
   const { body: payload, status } = await requestJson<PreparationCreateResponse>(
     `${API_PREFIX}/documents/${encodeURIComponent(documentId)}/preparations`,
     { method: "POST", body },
@@ -69,9 +72,10 @@ export interface PreparationDetail {
 }
 
 /** `GET /preparations/{id}`：状态 + 已上传页 + 缺页（续传的事实来源）。 */
-export async function getPreparation(preparationId: string): Promise<PreparationDetail> {
+export async function getPreparation(preparationId: string, signal?: AbortSignal): Promise<PreparationDetail> {
   const { data, etag } = await requestData<PreparationDetailDto>(
     `${API_PREFIX}/preparations/${encodeURIComponent(preparationId)}`,
+    signal ? { signal } : {},
   );
   return { detail: data, etag };
 }
@@ -148,4 +152,12 @@ export async function fetchAssetBytes(
     );
   }
   return new Uint8Array(await response.arrayBuffer());
+}
+
+/** Read-only, bounded discovery. Recommendation is global, not recomputed from this page. */
+export async function listPreparations(documentId: string, cursor: string | null = null, signal?: AbortSignal): Promise<PreparationList> {
+  const query = new URLSearchParams({ limit: "20" });
+  if (cursor !== null) query.set("cursor", cursor);
+  const result = await requestJson<PreparationList>(`${API_PREFIX}/documents/${encodeURIComponent(documentId)}/preparations?${query}`, signal ? { signal } : {});
+  return result.body;
 }

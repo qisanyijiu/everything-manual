@@ -2075,6 +2075,130 @@ async fn submission_unknown_rejects_retry_and_reconcile_actions_follow_the_contr
 // ===========================================================================
 
 #[tokio::test]
+async fn pc06_bad_model_preserves_remote_reconciliation_and_accepted_resume_without_purchase() {
+    use everything_manual::jobs::control::{
+        self, JobControlError, ReconcileAction, ReconcileRequest,
+    };
+    let manual = manual_ai_server(vec![respond_file(&responses_path("success.json"))]);
+    let (_cdn, model_url) = glb_cdn();
+    let tripo = FixtureServer::start(scenario(vec![
+        exact_route("POST", TRIPO_UPLOAD_PATH, upload_steps()),
+        exact_route(
+            "POST",
+            TRIPO_SUBMIT_PATH,
+            vec![respond_json_status(
+                500,
+                json!({"code":500,"message":"fixture unknown"}),
+            )],
+        ),
+        exact_route_repeat(
+            "GET",
+            &format!("{TRIPO_TASKS_PREFIX}pc06-known"),
+            vec![task_running(), task_success_with(&model_url)],
+        ),
+    ]));
+    let app = pipeline_app(
+        "pc06-reconcile",
+        &tripo_base_url(&tripo),
+        &manual_ai_base_url(&manual),
+    )
+    .await;
+    let (cookie, csrf) = logged_in(&app).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf).await;
+    let job_id = create_job(&app, &cookie, &csrf, &inputs, "pc06-reconcile").await;
+    let pool = pool(&app);
+    let clock = Arc::new(ManualClock::new(Timestamp::now()));
+    let executor = pipeline_executor(&app, Arc::clone(&clock));
+    tick_until_stage(
+        &pool,
+        &executor,
+        &clock,
+        &job_id,
+        StageKind::TripoSubmit,
+        JobStatus::SubmissionUnknown,
+        20,
+    )
+    .await;
+    let submit = stage_of(&pool, &job_id, StageKind::TripoSubmit).await;
+    let mut bad_settings = app.state().settings().clone();
+    bad_settings.providers.tripo.model = Some("sk-pc06_query_fake_0123456789".into());
+    let revision = job_row(&pool, &job_id).await.revision;
+    let mut request = ReconcileRequest {
+        action: ReconcileAction::AuthorizeReplacement,
+        stage_id: submit.id.clone(),
+        remote_task_id: Some("pc06-known".into()),
+        acknowledge_matches: true,
+        evidence: None,
+        acknowledge_duplicate_risk: true,
+        limits_tripo_credit_minor: Some(3000),
+        limits_manual_ai_usd_micros: Some(100_000),
+    };
+    let refused = control::reconcile(
+        &pool,
+        &bad_settings,
+        &job_id,
+        revision,
+        &request,
+        "pc06-fixture",
+        Timestamp::now(),
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(
+        refused,
+        JobControlError::NotAllowed {
+            reason: "providerModelInvalid",
+            ..
+        }
+    ));
+    assert_eq!(
+        stage_by_id(&pool, &submit.id).await.status,
+        JobStatus::SubmissionUnknown
+    );
+    tripo.assert_called_times("POST", TRIPO_SUBMIT_PATH, 1);
+    request.action = ReconcileAction::AttachRemoteTask;
+    let report = control::reconcile(
+        &pool,
+        &bad_settings,
+        &job_id,
+        revision,
+        &request,
+        "pc06-fixture",
+        Timestamp::now(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(report.job.id, job_id);
+    let mut registry = StageRegistry::new();
+    let registered = register_provider_handlers(&mut registry, &bad_settings).unwrap();
+    assert!(registered.contains(&StageKind::TripoSubmit));
+    assert!(!registered.contains(&StageKind::TripoUpload));
+    PipelineHandlers::from_settings(&bad_settings).register(&mut registry);
+    let resumed = fixed_jitter_executor(
+        pool.clone(),
+        ExecutorConfig::default(),
+        registry,
+        clock.clone(),
+    );
+    tick_until_stage(
+        &pool,
+        &resumed,
+        &clock,
+        &job_id,
+        StageKind::TripoPoll,
+        JobStatus::Succeeded,
+        40,
+    )
+    .await;
+    tripo.assert_called_times("POST", TRIPO_SUBMIT_PATH, 1);
+    assert_eq!(
+        tripo.call_count("GET", &format!("{TRIPO_TASKS_PREFIX}pc06-known")),
+        2
+    );
+    tripo.assert_no_script_problems();
+}
+
+#[tokio::test]
 async fn attach_remote_task_resumes_without_repurchase() {
     // 付费提交返回 5xx（结果未知，不能证明未被接受）。
     let manual = manual_ai_server(vec![respond_file(&responses_path("success.json"))]);

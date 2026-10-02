@@ -1005,6 +1005,122 @@
         ],
         "type": "object"
       },
+      "ItemSummaryDto": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/WorkflowAction"
+          },
+          "consumedJobId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "documentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "latestQuoteId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestReleaseCreatedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "latestReleaseDraftRevision": {
+            "description": "Readable identity of the same latest release; no manifest/per-row detail fetch.",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "latestReleaseId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "preparationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quoteExpiresAt": {
+            "description": "Clock boundary for an unconsumed quote; null for an already accepted task.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "$ref": "#/components/schemas/WorkflowStepsDto"
+          },
+          "targetId": {
+            "description": "Stable entity identity only, never an executable URL.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "action",
+          "steps"
+        ],
+        "type": "object"
+      },
+      "ItemSummaryResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ItemSummaryDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "JobActivityDto": {
+        "properties": {
+          "active": {
+            "description": "jobs in queued/running/retry_wait/waiting_provider. Human input/unknown are excluded.",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "active"
+        ],
+        "type": "object"
+      },
+      "JobActivityResponse": {
+        "description": "Constant-size, whole-library activity summary; not a page or stage count.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobActivityDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
       "JobAttemptDto": {
         "description": "付费提交 attempt（对账面板数据）。",
         "properties": {
@@ -1296,6 +1412,27 @@
         ],
         "type": "object"
       },
+      "JobSafeRetryDto": {
+        "description": "The executor's currently scheduled safe retry, independent of provider polling.",
+        "properties": {
+          "limit": {
+            "description": "Executor policy: manual_core::jobs::MAX_SAFE_RETRIES.",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "number": {
+            "description": "1-based retry number, copied from persisted attempt_count (not poll_count).",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "number",
+          "limit"
+        ],
+        "type": "object"
+      },
       "JobStageDto": {
         "description": "阶段明细行。",
         "properties": {
@@ -1363,6 +1500,17 @@
           "retry": {
             "$ref": "#/components/schemas/JobStageRetryDto",
             "description": "该阶段当前的**重试准入**（与服务端 `POST /jobs/{id}/retry` 的判定同源）。\nUI 只在 `allowed=true` 时渲染重试按钮；否则显示 `reason`/`message` 给出的\n真实恢复路径（T15 P3①：不允许\"写着可重试、点了被拒\"的分叉文案）。"
+          },
+          "safeRetry": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JobSafeRetryDto",
+                "description": "Only a scheduled retry_wait has a safe retry number. No automatic retry is\nadvertised for terminal jobs or jobs awaiting submission reconciliation."
+              }
+            ]
           },
           "stageKind": {
             "type": "string"
@@ -1704,6 +1852,12 @@
         ],
         "type": "object"
       },
+      "ModelIssue": {
+        "enum": [
+          "suspectedCredential"
+        ],
+        "type": "string"
+      },
       "ModelReviewPatch": {
         "additionalProperties": false,
         "description": "modelReview 的两个用户声明（服务器补 `checkedAt` 与模型身份）。",
@@ -1963,6 +2117,21 @@
         ],
         "type": "object"
       },
+      "PreparationCandidateDto": {
+        "properties": {
+          "preparation": {
+            "$ref": "#/components/schemas/PreparationDto"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/PreparationReadinessDto"
+          }
+        },
+        "required": [
+          "preparation",
+          "readiness"
+        ],
+        "type": "object"
+      },
       "PreparationCompleteRequest": {
         "additionalProperties": false,
         "description": "`POST /api/v1/preparations/{id}/complete` 请求体。",
@@ -1982,6 +2151,13 @@
         "additionalProperties": false,
         "description": "`POST /api/v1/documents/{id}/preparations` 请求体。",
         "properties": {
+          "createNew": {
+            "description": "Explicitly start a separate record; never rewrite an existing preparation.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
           "sourceSha256": {
             "description": "原件内容 sha256；必须与 document 绑定的原件一致（否则 422），\n用于确认浏览器准备的是同一份字节（contracts.md §3）。",
             "type": [
@@ -2029,6 +2205,9 @@
             },
             "type": "array"
           },
+          "readiness": {
+            "$ref": "#/components/schemas/PreparationReadinessDto"
+          },
           "revision": {
             "format": "int64",
             "type": "integer"
@@ -2053,6 +2232,7 @@
           "revision",
           "pages",
           "missingPages",
+          "readiness",
           "createdAt",
           "updatedAt"
         ],
@@ -2121,6 +2301,96 @@
           "revision",
           "createdAt",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PreparationListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PreparationCandidateDto"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recommended": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PreparationCandidateDto"
+              }
+            ]
+          },
+          "recommendedPreparationId": {
+            "description": "Global recommendation across every record, independent of this response page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "PreparationReadinessDto": {
+        "description": "Read-time v1 compatibility, based on stored facts and physical file metadata (not a byte audit).",
+        "properties": {
+          "compatible": {
+            "type": "boolean"
+          },
+          "completedPageCount": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "completedPages": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "explanation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "formatVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "missingPages": {
+            "description": "Known total only; unknown totals remain null on the preparation.",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "description": "Fixed reason code: sourceMismatch / unsupportedFormat / invalidPages / missingAssets / incompleteReady.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "compatible",
+          "completedPageCount",
+          "completedPages",
+          "missingPages"
         ],
         "type": "object"
       },
@@ -2268,6 +2538,13 @@
               "null"
             ]
           },
+          "clearModel": {
+            "description": "明确清空已隐藏问题模型的意图；model:null 本身不代表授权清空。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
           "keyAction": {
             "oneOf": [
               {
@@ -2304,6 +2581,31 @@
           "manual_ai"
         ],
         "type": "string"
+      },
+      "ProviderModelIssues": {
+        "properties": {
+          "manualAi": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelIssue"
+              }
+            ]
+          },
+          "tripo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelIssue"
+              }
+            ]
+          }
+        },
+        "type": "object"
       },
       "ProviderSettingsData": {
         "properties": {
@@ -2379,6 +2681,16 @@
             "type": [
               "string",
               "null"
+            ]
+          },
+          "modelIssue": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelIssue"
+              }
             ]
           },
           "modelSource": {
@@ -2514,6 +2826,17 @@
           "id": {
             "type": "string"
           },
+          "inputIssue": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuoteInputIssue",
+                "description": "Read-time validity of unconsumed inputs; never persisted back into the frozen payload."
+              }
+            ]
+          },
           "itemId": {
             "type": "string"
           },
@@ -2521,6 +2844,17 @@
             "description": "说明书 AI 的最大输出 token（批次数 × 每批上限；预算口径之一）。",
             "format": "int64",
             "type": "integer"
+          },
+          "modelIssue": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModelIssue",
+                "description": "仅公开读取副本标注；旧冻结 JSON 缺省为无问题，不用于放行执行。"
+              }
+            ]
           },
           "modelPreset": {
             "type": "string"
@@ -2569,6 +2903,16 @@
           "budgetNotice"
         ],
         "type": "object"
+      },
+      "QuoteInputIssue": {
+        "enum": [
+          "inputChanged",
+          "preparationIncompatible",
+          "providerConfigChanged",
+          "providerUnavailable",
+          "priceVersionChanged"
+        ],
+        "type": "string"
       },
       "QuoteResponse": {
         "description": "报价响应（`{ data }` 包装）。",
@@ -3092,6 +3436,10 @@
             "description": "额外的配置切换门禁；原有字段仍表示当前运行配置。",
             "type": "boolean"
           },
+          "providerModelIssues": {
+            "$ref": "#/components/schemas/ProviderModelIssues",
+            "description": "模型误填状态，不含疑似值或其任何摘要。"
+          },
           "providersConfigured": {
             "$ref": "#/components/schemas/ProvidersConfigured",
             "description": "各供应商是否具备发起真实请求的全部配置（密钥 + 模型）。"
@@ -3100,6 +3448,7 @@
         "required": [
           "providerConfigPending",
           "providersConfigured",
+          "providerModelIssues",
           "priceCatalog",
           "limits",
           "capabilities"
@@ -3265,6 +3614,55 @@
           "width",
           "height",
           "rotation"
+        ],
+        "type": "object"
+      },
+      "WorkflowAction": {
+        "enum": [
+          "handleJob",
+          "viewJob",
+          "reviewDraft",
+          "readRelease",
+          "addDocument",
+          "addViews",
+          "prepare",
+          "confirm"
+        ],
+        "type": "string"
+      },
+      "WorkflowStepState": {
+        "description": "Read-only workflow state: a visited route is never completion evidence.",
+        "enum": [
+          "complete",
+          "missing",
+          "needsReview"
+        ],
+        "type": "string"
+      },
+      "WorkflowStepsDto": {
+        "properties": {
+          "basic": {
+            "$ref": "#/components/schemas/WorkflowStepState"
+          },
+          "confirm": {
+            "$ref": "#/components/schemas/WorkflowStepState"
+          },
+          "document": {
+            "$ref": "#/components/schemas/WorkflowStepState"
+          },
+          "prepare": {
+            "$ref": "#/components/schemas/WorkflowStepState"
+          },
+          "views": {
+            "$ref": "#/components/schemas/WorkflowStepState"
+          }
+        },
+        "required": [
+          "basic",
+          "document",
+          "views",
+          "prepare",
+          "confirm"
         ],
         "type": "object"
       }
@@ -3501,6 +3899,89 @@
       }
     },
     "/api/v1/documents/{id}/preparations": {
+      "get": {
+        "operationId": "list_preparations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default 20, maximum 100",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreparationListResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Read-only discovery with a global recommendation, independent of the requested page.",
+        "tags": [
+          "preparations"
+        ]
+      },
       "post": {
         "description": "校验 `sourceSha256` 与绑定的原件一致（不一致 422 `details.reason=sourceChanged`）。同一 document + 原件已有未完成（preparing）记录时**返回现有记录**（200），否则新建（201）——重新进入同一 document 继续准备走这条路径。加密与超页数 PDF 的权威拒绝在浏览器（那里才有 PDF 解析器，ADR-003），本端点不创建页记录、不进入 jobs、不产生任何费用。",
         "operationId": "create_preparation",
@@ -3654,7 +4135,7 @@
     },
     "/api/v1/items": {
       "get": {
-        "description": "稳定排序 (createdAt DESC, id DESC)。`archived` 缺省或 false 只返回未归档物品，`archived=true` 只返回已归档物品；nextCursor 是**不透明**字符串（形如 `v1:items:active:<millis>:<id>`），已绑定产生它的过滤条件——切换过滤条件时必须从头分页，复用旧游标会得到 422。未知/重复/非法查询参数 → 422 字段级明细。",
+        "description": "稳定排序 (createdAt DESC, id DESC)。`archived` 缺省或 false 只返回未归档物品，true 只返回已归档。q 去首尾空格后按名称或型号字面包含匹配，ASCII 大小写不敏感，非 ASCII 按原字符；最多200字符，空串无筛选，%/_不是通配符。nextCursor 不透明，绑定规范化q、归档范围与固定排序；条件改变须从头分页，错游标422明确要求重置。旧无q游标仅可用于无筛选查询。未知/重复/非法查询参数 → 422 字段级明细。",
         "operationId": "list_items",
         "parameters": [
           {
@@ -3684,6 +4165,15 @@
             "required": false,
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "description": "名称或型号字面包含；去首尾空格，最多200字符，ASCII大小写不敏感",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3790,6 +4280,83 @@
           }
         ],
         "summary": "创建物品",
+        "tags": [
+          "items"
+        ]
+      }
+    },
+    "/api/v1/items/summaries": {
+      "get": {
+        "description": "ids为逗号分隔UUID，重复ID去重；空值/超过100个/非法参数422。混合不存在ID整个请求404，不返回假空状态。documentId仅允许单物品，需属于该物品；缺省选updatedAt/ID最新原件。状态目标按需处理任务、运行任务、未发布当前revision的草稿、最新发布版、资料缺项/报价优先。不可变release/quote的创建时间作为更新时间。",
+        "operationId": "summaries",
+        "parameters": [
+          {
+            "description": "1至100个物品UUID，以逗号分隔",
+            "in": "query",
+            "name": "ids",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "显式选择的原件，仅单物品摘要可用",
+            "in": "query",
+            "name": "documentId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemSummaryResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "批量读取物品处理摘要与向导事实（只读，最多100个ID）",
         "tags": [
           "items"
         ]
@@ -5414,6 +5981,43 @@
           }
         ],
         "summary": "任务中心列表（游标分页）",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/activity": {
+      "get": {
+        "description": "单次聚合 queued/running/retry_wait/waiting_provider 的 jobs 数；不是列表已加载行数或阶段数。needs_input/submission_unknown 和终态不计入。读取不触发供应商请求。",
+        "operationId": "get_job_activity",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobActivityResponse"
+                }
+              }
+            },
+            "description": "全库计数"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "全库自动进行中的任务计数",
         "tags": [
           "jobs"
         ]

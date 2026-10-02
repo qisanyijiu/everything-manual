@@ -208,7 +208,7 @@ fn parse_string_array(text: &str, column: &str) -> Result<Vec<String>, StorageEr
     })
 }
 
-fn quote_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<QuoteRecord, StorageError> {
+pub(crate) fn quote_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<QuoteRecord, StorageError> {
     let photo_ids_json: String = row.try_get("photo_ids")?;
     let photo_hashes_json: String = row.try_get("photo_hashes")?;
     let provider_config_json: String = row.try_get("provider_config")?;

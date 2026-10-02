@@ -21,6 +21,7 @@ use manual_core::domain::Item;
 use manual_core::validation::{
     FieldIssue, ItemCreateInput, ItemPatchInput, validate_item_create, validate_item_patch,
 };
+use sha2::{Digest, Sha256};
 
 use crate::storage::repo::items::{self, ArchivedFilter, ItemUpdate};
 
@@ -41,6 +42,7 @@ const SCOPE_ARCHIVED: &str = "items:archived";
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/items", routing::get(list_items).post(create_item))
+        .route("/items/summaries", routing::get(summaries))
         .route("/items/{id}", routing::get(get_item).patch(patch_item))
 }
 
@@ -51,13 +53,15 @@ pub fn routes() -> Router<AppState> {
     tag = "items",
     summary = "物品列表（游标分页，默认排除归档）",
     description = "稳定排序 (createdAt DESC, id DESC)。`archived` 缺省或 false 只返回未归档物品，\
-                   `archived=true` 只返回已归档物品；nextCursor 是**不透明**字符串（形如 \
-                   `v1:items:active:<millis>:<id>`），已绑定产生它的过滤条件——切换过滤条件时必须\
-                   从头分页，复用旧游标会得到 422。未知/重复/非法查询参数 → 422 字段级明细。",
+                   true 只返回已归档。q 去首尾空格后按名称或型号字面包含匹配，ASCII 大小写不敏感，\
+                   非 ASCII 按原字符；最多200字符，空串无筛选，%/_不是通配符。nextCursor 不透明，\
+                   绑定规范化q、归档范围与固定排序；条件改变须从头分页，错游标422明确要求重置。\
+                   旧无q游标仅可用于无筛选查询。未知/重复/非法查询参数 → 422 字段级明细。",
     params(
         ("limit" = Option<u32>, Query, description = "每页条数，默认 20，最大 100"),
         ("cursor" = Option<String>, Query, description = "上一页返回的 nextCursor（原样回传）"),
         ("archived" = Option<bool>, Query, description = "true 只看已归档；缺省/false 只看未归档"),
+        ("q" = Option<String>, Query, description = "名称或型号字面包含；去首尾空格，最多200字符，ASCII大小写不敏感"),
     ),
     security(("sessionCookie" = [])),
     responses(
@@ -72,13 +76,20 @@ pub async fn list_items(
     Query(params): Query<Vec<(String, String)>>,
 ) -> Response {
     let mut issues: Vec<FieldIssue> = Vec::new();
-    let parsed = match parse_list_params(&params, &["archived"]) {
+    let parsed = match parse_list_params(&params, &["archived", "q"]) {
         Ok(parsed) => Some(parsed),
         Err(mut found) => {
             issues.append(&mut found);
             None
         }
     };
+    let query = raw_value(&params, "q")
+        .unwrap_or("")
+        .trim()
+        .to_ascii_lowercase();
+    if query.chars().count() > 200 {
+        issues.push(FieldIssue::new("q", "搜索词最多200个字符，请缩短后重试"));
+    }
     let archived = match raw_value(&params, "archived") {
         None => false,
         Some("true") => true,
@@ -96,14 +107,25 @@ pub async fn list_items(
     }
     let parsed = parsed.expect("无字段问题时参数一定已解析");
 
-    let scope = if archived {
+    let legacy_scope = if archived {
         SCOPE_ARCHIVED
     } else {
         SCOPE_ACTIVE
     };
+    // 固定排序也是游标身份的一部分。摘要避免把查询内容直接扩散到游标中。
+    let scope = format!(
+        "{legacy_scope}:created-desc-id-desc:{:x}",
+        Sha256::digest(query.as_bytes())
+    );
     let cursor = match parsed.cursor.as_deref() {
         None => None,
-        Some(value) => match Cursor::parse(value, scope) {
+        Some(value) => match Cursor::parse(value, &scope).or_else(|issue| {
+            if query.is_empty() {
+                Cursor::parse(value, legacy_scope)
+            } else {
+                Err(issue)
+            }
+        }) {
             Ok(cursor) => Some(cursor.into_tuple()),
             Err(issue) => return ApiError::field_validation(vec![issue]).render(&request_id),
         },
@@ -122,15 +144,16 @@ pub async fn list_items(
         ArchivedFilter::Active
     };
     // 多取一条判断是否还有下一页（不伪造 nextCursor）。
-    let mut rows = match items::list_page(&mut connection, filter, cursor, parsed.limit + 1).await {
-        Ok(rows) => rows,
-        Err(error) => return ApiError::from_storage(error).render(&request_id),
-    };
+    let mut rows =
+        match items::list_page(&mut connection, filter, &query, cursor, parsed.limit + 1).await {
+            Ok(rows) => rows,
+            Err(error) => return ApiError::from_storage(error).render(&request_id),
+        };
     let has_more = rows.len() as u32 > parsed.limit;
     rows.truncate(parsed.limit as usize);
     let next_cursor = if has_more {
         rows.last()
-            .map(|item| Cursor::encode(scope, item.created_at.as_millis(), &item.id))
+            .map(|item| Cursor::encode(&scope, item.created_at.as_millis(), &item.id))
     } else {
         None
     };
@@ -336,4 +359,65 @@ fn item_response(item: Item, status: StatusCode) -> Response {
 
 fn with_etag(item: Item) -> Response {
     item_response(item, StatusCode::OK)
+}
+
+/// Bounded read-only workflow batch. Mixed unknown IDs fail the whole request with 404.
+#[utoipa::path(get,path="/api/v1/items/summaries",tag="items",
+    summary="批量读取物品处理摘要与向导事实（只读，最多100个ID）",
+    description="ids为逗号分隔UUID，重复ID去重；空值/超过100个/非法参数422。混合不存在ID整个请求404，不返回假空状态。documentId仅允许单物品，需属于该物品；缺省选updatedAt/ID最新原件。状态目标按需处理任务、运行任务、未发布当前revision的草稿、最新发布版、资料缺项/报价优先。不可变release/quote的创建时间作为更新时间。",
+    params(("ids"=String,Query,description="1至100个物品UUID，以逗号分隔"),("documentId"=Option<String>,Query,description="显式选择的原件，仅单物品摘要可用")),
+    security(("sessionCookie"=[])),responses((status=200,body=super::dto::ItemSummaryResponse),(status=401,body=super::dto::ApiErrorResponse),(status=404,body=super::dto::ApiErrorResponse),(status=422,body=super::dto::ApiErrorResponse)))]
+pub async fn summaries(
+    State(state): State<AppState>,
+    request_id: RequestId,
+    Query(params): Query<Vec<(String, String)>>,
+) -> Response {
+    let mut seen = std::collections::BTreeSet::new();
+    if params
+        .iter()
+        .any(|(key, _)| !matches!(key.as_str(), "ids" | "documentId") || !seen.insert(key.clone()))
+    {
+        return ApiError::field_validation(vec![FieldIssue::new("query", "不接受未知或重复参数")])
+            .render(&request_id);
+    }
+    let ids = raw_value(&params, "ids")
+        .unwrap_or("")
+        .split(',')
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    if ids.is_empty() || ids.len() > 100 || ids.iter().any(|id| uuid::Uuid::parse_str(id).is_err())
+    {
+        return ApiError::field_validation(vec![FieldIssue::new(
+            "ids",
+            "请提供1至100个有效物品UUID",
+        )])
+        .render(&request_id);
+    }
+    let ids: Vec<String> = ids
+        .into_iter()
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect();
+    let selected = raw_value(&params, "documentId");
+    if selected.is_some_and(|id| ids.len() != 1 || uuid::Uuid::parse_str(id).is_err()) {
+        return ApiError::field_validation(vec![FieldIssue::new(
+            "documentId",
+            "显式原件必须是单物品的有效UUID",
+        )])
+        .render(&request_id);
+    }
+    let mut connection = match acquire(&state).await {
+        Ok(c) => c,
+        Err(e) => return e.render(&request_id),
+    };
+    let mut tx = match sqlx::Connection::begin(&mut *connection).await {
+        Ok(t) => t,
+        Err(e) => return ApiError::from_storage(e.into()).render(&request_id),
+    };
+    let config = state.provider_config().read().await;
+    match crate::item_summaries::summarize(&mut tx, &ids, selected, state.settings(), &config).await
+    {
+        Ok(data) => Json(data).into_response(),
+        Err(e) => e.render(&request_id),
+    }
 }

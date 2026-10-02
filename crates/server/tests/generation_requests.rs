@@ -36,6 +36,285 @@ use tower::ServiceExt;
 
 const PASSWORD: &str = "test-password-gen-4b71";
 
+// Construct a pre-fix immutable snapshot only inside this private fixture DB;
+// restore every trigger immediately, before exercising any production read/action.
+async fn pc06_seed_legacy_field(
+    app: &TestApp,
+    table: &str,
+    sql: &'static str,
+    value: &str,
+    id: &str,
+) {
+    let triggers: Vec<(String, String)> =
+        sqlx::query_as("SELECT name,sql FROM sqlite_master WHERE type='trigger' AND tbl_name=?")
+            .bind(table)
+            .fetch_all(pool(app))
+            .await
+            .unwrap();
+    for (name, _) in &triggers {
+        sqlx::query(sqlx::AssertSqlSafe(format!("DROP TRIGGER \"{name}\"")))
+            .execute(pool(app))
+            .await
+            .unwrap();
+    }
+    sqlx::query(sql)
+        .bind(value)
+        .bind(id)
+        .execute(pool(app))
+        .await
+        .unwrap();
+    for (_, definition) in &triggers {
+        sqlx::query(sqlx::AssertSqlSafe(definition.as_str()))
+            .execute(pool(app))
+            .await
+            .unwrap();
+    }
+}
+
+#[tokio::test]
+async fn pc06_old_quotes_mask_each_model_position_without_rewriting_and_refuse_execution() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc06-quotes", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "PC06 fixture item").await;
+    let canary = "sk-pc06_frozen_fake_0123456789";
+    for pointer in [
+        "/providerConfig/tripo/model",
+        "/providerConfig/manualAi/model",
+        "/sendScope/tripo/model",
+        "/sendScope/tripo/parameters/model",
+        "/sendScope/manualAi/model",
+    ] {
+        let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+        // An already confirmed pre-fix quote must also be blocked on confirmation replay.
+        assert_eq!(
+            confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id)
+                .await
+                .status,
+            StatusCode::OK
+        );
+        let raw: String = sqlx::query_scalar("SELECT quote_json FROM quotes WHERE id=?")
+            .bind(&quote.id)
+            .fetch_one(pool(&app))
+            .await
+            .unwrap();
+        let mut payload: Value = serde_json::from_str(&raw).unwrap();
+        payload.as_object_mut().unwrap().remove("modelIssue");
+        *payload.pointer_mut(pointer).unwrap() = json!(canary);
+        let mutated = payload.to_string();
+        pc06_seed_legacy_field(
+            &app,
+            "quotes",
+            "UPDATE quotes SET quote_json=? WHERE id=?",
+            &mutated,
+            &quote.id,
+        )
+        .await;
+        let r = app
+            .call(
+                Method::GET,
+                &format!("/api/v1/items/{}/estimates/{}", inputs.item, quote.id),
+            )
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_eq!(r.status, StatusCode::OK, "{}", r.text());
+        assert_eq!(r.json()["data"]["modelIssue"], "suspectedCredential");
+        assert!(!r.text().contains(canary));
+        assert_eq!(r.json()["data"]["amounts"], payload["amounts"]);
+        assert_eq!(r.json()["data"]["id"], payload["id"]);
+        let retained: String = sqlx::query_scalar("SELECT quote_json FROM quotes WHERE id=?")
+            .bind(&quote.id)
+            .fetch_one(pool(&app))
+            .await
+            .unwrap();
+        assert_eq!(retained, mutated);
+        let r = confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id).await;
+        assert_eq!(r.status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(r.json()["error"]["details"]["reason"], "quoteModelInvalid");
+        assert!(!r.text().contains(canary));
+        let body = job_body(
+            &quote.id,
+            &inputs.preparation,
+            &photo_ids(&inputs),
+            (quote.tripo_upper, quote.manual_ai_upper),
+        );
+        let r = create_job(
+            &app,
+            &cookie,
+            &csrf,
+            &inputs.item,
+            &format!("pc06-{}", quote.id),
+            &body,
+        )
+        .await;
+        assert_eq!(r.status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert!(!r.text().contains(canary));
+    }
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM jobs").await, 0);
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM cost_ledger").await, 0);
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+}
+
+#[tokio::test]
+async fn pc06_frozen_job_blocks_retry_and_worker_before_attempt_and_preserves_replay() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc06-worker", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "PC06 worker fixture").await;
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id).await;
+    let body = job_body(
+        &quote.id,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        (quote.tripo_upper, quote.manual_ai_upper),
+    );
+    let r = create_job(&app, &cookie, &csrf, &inputs.item, "pc06-job", &body).await;
+    assert_eq!(r.status, StatusCode::ACCEPTED, "{}", r.text());
+    let job = r.json()["data"]["id"].as_str().unwrap().to_owned();
+    let raw: String = sqlx::query_scalar("SELECT provider_config FROM generation_snapshots WHERE id=(SELECT snapshot_id FROM jobs WHERE id=?)").bind(&job).fetch_one(pool(&app)).await.unwrap();
+    let mut frozen: Value = serde_json::from_str(&raw).unwrap();
+    frozen["manualAi"]["model"] = json!("sk-pc06_worker_fake_0123456789");
+    pc06_seed_legacy_field(&app, "generation_snapshots", "UPDATE generation_snapshots SET provider_config=? WHERE id=(SELECT snapshot_id FROM jobs WHERE id=?)", &frozen.to_string(), &job).await;
+    sqlx::query("UPDATE job_stages SET status='succeeded' WHERE job_id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let stage: String = sqlx::query_scalar(
+        "SELECT id FROM job_stages WHERE job_id=? AND stage_kind='manual_extract' LIMIT 1",
+    )
+    .bind(&job)
+    .fetch_one(pool(&app))
+    .await
+    .unwrap();
+    sqlx::query("UPDATE job_stages SET status='failed' WHERE id=?")
+        .bind(&stage)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let job_revision: i64 = sqlx::query_scalar("SELECT revision FROM jobs WHERE id=?")
+        .bind(&job)
+        .fetch_one(pool(&app))
+        .await
+        .unwrap();
+    let error = everything_manual::jobs::control::retry_stage(
+        pool(&app),
+        &admin_id(&app).await,
+        &job,
+        job_revision,
+        &stage,
+        "pc06-retry",
+        "pc06-body",
+        Timestamp::now(),
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(
+        error,
+        everything_manual::jobs::control::JobControlError::NotAllowed {
+            reason: "quoteModelInvalid",
+            ..
+        }
+    ));
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+    sqlx::query("UPDATE job_stages SET status='queued' WHERE id=?")
+        .bind(&stage)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let worker = everything_manual::jobs::JobExecutor::with_provider_config(
+        pool(&app).clone(),
+        everything_manual::jobs::ExecutorConfig::default(),
+        everything_manual::jobs::StageRegistry::new(),
+        app.state().provider_config_handle(),
+    );
+    worker.tick().await.unwrap();
+    let state: String = sqlx::query_scalar("SELECT status FROM job_stages WHERE id=?")
+        .bind(&stage)
+        .fetch_one(pool(&app))
+        .await
+        .unwrap();
+    assert_eq!(state, "needs_input");
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+    let detail = app
+        .call(Method::GET, &format!("/api/v1/jobs/{job}"))
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(detail.status, StatusCode::OK);
+    assert!(!detail.text().contains("sk-pc06_worker_fake"));
+    let stage_view = detail.json()["data"]["stages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["id"] == stage)
+        .unwrap()
+        .clone();
+    assert_eq!(stage_view["retry"]["allowed"], false);
+    assert_eq!(stage_view["retry"]["reason"], "quoteModelInvalid");
+    let replay = create_job(&app, &cookie, &csrf, &inputs.item, "pc06-job", &body).await;
+    assert_eq!(replay.status, StatusCode::ACCEPTED);
+    assert_eq!(replay.json()["data"]["id"], job);
+}
+
+#[tokio::test]
+async fn pc06_current_model_gate_refuses_new_quote_confirmation_and_job_without_side_effects() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc06-current", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "PC06 current fixture").await;
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id).await;
+    let mut bad = app.state().settings().clone();
+    bad.providers.manual_ai.model = Some("sk-pc06_current_fake_0123456789".into());
+    *app.state().provider_config().write().await =
+        everything_manual::config::provider_overrides::ProviderConfigStore::deployment(&bad);
+    let estimate = create_estimate(
+        &app,
+        &cookie,
+        &csrf,
+        &inputs.item,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        PRESET,
+    )
+    .await;
+    let confirm = confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id).await;
+    let create = create_job(
+        &app,
+        &cookie,
+        &csrf,
+        &inputs.item,
+        "pc06-current",
+        &job_body(
+            &quote.id,
+            &inputs.preparation,
+            &photo_ids(&inputs),
+            (quote.tripo_upper, quote.manual_ai_upper),
+        ),
+    )
+    .await;
+    for r in [estimate, confirm, create] {
+        assert_eq!(r.status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            r.json()["error"]["details"]["reason"],
+            "providerModelInvalid"
+        );
+        assert!(!r.text().contains("sk-pc06_current_fake"));
+    }
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM jobs").await, 0);
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM cost_ledger").await, 0);
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+}
+
 async fn api_settings_write(
     app: &TestApp,
     cookie: &str,
@@ -3148,4 +3427,1045 @@ async fn get_expired_quote_reports_status_facts_but_stays_unusable() {
         "已确认但过期的报价回读仍必须反映确认事实（BUG-004）"
     );
     assert!(data["data"]["consumedAt"].is_null(), "{data}");
+}
+
+#[tokio::test]
+async fn pc03a_incompatible_ready_cannot_quote_or_submit_and_history_remains_readable() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc03a-incompatible", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "PC03A compatibility").await;
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    assert_eq!(
+        confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    // A legacy/current stored ready record can lose its referenced content after quoting.
+    sqlx::query("UPDATE pages SET viewport_json=NULL WHERE preparation_id=? AND page_number=1")
+        .bind(&inputs.preparation)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let rejected = create_estimate(
+        &app,
+        &cookie,
+        &csrf,
+        &inputs.item,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        PRESET,
+    )
+    .await;
+    assert_eq!(rejected.status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(
+        rejected.json()["error"]["details"]["reason"],
+        "preparationIncompatible"
+    );
+    assert_eq!(
+        rejected.json()["error"]["details"]["compatibilityReason"],
+        "invalidPages"
+    );
+    let rejected = create_job(
+        &app,
+        &cookie,
+        &csrf,
+        &inputs.item,
+        "pc03a-invalid-ready",
+        &job_body(
+            &quote.id,
+            &inputs.preparation,
+            &photo_ids(&inputs),
+            (10_000, 100_000),
+        ),
+    )
+    .await;
+    assert_eq!(rejected.status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(
+        rejected.json()["error"]["details"]["reason"],
+        "preparationIncompatible"
+    );
+    assert_eq!(
+        read_estimate(&app, &cookie, &inputs.item, &quote.id)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM quotes").await, 1);
+    for sql in [
+        "SELECT COUNT(*) FROM jobs",
+        "SELECT COUNT(*) FROM provider_attempts",
+        "SELECT COUNT(*) FROM cost_ledger",
+    ] {
+        assert_eq!(count(&app, sql).await, 0);
+    }
+}
+
+// PC03B: bounded read summaries and consumption-first quote recovery (all local fixtures).
+async fn pc03b_summary(app: &TestApp, cookie: &str, item: &str) -> Value {
+    let r = app
+        .call(Method::GET, &format!("/api/v1/items/summaries?ids={item}"))
+        .cookie(cookie)
+        .send()
+        .await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text());
+    r.json()["data"][0].clone()
+}
+
+#[tokio::test]
+async fn pc03b_batch_summary_auth_bounds_dedup_and_missing_are_explicit() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc03b-batch", TEST_CATALOG).await;
+    let first = create_item(&app, &cookie, &csrf, "batch-first").await;
+    assert_eq!(
+        app.call(Method::GET, &format!("/api/v1/items/summaries?ids={first}"))
+            .send()
+            .await
+            .status,
+        StatusCode::UNAUTHORIZED
+    );
+    for query in [
+        "".to_owned(),
+        "ids=".to_owned(),
+        "ids=bad".to_owned(),
+        format!("ids={first}&ids={first}"),
+        format!("ids={first}&other=1"),
+        format!("ids={}", vec![first.clone(); 101].join(",")),
+    ] {
+        let r = app
+            .call(Method::GET, &format!("/api/v1/items/summaries?{query}"))
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_eq!(
+            r.status,
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "{query}: {}",
+            r.text()
+        );
+    }
+    let r = app
+        .call(
+            Method::GET,
+            &format!("/api/v1/items/summaries?ids={first},{first}"),
+        )
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text());
+    assert_eq!(r.json()["data"].as_array().unwrap().len(), 1);
+    let absent = uuid::Uuid::now_v7().to_string();
+    let r = app
+        .call(
+            Method::GET,
+            &format!("/api/v1/items/summaries?ids={first},{absent}"),
+        )
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(r.status, StatusCode::NOT_FOUND);
+    let mut ids = vec![first.clone()];
+    for n in 0..99 {
+        let id = uuid::Uuid::now_v7().to_string();
+        sqlx::query(
+            "INSERT INTO items(id,name,model,revision,created_at,updated_at) VALUES(?,?,?,1,1,1)",
+        )
+        .bind(&id)
+        .bind(format!("batch {n}"))
+        .bind("fixture")
+        .execute(pool(&app))
+        .await
+        .unwrap();
+        ids.push(id);
+    }
+    ids.reverse();
+    let r = app
+        .call(
+            Method::GET,
+            &format!("/api/v1/items/summaries?ids={}", ids.join(",")),
+        )
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text());
+    let data = r.json()["data"].as_array().unwrap().clone();
+    assert_eq!(data.len(), 100);
+    let returned: Vec<_> = data
+        .iter()
+        .map(|v| v["itemId"].as_str().unwrap().to_owned())
+        .collect();
+    ids.sort();
+    assert_eq!(returned, ids);
+    assert!(data.iter().all(|v| v["action"] == "addDocument"
+        && v["steps"]["basic"] == "complete"
+        && v["steps"]["prepare"] == "missing"));
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM quotes").await, 0);
+}
+
+#[tokio::test]
+async fn pc03b_summary_ready_quotes_changes_and_selected_document_are_read_only() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc03b-facts", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "workflow").await;
+    // More than one SQL batch: newer empty preparations cannot hide the older complete ready.
+    for n in 0..103 {
+        sqlx::query("INSERT INTO preparations(id,document_id,source_sha256,state,revision,created_at,updated_at,format_version) SELECT ?,document_id,source_sha256,'preparing',1,created_at+1000+?,updated_at+1000+?,1 FROM preparations WHERE id=?")
+            .bind(uuid::Uuid::now_v7().to_string()).bind(n).bind(n).bind(&inputs.preparation).execute(pool(&app)).await.unwrap();
+    }
+    let initial = pc03b_summary(&app, &cookie, &inputs.item).await;
+    assert_eq!(initial["action"], "confirm");
+    assert_eq!(initial["steps"]["prepare"], "complete");
+    assert_eq!(initial["steps"]["confirm"], "missing");
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    assert_eq!(
+        confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    assert_eq!(
+        pc03b_summary(&app, &cookie, &inputs.item).await["steps"]["confirm"],
+        "complete"
+    );
+    let source: String = sqlx::query_scalar("SELECT document_id FROM preparations WHERE id=?")
+        .bind(&inputs.preparation)
+        .fetch_one(pool(&app))
+        .await
+        .unwrap();
+    let other = uuid::Uuid::now_v7().to_string();
+    sqlx::query("INSERT INTO documents(id,item_id,source_asset_id,source_sha256,title,created_at,updated_at) SELECT ?,item_id,source_asset_id,source_sha256,'new PDF',created_at+1,updated_at+1 FROM documents WHERE id=?").bind(&other).bind(&source).execute(pool(&app)).await.unwrap();
+    let new = pc03b_summary(&app, &cookie, &inputs.item).await;
+    assert_eq!(new["documentId"], other);
+    assert_eq!(new["action"], "prepare");
+    assert_eq!(new["steps"]["prepare"], "needsReview");
+    assert_eq!(new["steps"]["confirm"], "needsReview");
+    let r = app
+        .call(
+            Method::GET,
+            &format!(
+                "/api/v1/items/summaries?ids={}&documentId={source}",
+                inputs.item
+            ),
+        )
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text());
+    assert_eq!(r.json()["data"][0]["steps"]["confirm"], "complete");
+    let foreign = create_item(&app, &cookie, &csrf, "foreign").await;
+    assert_eq!(
+        app.call(
+            Method::GET,
+            &format!("/api/v1/items/summaries?ids={foreign}&documentId={source}")
+        )
+        .cookie(&cookie)
+        .send()
+        .await
+        .status,
+        StatusCode::NOT_FOUND
+    );
+    // Current photo replacement/removal invalidates quote without changing its immutable payload.
+    let raw: String = sqlx::query_scalar("SELECT quote_json FROM quotes WHERE id=?")
+        .bind(&quote.id)
+        .fetch_one(pool(&app))
+        .await
+        .unwrap();
+    sqlx::query("UPDATE photos SET view='detail',revision=revision+1 WHERE id=?")
+        .bind(&inputs.photos[1].1)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let before: i64 = count(&app, "SELECT COUNT(*) FROM audit_events").await;
+    for _ in 0..3 {
+        let s = pc03b_summary(&app, &cookie, &inputs.item).await;
+        assert_eq!(s["steps"]["views"], "needsReview");
+        let q = app
+            .call(
+                Method::GET,
+                &format!("/api/v1/items/{}/estimates/{}", inputs.item, quote.id),
+            )
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_eq!(q.status, StatusCode::OK, "{}", q.text());
+        assert_eq!(q.json()["data"]["inputIssue"], "inputChanged");
+    }
+    let retained: String = sqlx::query_scalar("SELECT quote_json FROM quotes WHERE id=?")
+        .bind(&quote.id)
+        .fetch_one(pool(&app))
+        .await
+        .unwrap();
+    assert_eq!(raw, retained);
+    assert_eq!(
+        before,
+        count(&app, "SELECT COUNT(*) FROM audit_events").await
+    );
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM jobs").await, 0);
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+}
+
+#[tokio::test]
+async fn pc03b_summary_target_priority_ties_and_consumed_expired_quote_recovery() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc03b-targets", TEST_CATALOG).await;
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "target fixture").await;
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id).await;
+    let body = job_body(
+        &quote.id,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        (quote.tripo_upper, quote.manual_ai_upper),
+    );
+    let created = create_job(&app, &cookie, &csrf, &inputs.item, "pc03b-first", &body).await;
+    assert_eq!(created.status, StatusCode::ACCEPTED, "{}", created.text());
+    let job = created.json()["data"]["id"].as_str().unwrap().to_owned();
+    assert_eq!(
+        pc03b_summary(&app, &cookie, &inputs.item).await["targetId"],
+        job
+    );
+    let mut ties = Vec::new();
+    for _ in 0..2 {
+        let id = uuid::Uuid::now_v7().to_string();
+        sqlx::query("INSERT INTO jobs(id,item_id,snapshot_id,status,revision,created_at,updated_at) SELECT ?,item_id,snapshot_id,'failed',1,1,100 FROM jobs WHERE id=?").bind(&id).bind(&job).execute(pool(&app)).await.unwrap();
+        ties.push(id);
+    }
+    ties.sort();
+    let s = pc03b_summary(&app, &cookie, &inputs.item).await;
+    assert_eq!(s["action"], "handleJob");
+    assert_eq!(s["targetId"], ties[1]);
+    sqlx::query("UPDATE jobs SET status='cancelled' WHERE id IN (?,?)")
+        .bind(&ties[0])
+        .bind(&ties[1])
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    assert_eq!(
+        pc03b_summary(&app, &cookie, &inputs.item).await["action"],
+        "viewJob"
+    );
+    sqlx::query("UPDATE jobs SET status='succeeded' WHERE id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let draft = uuid::Uuid::now_v7().to_string();
+    sqlx::query("INSERT INTO manual_drafts(id,item_id,snapshot_id,knowledge_json,created_at,updated_at) SELECT ?,item_id,snapshot_id,'{}',1,1 FROM jobs WHERE id=?").bind(&draft).bind(&job).execute(pool(&app)).await.unwrap();
+    assert_eq!(
+        pc03b_summary(&app, &cookie, &inputs.item).await["action"],
+        "reviewDraft"
+    );
+    let model = uuid::Uuid::now_v7().to_string();
+    sqlx::query("INSERT INTO model_revisions(id,item_id,asset_id,sha256,created_at) SELECT ?,item_id,id,blob_id,1 FROM assets WHERE item_id=? LIMIT 1").bind(&model).bind(&inputs.item).execute(pool(&app)).await.unwrap();
+    let release = uuid::Uuid::now_v7().to_string();
+    sqlx::query("INSERT INTO manual_releases(id,item_id,draft_id,draft_revision,model_revision_id,manifest_asset_id,created_at) SELECT ?,item_id,?,1,?,id,1 FROM assets WHERE item_id=? LIMIT 1").bind(&release).bind(&draft).bind(&model).bind(&inputs.item).execute(pool(&app)).await.unwrap();
+    assert_eq!(
+        pc03b_summary(&app, &cookie, &inputs.item).await["action"],
+        "readRelease"
+    );
+    sqlx::query("UPDATE jobs SET status='submission_unknown',updated_at=500 WHERE id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let s = pc03b_summary(&app, &cookie, &inputs.item).await;
+    assert_eq!(s["action"], "handleJob");
+    assert_eq!(s["latestReleaseId"], release);
+    pc06_seed_legacy_field(
+        &app,
+        "quotes",
+        "UPDATE quotes SET expires_at=? WHERE id=?",
+        "1",
+        &quote.id,
+    )
+    .await;
+    sqlx::query("UPDATE items SET model='changed after acceptance',revision=revision+1 WHERE id=?")
+        .bind(&inputs.item)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let r = app
+        .call(
+            Method::GET,
+            &format!("/api/v1/items/{}/estimates/{}", inputs.item, quote.id),
+        )
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(r.status, StatusCode::OK, "{}", r.text());
+    assert_eq!(r.json()["data"]["consumedJobId"], job);
+    assert!(r.json()["data"]["inputIssue"].is_null());
+    assert_eq!(count(&app, "SELECT COUNT(*) FROM cost_ledger").await, 2);
+    assert_eq!(
+        count(&app, "SELECT COUNT(*) FROM provider_attempts").await,
+        0
+    );
+}
+
+#[tokio::test]
+async fn pc05c_activity_counts_whole_library_and_stage_retry_is_authoritative() {
+    let (app, cookie, csrf) = logged_in_generation_app("pc05c-activity", TEST_CATALOG).await;
+    let endpoint = "/api/v1/jobs/activity";
+    assert_eq!(
+        app.call(Method::GET, endpoint).send().await.status,
+        StatusCode::UNAUTHORIZED
+    );
+    let empty = app.call(Method::GET, endpoint).cookie(&cookie).send().await;
+    assert_eq!(empty.json()["data"]["active"], 0);
+    let inputs = build_ready_inputs(&app, &cookie, &csrf, "PC05C fixture").await;
+    let quote = estimate_and_view(&app, &cookie, &csrf, &inputs).await;
+    assert_eq!(
+        confirm_quote(&app, &cookie, &csrf, &inputs.item, &quote.id)
+            .await
+            .status,
+        StatusCode::OK
+    );
+    let response = create_job(
+        &app,
+        &cookie,
+        &csrf,
+        &inputs.item,
+        "pc05c-count",
+        &job_body(
+            &quote.id,
+            &inputs.preparation,
+            &photo_ids(&inputs),
+            (quote.tripo_upper, quote.manual_ai_upper),
+        ),
+    )
+    .await;
+    assert_eq!(response.status, StatusCode::ACCEPTED);
+    let job = response.json()["data"]["id"].as_str().unwrap().to_owned();
+    // Private database fixture adds distinct job rows with the same legal snapshot.
+    // No execution or supplier is invoked: this test exercises real HTTP aggregation.
+    for (status, count) in [
+        ("queued", 6),
+        ("running", 6),
+        ("retry_wait", 6),
+        ("waiting_provider", 6),
+        ("needs_input", 2),
+        ("submission_unknown", 2),
+        ("succeeded", 2),
+        ("failed", 2),
+        ("cancelled", 2),
+    ] {
+        for _ in 0..count {
+            sqlx::query("INSERT INTO jobs (id,item_id,snapshot_id,status,revision,created_at,updated_at) SELECT ?,item_id,snapshot_id,?,1,created_at,updated_at FROM jobs WHERE id=?")
+                .bind(manual_core::ids::new_id()).bind(status).bind(&job).execute(pool(&app)).await.unwrap();
+        }
+    }
+    let counts_before: (i64, i64) = sqlx::query_as(
+        "SELECT (SELECT COUNT(*) FROM provider_attempts),(SELECT COUNT(*) FROM cost_ledger)",
+    )
+    .fetch_one(pool(&app))
+    .await
+    .unwrap();
+    let all = app.call(Method::GET, endpoint).cookie(&cookie).send().await;
+    assert_eq!(all.status, StatusCode::OK);
+    assert_eq!(all.json(), json!({"data":{"active":25}}));
+    let page = app
+        .call(Method::GET, "/api/v1/jobs?limit=20")
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(page.json()["data"].as_array().unwrap().len(), 20);
+    assert!(page.json()["nextCursor"].is_string());
+    sqlx::query("UPDATE jobs SET status='succeeded' WHERE id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    assert_eq!(
+        app.call(Method::GET, endpoint)
+            .cookie(&cookie)
+            .send()
+            .await
+            .json()["data"]["active"],
+        24
+    );
+    sqlx::query("UPDATE jobs SET status='retry_wait' WHERE id=?")
+        .bind(&job)
+        .execute(pool(&app))
+        .await
+        .unwrap();
+    let stage: String = sqlx::query_scalar("SELECT id FROM job_stages WHERE job_id=? LIMIT 1")
+        .bind(&job)
+        .fetch_one(pool(&app))
+        .await
+        .unwrap();
+    sqlx::query("UPDATE job_stages SET status='retry_wait',attempt_count=4,poll_count=37,next_run_at=1700000000123 WHERE id=?").bind(&stage).execute(pool(&app)).await.unwrap();
+    let detail = app
+        .call(Method::GET, &format!("/api/v1/jobs/{job}"))
+        .cookie(&cookie)
+        .send()
+        .await;
+    let payload = detail.json();
+    let row = payload["data"]["stages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["id"] == stage)
+        .unwrap();
+    assert_eq!(
+        row["safeRetry"],
+        json!({"number":4,"limit":manual_core::jobs::MAX_SAFE_RETRIES})
+    );
+    assert_eq!(row["pollCount"], 37);
+    assert_eq!(row["nextRunAt"], "2023-11-14T22:13:20.123Z");
+    let counts_after: (i64, i64) = sqlx::query_as(
+        "SELECT (SELECT COUNT(*) FROM provider_attempts),(SELECT COUNT(*) FROM cost_ledger)",
+    )
+    .fetch_one(pool(&app))
+    .await
+    .unwrap();
+    assert_eq!(counts_before, counts_after);
+    assert_eq!(counts_after.0, 0);
+}
+
+// BUG-PCF-004: a deployment key can disappear across restart without changing
+// the web configuration revision. Exercise actual HTTP routes over the same DB.
+// No worker is started: these tests observe admission and persisted side effects;
+// the separate loopback process diagnostic observes provider wire counts.
+struct Pcf004Client {
+    router: Router,
+    cookie: String,
+    csrf: String,
+}
+
+impl Pcf004Client {
+    fn after_key_loss(app: &TestApp, cookie: &str, csrf: &str, loss: (bool, bool)) -> Self {
+        let mut settings = app.state().settings().clone();
+        if loss.0 {
+            settings.providers.tripo.api_key = None;
+            settings.providers.tripo.key_source = None;
+        }
+        if loss.1 {
+            settings.providers.manual_ai.api_key = None;
+            settings.providers.manual_ai.key_source = None;
+        }
+        let state =
+            everything_manual::http::state::AppState::new(app.state().database().clone(), settings);
+        Self {
+            router: everything_manual::http::router::build_app(state),
+            cookie: cookie.to_owned(),
+            csrf: csrf.to_owned(),
+        }
+    }
+
+    async fn request(
+        &self,
+        method: Method,
+        uri: &str,
+        key: Option<&str>,
+        etag: Option<&str>,
+        body: Option<&Value>,
+    ) -> TestResponse {
+        let mut request = Request::builder()
+            .method(method)
+            .uri(uri)
+            .header("host", "127.0.0.1:8080")
+            .header("cookie", &self.cookie)
+            .header("x-csrf-token", &self.csrf);
+        if let Some(key) = key {
+            request = request.header("idempotency-key", key);
+        }
+        if let Some(etag) = etag {
+            request = request.header("if-match", etag);
+        }
+        let body = if let Some(body) = body {
+            request = request.header("content-type", "application/json");
+            Body::from(serde_json::to_vec(body).unwrap())
+        } else {
+            Body::empty()
+        };
+        let response = self
+            .router
+            .clone()
+            .oneshot(request.body(body).unwrap())
+            .await
+            .unwrap();
+        let status = response.status();
+        let headers = response.headers().clone();
+        let body = http_body_util::BodyExt::collect(response.into_body())
+            .await
+            .unwrap()
+            .to_bytes()
+            .to_vec();
+        TestResponse {
+            status,
+            headers,
+            body,
+        }
+    }
+
+    async fn get(&self, uri: &str) -> TestResponse {
+        self.request(Method::GET, uri, None, None, None).await
+    }
+
+    async fn post(
+        &self,
+        uri: &str,
+        key: Option<&str>,
+        etag: Option<&str>,
+        body: &Value,
+    ) -> TestResponse {
+        self.request(Method::POST, uri, key, etag, Some(body)).await
+    }
+}
+
+async fn pcf004_counts(app: &TestApp) -> [i64; 8] {
+    [
+        count(app, "SELECT COUNT(*) FROM quotes").await,
+        count(app, "SELECT COUNT(*) FROM jobs").await,
+        count(app, "SELECT COUNT(*) FROM job_stages").await,
+        count(app, "SELECT COUNT(*) FROM generation_snapshots").await,
+        count(app, "SELECT COUNT(*) FROM cost_ledger").await,
+        count(app, "SELECT COUNT(*) FROM provider_attempts").await,
+        count(app, "SELECT COUNT(*) FROM idempotency_records").await,
+        count(app, "SELECT COUNT(*) FROM audit_events").await,
+    ]
+}
+
+fn pcf004_missing(loss: (bool, bool)) -> Vec<&'static str> {
+    let mut missing = Vec::new();
+    if loss.0 {
+        missing.push("tripo.api_key");
+    }
+    if loss.1 {
+        missing.push("manual_ai.api_key");
+    }
+    missing
+}
+
+async fn pcf004_quote_record(
+    app: &TestApp,
+    id: &str,
+) -> everything_manual::storage::repo::quotes::QuoteRecord {
+    let mut conn = pool(app).acquire().await.unwrap();
+    everything_manual::storage::repo::quotes::get(&mut conn, id)
+        .await
+        .unwrap()
+        .unwrap()
+}
+
+async fn pcf004_confirmed_body(
+    app: &TestApp,
+    cookie: &str,
+    csrf: &str,
+) -> (ReadyInputs, QuoteView, Value) {
+    let inputs = build_ready_inputs(app, cookie, csrf, "PCF004 synthetic item").await;
+    let quote = estimate_and_view(app, cookie, csrf, &inputs).await;
+    let confirmed = confirm_quote(app, cookie, csrf, &inputs.item, &quote.id).await;
+    assert_eq!(confirmed.status, StatusCode::OK, "{}", confirmed.text());
+    let body = job_body(
+        &quote.id,
+        &inputs.preparation,
+        &photo_ids(&inputs),
+        (quote.tripo_upper, quote.manual_ai_upper),
+    );
+    (inputs, quote, body)
+}
+
+#[tokio::test]
+async fn pcf004_new_jobs_reject_each_missing_provider_without_writes() {
+    for loss in [(true, false), (false, true), (true, true)] {
+        let (app, cookie, csrf) = logged_in_generation_app("pcf004-new", TEST_CATALOG).await;
+        let (inputs, quote, body) = pcf004_confirmed_body(&app, &cookie, &csrf).await;
+        let before_quote = pcf004_quote_record(&app, &quote.id).await;
+        let before_counts = pcf004_counts(&app).await;
+        let client = Pcf004Client::after_key_loss(&app, &cookie, &csrf, loss);
+        let rejected = client
+            .post(
+                &format!("/api/v1/items/{}/jobs", inputs.item),
+                Some("pcf004-new"),
+                None,
+                &body,
+            )
+            .await;
+        rejected.assert_contract_error(StatusCode::CONFLICT, "PROVIDER_NOT_CONFIGURED");
+        assert_eq!(
+            rejected.json()["error"]["details"]["missing"],
+            json!(pcf004_missing(loss))
+        );
+        assert_eq!(pcf004_counts(&app).await, before_counts);
+        assert_eq!(pcf004_quote_record(&app, &quote.id).await, before_quote);
+
+        // The existing estimate contract uses the same missing-field calculation.
+        let estimate = client.post(&format!("/api/v1/items/{}/estimates", inputs.item), None, None, &json!({
+            "preparationId": inputs.preparation, "photoIds": photo_ids(&inputs), "modelPreset": PRESET,
+        })).await;
+        estimate.assert_contract_error(StatusCode::CONFLICT, "PROVIDER_NOT_CONFIGURED");
+        assert_eq!(
+            estimate.json()["error"]["details"]["missing"],
+            json!(pcf004_missing(loss))
+        );
+        let read = client
+            .get(&format!(
+                "/api/v1/items/{}/estimates/{}",
+                inputs.item, quote.id
+            ))
+            .await;
+        assert_eq!(read.status, StatusCode::OK, "{}", read.text());
+        assert_eq!(read.json()["data"]["id"], quote.id);
+        assert!(read.json()["data"]["consumedJobId"].is_null());
+        assert_eq!(pcf004_counts(&app).await, before_counts);
+        assert_eq!(pcf004_quote_record(&app, &quote.id).await, before_quote);
+    }
+}
+
+#[tokio::test]
+async fn pcf004_existing_job_replay_survives_each_missing_provider() {
+    // The API defines per-provider amounts, not reservation array order. Compare
+    // every field after normalizing only that array by its provider/currency key.
+    let normalized = |mut data: Value| {
+        data["reservations"]
+            .as_array_mut()
+            .expect("job reservations must be an array")
+            .sort_by_key(|entry| {
+                (
+                    entry["provider"].as_str().unwrap().to_owned(),
+                    entry["currency"].as_str().unwrap().to_owned(),
+                )
+            });
+        data
+    };
+    for loss in [(true, false), (false, true), (true, true)] {
+        let (app, cookie, csrf) = logged_in_generation_app("pcf004-replay", TEST_CATALOG).await;
+        let (inputs, quote, body) = pcf004_confirmed_body(&app, &cookie, &csrf).await;
+        let accepted =
+            create_job(&app, &cookie, &csrf, &inputs.item, "pcf004-receipt", &body).await;
+        assert_eq!(accepted.status, StatusCode::ACCEPTED, "{}", accepted.text());
+        let job = accepted.json()["data"]["id"].as_str().unwrap().to_owned();
+        let before_quote = pcf004_quote_record(&app, &quote.id).await;
+        let before_counts = pcf004_counts(&app).await;
+        let client = Pcf004Client::after_key_loss(&app, &cookie, &csrf, loss);
+        let replay = client
+            .post(
+                &format!("/api/v1/items/{}/jobs", inputs.item),
+                Some("pcf004-receipt"),
+                None,
+                &body,
+            )
+            .await;
+        assert_eq!(replay.status, StatusCode::ACCEPTED, "{}", replay.text());
+        assert_eq!(
+            replay.header("x-idempotent-replay").as_deref(),
+            Some("true")
+        );
+        assert_eq!(
+            normalized(replay.json()["data"].clone()),
+            normalized(accepted.json()["data"].clone())
+        );
+        let detail = client.get(&format!("/api/v1/jobs/{job}")).await;
+        assert_eq!(detail.status, StatusCode::OK, "{}", detail.text());
+        assert_eq!(detail.json()["data"]["id"], job);
+        let mut conflicting = body.clone();
+        conflicting["limits"]["tripoCreditMinor"] = json!(quote.tripo_upper + 1);
+        let conflict = client
+            .post(
+                &format!("/api/v1/items/{}/jobs", inputs.item),
+                Some("pcf004-receipt"),
+                None,
+                &conflicting,
+            )
+            .await;
+        conflict.assert_contract_error(StatusCode::CONFLICT, "IDEMPOTENCY_CONFLICT");
+        assert_eq!(pcf004_counts(&app).await, before_counts);
+        assert_eq!(pcf004_quote_record(&app, &quote.id).await, before_quote);
+    }
+}
+
+// Synthetic persisted states represent failed/unknown/accepted outcomes already
+// supported by the pipeline; no provider request is made to construct them.
+async fn pcf004_stage_fixture(
+    app: &TestApp,
+    cookie: &str,
+    csrf: &str,
+    kind: &str,
+    status: &str,
+    receipt: &str,
+) -> (String, String, QuoteView) {
+    let (inputs, quote, body) = pcf004_confirmed_body(app, cookie, csrf).await;
+    let accepted = create_job(app, cookie, csrf, &inputs.item, "pcf004-stage", &body).await;
+    assert_eq!(accepted.status, StatusCode::ACCEPTED, "{}", accepted.text());
+    let job = accepted.json()["data"]["id"].as_str().unwrap().to_owned();
+    let stage: String = sqlx::query_scalar(
+        "SELECT id FROM job_stages WHERE job_id=? AND stage_kind=? ORDER BY id LIMIT 1",
+    )
+    .bind(&job)
+    .bind(kind)
+    .fetch_one(pool(app))
+    .await
+    .unwrap();
+    sqlx::query("UPDATE job_stages SET status=? WHERE id=?")
+        .bind(status)
+        .bind(&stage)
+        .execute(pool(app))
+        .await
+        .unwrap();
+    sqlx::query("UPDATE jobs SET status=? WHERE id=?")
+        .bind(status)
+        .bind(&job)
+        .execute(pool(app))
+        .await
+        .unwrap();
+    if !receipt.is_empty() {
+        let mut conn = pool(app).acquire().await.unwrap();
+        let now = Timestamp::now();
+        let attempt = attempts_repo::create_intent(
+            &mut conn,
+            attempts_repo::NewAttempt {
+                job_id: job.clone(),
+                stage_id: stage.clone(),
+                request_hash: "pcf004-fixture".to_owned(),
+            },
+            now,
+        )
+        .await
+        .unwrap();
+        assert!(
+            attempts_repo::mark_submitting(&mut conn, &attempt.id, now)
+                .await
+                .unwrap()
+        );
+        match receipt {
+            "tripo" | "failed-tripo" => {
+                attempts_repo::record_remote_task_id(
+                    &mut conn,
+                    &attempt.id,
+                    "pcf004-existing-task",
+                    now,
+                )
+                .await
+                .unwrap();
+                if receipt == "failed-tripo" {
+                    assert!(
+                        attempts_repo::mark_failed(
+                            &mut conn,
+                            &attempt.id,
+                            "synthetic replacement authorization",
+                            now,
+                        )
+                        .await
+                        .unwrap()
+                    );
+                }
+            }
+            "manual" | "tripo-no-id" => {
+                assert!(
+                    attempts_repo::record_sync_response(
+                        &mut conn,
+                        &attempt.id,
+                        (receipt == "manual").then_some("pcf004-existing-response"),
+                        now
+                    )
+                    .await
+                    .unwrap()
+                );
+            }
+            "unknown" => {
+                assert!(
+                    attempts_repo::mark_unknown(&mut conn, &attempt.id, "synthetic unknown", now)
+                        .await
+                        .unwrap()
+                );
+                let provider = if kind == "manual_extract" {
+                    "manual_ai"
+                } else {
+                    "tripo"
+                };
+                sqlx::query("UPDATE cost_ledger SET state='unknown',attempt_id=? WHERE snapshot_id=(SELECT snapshot_id FROM jobs WHERE id=?) AND provider=?")
+                    .bind(&attempt.id).bind(&job).bind(provider).execute(&mut *conn).await.unwrap();
+            }
+            _ => panic!("unknown fixture receipt"),
+        }
+    }
+    (job, stage, quote)
+}
+
+async fn pcf004_detail(client: &Pcf004Client, job: &str) -> (Value, String) {
+    let response = client.get(&format!("/api/v1/jobs/{job}")).await;
+    assert_eq!(response.status, StatusCode::OK, "{}", response.text());
+    (
+        response.json()["data"].clone(),
+        response.header("etag").unwrap(),
+    )
+}
+
+#[tokio::test]
+async fn pcf004_retry_checks_target_provider_and_preserves_local_or_accepted_recovery() {
+    for (kind, loss, receipt, expected_missing) in [
+        (
+            "manual_extract",
+            (false, true),
+            "",
+            Some("manual_ai.api_key"),
+        ),
+        (
+            "manual_extract",
+            (true, true),
+            "",
+            Some("manual_ai.api_key"),
+        ),
+        (
+            "manual_extract",
+            (true, true),
+            "manual",
+            Some("manual_ai.api_key"),
+        ),
+        ("tripo_submit", (true, false), "", Some("tripo.api_key")),
+        ("tripo_submit", (true, true), "", Some("tripo.api_key")),
+        (
+            "tripo_submit",
+            (true, true),
+            "failed-tripo",
+            Some("tripo.api_key"),
+        ),
+        ("manual_extract", (true, false), "", None),
+        ("tripo_submit", (false, true), "", None),
+        ("manual_merge", (true, true), "", None),
+        ("assemble_draft", (true, true), "", None),
+        ("tripo_submit", (true, true), "tripo", None),
+        ("tripo_submit", (true, true), "tripo-no-id", None),
+    ] {
+        let (app, cookie, csrf) = logged_in_generation_app("pcf004-retry", TEST_CATALOG).await;
+        let (job, stage, _) =
+            pcf004_stage_fixture(&app, &cookie, &csrf, kind, "failed", receipt).await;
+        let client = Pcf004Client::after_key_loss(&app, &cookie, &csrf, loss);
+        let (before, etag) = pcf004_detail(&client, &job).await;
+        let before_counts = pcf004_counts(&app).await;
+        let flag = &before["stages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["id"] == stage)
+            .unwrap()["retry"];
+        assert_eq!(
+            flag["allowed"],
+            expected_missing.is_none(),
+            "{kind} {loss:?} {receipt}"
+        );
+        let retry = client
+            .post(
+                &format!("/api/v1/jobs/{job}/retry"),
+                Some("pcf004-retry"),
+                Some(&etag),
+                &json!({"stageId": stage}),
+            )
+            .await;
+        if let Some(missing) = expected_missing {
+            retry.assert_contract_error(StatusCode::CONFLICT, "PROVIDER_NOT_CONFIGURED");
+            assert_eq!(
+                retry.json()["error"]["details"]["missing"],
+                json!([missing])
+            );
+            assert_eq!(flag["reason"], "providerNotConfigured");
+            assert_eq!(pcf004_detail(&client, &job).await, (before, etag));
+            assert_eq!(pcf004_counts(&app).await, before_counts);
+        } else {
+            assert_eq!(
+                retry.status,
+                StatusCode::OK,
+                "{kind} {loss:?}: {}",
+                retry.text()
+            );
+            assert_eq!(retry.json()["data"]["stageId"], stage);
+            let after = pcf004_counts(&app).await;
+            assert_eq!(
+                &after[..6],
+                &before_counts[..6],
+                "retry does not create snapshots, reservations or attempts"
+            );
+        }
+    }
+}
+
+#[tokio::test]
+async fn pcf004_retry_idempotent_replay_precedes_key_loss_gate() {
+    for kind in ["manual_extract", "tripo_submit"] {
+        let (app, cookie, csrf) =
+            logged_in_generation_app("pcf004-retry-replay", TEST_CATALOG).await;
+        let (job, stage, _) = pcf004_stage_fixture(&app, &cookie, &csrf, kind, "failed", "").await;
+        let configured = Pcf004Client::after_key_loss(&app, &cookie, &csrf, (false, false));
+        let (_, etag) = pcf004_detail(&configured, &job).await;
+        let uri = format!("/api/v1/jobs/{job}/retry");
+        let body = json!({"stageId":stage});
+        let accepted = configured
+            .post(&uri, Some("pcf004-retry-receipt"), Some(&etag), &body)
+            .await;
+        assert_eq!(accepted.status, StatusCode::OK, "{}", accepted.text());
+        let missing = Pcf004Client::after_key_loss(&app, &cookie, &csrf, (true, true));
+        let before_detail = pcf004_detail(&missing, &job).await;
+        let before_counts = pcf004_counts(&app).await;
+        let replay = missing
+            .post(&uri, Some("pcf004-retry-receipt"), Some(&etag), &body)
+            .await;
+        assert_eq!(replay.status, StatusCode::OK, "{}", replay.text());
+        assert_eq!(
+            replay.header("x-idempotent-replay").as_deref(),
+            Some("true")
+        );
+        assert_eq!(replay.json()["data"]["stageId"], stage);
+        let conflicting = missing
+            .post(
+                &uri,
+                Some("pcf004-retry-receipt"),
+                Some(&etag),
+                &json!({"stageId":job}),
+            )
+            .await;
+        conflicting.assert_contract_error(StatusCode::CONFLICT, "IDEMPOTENCY_CONFLICT");
+        assert_eq!(pcf004_counts(&app).await, before_counts);
+        assert_eq!(pcf004_detail(&missing, &job).await, before_detail);
+    }
+}
+
+#[tokio::test]
+async fn pcf004_replacement_checks_target_provider_before_touching_unknown_facts() {
+    for (kind, loss, expected_missing) in [
+        ("manual_extract", (false, true), Some("manual_ai.api_key")),
+        ("manual_extract", (true, true), Some("manual_ai.api_key")),
+        ("tripo_submit", (true, false), Some("tripo.api_key")),
+        ("tripo_submit", (true, true), Some("tripo.api_key")),
+        ("manual_extract", (true, false), None),
+        ("tripo_submit", (false, true), None),
+    ] {
+        let (app, cookie, csrf) = logged_in_generation_app("pcf004-replace", TEST_CATALOG).await;
+        let (job, stage, quote) =
+            pcf004_stage_fixture(&app, &cookie, &csrf, kind, "submission_unknown", "unknown").await;
+        let client = Pcf004Client::after_key_loss(&app, &cookie, &csrf, loss);
+        let before_detail = pcf004_detail(&client, &job).await;
+        let before_counts = pcf004_counts(&app).await;
+        let replacement = client.post(&format!("/api/v1/jobs/{job}/reconcile"), None, Some(&before_detail.1), &json!({
+            "stageId": stage, "action":"authorizeReplacement", "acknowledgeDuplicateRisk":true,
+            "limits":{"tripoCreditMinor":quote.tripo_upper,"manualAiUsdMicros":quote.manual_ai_upper},
+        })).await;
+        if let Some(missing) = expected_missing {
+            replacement.assert_contract_error(StatusCode::CONFLICT, "PROVIDER_NOT_CONFIGURED");
+            assert_eq!(
+                replacement.json()["error"]["details"]["missing"],
+                json!([missing])
+            );
+            assert_eq!(pcf004_detail(&client, &job).await, before_detail);
+            assert_eq!(pcf004_counts(&app).await, before_counts);
+        } else {
+            assert_eq!(
+                replacement.status,
+                StatusCode::OK,
+                "{kind} {loss:?}: {}",
+                replacement.text()
+            );
+            let after_detail = pcf004_detail(&client, &job).await;
+            assert_eq!(
+                after_detail.0["reservations"], before_detail.0["reservations"],
+                "unknown budget remains held"
+            );
+            let after = pcf004_counts(&app).await;
+            assert_eq!(
+                &after[..7],
+                &before_counts[..7],
+                "authorization does not create another attempt or reservation"
+            );
+            assert_eq!(after[7], before_counts[7] + 1);
+        }
+    }
 }

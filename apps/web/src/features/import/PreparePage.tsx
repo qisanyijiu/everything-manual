@@ -1,584 +1,223 @@
-/**
- * 向导第 4 步：PDF 逐页准备与续传（T09 / REQ-014、REQ-015；PRD §6.2 UI-014–UI-018）。
- *
- * 交互要点（QA 按此复核）：
- * - 进度是「第 n / N 页」与已完成页数（`role="progressbar"` 的 `aria-valuenow` 是已完成页数），
- *   **不出现与真实页数无关的百分比或预计剩余时间**（PRD §6.3.2 禁用措辞）。
- * - 常驻文案：准备需要保持本标签页打开；关闭标签页会中断准备，重新进入只补齐未完成的页。
- *   进行中注册 `beforeunload` 离开确认（UI-015）。
- * - 断线续传：进入时先用 `GET /preparations/{id}` 的服务端状态，只渲染并上传缺失页（UI-017）；
- *   服务端记录是事实来源，本地不缓存"已完成"结论。
- * - 加密与超页数 PDF 在打开阶段拒绝（UI-016）：**不创建页记录、不创建准备记录、不进 job**。
- * - 封存（UI-018）需显式点击；缺页/资产不符的 422 逐条列出并提供「继续补齐」；
- *   成功显示「准备完成（ready）」且禁用写入控件；常驻 `clientDerived` 说明。
- */
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router";
-
-import { describeError } from "../../api/client";
-import { PageLayout } from "../shell/PageLayout";
+import { usePageWork } from "../shell/work-protection";
+import { useQueryClient } from "@tanstack/react-query";
+import { workflowKeys, useItemSummaries } from "../library/workflow";
+/** PDF preparation is explicit; all persisted progress comes from document-scoped discovery. */
+import { useEffect, useRef, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router";
+import { describeError, isApiError } from "../../api/client";
 import { Skeleton } from "../../components/Skeleton";
-import {
-  forgetPreparationId,
-  recallPreparationId,
-  rememberPreparationId,
-} from "./preparation-pointer";
+import { PageLayout } from "../shell/PageLayout";
+import { useItemDetail } from "../library/items";
+import { useReaderDocuments } from "../viewer/reader-documents";
 import { WizardNav, WizardSteps } from "./WizardSteps";
-import { useNotify } from "../../components/notifications";
-import {
-  completePreparation,
-  createOrResumePreparation,
-  fetchAssetBytes,
-  getPreparation,
-  type DocumentDto,
-} from "./api";
-import { describeCompleteFailure } from "./messages";
-import {
-  classifyPdfError,
-  isCancelled,
-  tooManyPagesRejection,
-  type PdfRejection,
-} from "./pdf/errors";
-import {
-  missingPageNumbers,
-  preparePages,
-  type PageFailure,
-  type PageProgress,
-} from "./pdf/prepare";
+import { completePreparation, createOrResumePreparation, fetchAssetBytes, getPreparation, type DocumentDto, type PreparationDetail } from "./api";
+import { rememberPreparationId } from "./preparation-pointer";
+import { CLIENT_DERIVED_NOTICE, matchesDocument, PreparationDiscovery, preparationProgress, usePreparationDiscovery } from "./preparation-discovery";
+import { classifyPdfError, isCancelled, PrepareCancelledError, tooManyPagesRejection, type PdfRejection } from "./pdf/errors";
+import { isPreparationConflict, missingPageNumbers, preparePages, type PageFailure } from "./pdf/prepare";
 import { MAX_PDF_PAGES, openPdfDocument } from "./pdf/vendor";
-// 物品与 document 的读取复用 T07/T08 已交付的 Query 钩子（同一份服务端事实，避免第二套缓存）。
-import { useItemDetail, useItemDocuments } from "../library/items";
-
-/** 常驻提示（UI-015）：准备期间必须保持页面打开。 */
-const KEEP_OPEN_NOTICE =
-  "准备需要保持本标签页打开；关闭标签页会中断准备，重新进入只补齐未完成的页。";
-
-/** 封存说明（UI-018）：哈希只证明字节一致。 */
-const CLIENT_DERIVED_NOTICE =
-  "页图由本机浏览器生成（clientDerived）；哈希只证明字节一致，不证明其确实来自原 PDF，原件保留可复核。";
-
-type Phase = "idle" | "starting" | "preparing" | "sealed";
+import { describeCompleteFailure } from "./messages";
 
 interface RunState {
-  readonly phase: Phase;
-  readonly totalPages: number | null;
-  readonly uploaded: readonly number[];
-  readonly currentPage: number | null;
-  readonly completedPages: number;
-  readonly startedAt: number | null;
-  readonly failures: readonly PageFailure[];
-  readonly rejection: PdfRejection | null;
-  /** 上一轮是"续传"（服务端已有页）时为 true，用于「已完成 n / N 页，继续补齐」文案。 */
-  readonly resumed: boolean;
+  phase: "idle" | "starting" | "preparing" | "stopping" | "sealing";
+  preparationId: string | null;
+  total: number | null;
+  pages: number[];
+  current: number | null;
+  failures: PageFailure[];
+  rejection: PdfRejection | null;
+  stopped: boolean;
 }
-
-const INITIAL_STATE: RunState = {
-  phase: "idle",
-  totalPages: null,
-  uploaded: [],
-  currentPage: null,
-  completedPages: 0,
-  startedAt: null,
-  failures: [],
-  rejection: null,
-  resumed: false,
-};
+const INITIAL: RunState = { phase: "idle", preparationId: null, total: null, pages: [], current: null, failures: [], rejection: null, stopped: false };
+const CONFLICT = "记录已更新，请重新读取进度";
 
 export function PreparePage() {
-  const { itemId } = useParams();
-  const id = itemId ?? "";
-  const itemQuery = useItemDetail(id === "" ? null : id);
-  const documentsQuery = useItemDocuments(id === "" ? null : id);
-  const notify = useNotify();
+  const { itemId = "" } = useParams();
+  const [search, setSearch] = useSearchParams();
+  const item = useItemDetail(itemId || null);
+  const documents = useReaderDocuments(itemId || null);
+  const [busy, setBusy] = useState(false);
+  const all = documents.data?.documents ?? [];
+  const summary = useItemSummaries([itemId], search.get("documentId"));
+  const selectedId = search.get("documentId") ?? summary.data?.[0]?.documentId ?? null;
+  const document = all.find((entry) => entry.id === selectedId) ?? null;
+  return <PageLayout><section className="page prepare-page" aria-labelledby="prepare-title">
+    <WizardSteps currentSegment="import/prepare" itemId={itemId} />
+    <h1 id="prepare-title">准备说明书资料</h1>
+    <p className="page__lead">{item.data?.data.name ?? "物品"}：把原件整理为可核对的逐页资料。此步骤不调用生成服务。</p>
+    {summary.isError && <p role="alert">处理状态暂不可用。<button type="button" onClick={() => void summary.refetch()}>重新读取处理状态</button></p>}
+    {(documents.isPending || summary.isPending) && <Skeleton label="正在读取原件…" rows={3} />}
+    {documents.error && <div className="error-panel" role="alert"><p>原件清单读取失败：{describeError(documents.error).message}</p><button type="button" onClick={() => void documents.refetch()}>重新读取原件</button></div>}
+    {!documents.isPending && !documents.error && all.length === 0 && <p>还没有说明书原件。<Link to={`/items/${itemId}/import/document`}>先去绑定原件</Link></p>}
+    {all.length > 0 && <div className="field"><label htmlFor="prepare-document">所选原件</label>
+      <select id="prepare-document" className="field__input" value={document?.id ?? ""} disabled={busy} onChange={(event) => setSearch({ documentId: event.target.value })}>
+        {!document && <option value="">请选择当前物品的原件</option>}
+        {all.map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}
+      </select>{busy && <p className="field__hint">请先停止当前准备，再切换原件。</p>}
+    </div>}
+    {document && <DocumentPreparation key={`${itemId}/${document.id}/${document.sourceSha256}`} itemId={itemId} document={document} requestedId={search.get("preparationId")} onBusy={setBusy} />}
+    {!document && selectedId !== null && !documents.isPending && <p role="alert">之前的记录不适用于当前原件，请重新选择。</p>}
+  </section></PageLayout>;
+}
 
-  const [documentId, setDocumentId] = useState<string | null>(null);
-  const [preparationId, setPreparationId] = useState<string | null>(null);
-  const [etag, setEtag] = useState<string | null>(null);
-  const [state, setState] = useState<RunState>(INITIAL_STATE);
-  const [sealError, setSealError] = useState<string | null>(null);
-  const [sealing, setSealing] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
-
-  const abortRef = useRef<AbortController | null>(null);
-  const mountedRef = useRef(true);
+function DocumentPreparation({ itemId, document, requestedId, onBusy }: {
+  itemId: string; document: DocumentDto; requestedId: string | null; onBusy: (value: boolean) => void;
+}) {
+  const discovery = usePreparationDiscovery(itemId, document, requestedId);
+  const [run, setRun] = useState<RunState>(INITIAL);
+  const [error, setError] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
+  const abort = useRef<AbortController | null>(null);
+  const mounted = useRef(true);
+  const queryClient = useQueryClient();
+  const running = useRef(false);
+  const busy = run.phase !== "idle";
   useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      abortRef.current?.abort();
-    };
-  }, []);
+    mounted.current = true;
+    return () => { mounted.current = false; abort.current?.abort(); onBusy(false); };
+  }, [onBusy]);
+  useEffect(() => { onBusy(busy); }, [busy, onBusy]);
+  usePageWork({ active: busy, message: "离开将停止本页尚未完成的资料准备。已上传及已保存的页保留；返回后读取进度，仅补缺页。在途请求可能已经完成。", discard: () => abort.current?.abort() });
+  const selected = discovery.selected;
+  const usable = selected?.readiness.compatible === true;
+  const ready = usable && selected?.preparation.state === "ready";
+  const runMatches = run.preparationId === selected?.preparation.id;
+  const total = selected?.preparation.pageCount ?? (runMatches ? run.total : null);
+  const pages = busy && runMatches ? run.pages : selected?.readiness.completedPages ?? [];
+  const missing = total === null ? [] : missingPageNumbers(total, pages);
+  const uncertain = discovery.loading || !!discovery.error || discovery.invalidSelection;
 
-  // 进行中：注册离开确认（刷新/关闭标签页），并每秒更新"已用时"。
-  const preparing = state.phase === "preparing";
-  useEffect(() => {
-    if (!preparing) {
-      return;
-    }
-    const handler = (event: BeforeUnloadEvent): void => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handler);
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      window.removeEventListener("beforeunload", handler);
-      window.clearInterval(timer);
-    };
-  }, [preparing]);
-
-  const documents: readonly DocumentDto[] = documentsQuery.data?.documents ?? [];
-  const selectedDocument =
-    documents.find((document) => document.id === documentId) ?? documents[0] ?? null;
-
-  // 刷新/重新进入：用服务端查询恢复"已完成哪些页"（不重传已完成页，UI-017）。
-  const selectedId = selectedDocument?.id ?? null;
-  useEffect(() => {
-    if (selectedId === null) {
-      return;
-    }
-    const stored = recallPreparationId(id);
-    if (stored === null) {
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const detail = await getPreparation(stored);
-        if (cancelled || !mountedRef.current) {
-          return;
-        }
-        setPreparationId(stored);
-        setEtag(detail.etag);
-        setState((previous) => ({
-          ...previous,
-          totalPages: detail.detail.pageCount ?? previous.totalPages,
-          uploaded: detail.detail.pages.map((page) => page.pageNumber),
-          phase: detail.detail.state === "ready" ? "sealed" : previous.phase,
-        }));
-      } catch {
-        forgetPreparationId(id);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [id, selectedId]);
-
-  const refreshPreparation = useCallback(async (preparation: string): Promise<number[]> => {
-    const detail = await getPreparation(preparation);
-    if (mountedRef.current) {
-      setEtag(detail.etag);
-      setState((previous) => ({
-        ...previous,
-        totalPages: detail.detail.pageCount ?? previous.totalPages,
-        uploaded: detail.detail.pages.map((page) => page.pageNumber),
-        phase: detail.detail.state === "ready" ? "sealed" : previous.phase,
-      }));
-    }
-    return detail.detail.pages.map((page) => page.pageNumber);
-  }, []);
-
-  /** 开始/继续准备：先解析 PDF 并做拒绝判定，再创建/复用服务端记录并只补缺失页。 */
-  const start = useCallback(async (): Promise<void> => {
-    if (selectedDocument === null) {
-      return;
-    }
-    setSealError(null);
-    setState({ ...INITIAL_STATE, phase: "starting" });
+  function verify(resource: PreparationDetail): void {
+    const candidate = { preparation: resource.detail, readiness: resource.detail.readiness };
+    if (!matchesDocument(candidate, document)) throw new Error("之前的记录不适用于当前原件");
+    if (!candidate.readiness.compatible) throw new Error(candidate.readiness.explanation ?? "记录无法复用，请重新准备。");
+  }
+  function publish(resource: PreparationDetail) {
+    if (!mounted.current) return;
+    discovery.update(resource);
+    rememberPreparationId(itemId, resource.detail.id);
+    setRun((previous) => ({ ...previous, preparationId: resource.detail.id, pages: resource.detail.readiness.completedPages, total: resource.detail.pageCount ?? previous.total }));
+  }
+  async function reread() {
+    setError(null);
+    try {
+      await discovery.refresh();
+      setConflict(false);
+    } catch (failure) { setError(describeError(failure).message); }
+  }
+  async function start(createNew = false, onlyPage?: number) {
+    if (running.current || uncertain || conflict || ready || (!createNew && selected && !usable)) return;
+    running.current = true;
     const controller = new AbortController();
-    abortRef.current = controller;
+    abort.current = controller;
+    setError(null);
+    setRun({ ...INITIAL, phase: "starting", preparationId: createNew ? null : selected?.preparation.id ?? null });
+    let preparationId = createNew ? null : selected?.preparation.id ?? null;
     let pdf: Awaited<ReturnType<typeof openPdfDocument>> | null = null;
+    let stopped = false;
     try {
-      // 每次运行都重新读取原件字节：worker 可能已转移上一次的 ArrayBuffer。
-      const bytes = await fetchAssetBytes(selectedDocument.sourceAssetId, controller.signal);
-      pdf = await openPdfDocument(bytes);
+      // Recheck before reading/rendering the PDF. A remotely sealed record never enters the pipeline.
+      let resource = preparationId === null ? null : await getPreparation(preparationId, controller.signal);
+      if (resource) {
+        verify(resource); publish(resource);
+        if (resource.detail.state === "ready") return;
+      }
+      const bytes = await fetchAssetBytes(document.sourceAssetId, controller.signal);
+      try { pdf = await openPdfDocument(bytes); }
+      catch (failure) { if (!controller.signal.aborted) setRun((previous) => ({ ...previous, rejection: classifyPdfError(failure) })); return; }
+      if (controller.signal.aborted) throw new PrepareCancelledError();
       if (pdf.numPages > MAX_PDF_PAGES) {
-        const rejection = tooManyPagesRejection(pdf.numPages);
-        await pdf.loadingTask.destroy().catch(() => undefined);
-        pdf = null;
-        setState({ ...INITIAL_STATE, rejection });
+        setRun((previous) => ({ ...previous, rejection: tooManyPagesRejection(pdf!.numPages) }));
         return;
       }
-      const { preparation } = await createOrResumePreparation(
-        selectedDocument.id,
-        selectedDocument.sourceSha256,
-      );
-      if (mountedRef.current) {
-        setPreparationId(preparation.id);
+      if (preparationId === null) {
+        const created = await createOrResumePreparation(document.id, document.sourceSha256, createNew);
+        preparationId = created.preparation.id;
+        if (controller.signal.aborted) throw new PrepareCancelledError();
+        resource = await getPreparation(preparationId, controller.signal);
+        verify(resource); publish(resource);
       }
-      rememberPreparationId(id, preparation.id);
-      const uploaded = await refreshPreparation(preparation.id);
-      const totalPages = pdf.numPages;
-      const missing = missingPageNumbers(totalPages, uploaded);
-      if (missing.length === 0) {
-        setState((previous) => ({
-          ...previous,
-          phase: "idle",
-          totalPages,
-          uploaded,
-          resumed: uploaded.length > 0,
-        }));
-        return;
-      }
-      setState({
-        ...INITIAL_STATE,
-        phase: "preparing",
-        totalPages,
-        uploaded,
-        startedAt: Date.now(),
-        resumed: uploaded.length > 0,
+      if (controller.signal.aborted) throw new PrepareCancelledError();
+      if (!resource || resource.detail.state === "ready") return;
+      const pageCount = pdf.numPages;
+      if (resource.detail.readiness.completedPages.some((number) => number > pageCount)) throw new Error("保存页码超出当前 PDF 总页数，请重新准备；旧记录保留。");
+      const uploaded = resource.detail.readiness.completedPages;
+      const remaining = missingPageNumbers(pageCount, uploaded).filter((number) => onlyPage === undefined || number === onlyPage);
+      setRun({ ...INITIAL, preparationId, phase: "preparing", total: pageCount, pages: uploaded });
+      if (remaining.length === 0) return;
+      const pipelinePdf = pdf;
+      pdf = null; // Pipeline owns cleanup, including cancellation and conflicts.
+      await preparePages({ itemId, preparationId, pdf: pipelinePdf, pageNumbers: remaining, totalPages: pageCount, signal: controller.signal,
+        onProgress: (progress) => { if (mounted.current) setRun((previous) => ({ ...previous, current: progress.currentPage })); },
+        onPageDone: (number) => { if (mounted.current) setRun((previous) => ({ ...previous, pages: [...new Set([...previous.pages, number])].sort((a,b) => a-b) })); },
+        onPageFailed: (failure) => { if (mounted.current) setRun((previous) => ({ ...previous, failures: [...previous.failures, failure] })); },
       });
-      await preparePages({
-        itemId: id,
-        preparationId: preparation.id,
-        pdf,
-        pageNumbers: missing,
-        totalPages,
-        signal: controller.signal,
-        onProgress: (progress: PageProgress) => {
-          if (!mountedRef.current) {
-            return;
-          }
-          setState((previous) => ({
-            ...previous,
-            currentPage: progress.currentPage,
-            completedPages: progress.completedPages,
-            startedAt: progress.startedAt,
-          }));
-        },
-        onPageFailed: (failure) => {
-          if (!mountedRef.current) {
-            return;
-          }
-          setState((previous) => ({ ...previous, failures: [...previous.failures, failure] }));
-        },
-      });
-      pdf = null; // preparePages 已 destroy。
-      const finalPages = await refreshPreparation(preparation.id);
-      setState((previous) => ({
-        ...previous,
-        phase: "idle",
-        uploaded: finalPages,
-        currentPage: null,
-        resumed: false,
-      }));
-    } catch (error) {
-      if (pdf !== null) {
-        // `preparePages` 在 finally 里负责销毁；cancel 路径可能已销毁过，
-        // 二次调用是 no-op（PDF.js 用 `_transport?.destroy()` + 置空），这里再兜一层。
-        await pdf.loadingTask.destroy().catch(() => undefined);
-      }
-      if (isCancelled(error) || controller.signal.aborted) {
-        if (mountedRef.current) {
-          setState((previous) => ({ ...previous, phase: "idle", currentPage: null }));
-          if (preparationId !== null) {
-            await refreshPreparation(preparationId).catch(() => undefined);
-          }
+    } catch (failure) {
+      if (isCancelled(failure) || controller.signal.aborted) stopped = true;
+      else if (mounted.current) {
+        if (isPreparationConflict(failure)) { setConflict(true); setError(CONFLICT); }
+        else {
+          setError(describeError(failure).message);
         }
-        return;
-      }
-      const rejection = classifyPdfError(error);
-      if (mountedRef.current) {
-        setState({ ...INITIAL_STATE, rejection });
       }
     } finally {
-      abortRef.current = null;
-    }
-  }, [id, preparationId, refreshPreparation, selectedDocument]);
-
-  /** 取消：销毁 render task 与上传，保留已完成页（UI-015）。 */
-  const cancel = useCallback((): void => {
-    abortRef.current?.abort();
-    setState((previous) => ({ ...previous, phase: "idle", currentPage: null }));
-  }, []);
-
-  /** 重试单页（UI-014：失败页不阻塞其它页）。 */
-  const retryPage = useCallback(
-    async (pageNumber: number): Promise<void> => {
-      if (selectedDocument === null || preparationId === null || state.totalPages === null) {
-        return;
+      await pdf?.loadingTask.destroy().catch(() => undefined);
+      stopped ||= controller.signal.aborted;
+      // A PUT already in flight may settle after Stop. Wait for it, then use the persisted facts.
+      if (preparationId !== null && mounted.current) {
+        try { publish(await getPreparation(preparationId)); }
+        catch (failure) { setError(`准备记录读取失败：${describeError(failure).message}`); setConflict(true); }
       }
-      const controller = new AbortController();
-      abortRef.current = controller;
-      const pdf = await openPdfDocument(
-        await fetchAssetBytes(selectedDocument.sourceAssetId, controller.signal),
-      );
-      try {
-        setState((previous) => ({
-          ...previous,
-          phase: "preparing",
-          failures: previous.failures.filter((failure) => failure.pageNumber !== pageNumber),
-          startedAt: Date.now(),
-        }));
-        await preparePages({
-          itemId: id,
-          preparationId,
-          pdf,
-          pageNumbers: [pageNumber],
-          totalPages: state.totalPages,
-          signal: controller.signal,
-          onProgress: (progress) => {
-            if (mountedRef.current) {
-              setState((previous) => ({
-                ...previous,
-                currentPage: progress.currentPage,
-                completedPages: progress.completedPages,
-              }));
-            }
-          },
-          onPageFailed: (failure) => {
-            if (mountedRef.current) {
-              setState((previous) => ({ ...previous, failures: [...previous.failures, failure] }));
-            }
-          },
-        });
-      } catch (error) {
-        if (!isCancelled(error) && mountedRef.current) {
-          setState((previous) => ({
-            ...previous,
-            failures: [...previous.failures, { pageNumber, message: describeError(error).message }],
-          }));
-        }
-      } finally {
-        abortRef.current = null;
-        const refreshed = await refreshPreparation(preparationId).catch(() => null);
-        if (mountedRef.current) {
-          setState((previous) => ({
-            ...previous,
-            phase: "idle",
-            currentPage: null,
-            uploaded: refreshed ?? previous.uploaded,
-          }));
-        }
+      if (mounted.current) {
+        await discovery.query.refetch();
+        setRun((previous) => ({ ...previous, phase: "idle", current: null, stopped }));
       }
-    },
-    [id, preparationId, refreshPreparation, selectedDocument, state.totalPages],
-  );
-
-  /** 封存：If-Match + pageCount；缺项 422 逐条列出（UI-018）。 */
-  const seal = useCallback(async (): Promise<void> => {
-    if (preparationId === null || state.totalPages === null || selectedDocument === null) {
-      return;
+      running.current = false;
+      abort.current = null;
     }
-    setSealing(true);
-    setSealError(null);
+  }
+  async function seal() {
+    if (running.current || !selected || ready || uncertain || conflict || total === null || missing.length > 0) return;
+    running.current = true;
+    const controller = new AbortController(); abort.current = controller;
+    setRun((previous) => ({ ...previous, phase: "sealing" }));
+    setError(null);
     try {
-      const latest = await getPreparation(preparationId);
-      const sealed = await completePreparation(
-        preparationId,
-        state.totalPages,
-        latest.etag ?? etag,
-      );
-      if (mountedRef.current) {
-        setEtag(`"r${sealed.revision}"`);
-        setState((previous) => ({ ...previous, phase: "sealed" }));
-        notify("准备已封存（ready）");
-      }
-    } catch (error) {
-      const info = describeError(error);
-      const details = (error as { details?: unknown } | null)?.details;
-      const lines = describeCompleteFailure(details);
-      setSealError(lines.length > 0 ? `${info.message}（${lines.join("；")}）` : info.message);
-    } finally {
-      if (mountedRef.current) {
-        setSealing(false);
-      }
-    }
-  }, [etag, notify, preparationId, selectedDocument, state.totalPages]);
-
-  const item = itemQuery.data?.data;
-  const elapsedSeconds =
-    state.startedAt === null ? 0 : Math.max(0, Math.round((now - state.startedAt) / 1000));
-  const allUploaded =
-    state.totalPages !== null && state.uploaded.length >= state.totalPages;
-
-  return (
-    <PageLayout>
-      <section className="page">
-        <WizardSteps currentSegment="import/prepare" itemId={id} />
-        <h1>资料准备</h1>
-        <p className="page__lead">
-          {item?.name ?? "物品"}：浏览器逐页提取页文字并渲染页图，上传到本机服务端后封存。
-        </p>
-
-        <p className="notice-inline" role="note">
-          {KEEP_OPEN_NOTICE}
-        </p>
-
-        {(itemQuery.isPending || documentsQuery.isPending) && (
-          <Skeleton label="正在读取资料…" rows={3} />
-        )}
-
-        {(itemQuery.error !== null || documentsQuery.error !== null) && (
-          <div className="error-panel" role="alert">
-            <h2>无法读取准备资料</h2>
-            <p>{describeError(itemQuery.error ?? documentsQuery.error).message}</p>
-            {describeError(itemQuery.error ?? documentsQuery.error).requestId !== null && (
-              <p className="error-panel__meta">
-                请求 ID：{describeError(itemQuery.error ?? documentsQuery.error).requestId}
-              </p>
-            )}
-          </div>
-        )}
-
-        {!itemQuery.isPending && !documentsQuery.isPending && documents.length === 0 && (
-          <div className="empty-state">
-            <p>这件物品还没有绑定说明书原件。</p>
-            <p>
-              <Link to={`/items/${id}/import/document`}>先绑定说明书原件</Link>
-            </p>
-          </div>
-        )}
-
-        {!itemQuery.isPending && !documentsQuery.isPending && documents.length > 0 && (
-          <div className="prepare">
-            {documents.length > 1 && (
-              <div className="field">
-                <label htmlFor="prepare-document">说明书原件</label>
-                <select
-                  id="prepare-document"
-                  value={selectedDocument?.id ?? ""}
-                  onChange={(event) => {
-                    setDocumentId(event.target.value);
-                    setPreparationId(null);
-                    setState(INITIAL_STATE);
-                  }}
-                  disabled={preparing}
-                >
-                  {documents.map((document) => (
-                    <option key={document.id} value={document.id}>
-                      {document.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {state.rejection !== null && (
-              <div className="error-panel" role="alert">
-                <h2>无法开始准备</h2>
-                <p>{state.rejection.message}</p>
-                <p className="error-panel__meta">
-                  没有创建页记录，也没有任何收费请求；请换一份可用的 PDF 后重试。
-                </p>
-              </div>
-            )}
-
-            {state.totalPages !== null && state.phase !== "sealed" && (
-              <div className="prepare__progress">
-                <p aria-live="polite" data-testid="prepare-status">
-                  {state.phase === "preparing"
-                    ? `第 ${state.currentPage ?? "-"} / ${state.totalPages} 页`
-                    : state.uploaded.length > 0
-                      ? `已完成 ${state.uploaded.length} / ${state.totalPages} 页`
-                      : `共 ${state.totalPages} 页，尚未开始`}
-                </p>
-                <p className="prepare__meta">
-                  已完成页数：{state.uploaded.length} / {state.totalPages}
-                  {state.phase === "preparing" && `；已用时 ${elapsedSeconds} 秒`}
-                </p>
-                <div
-                  className="progressbar"
-                  role="progressbar"
-                  aria-label="已完成的页数"
-                  aria-valuenow={state.uploaded.length}
-                  aria-valuemin={0}
-                  aria-valuemax={state.totalPages}
-                >
-                  <span
-                    className="progressbar__fill"
-                    style={{
-                      width: `${Math.round((state.uploaded.length / state.totalPages) * 100)}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {state.totalPages === null && state.uploaded.length > 0 && (
-              <p data-testid="prepare-resume-hint">
-                已完成 {state.uploaded.length} 页，继续补齐（总页数在开始准备后确认）。
-              </p>
-            )}
-
-            {state.failures.length > 0 && (
-              <ul className="prepare__failures" data-testid="prepare-failures">
-                {state.failures.map((failure) => (
-                  <li key={failure.pageNumber}>
-                    <span>
-                      第 {failure.pageNumber} 页失败：{failure.message}
-                    </span>
-                    <button type="button" onClick={() => void retryPage(failure.pageNumber)}>
-                      重试本页
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="prepare__actions">
-              <button
-                type="button"
-                data-testid="prepare-start"
-                onClick={() => void start()}
-                disabled={preparing || state.phase === "starting" || state.phase === "sealed"}
-              >
-                {state.phase === "starting"
-                  ? "正在读取 PDF…"
-                  : allUploaded && state.phase !== "sealed"
-                    ? "重新检查缺失页"
-                    : state.uploaded.length > 0 && state.phase !== "sealed"
-                      ? "继续准备"
-                      : "开始准备"}
-              </button>
-              <button
-                type="button"
-                data-testid="prepare-cancel"
-                onClick={cancel}
-                disabled={!preparing}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                data-testid="prepare-seal"
-                onClick={() => void seal()}
-                disabled={!allUploaded || sealing || state.phase === "sealed"}
-              >
-                {sealing ? "正在封存…" : "封存资料"}
-              </button>
-            </div>
-
-            {sealError !== null && (
-              <div className="error-panel" role="alert">
-                <p>{sealError}</p>
-                <button type="button" onClick={() => void start()}>
-                  继续补齐
-                </button>
-              </div>
-            )}
-
-            {state.phase === "sealed" && (
-              <div className="prepare__sealed" role="status" data-testid="prepare-sealed">
-                <h2>准备完成（ready）</h2>
-                <p>页图与页文字已封存（{state.uploaded.length} 页）。</p>
-                <p className="error-panel__meta">{CLIENT_DERIVED_NOTICE}</p>
-              </div>
-            )}
-
-            <p className="prepare__note">{CLIENT_DERIVED_NOTICE}</p>
-          </div>
-        )}
-
-        <WizardNav
-          currentSegment="import/prepare"
-          itemId={id}
-          nextDisabled={state.phase !== "sealed"}
-          nextDisabledReason="资料准备尚未封存（ready）：请先完成全部页并点击「封存资料」。"
-        />
-      </section>
-    </PageLayout>
-  );
+      const current = await getPreparation(selected.preparation.id, controller.signal);
+      verify(current);
+      if (current.detail.state === "ready") { publish(current); return; }
+      if (controller.signal.aborted) throw new PrepareCancelledError();
+      await completePreparation(current.detail.id, total, current.etag);
+      await queryClient.invalidateQueries({ queryKey: workflowKeys.root });
+      publish(await getPreparation(current.detail.id));
+      await discovery.query.refetch();
+    } catch (failure) {
+      if (isPreparationConflict(failure)) { setConflict(true); setError(CONFLICT); }
+      else setError([describeError(failure).message, ...(isApiError(failure) ? describeCompleteFailure(failure.details) : [])].join("；"));
+    } finally { running.current = false; abort.current = null; if (mounted.current) setRun((previous) => ({ ...previous, phase: "idle" })); }
+  }
+  return <>
+    <PreparationDiscovery state={{ ...discovery, choose: (candidateId) => { setRun(INITIAL); setError(null); setConflict(false); discovery.choose(candidateId); } }} document={document} disabled={busy} />
+    <p className="field__hint">准备需要保持本标签页打开；关闭标签页会中断准备，重新进入只补齐未完成的页。</p>
+    {selected && !uncertain && <section className="prepare-progress" aria-label="当前准备进度">
+      <h2>当前记录 · {document.title}</h2><p><code>{selected.preparation.id}</code></p>
+      <p role="status" data-testid={ready ? "prepare-sealed" : "prepare-progress"}>{ready ? preparationProgress(selected) : total === null ? preparationProgress(selected) : `已完成 ${pages.length}/${total} 页`}</p>
+      {busy && run.current !== null && <p role="status">正在处理第 {run.current} / {run.total} 页</p>}
+      {total !== null && !ready && <progress aria-label="已完成页数" max={total} value={pages.length} />}
+      {ready && <p>{CLIENT_DERIVED_NOTICE}</p>}
+    </section>}
+    {run.stopped && <p role="status">已停止，已完成页已保留。可稍后继续准备。</p>}
+    {run.rejection && <div className="error-panel" role="alert"><h2>无法准备此 PDF</h2><p>{run.rejection.message}</p></div>}
+    {error && <div className="error-panel" role="alert"><p>{error}</p><button type="button" disabled={busy} onClick={() => void reread()}>重新读取进度</button></div>}
+    {runMatches && run.failures.length > 0 && <ul className="prepare-failures">{run.failures.map((failure) => <li key={failure.pageNumber}>第 {failure.pageNumber} 页：{failure.message} <button type="button" disabled={busy || conflict || ready || uncertain} onClick={() => void start(false, failure.pageNumber)}>重试第 {failure.pageNumber} 页</button></li>)}</ul>}
+    <div className="prepare-actions">
+      {busy ? <><button type="button" data-testid="prepare-cancel" disabled={run.phase === "stopping" || run.phase === "sealing"} onClick={() => { setRun((previous) => ({ ...previous, phase: "stopping" })); abort.current?.abort(); }}>{run.phase === "stopping" ? "正在停止并读取进度…" : run.phase === "sealing" ? "正在封存…" : "停止准备"}</button><p>停止后保留已完成页，可稍后继续。</p></>
+        : !ready && !uncertain && <>
+          {(selected === null && discovery.entries.length === 0) || usable ? <button type="button" className="button-primary" data-testid="prepare-start" disabled={conflict} onClick={() => void start()}>{selected ? "继续准备，仅补齐缺页" : "开始准备"}</button> : <><p>重新准备会新建记录，旧记录保留。</p><button type="button" data-testid="prepare-restart" disabled={conflict} onClick={() => void start(true)}>重新准备</button></>}
+          {usable && total !== null && missing.length === 0 && <button type="button" className="button-primary" data-testid="prepare-seal" disabled={conflict} onClick={() => void seal()}>封存资料</button>}
+        </>}
+    </div>
+    {!ready && <p className="field__hint">{CLIENT_DERIVED_NOTICE}</p>}
+    <WizardNav currentSegment="import/prepare" itemId={itemId} nextDisabled={!ready || busy || uncertain} nextDisabledReason="请先补齐页资料并明确封存。" nextHref={`/items/${itemId}/import/confirm?documentId=${encodeURIComponent(document.id)}&preparationId=${encodeURIComponent(selected?.preparation.id ?? "")}`} />
+  </>;
 }

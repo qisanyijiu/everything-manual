@@ -56,6 +56,18 @@ pub async fn status(State(state): State<AppState>) -> Response {
             tripo: settings.providers.tripo.configured(),
             manual_ai: settings.providers.manual_ai.configured(),
         },
+        provider_model_issues: super::dto::ProviderModelIssues {
+            tripo: settings
+                .providers
+                .tripo
+                .model_issue()
+                .then_some(super::dto::ModelIssue::SuspectedCredential),
+            manual_ai: settings
+                .providers
+                .manual_ai
+                .model_issue()
+                .then_some(super::dto::ModelIssue::SuspectedCredential),
+        },
         price_catalog,
         limits: LimitsStatus {
             max_json_request_bytes: settings.limits.max_json_request_bytes,

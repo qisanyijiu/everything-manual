@@ -71,7 +71,7 @@ pub async fn create_estimate(
     JsonBody(body): JsonBody<EstimateRequest>,
 ) -> Response {
     let config = state.provider_config().read().await;
-    if let Err(error) = config.ensure_available() {
+    if let Err(error) = config.ensure_generation_available() {
         return error.render(&request_id);
     }
     let mut connection = match acquire(&state).await {
@@ -142,6 +142,22 @@ pub async fn get_estimate(
     };
     match estimate_service::quote_payload(&record).await {
         Ok(mut payload) => {
+            let issue = match estimate_service::quote_model_issue(&record) {
+                Ok(issue) => issue,
+                Err(error) => return ApiError::from(error).render(&request_id),
+            };
+            estimate_service::conceal_quote_models(&mut payload, issue);
+            payload.input_issue = match estimate_service::quote_input_issue(
+                &mut connection,
+                &record,
+                state.settings(),
+                &*state.provider_config().read().await,
+            )
+            .await
+            {
+                Ok(issue) => issue,
+                Err(error) => return ApiError::from(error).render(&request_id),
+            };
             // BUG-004：`quote_json` 是创建时冻结的载荷，`confirmed_at`/`consumed_at`/
             // `consumed_job_id` 在其中恒为 null（报价只能先创建、后确认/消费）。
             // 回读（确认页刷新路径）必须以持久层当前列覆盖这三个字段，否则界面会
@@ -188,7 +204,7 @@ pub async fn confirm_estimate(
     Path((item_id, quote_id)): Path<(String, String)>,
 ) -> Response {
     let config = state.provider_config().read().await;
-    if let Err(error) = config.ensure_available() {
+    if let Err(error) = config.ensure_generation_available() {
         return error.render(&request_id);
     }
     let mut connection = match acquire(&state).await {

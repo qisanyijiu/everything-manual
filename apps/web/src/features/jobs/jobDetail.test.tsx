@@ -38,6 +38,13 @@ const FORBIDDEN_WORDING = [
   "离线可用",
 ];
 
+it("PC06 冻结模型被拒时显示设置与重新报价路径，不提供重试", async () => {
+  stubDetail(detailFixture({ status: "needs_input", stages: [stage({ status: "needs_input", stageKind: "manual_extract", retry: { allowed: false, reason: "quoteModelInvalid", message: "此报价的模型信息不可用，请重新获取报价。" } })] }));
+  renderApp({ route: "/jobs/job-1" });
+  expect(await screen.findByRole("link", { name: "前往设置修正模型；随后重新报价" })).toHaveAttribute("href", "/settings");
+  expect(screen.queryByTestId("stage-retry-button")).not.toBeInTheDocument();
+});
+
 function stage(overrides: Record<string, unknown>): Record<string, unknown> {
   return {
     id: "stage-1",

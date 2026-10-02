@@ -53,6 +53,12 @@ pub struct QuoteResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct QuoteDto {
+    /// 仅公开读取副本标注；旧冻结 JSON 缺省为无问题，不用于放行执行。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_issue: Option<super::ModelIssue>,
+    /// Read-time validity of unconsumed inputs; never persisted back into the frozen payload.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub input_issue: Option<QuoteInputIssue>,
     pub id: String,
     pub item_id: String,
     pub preparation_id: String,
@@ -86,6 +92,16 @@ pub struct QuoteDto {
     pub created_at: Timestamp,
     /// 预算语义说明（固定文案；不得改写为"供应商硬封顶"）。
     pub budget_notice: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum QuoteInputIssue {
+    InputChanged,
+    PreparationIncompatible,
+    ProviderConfigChanged,
+    ProviderUnavailable,
+    PriceVersionChanged,
 }
 
 /// `[from, to]`（1-based、闭区间；contracts.md §1 页码基准）。

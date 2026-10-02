@@ -28,6 +28,28 @@ pub struct JobListResponse {
     pub next_cursor: Option<String>,
 }
 
+/// Constant-size, whole-library activity summary; not a page or stage count.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct JobActivityResponse {
+    pub data: JobActivityDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct JobActivityDto {
+    /// jobs in queued/running/retry_wait/waiting_provider. Human input/unknown are excluded.
+    pub active: i64,
+}
+
+/// The executor's currently scheduled safe retry, independent of provider polling.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct JobSafeRetryDto {
+    /// 1-based retry number, copied from persisted attempt_count (not poll_count).
+    pub number: i64,
+    /// Executor policy: manual_core::jobs::MAX_SAFE_RETRIES.
+    pub limit: u32,
+}
+
 /// 任务中心列表行（UI-029）。
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -126,6 +148,10 @@ pub struct JobStageDto {
     pub page_set: Option<Vec<i64>>,
     pub attempt_count: i64,
     pub poll_count: i64,
+    /// Only a scheduled retry_wait has a safe retry number. No automatic retry is
+    /// advertised for terminal jobs or jobs awaiting submission reconciliation.
+    #[schema(nullable = true)]
+    pub safe_retry: Option<JobSafeRetryDto>,
     /// 下次自动运行时间（退避/轮询展示；可为 null）。
     #[schema(value_type = Option<String>, nullable = true)]
     pub next_run_at: Option<Timestamp>,

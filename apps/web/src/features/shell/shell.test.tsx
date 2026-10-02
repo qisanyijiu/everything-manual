@@ -127,7 +127,7 @@ describe("会话恢复（UI-002）", () => {
 
     renderApp({ route: "/" });
 
-    expect(await screen.findByText("加载失败")).toBeTruthy();
+    expect(await screen.findByText("此次搜索未完成")).toBeTruthy();
     expect(screen.getByText("服务器内部错误")).toBeTruthy();
     expect(screen.getByRole("button", { name: "重试" })).toBeTruthy();
   });
@@ -278,8 +278,8 @@ describe("401 跳转与 next 安全性（UI-002）", () => {
     renderApp({ route: "/settings" });
 
     expect(await screen.findByLabelText("密码")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toContain("登录已过期");
-    expect(screen.getByText("/settings")).toBeTruthy();
+    expect(screen.queryByText(/登录已过期/)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "万物说明书" })).toBeInTheDocument();
   });
 
   it("业务请求 401 时丢弃本地状态跳登录页（已在登录页不重复跳转）", async () => {
@@ -377,7 +377,7 @@ describe("CSRF 与 If-Match 注入（T08 卡）", () => {
 });
 
 describe("412 并发冲突恢复（UI-008）", () => {
-  it("显示 currentRevision 与刷新后重试，保留输入；刷新后用新 ETag 重新提交", async () => {
+  it("显示 currentRevision 并保留输入；核对不换 ETag，明确丢弃后才加载新值", async () => {
     // 服务端版本在冲突后前进到 r7（模拟"其他操作已更新"）。
     let serverRevision = 3;
     const fetchMock = stubFetch((url, init) => {
@@ -410,18 +410,23 @@ describe("412 并发冲突恢复（UI-008）", () => {
     fireEvent.change(name, { target: { value: "保留的输入" } });
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
-    const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toContain("该内容已被其他操作更新（当前 r7）");
+    const alert = await screen.findByText("该内容已被其他操作更新（当前 r7）");
+    expect(alert).toBeInTheDocument();
     // 不丢表单内容 + 刷新前禁用提交。
     expect((screen.getByLabelText(/名称/) as HTMLInputElement).value).toBe("保留的输入");
     expect((screen.getByRole("button", { name: "保存" }) as HTMLButtonElement).disabled).toBe(true);
-    const refreshButton = screen.getByRole("button", { name: "刷新后重试" });
-
-    // 刷新：重新读取服务端最新版本（r7）。
     serverRevision = 7;
-    fireEvent.click(refreshButton);
-    expect(await screen.findByText(/已刷新到服务端最新版本（r7）/)).toBeTruthy();
-    expect((screen.getByLabelText(/名称/) as HTMLInputElement).value).toBe("保留的输入");
+    fireEvent.click(screen.getByRole("button", { name: "核对最新版本" }));
+    await screen.findByRole("heading", { name: "服务器最新版本 r7" });
+    expect(screen.getByLabelText(/名称/)).toHaveValue("保留的输入");
+    expect(screen.getByRole("button", { name: "保存" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "丢弃本页修改并加载最新版本" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "继续处理" }));
+    expect(screen.getByLabelText(/名称/)).toHaveValue("保留的输入");
+    fireEvent.click(screen.getByRole("button", { name: "丢弃本页修改并加载最新版本" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "丢弃本页修改并加载最新版本" }));
+    await waitFor(() => expect(screen.getByLabelText(/名称/)).toHaveValue(ITEM.name));
+    fireEvent.change(screen.getByLabelText(/名称/), { target: { value: "核对后的新修订" } });
 
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
     await waitFor(() => {
@@ -566,8 +571,10 @@ describe("路由骨架与文案边界", () => {
     // 页面只请求自己需要的数据；`/api/v1/items/item-1` 是 AppShell 顶栏的物品上下文
     // （§6.1.1 的既有行为，T08 起如此）。
     const urls = fetchMock.mock.calls.map(([url]) => String(url));
+    // PC05C adds exactly one bounded global count; no per-job detail request.
     expect(urls.filter((url) => url !== "/api/v1/items/item-1")).toEqual([
       "/api/v1/auth/session",
+      "/api/v1/jobs/activity",
       "/api/v1/items/item-1/releases",
     ]);
   });

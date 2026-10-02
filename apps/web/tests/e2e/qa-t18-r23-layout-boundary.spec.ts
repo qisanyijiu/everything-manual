@@ -200,6 +200,17 @@ async function seed(page: Page, request: APIRequestContext): Promise<{ itemId: s
 const markAt = (log: LayoutLog, label: string): number =>
   log.marks.find((entry) => entry.label === label)?.t ?? Number.NaN;
 
+/** A scrollbar changes client/visual width without changing the layout viewport. */
+function layoutPollChanges(log: LayoutLog): LayoutLog["polls"] {
+  return log.polls.filter((event, index) => {
+    const previous = index === 0 ? log.init[0] : log.polls[index - 1];
+    return previous !== undefined && (event.iw !== previous.iw || event.matches !== previous.matches);
+  });
+}
+function layoutRafChanges(log: LayoutLog): LayoutLog["raf"] {
+  return log.raf.filter((event, index) => index > 0 && event.iw !== log.raf[index - 1]?.iw);
+}
+
 interface SequenceOutcome {
   readonly log: LayoutLog;
   readonly outsideScreenshot: string[];
@@ -266,7 +277,8 @@ async function runSequence(
   const screenshotTo = markAt(log, "screenshot-end") + 300;
   const transients = [
     ...log.mqEvents.map((event) => ({ label: `change@${Math.round(event.t)}ms`, t: event.t })),
-    ...log.polls.slice(1).map((event) => ({ label: `poll@${Math.round(event.t)}ms`, t: event.t })),
+    ...layoutPollChanges(log).map((event) => ({ label: `poll@${Math.round(event.t)}ms`, t: event.t })),
+    ...layoutRafChanges(log).map((event) => ({ label: `raf@${Math.round(event.t)}ms`, t: event.t })),
     ...log.probes.map((event) => ({ label: `probe@${Math.round(event.t)}ms`, t: event.t })),
   ];
   const during = transients.filter((event) => event.t >= screenshotFrom && event.t <= screenshotTo);
@@ -277,6 +289,15 @@ async function runSequence(
   const tinyViewportTransient = log.raf.some(
     (sample) => sample.t >= screenshotFrom && sample.t <= screenshotTo && sample.iw < 100,
   );
+  // Keep every raw client/visual sample and the exact original time window.
+  // The 1px fullPage screenshot transient remains a real layout change.
+  const layoutPolls = layoutPollChanges(log);
+  fs.writeFileSync(path.join(evidenceDir, `${options.evidenceFile}.classification.json`), JSON.stringify({
+    screenshotFrom, screenshotTo, transients, during, outside, remountsOutside,
+    layoutPolls, layoutRaf: layoutRafChanges(log),
+    visualClientOnlyPolls: log.polls.filter(event => !layoutPolls.includes(event)),
+    rawRaf: log.raf, tinyViewportTransient,
+  }, null, 2));
   return {
     log,
     outsideScreenshot: outside.map((event) => event.label),
@@ -318,7 +339,8 @@ test("QA-R23-LB2 对照：同视口、同交互但**不截图** → 零瞬态、
   expect(log.mqEvents, `不得出现跨断点事件：${JSON.stringify(log)}`).toEqual([]);
   expect(log.probes, "探针查询不得翻转（瞬态证据）").toEqual([]);
   // raf[0] 是安装时的基线采样（不是变化）。
-  expect(log.raf.slice(1), "帧采样不得观察到视口宽度变化").toEqual([]);
+  expect(layoutRafChanges(log), "帧采样不得观察到 layout viewport 宽度变化（全部 visual 原始值保留）").toEqual([]);
+  expect(layoutPollChanges(log), "5ms 采样不得观察到 layout viewport / 断点变化").toEqual([]);
   expect(log.nodeEvents.length, "阅读器面板不得被重挂载").toBe(1);
   await expect(page.getByTestId("viewer-status")).toContainText("模型已加载");
 });

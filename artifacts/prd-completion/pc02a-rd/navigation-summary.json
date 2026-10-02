@@ -1,0 +1,44 @@
+[
+  {
+    "release": false,
+    "width": 375,
+    "part": "ALPHA PAGE 2",
+    "step": "BRAVO PAGE 2",
+    "focus": true
+  },
+  {
+    "release": false,
+    "width": 1024,
+    "part": "ALPHA PAGE 2",
+    "step": "BRAVO PAGE 2",
+    "focus": true
+  },
+  {
+    "release": false,
+    "width": 1440,
+    "part": "ALPHA PAGE 2",
+    "step": "BRAVO PAGE 2",
+    "focus": true
+  },
+  {
+    "release": true,
+    "width": 375,
+    "part": "ALPHA PAGE 2",
+    "step": "BRAVO PAGE 2",
+    "focus": true
+  },
+  {
+    "release": true,
+    "width": 1024,
+    "part": "ALPHA PAGE 2",
+    "step": "BRAVO PAGE 2",
+    "focus": true
+  },
+  {
+    "release": true,
+    "width": 1440,
+    "part": "ALPHA PAGE 2",
+    "step": "BRAVO PAGE 2",
+    "focus": true
+  }
+]

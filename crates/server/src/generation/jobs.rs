@@ -120,11 +120,25 @@ pub async fn create_job_with_config(
         .filter(|quote| quote.item_id == item_id)
         .ok_or_else(|| GenerationError::not_found(format!("报价不存在：{}", validated.quote_id)))?;
     let payload = quote_payload(&quote).await?;
+    crate::generation::estimate::ensure_safe_quote_model(&quote)?;
+    if settings.providers.tripo.model_issue() || settings.providers.manual_ai.model_issue() {
+        return Err(GenerationError::unprocessable(
+            crate::config::model_guard::MODEL_ISSUE_REASON,
+            crate::config::model_guard::MODEL_CONFIG_MESSAGE,
+        ));
+    }
     if let Some(config) = config {
+        config
+            .ensure_generation_available()
+            .map_err(config_gate_error)?;
         config
             .ensure_revision(&quote.provider_config)
             .map_err(config_gate_error)?;
     }
+
+    // Deployment credentials can disappear without changing the saved config revision.
+    // Keep the existing idempotent receipt path above this new-purchase gate.
+    super::estimate::ensure_providers_configured(&settings.providers)?;
 
     if let Err(error) = check_quote_state(&quote, &payload, &validated, now) {
         // 并发同键竞争窗口：另一请求可能已消费该报价并写下幂等记录 → 按重放返回。
@@ -154,6 +168,7 @@ pub async fn create_job_with_config(
     }
     let photos = load_photos_for_item(conn, item_id, &quote.photo_ids).await?;
     let preparation = load_preparation_for_item(conn, item_id, &quote.preparation_id).await?;
+    super::estimate::ensure_preparation_reusable(conn, &preparation, &settings.data_dir).await?;
     let recomputed = recompute_input_hash(
         &item,
         &preparation,
@@ -234,17 +249,17 @@ pub async fn create_job_with_config(
 }
 
 fn config_gate_error(error: crate::http::error::ApiError) -> GenerationError {
-    let pending = error
+    let reason = error
         .details
         .as_ref()
         .and_then(|d| d.get("reason"))
-        .and_then(serde_json::Value::as_str)
-        == Some("providerConfigPending");
+        .and_then(serde_json::Value::as_str);
     GenerationError::unprocessable(
-        if pending {
-            "providerConfigPending"
-        } else {
-            "providerConfigChanged"
+        match reason {
+            Some("providerConfigPending") => "providerConfigPending",
+            Some("providerModelInvalid") => crate::config::model_guard::MODEL_ISSUE_REASON,
+            Some("quoteModelInvalid") => crate::config::model_guard::FROZEN_MODEL_REASON,
+            _ => "providerConfigChanged",
         },
         error.message,
     )
@@ -449,7 +464,7 @@ async fn create_in_transaction(
 }
 
 /// 组装阶段（contracts.md §5 的 DAG 顺序与依赖规则；`job_stages::insert` 自动写依赖边）。
-fn build_stage_plan(
+pub(crate) fn build_stage_plan(
     job_id: &str,
     plan: &ManualAiPlan,
     quote: &QuoteRecord,

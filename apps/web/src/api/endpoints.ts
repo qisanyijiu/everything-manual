@@ -37,6 +37,11 @@ type JsonRequest<Op extends keyof operations> = operations[Op] extends {
 // --- 合同类型别名（供页面与测试引用，全部来自生成文件） ---
 export type SessionData = OkData<"session">;
 export type LoginRequest = JsonRequest<"login">;
+export type ItemSummaryDto = components["schemas"]["ItemSummaryDto"];
+export function getItemSummaries(ids: readonly string[], documentId: string | null = null): Promise<ApiResource<ItemSummaryDto[]>> {
+  return requestData(`${API_PREFIX}/items/summaries`, { query: { ids: ids.join(","), ...(documentId ? { documentId } : {}) }, cache: "no-store" });
+}
+
 export type ItemDto = OkData<"get_item">;
 export type ItemCreateRequest = JsonRequest<"create_item">;
 export type ItemPatchRequest = JsonRequest<"patch_item">;
@@ -124,6 +129,7 @@ export interface ItemPageRequest {
   limit?: number;
   cursor?: string;
   archived?: boolean;
+  q?: string;
 }
 
 export interface ItemPage {
@@ -137,6 +143,7 @@ export async function listItems(params: ItemPageRequest = {}): Promise<ItemPage>
     limit: params.limit,
     cursor: params.cursor,
     archived: params.archived,
+    q: params.q,
   };
   const { body, etag } = await requestJson<ItemList>(`${API_PREFIX}/items`, { query });
   return { items: body.data, nextCursor: body.nextCursor ?? null, etag };
@@ -262,9 +269,10 @@ export interface DocumentPage {
   readonly etag: string | null;
 }
 
-export async function listDocuments(itemId: string): Promise<DocumentPage> {
+export async function listDocuments(itemId: string, cursor: string | null = null, signal?: AbortSignal): Promise<DocumentPage> {
   const { body, etag } = await requestJson<DocumentList>(
-    `${API_PREFIX}/items/${encodeURIComponent(itemId)}/documents`,
+    `${API_PREFIX}/items/${encodeURIComponent(itemId)}/documents${cursor === null ? "" : `?cursor=${encodeURIComponent(cursor)}`}`,
+    { signal },
   );
   return { documents: body.data, nextCursor: body.nextCursor ?? null, etag };
 }
@@ -390,6 +398,12 @@ export function getRelease(itemId: string, releaseId: string): Promise<ApiResour
 export type JobSummaryDto = components["schemas"]["JobSummaryDto"];
 export type JobStageSummaryDto = components["schemas"]["JobStageSummaryDto"];
 export type JobStageDto = components["schemas"]["JobStageDto"];
+export type JobActivityDto = components["schemas"]["JobActivityDto"];
+/** Whole-library count. No provider call or job payload enumeration. */
+export function getJobActivity(): Promise<ApiResource<JobActivityDto>> {
+  return requestData<JobActivityDto>(`${API_PREFIX}/jobs/activity`, { cache: "no-store" });
+}
+
 export type JobStageRetryDto = components["schemas"]["JobStageRetryDto"];
 export type JobAttemptDto = components["schemas"]["JobAttemptDto"];
 export type JobMissingItemDto = components["schemas"]["JobMissingItemDto"];

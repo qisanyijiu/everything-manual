@@ -19,6 +19,8 @@ pub struct SettingsStatusData {
     pub provider_config_pending: bool,
     /// 各供应商是否具备发起真实请求的全部配置（密钥 + 模型）。
     pub providers_configured: ProvidersConfigured,
+    /// 模型误填状态，不含疑似值或其任何摘要。
+    pub provider_model_issues: ProviderModelIssues,
     /// 价格目录状态（T11；只说配置与否与版本，不含路径与内容）。
     pub price_catalog: PriceCatalogStatus,
     /// 生效的输入限制（PRD §5.3 默认值或配置覆盖值）。
@@ -77,10 +79,24 @@ pub struct CapabilitiesStatus {
 pub struct ProviderView {
     pub base_url: String,
     pub model: Option<String>,
+    pub model_issue: Option<ModelIssue>,
     pub key_configured: bool,
     pub base_url_source: ConfigSource,
     pub model_source: ConfigSource,
     pub key_source: ConfigSource,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum ModelIssue {
+    SuspectedCredential,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderModelIssues {
+    pub tripo: Option<ModelIssue>,
+    pub manual_ai: Option<ModelIssue>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema)]
@@ -129,6 +145,8 @@ pub struct ProviderEdit {
     pub action: ProviderEditAction,
     pub base_url: Option<String>,
     pub model: Option<String>,
+    /// 明确清空已隐藏问题模型的意图；model:null 本身不代表授权清空。
+    pub clear_model: Option<bool>,
     pub key_action: Option<KeyEditAction>,
     #[schema(write_only)]
     pub api_key: Option<String>,
@@ -139,6 +157,9 @@ impl Drop for ProviderEdit {
         use zeroize::Zeroize;
         if let Some(key) = &mut self.api_key {
             key.zeroize();
+        }
+        if let Some(model) = &mut self.model {
+            model.zeroize();
         }
     }
 }

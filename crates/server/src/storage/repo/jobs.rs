@@ -276,3 +276,13 @@ fn job_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Job, StorageError> {
         updated_at: Timestamp::from_millis(row.try_get("updated_at")?),
     })
 }
+
+/// Whole-library automatic activity, using the existing jobs_status index.
+/// No stage, attempt, ledger or per-job detail expansion is required.
+pub async fn active_count(conn: &mut SqliteConnection) -> Result<i64, StorageError> {
+    Ok(sqlx::query_scalar(
+        "SELECT COUNT(*) FROM jobs WHERE status IN ('queued', 'running', 'retry_wait', 'waiting_provider')",
+    )
+    .fetch_one(conn)
+    .await?)
+}

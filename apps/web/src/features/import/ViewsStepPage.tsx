@@ -1,3 +1,4 @@
+import { workflowKeys } from "../library/workflow";
 /**
  * 向导第 3 步：视图排列（PRD §6.1.2 `/items/:itemId/import/views`；
  * §6.2 UI-009（上传）、UI-010（失败重试）、UI-012（槽位与占用）、UI-013（缺项）、UI-019（导航））。
@@ -43,6 +44,7 @@ export function ViewsStepPage() {
 
   async function refreshPhotos(): Promise<void> {
     await queryClient.invalidateQueries({ queryKey: itemKeys.photos(id) });
+      await queryClient.invalidateQueries({ queryKey: workflowKeys.root });
   }
 
   /** 同视图占用与其它照片写入错误的统一处理（可行动文案，不用通用错误）。 */

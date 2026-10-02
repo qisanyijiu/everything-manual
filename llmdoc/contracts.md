@@ -80,7 +80,8 @@
 | POST /auth/logout | 204 | 撤销会话、清 cookie |
 | GET /settings/status | providersConfigured、limits、capabilities、providerConfigPending | 原字段仍描述当前运行基础配置；不代表模型有价格或连接已验证；pending 另加生成门禁 |
 | GET/PUT /settings/providers | revision、active/saved、pending；两家 update/restore 与 keep/replace/clear | 已认证、写入CSRF/Origin；no-store；只返回密钥存在与来源类别；整体私有持久化，重启生效 |
-| GET/POST /items | 查询／名称品牌型号配置 → item | 创建 201；服务端校验长度与空白 |
+| GET/POST /items | q/archived/游标查询／名称品牌型号配置 → item | q trim后最多200字符，名称或型号字面包含，ASCII不分大小写，%/_非通配；游标绑定q/归档/固定创建时间排序。创建201；服务端校验长度与空白 |
+| GET /items/summaries | 最多100个ID → 有界工作流摘要 | 最新发布ID及同一版本的草稿revision/发布时间；列表不逐行读取release manifest |
 | GET/PATCH /items/{id} | item／变更 → item | PATCH If-Match；归档不物理删除被引用资产 |
 | POST /items/{id}/assets | multipart file+purpose → asset | 流式上传；purpose 指定 document/photo/pageImage/pageText |
 | GET/HEAD /assets/{id}/content | 字节 | 授权、ETag、Range；不暴露磁盘路径 |
@@ -94,6 +95,7 @@
 | GET /items/{id}/estimates/{quoteId} | → quote | 读取既有报价（确认页回显用）；过期状态如实返回，不自动续期（T11 新增，2026-09-12 由协调者补记） |
 | POST /items/{id}/estimates/{quoteId}/confirm | → 确认记录 | 记录"已获用户对发送内容与预算的确认"并写 audit_events；未确认的建单请求被拒（T11 新增，同上） |
 | POST /items/{id}/jobs | quoteId、输入 IDs、limits → job | Idempotency-Key；quote 未过期且输入未变；冻结并预留，202 |
+| GET /jobs/activity | 全库 `{data:{active}}` 任务数；只统计 queued/running/retry_wait/waiting_provider | 单次聚合、不分页/展开阶段；needs_input/unknown/终态排除，读取不触发供应商 |
 | GET /jobs[/{id}] | 列表／阶段、费用、错误、revision | 未知状态可读，前端轮询，不需要 WebSocket |
 | POST /jobs/{id}/cancel | If-Match → job | 取消后续本地阶段；不声称已取消远端付费操作 |
 | POST /jobs/{id}/retry | If-Match、stage、费用确认 → job | Idempotency-Key；仅可重試阶段；未知提交不得从此盲重试 |
@@ -141,6 +143,9 @@ PDF preparation 在这个 DAG 之前；浏览器热点校准／发布在这个 D
 `manual_extract_batches` 是逻辑分支，实际展开为 `(stageKind=manual_extract, batchIndex=0..N-1)` 的持久执行单元。每批固定页集合、inputHash，分别保存结果资产与usage，不用内存for循环代替checkpoint；全部批次成功且页覆盖完整才解锁merge。租约、attempt和“同阶段一个未决提交”都针对具体stage_id，允许两个不同批次并发。
 
 job／stage 状态枚举：`queued/running/waiting_provider/retry_wait/needs_input/submission_unknown/succeeded/failed/cancelled`。工作流 state.yaml 的 `pm_ready` 等不是这些运行时状态，不共用枚举。
+
+PC05C：阶段详情 `safeRetry:{number,limit}|null` 与执行器同源：number 为持久化 `attempt_count`（安全重试次数），limit 为 `MAX_SAFE_RETRIES=5`；供应商正常查询只增加 `poll_count`，不得混算。仅合法 retry_wait 且父任务非终态/非 submission_unknown 提供；其余为 null。`nextRunAt` 仍为服务端实际调度时刻（包含既有 Retry-After 上限），前端倒计时到0只等待状态更新，不发重试请求。
+
 
 | 事件 | 状态规则 |
 | --- | --- |

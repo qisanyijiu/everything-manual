@@ -17,6 +17,8 @@
 //!
 //! 所有函数接受 `&mut SqliteConnection`，可与其它写入放进同一短事务。
 
+pub mod discovery;
+
 use sqlx::{Row, SqliteConnection};
 
 use manual_core::domain::{Page, PageViewport, Preparation, PreparationState};
@@ -103,8 +105,8 @@ pub async fn create(
     };
     sqlx::query(
         "INSERT INTO preparations \
-           (id, document_id, source_sha256, state, page_count, client_derived, revision, created_at, updated_at) \
-         VALUES (?, ?, ?, ?, NULL, 0, ?, ?, ?)",
+           (id, document_id, source_sha256, state, page_count, client_derived, revision, created_at, updated_at, format_version) \
+         VALUES (?, ?, ?, ?, NULL, 0, ?, ?, ?, 1)",
     )
     .bind(&preparation.id)
     .bind(&preparation.document_id)

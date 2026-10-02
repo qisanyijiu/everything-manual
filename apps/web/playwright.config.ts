@@ -23,6 +23,9 @@ const EVIDENCE_DIR = path.join(REPO_ROOT, "artifacts", "web-mvp", "t09-rd");
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  // Standalone PC acceptance suites own frozen binaries/source and dedicated ports.
+  // Run each through its explicit QA config; keep ordinary baseline specs here.
+  testIgnore: "**/qa-pc*.spec.ts",
   // 每个用例都自建物品/资料；顺序执行避免共享后端上的相互等待。
   fullyParallel: false,
   workers: 1,

@@ -114,14 +114,30 @@ async function login(page: Page): Promise<void> {
   await expect(page.getByRole("navigation", { name: "主导航" })).toBeVisible();
 }
 
-function countJobApiRequests(page: Page): () => number {
+function countJobApiRequests(page: Page, pathname: string): () => number {
   let count = 0;
-  page.on("request", (request) => {
-    if (request.url().includes("/api/v1/jobs")) {
-      count += 1;
-    }
+  page.on("request", request => {
+    if (request.method() === "GET" && new URL(request.url()).pathname === pathname) count += 1;
   });
   return () => count;
+}
+function observeActivity(page: Page) {
+  const stamps: number[] = [];
+  const writes: string[] = [];
+  page.on("request", request => {
+    const pathname = new URL(request.url()).pathname;
+    if (pathname.startsWith("/api/v1/") && ["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(pathname);
+    if (pathname === "/api/v1/jobs/activity") {
+      expect(request.method()).toBe("GET"); stamps.push(Date.now());
+    }
+  });
+  return { stamps, writes };
+}
+function assertActivityWindow(observation: ReturnType<typeof observeActivity>, start: number) {
+  const stamps = observation.stamps.filter(stamp => stamp >= start);
+  expect(stamps.length, "global activity uses its 2s cadence, not per-row polling").toBeLessThanOrEqual(4);
+  for (let index = 1; index < stamps.length; index++) expect(stamps[index]! - stamps[index-1]!).toBeGreaterThanOrEqual(1500);
+  expect(observation.writes).toEqual([]);
 }
 
 async function bodyText(page: Page): Promise<string> {
@@ -239,10 +255,12 @@ test("QA-T17-1 列表/详情：分列金额与服务端逐字段一致、终态�
   expect(listCostText).not.toMatch(/合计|总计|total/i);
 
   // 终态停止（列表：已加载行全为终态）：6 秒内 0 次任务接口请求。
-  const listCount = countJobApiRequests(page);
+  const listCount = countJobApiRequests(page, "/api/v1/jobs");
+  const listActivity = observeActivity(page); const listActivityStart = Date.now();
   const listStart = listCount();
   await page.waitForTimeout(6000);
   expect(listCount() - listStart, "列表全部终态后必须停止轮询").toBe(0);
+  assertActivityWindow(listActivity, listActivityStart);
   await captureTo("t17-qa", page, "01-list-terminal-stop");
 
   // 物品过滤入口（资料库「查看任务」指到真实列表）。
@@ -266,10 +284,12 @@ test("QA-T17-1 列表/详情：分列金额与服务端逐字段一致、终态�
   expect(detailText, "不得出现禁用措辞「重试不会重复收费」").not.toContain("重试不会重复收费");
   expect(detailText, "不得出现「零费用」").not.toContain("零费用");
   await expectNoShortcutControls(page);
-  const detailCount = countJobApiRequests(page);
+  const detailCount = countJobApiRequests(page, `/api/v1/jobs/${jobId}`);
+  const detailActivity = observeActivity(page); const detailActivityStart = Date.now();
   const detailStart = detailCount();
   await page.waitForTimeout(6000);
   expect(detailCount() - detailStart, "详情终态后必须停止轮询").toBe(0);
+  assertActivityWindow(detailActivity, detailActivityStart);
   await captureTo("t17-qa", page, "02-detail-terminal-stop");
 
   expect(external(), "不应访问外部地址").toEqual([]);
@@ -554,8 +574,13 @@ test("QA-T17-6 轮询频率：可见约 2 秒 / 后台约 15 秒；重启后仍�
   );
 
   const stamps: number[] = [];
+  const activityStamps: number[] = [];
+  const activityMethods: string[] = [];
   page.on("request", (request_) => {
-    if (request_.url().includes("/api/v1/jobs")) {
+    if (new URL(request_.url()).pathname === "/api/v1/jobs/activity") {
+      activityStamps.push(Date.now()); activityMethods.push(request_.method());
+    }
+    if (request_.method() === "GET" && new URL(request_.url()).pathname === `/api/v1/jobs/${jobId}`) {
       stamps.push(Date.now());
     }
   });
@@ -566,8 +591,11 @@ test("QA-T17-6 轮询频率：可见约 2 秒 / 后台约 15 秒；重启后仍�
 
   // 可见：连续观测 8 秒，请求间隔应集中在约 2 秒（4 秒的间隔会说明是 4s+ 轮询）。
   const visibleStart = stamps.length;
+  const visibleActivityStart = activityStamps.length;
   await page.waitForTimeout(8000);
   const visibleStamps = stamps.slice(visibleStart);
+  expect(activityStamps.length - visibleActivityStart, "bounded global activity GET is not part of detail cadence").toBeLessThanOrEqual(5);
+  expect(activityMethods.every(method => method === "GET")).toBe(true);
   expect(visibleStamps.length, "可见页 8 秒内应有约 4 次轮询").toBeGreaterThanOrEqual(3);
   const gaps = visibleStamps.slice(1).map((stamp, index) => stamp - (visibleStamps[index] ?? stamp));
   const maxGap = Math.max(...gaps);

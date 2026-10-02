@@ -942,17 +942,27 @@ fn check_unconfigured_rejection(
 /// 步骤 3：静态资源与路由（JS/CSS/字体/PDF vendor、嵌套路由刷新、未知 API/静态资源）。
 fn check_static_surface(client: &Client, base_url: &str, index_html: &str) -> Result<()> {
     let assets = collect_asset_refs(index_html);
-    let js = assets
+    let js: Vec<String> = assets
         .iter()
-        .find(|path| path.ends_with(".js") || path.ends_with(".mjs"))
-        .context("首页未引用 JS 资源")?
-        .clone();
-    let css = assets
+        .filter(|path| path.ends_with(".js") || path.ends_with(".mjs"))
+        .cloned()
+        .collect();
+    if js.is_empty() {
+        bail!("首页未引用 JS 资源");
+    }
+    let css: Vec<String> = assets
         .iter()
-        .find(|path| path.ends_with(".css"))
-        .context("首页未引用 CSS 资源")?
-        .clone();
-    for (path, expect_type) in [(&js, "javascript"), (&css, "css")] {
+        .filter(|path| path.ends_with(".css"))
+        .cloned()
+        .collect();
+    if css.is_empty() {
+        bail!("首页未引用 CSS 资源");
+    }
+    for (path, expect_type) in js
+        .iter()
+        .map(|p| (p, "javascript"))
+        .chain(css.iter().map(|p| (p, "css")))
+    {
         let response = client
             .get(format!("{base_url}{path}"))
             .send()
@@ -1090,25 +1100,42 @@ fn is_hashed_chunk(path: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
-/// 沿入口 JS 的 chunk 引用找到 PDF worker（文件名带构建哈希，不硬编码）。
-fn discover_pdf_worker(client: &Client, base_url: &str, entry_js: &str) -> Result<String> {
-    let mut seen: BTreeSet<String> = BTreeSet::new();
-    let mut queue: Vec<String> = vec![entry_js.to_owned()];
-    let mut worker: Option<String> = None;
-    while let Some(path) = queue.pop() {
-        if !seen.insert(path.clone()) || seen.len() > 40 {
-            continue;
-        }
-        let is_worker_candidate = path.contains("pdf.worker");
+/// HTML can reference modulepreload chunks before its actual module entry. Walk
+/// every HTML JS root, not the lexicographically first reference, and finish
+/// validating the graph even after finding the worker.
+fn discover_pdf_worker(client: &Client, base_url: &str, roots: &[String]) -> Result<String> {
+    discover_pdf_worker_with(roots, |path| {
         let response = client
             .get(format!("{base_url}{path}"))
             .send()
             .with_context(|| format!("请求 {path} 失败"))?;
-        let status = response.status().as_u16();
+        Ok((
+            response.status().as_u16(),
+            response.text().context("读取内嵌资源失败")?,
+        ))
+    })
+}
+
+fn discover_pdf_worker_with(
+    roots: &[String],
+    mut fetch: impl FnMut(&str) -> Result<(u16, String)>,
+) -> Result<String> {
+    let mut seen: BTreeSet<String> = BTreeSet::new();
+    let mut queue: Vec<String> = roots.to_vec();
+    let mut worker: Option<String> = None;
+    while let Some(path) = queue.pop() {
+        if !seen.insert(path.clone()) {
+            continue;
+        }
+        if seen.len() > 256 {
+            bail!("内嵌资源引用超过有界检查上限（256）：未完成资源完整性验证");
+        }
+        let is_worker_candidate = path.contains("pdf.worker");
+        let (status, body) = fetch(&path)?;
         if status != 200 {
             // 只有"构建哈希名"的引用必须存在；库源码里的路径文案（如 `./pdf.worker.mjs`）
             // 返回 404 属正常，不据此失败。
-            if is_hashed_chunk(&path) {
+            if roots.contains(&path) || is_hashed_chunk(&path) {
                 bail!("内嵌资源 {path} 应 200，实际 {status}（包内构建产物不完整）");
             }
             continue;
@@ -1116,7 +1143,6 @@ fn discover_pdf_worker(client: &Client, base_url: &str, entry_js: &str) -> Resul
         if is_worker_candidate {
             worker = Some(path.clone());
         }
-        let body = response.text().unwrap_or_default();
         for reference in collect_asset_refs(&body) {
             if !seen.contains(&reference) {
                 queue.push(reference);
@@ -1375,4 +1401,97 @@ fn header_value(response: &Response, name: &str) -> Option<String> {
         .get(name)
         .and_then(|value| value.to_str().ok())
         .map(str::to_owned)
+}
+
+#[cfg(test)]
+mod resource_tests {
+    use super::*;
+    use std::collections::BTreeMap;
+
+    fn roots() -> Vec<String> {
+        collect_asset_refs(
+            r#"<link rel="modulepreload" href="/assets/Skeleton-abcdef.js">
+          <script type="module" src="/assets/index-ghijkl.js"></script>"#,
+        )
+    }
+
+    fn graph() -> BTreeMap<String, String> {
+        BTreeMap::from([
+            (
+                "/assets/Skeleton-abcdef.js".into(),
+                "export const loading=true".into(),
+            ),
+            (
+                "/assets/index-ghijkl.js".into(),
+                "import('./Prepare-mnopqr.js')".into(),
+            ),
+            (
+                "/assets/Prepare-mnopqr.js".into(),
+                "new URL('/assets/pdf.worker.min-stuvwx.mjs',import.meta.url); './pdf.worker.mjs'"
+                    .into(),
+            ),
+            (
+                "/assets/pdf.worker.min-stuvwx.mjs".into(),
+                "export const worker=true".into(),
+            ),
+        ])
+    }
+
+    fn walk(graph: &BTreeMap<String, String>, roots: &[String]) -> Result<String> {
+        discover_pdf_worker_with(roots, |path| {
+            Ok(match graph.get(path) {
+                Some(body) => (200, body.clone()),
+                None => (404, String::new()),
+            })
+        })
+    }
+
+    #[test]
+    fn modulepreload_before_entry_still_discovers_referenced_worker() {
+        let roots = roots();
+        assert!(
+            roots[0].contains("Skeleton"),
+            "regression: sorted preload comes first"
+        );
+        assert_eq!(
+            walk(&graph(), &roots).unwrap(),
+            "/assets/pdf.worker.min-stuvwx.mjs"
+        );
+    }
+
+    #[test]
+    fn missing_chunk_fails_even_when_another_root_has_a_worker() {
+        let mut graph = graph();
+        graph.insert(
+            "/assets/Skeleton-abcdef.js".into(),
+            "import('./Missing-abcdef.js')".into(),
+        );
+        let error = walk(&graph, &roots()).unwrap_err().to_string();
+        assert!(error.contains("Missing-abcdef.js"), "{error}");
+        graph.remove("/assets/Skeleton-abcdef.js");
+        assert!(
+            walk(&graph, &roots())
+                .unwrap_err()
+                .to_string()
+                .contains("Skeleton-abcdef.js")
+        );
+    }
+
+    #[test]
+    fn missing_worker_and_unhashed_html_root_are_not_ignored() {
+        let mut graph = graph();
+        graph.remove("/assets/pdf.worker.min-stuvwx.mjs");
+        assert!(
+            walk(&graph, &roots())
+                .unwrap_err()
+                .to_string()
+                .contains("pdf.worker.min-stuvwx.mjs")
+        );
+        assert!(
+            walk(&graph, &["/assets/entry.js".into()])
+                .unwrap_err()
+                .to_string()
+                .contains("entry.js")
+        );
+    }
 }

@@ -1,55 +1,78 @@
-/**
- * 资料库（PRD §6.1.2 `/`、§6.2 UI-005）：
- * - `GET /items`（默认 20/页，游标继续加载）；游标、归档开关与搜索词由 URL 承载
- *   （§6.1.1「列表状态由 URL 承载，不用内存状态代替」）；
- * - 空态：还没有物品 + 主按钮「新建物品」；加载：行骨架；失败：加载失败，重试且保留已加载行；
- * - 行显示名称、型号、状态、更新时间；归档物品默认隐藏，可由「显示已归档」切出；
- * - 搜索首版只服务端不支持检索（A-06）：在**已加载行**内按名称/型号筛选，界面写明范围。
- */
+/** PC05A: server-side literal search; each URL position retains its own query cache. */
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { Link, useSearchParams } from "react-router";
-
-import { describeError } from "../../api/client";
+import { describeError, isApiError } from "../../api/client";
 import { EmptyState } from "../../components/EmptyState";
 import { PageLayout } from "../shell/PageLayout";
 import { Skeleton } from "../../components/Skeleton";
 import { formatLocalDateTime } from "../../lib/format";
-import { useItemList } from "./items";
+import { itemKeys, useItemList } from "./items";
+import { useItemSummaries, WorkflowActions } from "./workflow";
+import type { ItemSummaryDto } from "../../api/endpoints";
+import { readFieldErrors } from "../../components/form";
+import { rememberLibraryItem, useLibraryPosition } from "./library-navigation";
 import type { ItemDto } from "../../api/endpoints";
 import { Icon, ManualArtwork } from "../../components/Icon";
 
 export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const queryClient = useQueryClient();
   const archived = searchParams.get("archived") === "true";
   const startCursor = searchParams.get("cursor");
-  const search = searchParams.get("q") ?? "";
-
-  const query = useItemList({ archived, startCursor });
-  const loadedItems = (query.data?.pages ?? []).flatMap((page) => page.items);
-  const visibleItems =
-    search === ""
-      ? loadedItems
-      : loadedItems.filter((item) => matchesSearch(item, search));
+  const search = (searchParams.get("q") ?? "").trim();
+  // A submitted query belongs to the URL. Do not optimistically clear its text before
+  // the Router transition commits: a fast Back may cancel that transition entirely.
+  const [inputDraft, setInputDraft] = useState<{ key: string; value: string } | null>(null);
+  const input = inputDraft?.key === location.key ? inputDraft.value : search;
+  const [inputError, setInputError] = useState<string | null>(null);
+  useEffect(() => { setInputError(null); }, [location.key]);
+  const query = useItemList({ archived, startCursor, q: search });
+  const [lastData, setLastData] = useState(query.data);
+  useEffect(() => { if (query.data) setLastData(query.data); }, [query.data]);
+  const data = query.data ?? lastData;
+  const loadedItems = (data?.pages ?? []).flatMap((page) => page.items);
+  const summaries = useItemSummaries(loadedItems.map((item) => item.id));
+  const badQuery = [...search].length > 200;
+  const cursorError = isApiError(query.error) && query.error.status === 422 && readFieldErrors(query.error.details).some((field) => field.field === "cursor");
+  const errorInfo = query.isError ? describeError(query.error) : null;
+  const scope = `${location.key}:${archived}:${search}:${startCursor ?? ""}`;
+  const activeScope = useRef(scope);
+  const loadingMore = useRef(false);
+  useEffect(() => { activeScope.current = scope; return () => { activeScope.current = ""; }; }, [scope]);
+  useLibraryPosition(query.data !== undefined && !query.isFetching);
 
   async function loadMore() {
-    const pages = query.data?.pages ?? [];
-    // 新一页从上一页的 nextCursor 开始；只在该页加载成功后把它写进 URL，
-    // 刷新后从同一位置继续（§6.1.1：游标由 URL 承载，不用内存状态代替）。
-    const nextStart = pages[pages.length - 1]?.nextCursor ?? null;
-    await query.fetchNextPage();
-    updateParams({ cursor: nextStart });
+    if (loadingMore.current || query.isFetching || !query.data) return;
+    const nextStart = query.data.pages.at(-1)?.nextCursor;
+    if (!nextStart) return;
+    loadingMore.current = true;
+    const previous = query.data;
+    try {
+      const result = await query.fetchNextPage();
+      if (result.isError || !result.data || activeScope.current !== scope) return;
+      // Preserve both history entries: advancing the URL must not discard preceding rows,
+      // nor make Back display pages that were loaded only by a later navigation.
+      queryClient.setQueryData(itemKeys.list(archived, nextStart, search), result.data);
+      queryClient.setQueryData(itemKeys.list(archived, startCursor, search), previous);
+      updateParams({ cursor: nextStart });
+    } finally { loadingMore.current = false; }
   }
 
   function updateParams(changes: Record<string, string | null>) {
     const next = new URLSearchParams(searchParams);
     for (const [key, value] of Object.entries(changes)) {
-      if (value === null || value === "") {
-        next.delete(key);
-      } else {
-        next.set(key, value);
-      }
+      if (value === null || value === "") next.delete(key); else next.set(key, value);
     }
-    setSearchParams(next, { replace: true });
+    setSearchParams(next);
+  }
+  function submitSearch() {
+    const q = input.trim();
+    if ([...q].length > 200) { setInputError("搜索词最多200个字符，请缩短后重试"); return; }
+    setInputError(null); setInputDraft(null);
+    updateParams({ q, cursor: null });
   }
 
   return (
@@ -68,39 +91,27 @@ export function LibraryPage() {
       <section className="page library-page" aria-labelledby="library-title">
         <header className="collection-heading"><h2>我的物品 <span>{loadedItems.length}</span></h2><span>{archived ? "已归档收藏" : "使用中的收藏"}</span></header>
 
-        <form className="library-toolbar" role="search" onSubmit={(event) => event.preventDefault()}>
+        <form className="library-toolbar" role="search" onSubmit={(event) => { event.preventDefault(); submitSearch(); }}>
           <div className="field library-search">
-            <label className="visually-hidden" htmlFor="library-search">
-              搜索
-            </label>
-            <Icon name="search" size={18} /><input
-              id="library-search"
-              className="field__input"
-              type="search"
-              placeholder="搜索物品名称、型号…"
-              value={search}
-              aria-describedby="library-search-hint"
-              onChange={(event) => updateParams({ q: event.target.value })}
-            />
-            <p className="field__hint" id="library-search-hint">
-              搜索当前已加载的 {loadedItems.length} 件物品。
-            </p>
+            <label htmlFor="library-search">按名称或型号搜索</label>
+            <input id="library-search" className="field__input" type="search" placeholder="输入名称或型号"
+              value={input} aria-describedby={`library-search-hint${inputError || badQuery ? " library-search-error" : ""}`}
+              aria-invalid={Boolean(inputError || badQuery)} onChange={(event) => { setInputDraft({ key: location.key, value: event.target.value }); setInputError(null); }} />
+            <p className="field__hint" id="library-search-hint">搜索{archived ? "已归档" : "使用中"}物品的名称或型号，最多200个字符。</p>
+            {(inputError || badQuery) && <p id="library-search-error" className="field__error" role="alert">{inputError ?? "搜索词最多200个字符，请缩短后重试"}</p>}
+          </div>
+          <div className="library-search-actions">
+            <button type="submit">搜索</button>
+            {(search !== "" || input !== "") && <button type="button" onClick={() => { setInputDraft(null); setInputError(null); updateParams({ q: null, cursor: null }); }}>清除搜索</button>}
           </div>
           <div className="library-toolbar__toggle">
-            <input
-              id="library-include-archived"
-              type="checkbox"
-              checked={archived}
-              onChange={(event) =>
-                // 游标绑定过滤条件（ADR-016 第 3 条）：切换归档范围时回到第一页。
-                updateParams({ archived: event.target.checked ? "true" : null, cursor: null })
-              }
-            />
+            <input id="library-include-archived" type="checkbox" checked={archived}
+              onChange={(event) => updateParams({ archived: event.target.checked ? "true" : null, cursor: null })} />
             <label htmlFor="library-include-archived">显示已归档</label>
           </div>
         </form>
 
-        {startCursor !== null && (
+        {startCursor !== null && !cursorError && (
           <p className="library-page__resume">
             本页从 URL 记录的游标继续显示。{" "}
             <button type="button" className="link-button" onClick={() => updateParams({ cursor: null })}>
@@ -109,80 +120,44 @@ export function LibraryPage() {
           </p>
         )}
 
-        {query.isPending && <Skeleton label="正在加载物品…" rows={5} />}
-
-        {query.isError && (
-          <div className="error-panel" role="alert">
-            <h2>加载失败</h2>
-            <p>{describeError(query.error).message}</p>
-            <button type="button" onClick={() => void query.refetch()}>
-              重试
-            </button>
+        {query.isPending && !data && !badQuery && <Skeleton label="正在查找物品…" rows={5} />}
+        {query.isFetching && data && <p role="status">{query.isFetchingNextPage ? "正在加载更多…" : "正在查找…，下方为上次结果"}</p>}
+        {errorInfo && <div className="error-panel" role="alert">
+          <h2>{cursorError ? "列表条件已变化，请回到开头" : "此次搜索未完成"}</h2>
+          {data && <p>此次搜索未完成，仍显示上次结果。</p>}
+          <p>{errorInfo.message}</p>
+          {errorInfo.requestId && <p>诊断请求 ID：<code>{errorInfo.requestId}</code></p>}
+          {cursorError ? <button type="button" onClick={() => updateParams({ cursor: null })}>回到列表开头</button>
+            : <button type="button" disabled={query.isFetching} onClick={() => { if (query.isFetchNextPageError) void loadMore(); else void query.refetch(); }}>重试</button>}
+        </div>}
+        {query.isSuccess && loadedItems.length === 0 && <EmptyState
+          title={search ? "当前范围没有匹配物品" : archived ? "没有已归档的物品" : "还没有物品"}
+          description={search ? "换个名称或型号，或清除搜索查看当前范围。" : "收藏资料，从新建物品开始。"}
+          action={search ? <button type="button" onClick={() => { setInputDraft(null); updateParams({ q: null, cursor: null }); }}>清除搜索</button>
+            : archived ? <button type="button" onClick={() => updateParams({ archived: null, cursor: null })}>查看使用中的物品</button>
+            : <Link className="button-primary" to="/items/new">新建物品</Link>} />}
+        {summaries.isError && <p role="alert">处理状态暂不可用。<button type="button" onClick={() => void summaries.refetch()}>重新读取处理状态</button></p>}
+        {loadedItems.length > 0 && <>
+          <ul className="item-list">
+            {loadedItems.map((item) => <ItemRow key={item.id} item={item}
+              onOpen={() => rememberLibraryItem(item.id, location.key, location.search)}
+              summary={summaries.data?.find((summary) => summary.itemId === item.id)} unavailable={summaries.isError} loading={summaries.isPending} />)}
+          </ul>
+          <div className="library-page__more">
+            {query.data && query.hasNextPage ? <button type="button" disabled={query.isFetching} onClick={() => void loadMore()}>{query.isFetchingNextPage ? "正在加载…" : "加载更多"}</button>
+              : query.isSuccess && <p className="empty-note">已显示 {loadedItems.length} 件物品，当前分页已到末尾。</p>}
           </div>
-        )}
+        </>}
 
-        {!query.isPending && loadedItems.length === 0 && !query.isError && (
-          <EmptyState
-            title="还没有物品"
-            description={
-              archived
-                ? "没有已归档的物品。"
-                : "先新建一个物品，再上传说明书原件与多视图照片。"
-            }
-            action={
-              archived ? undefined : (
-                <Link className="button-primary" to="/items/new">
-                  新建物品
-                </Link>
-              )
-            }
-          />
-        )}
-
-        {loadedItems.length > 0 && (
-          <>
-            <ul className="item-list">
-              {visibleItems.map((item) => (
-                <ItemRow key={item.id} item={item} />
-              ))}
-            </ul>
-            {visibleItems.length === 0 && search !== "" && (
-              <p className="empty-note">当前已加载的行中没有匹配「{search}」的物品。</p>
-            )}
-            <div className="library-page__more">
-              {query.hasNextPage ? (
-                <button
-                  type="button"
-                  disabled={query.isFetchingNextPage}
-                  onClick={() => void loadMore()}
-                >
-                  {query.isFetchingNextPage ? "正在加载…" : "加载更多"}
-                </button>
-              ) : (
-                <p className="empty-note">已显示全部 {loadedItems.length} 件物品</p>
-              )}
-            </div>
-          </>
-        )}
       </section>
     </PageLayout>
     </div>
   );
 }
 
-function matchesSearch(item: ItemDto, search: string): boolean {
-  const needle = search.trim().toLowerCase();
-  if (needle === "") {
-    return true;
-  }
+function ItemRow({ item, summary, unavailable, loading, onOpen }: { onOpen: () => void; item: ItemDto; summary?: ItemSummaryDto; unavailable: boolean; loading: boolean }) {
   return (
-    item.name.toLowerCase().includes(needle) || item.model.toLowerCase().includes(needle)
-  );
-}
-
-function ItemRow({ item }: { item: ItemDto }) {
-  return (
-    <li className="item-row">
+    <li className="item-row" data-library-item={item.id} onClickCapture={(event) => { if ((event.target as HTMLElement).closest("a")) onOpen(); }}>
       <div className="item-row__identity">
         <span className="item-row__art"><Icon name="cube" size={31} /></span><div>
         <Link to={`/items/${item.id}`} className="item-row__name">
@@ -205,9 +180,7 @@ function ItemRow({ item }: { item: ItemDto }) {
         <time dateTime={item.updatedAt}>{formatLocalDateTime(item.updatedAt)}</time>
       </div>
       <div className="item-row__actions">
-        <Link to={`/items/${item.id}/import/prepare`}>继续准备</Link>
-        <Link to={`/jobs?itemId=${encodeURIComponent(item.id)}`}>查看任务</Link>
-        <Link to={`/items/${item.id}/releases`} className="item-row__open">打开说明书 <Icon name="arrow" size={15} /></Link>
+        <WorkflowActions itemId={item.id} summary={summary} unavailable={unavailable} loading={loading} />
       </div>
     </li>
   );

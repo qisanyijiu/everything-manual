@@ -156,6 +156,26 @@ pub fn retry_gate(
     RetryGate::allowed()
 }
 
+/// Only a fresh paid submission requires this provider's current configuration.
+/// Tripo receipts resume locally; synchronous Manual AI retries can purchase again.
+pub(crate) fn retry_configuration_missing(
+    providers: &crate::config::Providers,
+    kind: StageKind,
+    latest_attempt: Option<&ProviderAttempt>,
+) -> Vec<String> {
+    let provider = match kind {
+        StageKind::ManualExtract => manual_core::domain::ProviderKey::ManualAi,
+        StageKind::TripoSubmit
+            if !latest_attempt
+                .is_some_and(|attempt| attempt.submit_state == SubmitState::Accepted) =>
+        {
+            manual_core::domain::ProviderKey::Tripo
+        }
+        _ => return Vec::new(),
+    };
+    crate::generation::estimate::provider_configuration_missing(providers, provider)
+}
+
 /// 控制动作错误（HTTP 层映射为合同错误结构）。
 #[derive(Debug, Clone, PartialEq)]
 pub enum JobControlError {
@@ -497,6 +517,26 @@ pub async fn retry_stage_with_config(
             entity: "job_stage",
             id: stage_id.to_owned(),
         })?;
+    if crate::config::model_guard::submission_stage(stage.stage_kind) {
+        crate::config::model_guard::ensure_job_models(&mut conn, job_id)
+            .await
+            .map_err(|error| {
+                JobControlError::not_allowed(
+                    crate::config::model_guard::FROZEN_MODEL_REASON,
+                    error.message,
+                    json!({}),
+                )
+            })?;
+        if let Some(config) = config {
+            config.ensure_generation_available().map_err(|error| {
+                JobControlError::not_allowed(
+                    crate::config::model_guard::MODEL_ISSUE_REASON,
+                    error.message,
+                    json!({}),
+                )
+            })?;
+        }
+    }
     // 3b) 付费分支的预算背书：重试会再次发起请求，对应预留必须仍占用预算
     //     （reserved/unknown）。已被释放（明确未计费）或缺失的预留 = 这次重试没有
     //     预算背书 → 拒绝，请重新报价（REQ-023：不自动降质量/不无预算花费）。
@@ -518,6 +558,17 @@ pub async fn retry_stage_with_config(
             gate.message.unwrap_or_default(),
             gate.details,
         ));
+    }
+    if let Some(config) = config {
+        let attempt = repo::attempts::latest_for_stage(&mut conn, &stage.id).await?;
+        let missing = retry_configuration_missing(
+            config.active_providers(),
+            stage.stage_kind,
+            attempt.as_ref(),
+        );
+        if !missing.is_empty() {
+            return Err(JobControlError::ProviderNotConfigured { missing });
+        }
     }
     let previous_status = stage.status;
 
@@ -765,8 +816,17 @@ pub async fn reconcile(
             .await
         }
         ReconcileAction::AuthorizeReplacement => {
+            if settings.providers.tripo.model_issue() || settings.providers.manual_ai.model_issue()
+            {
+                return Err(JobControlError::not_allowed(
+                    crate::config::model_guard::MODEL_ISSUE_REASON,
+                    crate::config::model_guard::MODEL_CONFIG_MESSAGE,
+                    json!({}),
+                ));
+            }
             authorize_replacement(
                 &mut conn,
+                &settings.providers,
                 &job,
                 stage,
                 attempt.as_ref(),
@@ -1058,8 +1118,10 @@ async fn record_no_task(
 }
 
 /// `authorizeReplacement`：再次预算确认 + 明确重复收费风险；保留旧 attempt 未决账务。
+#[allow(clippy::too_many_arguments)]
 async fn authorize_replacement(
     conn: &mut SqliteConnection,
+    providers: &crate::config::Providers,
     job: &Job,
     stage: &JobStage,
     attempt: Option<&ProviderAttempt>,
@@ -1067,6 +1129,15 @@ async fn authorize_replacement(
     actor: &str,
     now: Timestamp,
 ) -> Result<ReconcileReport, JobControlError> {
+    crate::config::model_guard::ensure_job_models(conn, &job.id)
+        .await
+        .map_err(|error| {
+            JobControlError::not_allowed(
+                crate::config::model_guard::FROZEN_MODEL_REASON,
+                error.message,
+                json!({}),
+            )
+        })?;
     if job.status == JobStatus::Cancelled {
         return Err(JobControlError::not_allowed(
             "jobCancelled",
@@ -1144,6 +1215,16 @@ async fn authorize_replacement(
                 "upperBound": upper,
             }),
         ));
+    }
+
+    // Replacement explicitly authorizes a new paid attempt, even when the old
+    // attempt's result is unknown. Reject before changing that fact or the queue.
+    if let Some(provider) = branch_provider(stage.stage_kind) {
+        let missing =
+            crate::generation::estimate::provider_configuration_missing(providers, provider);
+        if !missing.is_empty() {
+            return Err(JobControlError::ProviderNotConfigured { missing });
+        }
     }
 
     // 写事务统一 `BEGIN IMMEDIATE`（`storage::tx`，BUG-006）。
@@ -1248,12 +1329,8 @@ async fn verify_remote_task(
     use crate::providers::tripo::{TripoClient, TripoTimeouts};
 
     let provider = &settings.providers.tripo;
-    if !provider.configured() {
-        return Err(RemoteTaskVerificationError {
-            code: "providerNotConfigured",
-            message: format!("Tripo 未配置（缺：{}）", provider.missing().join("、")),
-        });
-    }
+    // Querying an existing task sends no model identifier and must remain available
+    // while a mistaken model is being corrected (including unknown submissions).
     let api_key = provider
         .api_key
         .clone()

@@ -311,9 +311,8 @@ fn init_creates_structure_and_never_leaks_password() {
         data.join("manual.sqlite3").is_file(),
         "init 必须创建并迁移数据库（T03）：{out:?}"
     );
-    // T19 起为 schema v7（0007_release_manifest；迁移只追加，见 ADR-009）。
-    // 事实更新（T19 交付回合，2026-09-12）：版本号随新增迁移变化，断言口径不变。
-    assert!(out.stdout.contains("schema v7"), "{out:?}");
+    // PC-03A adds migration 0008; the CLI must report the embedded current schema.
+    assert!(out.stdout.contains("schema v8"), "{out:?}");
 
     // 敏感值不得出现在 stdout/stderr 与日志文件中。
     assert!(!out.stdout.contains(CANARY) && !out.stderr.contains(CANARY));

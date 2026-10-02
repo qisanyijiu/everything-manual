@@ -1,3 +1,5 @@
+import { LibraryBackLink } from "./library-navigation";
+import { useReaderDocuments } from "../viewer/reader-documents";
 /**
  * 物品概览（PRD §6.1.2 `/items/:itemId`）。
  *
@@ -6,8 +8,8 @@
  * 上传、准备、报价与生成通过向导进入；阅读入口连接真实发布版本列表。
  */
 
-import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router";
 
 import { describeError, isApiError } from "../../api/client";
 import { ConflictNotice } from "../../components/ConflictNotice";
@@ -18,14 +20,16 @@ import { assetContentUrl } from "../../api/endpoints";
 import { formatLocalDateTime } from "../../lib/format";
 import { readCurrentRevision } from "../../components/form";
 import { JobSnapshotNotice } from "./JobSnapshotNotice";
-import { useItemDetail, useItemDocuments, useItemPhotos, usePatchItem } from "./items";
-import { Icon } from "../../components/Icon";
+import { useItemDetail, useItemPhotos, usePatchItem } from "./items";
+import { useItemSummaries, WorkflowActions } from "./workflow";
 
 export function ItemOverviewPage() {
   const { itemId } = useParams();
   const id = itemId ?? "";
+  const location = useLocation();
+  const summaries = useItemSummaries([id], new URLSearchParams(location.search).get("documentId"));
   const itemQuery = useItemDetail(id);
-  const documentsQuery = useItemDocuments(id);
+  const documentsQuery = useReaderDocuments(id);
   const photosQuery = useItemPhotos(id);
   const patchMutation = usePatchItem();
   const notify = useNotify();
@@ -33,6 +37,12 @@ export function ItemOverviewPage() {
   const [conflict, setConflict] = useState<{ currentRevision: number | null } | null>(null);
 
   const item = itemQuery.data?.data;
+  useEffect(() => {
+    if (!location.hash.startsWith("#document-")) return;
+    const target = document.getElementById(location.hash.slice(1));
+    target?.focus();
+    target?.scrollIntoView?.({ block: "center" });
+  }, [location.hash, documentsQuery.data, itemQuery.data]);
   const effectiveEtag = etag ?? itemQuery.data?.etag ?? null;
 
   if (itemQuery.isPending) {
@@ -59,7 +69,7 @@ export function ItemOverviewPage() {
             <button type="button" onClick={() => void itemQuery.refetch()}>
               重试
             </button>
-            <Link to="/">返回资料库</Link>
+            <LibraryBackLink itemId={id} />
           </div>
         </div>
       </section>
@@ -111,7 +121,8 @@ export function ItemOverviewPage() {
           </p>
         </div>
         <div className="page__actions">
-          <Link className="button-primary" to={`/items/${item.id}/releases`}><Icon name="book" size={17} />打开说明书</Link>
+          <WorkflowActions itemId={id} summary={summaries.data?.[0]} unavailable={summaries.isError} loading={summaries.isPending} />
+          {summaries.isError && <button type="button" onClick={() => void summaries.refetch()}>重新读取处理状态</button>}
           <Link className="button" to={`/items/${item.id}/edit`}>
             编辑
           </Link>
@@ -154,7 +165,7 @@ export function ItemOverviewPage() {
         </div>
       </dl>
 
-      <section className="panel" aria-labelledby="documents-title">
+      <section id="documents" className="panel" aria-labelledby="documents-title">
         <h2 id="documents-title">说明书原件</h2>
         {documentsQuery.isPending && <Skeleton label="正在读取资料清单…" rows={2} />}
         {documentsQuery.isError && (
@@ -177,6 +188,7 @@ export function ItemOverviewPage() {
             {documentsQuery.data.documents.map((document) => (
               <li key={document.id}>
                 <span className="entity-list__title">{document.title}</span>
+                <Link id={`document-${document.id}`} className="button original-document-link" aria-label={`查看原件 · ${document.title}`} to={`/items/${item.id}/documents/${document.id}?page=1`}>查看原件</Link>
                 <span className="entity-list__meta">
                   添加于{" "}
                   {formatLocalDateTime(document.createdAt)}
@@ -249,7 +261,7 @@ export function ItemOverviewPage() {
       </section>
 
       <p>
-        <Link to="/">返回资料库</Link>
+        <LibraryBackLink itemId={id} />
       </p>
     </section>
   );

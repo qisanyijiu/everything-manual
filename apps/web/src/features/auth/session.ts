@@ -8,19 +8,24 @@
  * 401 的统一跳转由 [`SessionExpiryWatcher`]（shell 层）处理，避免每个调用点各自为政。
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 
 import { setCsrfToken, type ApiResource } from "../../api/client";
 import { fetchSession, login, logout, type SessionData } from "../../api/endpoints";
 
 export const SESSION_QUERY_KEY = ["session"] as const;
+// Non-secret lifetime fact scoped to a QueryClient, never persisted across reloads.
+const verifiedSessions = new WeakSet<QueryClient>();
+export function hasVerifiedSession(client: QueryClient): boolean { return verifiedSessions.has(client); }
 
 /** 会话恢复查询：401 交给会话恢复流程处理（不广播全局跳转），且不自动重试。 */
 export function useSession() {
+  const client = useQueryClient();
   return useQuery({
     queryKey: SESSION_QUERY_KEY,
     queryFn: async (): Promise<ApiResource<SessionData>> => {
       const session = await fetchSession();
+      verifiedSessions.add(client);
       setCsrfToken(session.data.csrfToken);
       return session;
     },
@@ -35,6 +40,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (password: string) => login({ password }),
     onSuccess: (session) => {
+      verifiedSessions.add(queryClient);
       setCsrfToken(session.data.csrfToken);
       queryClient.setQueryData(SESSION_QUERY_KEY, session);
       void queryClient.invalidateQueries({
@@ -50,6 +56,7 @@ export function useLogout() {
     mutationFn: () => logout(),
     onSettled: () => {
       // 无论服务端登出成功与否，本地凭据与查询缓存都不保留。
+      verifiedSessions.delete(queryClient);
       setCsrfToken(null);
       queryClient.removeQueries();
     },

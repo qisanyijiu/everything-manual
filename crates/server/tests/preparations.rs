@@ -1017,3 +1017,267 @@ async fn preparation_endpoints_require_session() {
         response.assert_contract_error(StatusCode::UNAUTHORIZED, "UNAUTHORIZED");
     }
 }
+
+// PC-03A: discovery is a read, and recommendation covers every bounded SQL batch.
+async fn discovery(app: &TestApp, cookie: &str, document: &str, query: &str) -> TestResponse {
+    app.call(
+        Method::GET,
+        &format!("/api/v1/documents/{document}/preparations{query}"),
+    )
+    .cookie(cookie)
+    .send()
+    .await
+}
+
+async fn new_preparation(
+    app: &TestApp,
+    cookie: &str,
+    csrf: &str,
+    document: &str,
+    sha: &str,
+) -> String {
+    let response = app
+        .call(
+            Method::POST,
+            &format!("/api/v1/documents/{document}/preparations"),
+        )
+        .cookie(cookie)
+        .csrf(csrf)
+        .json(&json!({"sourceSha256":sha,"createNew":true}))
+        .send()
+        .await;
+    assert_eq!(response.status, StatusCode::CREATED, "{}", response.text());
+    response.json()["data"]["id"].as_str().unwrap().to_owned()
+}
+
+async fn discovery_snapshot(app: &TestApp) -> String {
+    // All business aggregates relevant to discovery, including revision/timestamp/page bytes.
+    sqlx::query_scalar("SELECT json_object('preparations',(SELECT json_group_array(json_array(id,document_id,source_sha256,state,page_count,revision,updated_at,format_version)) FROM preparations),'pages',(SELECT json_group_array(json_array(preparation_id,page_number,image_asset_id,text_asset_id,viewport_json,updated_at)) FROM pages),'assets',(SELECT COUNT(*) FROM assets),'jobs',(SELECT COUNT(*) FROM jobs),'quotes',(SELECT COUNT(*) FROM quotes),'costs',(SELECT COUNT(*) FROM cost_ledger),'attempts',(SELECT COUNT(*) FROM provider_attempts))")
+        .fetch_one(app.state().database().pool()).await.unwrap()
+}
+
+#[tokio::test]
+async fn discovery_global_recommendation_pagination_security_and_zero_writes() {
+    let (app, cookie, csrf, item, doc, ready) = preparation_fixture("discovery-global").await;
+    let image = upload_page_image(&app, &cookie, &csrf, &item).await;
+    let put = put_page(
+        &app,
+        &cookie,
+        &csrf,
+        &ready,
+        1,
+        &page_body(None, Some(&image), viewport(800, 1000, 0)),
+        None,
+    )
+    .await;
+    assert_eq!(put.status, StatusCode::OK);
+    let etag = get_preparation(&app, &cookie, &ready)
+        .await
+        .header("etag")
+        .unwrap();
+    assert_eq!(
+        complete_preparation(&app, &cookie, &csrf, &ready, 1, Some(&etag))
+            .await
+            .status,
+        StatusCode::OK
+    );
+    let sha = get_preparation(&app, &cookie, &ready).await.json()["data"]["sourceSha256"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    // More than one repository batch; the ready row is outside both the first HTTP and SQL pages.
+    for index in 0..103 {
+        sqlx::query("INSERT INTO preparations(id,document_id,source_sha256,state,page_count,client_derived,revision,created_at,updated_at,format_version) VALUES(?,?,?,'preparing',NULL,0,1,?, ?,1)")
+            .bind(format!("fixture-{index:03}")).bind(&doc).bind(&sha).bind(2_000_000_000_000_i64+index).bind(2_000_000_000_000_i64+index)
+            .execute(app.state().database().pool()).await.unwrap();
+    }
+    let before = discovery_snapshot(&app).await;
+    let first = discovery(&app, &cookie, &doc, "?limit=1").await;
+    assert_eq!(first.status, StatusCode::OK, "{}", first.text());
+    assert_eq!(first.json()["data"].as_array().unwrap().len(), 1);
+    assert_eq!(first.json()["recommendedPreparationId"], ready);
+    assert_eq!(
+        first.json()["recommended"]["readiness"]["completedPages"],
+        json!([1])
+    );
+    assert_eq!(first.json()["recommended"]["readiness"]["compatible"], true);
+    let cursor = first.json()["nextCursor"].as_str().unwrap().to_owned();
+    let second = discovery(&app, &cookie, &doc, &format!("?limit=1&cursor={cursor}")).await;
+    assert_eq!(second.status, StatusCode::OK);
+    assert_ne!(
+        first.json()["data"][0]["preparation"]["id"],
+        second.json()["data"][0]["preparation"]["id"]
+    );
+    assert_eq!(second.json()["recommendedPreparationId"], ready);
+    assert_eq!(
+        before,
+        discovery_snapshot(&app).await,
+        "GET must not mutate business data"
+    );
+    app.call(
+        Method::GET,
+        &format!("/api/v1/documents/{doc}/preparations"),
+    )
+    .send()
+    .await
+    .assert_contract_error(StatusCode::UNAUTHORIZED, "UNAUTHORIZED");
+    for query in [
+        "?limit=0",
+        "?limit=101",
+        "?limit=no",
+        "?unknown=1",
+        "?cursor=invalid",
+    ] {
+        assert_eq!(
+            discovery(&app, &cookie, &doc, query).await.status,
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "{query}"
+        );
+    }
+    let (other, _) = bind_document(&app, &cookie, &csrf, &item).await;
+    assert_eq!(
+        discovery(&app, &cookie, &other, &format!("?cursor={cursor}"))
+            .await
+            .status,
+        StatusCode::UNPROCESSABLE_ENTITY
+    );
+    assert_eq!(
+        discovery(&app, &cookie, "missing-document", "")
+            .await
+            .status,
+        StatusCode::NOT_FOUND
+    );
+    app.call(
+        Method::POST,
+        &format!("/api/v1/documents/{doc}/preparations"),
+    )
+    .cookie(&cookie)
+    .json(&json!({"sourceSha256":sha,"createNew":true}))
+    .send()
+    .await
+    .assert_contract_error(StatusCode::FORBIDDEN, "CSRF_REJECTED");
+}
+
+#[tokio::test]
+async fn discovery_compatibility_legacy_assets_and_ranking_are_facts_not_age() {
+    let (app, cookie, csrf, item, doc, first) =
+        preparation_fixture("discovery-compatibility").await;
+    let sha = get_preparation(&app, &cookie, &first).await.json()["data"]["sourceSha256"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let image = upload_page_image(&app, &cookie, &csrf, &item).await;
+    let text = upload_page_text(&app, &cookie, &csrf, &item, "original v1 text").await;
+    for n in 1..=2 {
+        assert_eq!(
+            put_page(
+                &app,
+                &cookie,
+                &csrf,
+                &first,
+                n,
+                &page_body(Some(&text), Some(&image), viewport(800, 1000, 0)),
+                None
+            )
+            .await
+            .status,
+            StatusCode::OK
+        );
+    }
+    let empty = new_preparation(&app, &cookie, &csrf, &doc, &sha).await;
+    sqlx::query("UPDATE preparations SET format_version=NULL WHERE id IN (?,?)")
+        .bind(&first)
+        .bind(&empty)
+        .execute(app.state().database().pool())
+        .await
+        .unwrap();
+    let list = discovery(&app, &cookie, &doc, "").await.json();
+    assert_eq!(list["recommendedPreparationId"], first);
+    let empty_row = list["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|x| x["preparation"]["id"] == empty)
+        .unwrap();
+    assert_eq!(empty_row["readiness"]["reason"], "unsupportedFormat");
+    assert_eq!(list["recommended"]["readiness"]["formatVersion"], "v1");
+    assert_eq!(
+        list["recommended"]["preparation"]["pageCount"],
+        serde_json::Value::Null
+    );
+    // Explicit restart preserves the unverifiable legacy record and creates a marked v1 row.
+    let fresh = new_preparation(&app, &cookie, &csrf, &doc, &sha).await;
+    assert_ne!(fresh, empty);
+    assert_eq!(
+        discovery(&app, &cookie, &doc, "").await.json()["recommendedPreparationId"],
+        first,
+        "effective pages win over newer empty record"
+    );
+    // Same valid page count: updatedAt, then id descending.
+    for n in 1..=2 {
+        assert_eq!(
+            put_page(
+                &app,
+                &cookie,
+                &csrf,
+                &fresh,
+                n,
+                &page_body(None, Some(&image), viewport(800, 1000, 0)),
+                None
+            )
+            .await
+            .status,
+            StatusCode::OK
+        );
+    }
+    sqlx::query("UPDATE preparations SET updated_at=2000000000000 WHERE id IN (?,?)")
+        .bind(&first)
+        .bind(&fresh)
+        .execute(app.state().database().pool())
+        .await
+        .unwrap();
+    assert_eq!(
+        discovery(&app, &cookie, &doc, "").await.json()["recommendedPreparationId"],
+        std::cmp::max(&first, &fresh).as_str()
+    );
+    sqlx::query("UPDATE preparations SET format_version=2 WHERE id=?")
+        .bind(&fresh)
+        .execute(app.state().database().pool())
+        .await
+        .unwrap();
+    assert_eq!(
+        get_preparation(&app, &cookie, &fresh).await.json()["data"]["readiness"]["reason"],
+        "unsupportedFormat"
+    );
+    sqlx::query("UPDATE pages SET viewport_json=NULL WHERE preparation_id=? AND page_number=1")
+        .bind(&first)
+        .execute(app.state().database().pool())
+        .await
+        .unwrap();
+    assert_eq!(
+        get_preparation(&app, &cookie, &first).await.json()["data"]["readiness"]["reason"],
+        "invalidPages"
+    );
+    sqlx::query("UPDATE pages SET viewport_json=? WHERE preparation_id=?")
+        .bind(viewport(800, 1000, 0).to_string())
+        .bind(&first)
+        .execute(app.state().database().pool())
+        .await
+        .unwrap();
+    // Missing file cannot be advertised as reusable even when blob storage_state still says stored.
+    let blob: String = sqlx::query_scalar("SELECT blob_id FROM assets WHERE id=?")
+        .bind(&image)
+        .fetch_one(app.state().database().pool())
+        .await
+        .unwrap();
+    let path =
+        everything_manual::assets::blob_store::blob_path(&app.state().settings().data_dir, &blob);
+    std::fs::remove_file(path).unwrap();
+    let bad = get_preparation(&app, &cookie, &first).await;
+    assert_eq!(bad.json()["data"]["readiness"]["reason"], "missingAssets");
+    assert_eq!(bad.json()["data"]["readiness"]["completedPageCount"], 0);
+    assert_eq!(
+        discovery(&app, &cookie, &doc, "").await.json()["recommendedPreparationId"],
+        serde_json::Value::Null
+    );
+}

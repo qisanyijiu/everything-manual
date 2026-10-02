@@ -413,14 +413,14 @@ async function spaNavigate(page: Page, target: string): Promise<void> {
 
 test.beforeAll(async () => {
   test.setTimeout(900_000);
-  buildTestServerBinary();
+  if (!process.env.EM_E2E_SERVER_BINARY) buildTestServerBinary();
   fixture = new LocalFixture();
   fixture.state.manualMode = "success";
   fixture.state.submitMode = "success";
   fixture.state.modelMode = "valid";
   fixture.state.manualDelayMs = 0;
   await fixture.start();
-  backend = new TestBackend("t19");
+  backend = new TestBackend("t19", process.env.EM_E2E_SERVER_BINARY);
   await backend.start(fixture);
   fs.mkdirSync(`${REPO_ROOT}/artifacts/web-mvp/t19-rd`, { recursive: true });
 });
@@ -634,7 +634,7 @@ test("T19-3 引用跳到正确 1-based 页（页图与页文字一致）", async
   // 步骤的出处按钮跳到真实页码（1-based；0 会显示成"第 0 页"或跳到末页）。
   const pageButton = page
     .getByTestId("steps-panel")
-    .getByRole("button", { name: /^第 \d+ 页$/ })
+    .locator(".step-evidence button")
     .first();
   await expect(pageButton).toBeVisible();
   const evidencePage = Number(/第 (\d+) 页/.exec((await pageButton.textContent()) ?? "")?.[1] ?? "0");
@@ -692,7 +692,7 @@ test("T19-4 并发冲突 412：提示当前 revision 且刷新后恢复（真实
   await captureTo("t19-rd", page, "04-conflict-412");
 
   // 刷新后按最新 revision 重新载入（外部修改可见），可继续操作。
-  await page.getByTestId("conflict-panel").getByRole("button", { name: "刷新草稿" }).click();
+  await page.getByTestId("conflict-panel").getByRole("button", { name: "核对最新版本" }).click();
   await expect(page.getByTestId("conflict-panel")).toBeHidden();
   await expect(page.getByTestId(`knowledge-status-${draft.parts[0]?.id ?? ""}`)).toContainText(
     "已确认",

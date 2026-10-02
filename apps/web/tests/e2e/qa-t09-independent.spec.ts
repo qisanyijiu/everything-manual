@@ -215,7 +215,7 @@ test("续传：关闭标签页后用新标签页继续，只补缺失页且不�
   const firstRunPuts = recordPagePuts(page);
   await page.goto(`/items/${seed.itemId}/import/prepare`);
   const preparationId = await startPreparation(page);
-  await expect(page.getByTestId("prepare-failures")).toContainText("第 2 页失败", {
+  await expect(page.locator(".prepare-failures")).toContainText("第 2 页：QA 注入中断", {
     timeout: 60_000,
   });
   expect(firstRunPuts, "第一轮按 1-based 页序处理 1、2").toEqual([1, 2]);
@@ -242,7 +242,8 @@ test("续传：关闭标签页后用新标签页继续，只补缺失页且不�
     }
   });
   await resumed.goto(`/items/${seed.itemId}/import/prepare`);
-  await expect(resumed.getByTestId("prepare-start")).toHaveText("开始准备");
+  await expect(resumed.getByRole("region", { name: "已保存的准备记录" }).locator(`input[value="${preparationId}"]`)).toBeChecked();
+  await expect(resumed.getByTestId("prepare-start")).toHaveText("继续准备，仅补齐缺页");
   await resumed.getByTestId("prepare-start").click();
   await expect(resumed.getByTestId("prepare-seal")).toBeEnabled({ timeout: 60_000 });
 
@@ -265,7 +266,8 @@ test("续传：关闭标签页后用新标签页继续，只补缺失页且不�
   const attemptsBefore = dbCount("provider_attempts");
   await resumed.getByTestId("prepare-seal").click();
   await expect(resumed.getByTestId("prepare-sealed")).toBeVisible({ timeout: 30_000 });
-  await expect(resumed.getByTestId("prepare-sealed")).toContainText("clientDerived");
+  await expect(resumed.getByTestId("prepare-sealed")).toHaveText("准备完成 · 2 页");
+  await expect(resumed.getByText(/页图由本机浏览器生成（clientDerived）/)).toBeVisible();
 
   const sealed = await fetchPreparation(request, preparationId);
   expect(sealed.state).toBe("ready");
@@ -488,6 +490,7 @@ test("BUG-002 复验：通知可见时顶栏指针/键盘可用（1280/390；并
   }
 
   // 把"第一帧 vs 稳定态"的命中记录留在 QA 证据目录（定位轮询窗口的残留）。
+  fs.mkdirSync(path.join(REPO_ROOT, "artifacts", "web-mvp", "t09-qa"), { recursive: true });
   fs.writeFileSync(
     path.join(REPO_ROOT, "artifacts", "web-mvp", "t09-qa", "bug002-hit-samples.json"),
     JSON.stringify(transientRecords, null, 2),
@@ -518,17 +521,20 @@ test("逐页进度（第 n / N 页）、单 canvas、beforeunload 与取消停�
     }) as typeof document.createElement;
   });
 
-  // 放慢资产上传，留出稳定的观测窗口（只在网络层延迟，不改生产代码）。
+  // Hold a real in-flight upload until stop: keeps the progress/unload observation
+  // inside the active operation without fabricating a successful response.
+  let releaseUpload!: () => void;
+  const uploadGate = new Promise<void>((resolve) => { releaseUpload = resolve; });
   await page.route("**/items/*/assets", async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    await route.continue();
+    await uploadGate;
+    await route.continue().catch(() => undefined); // The user may already have aborted it.
   });
 
   const puts = recordPagePuts(page);
   await page.goto(`/items/${seed.itemId}/import/prepare`);
   await startPreparation(page);
 
-  await expect(page.getByTestId("prepare-status")).toContainText(/第 \d+ \/ 2 页/, {
+  await expect(page.getByText(/^正在处理第 \d+ \/ 2 页$/)).toBeVisible({
     timeout: 60_000,
   });
   const pageText = await page.locator("body").innerText();
@@ -551,7 +557,9 @@ test("逐页进度（第 n / N 页）、单 canvas、beforeunload 与取消停�
 
   const putsBeforeCancel = puts.length;
   await page.getByTestId("prepare-cancel").click();
-  await expect(page.getByTestId("prepare-cancel")).toBeDisabled();
+  releaseUpload();
+  await expect(page.getByText("已停止，已完成页已保留。可稍后继续准备。")).toBeVisible();
+  await expect(page.getByTestId("prepare-cancel")).toHaveCount(0);
   await page.waitForTimeout(1500);
   expect(
     puts.length,
@@ -591,10 +599,12 @@ test("加密与 101 页 PDF：明确拒绝、零 preparation 请求、SQLite 各
   };
 
   const writes: string[] = [];
+  const discoveryReads: string[] = [];
   page.on("request", (event) => {
     const pathname = new URL(event.url()).pathname;
     if (/\/preparations(\/|$)/.test(pathname)) {
-      writes.push(`${event.method()} ${pathname}`);
+      if (event.method() === "GET") discoveryReads.push(`${event.method()} ${pathname}`);
+      else writes.push(`${event.method()} ${pathname}`);
     }
   });
 
@@ -605,9 +615,10 @@ test("加密与 101 页 PDF：明确拒绝、零 preparation 请求、SQLite 各
     await page.getByTestId("prepare-start").click();
     await expect(page.getByText(testCase.expected)).toBeVisible({ timeout: 30_000 });
     expect(writes, `${testCase.fixture}：拒绝路径不得创建 preparation / 页记录`).toEqual([]);
-    await expect(page.getByTestId("prepare-seal")).toBeDisabled();
+    await expect(page.locator('[data-testid="prepare-seal"]:enabled')).toHaveCount(0);
   }
 
+  console.log(`Preparation discovery GETs (read-only): ${JSON.stringify(discoveryReads)}`);
   expect(dbCount("preparations") - before.preparations, "不得创建 preparation 行").toBe(0);
   expect(dbCount("pages") - before.pages, "不得创建页行").toBe(0);
   expect(dbCount("jobs") - before.jobs, "不得进入 jobs").toBe(0);
