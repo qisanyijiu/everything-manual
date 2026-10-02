@@ -1789,6 +1789,22 @@
         ],
         "type": "object"
       },
+      "ManualAiModelsResponse": {
+        "description": "Explicit discovery using the active Manual AI configuration; IDs only, no upstream metadata.",
+        "properties": {
+          "data": {
+            "description": "Valid model IDs, sorted and deduplicated; selection does not save configuration.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
       "ManualAiSendScopeDto": {
         "description": "发送给说明书 AI 的内容。",
         "properties": {
@@ -6870,6 +6886,83 @@
             "sessionCookie": []
           }
         ],
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/settings/providers/manual-ai/models": {
+      "post": {
+        "description": "仅使用当前生效配置 GET 基础地址/models；待重启与页面未保存配置不参与。无自动重试、无重定向、10 秒及 256 KiB 上限；仅返回最多 1000 个合法模型 ID，不保存或选择模型。需要登录与 CSRF/Origin 校验。",
+        "operationId": "read_manual_ai_models",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualAiModelsResponse"
+                }
+              }
+            },
+            "description": "模型 ID 列表；no-store"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "生效配置无密钥"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "生效地址无效"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "上游失败或返回不可安全使用的模型列表；不回显上游正文"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "显式读取说明书 AI 可用模型",
         "tags": [
           "settings"
         ]

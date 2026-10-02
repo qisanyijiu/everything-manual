@@ -63,6 +63,7 @@ use super::{
         settings::status,
         settings::get_providers,
         settings::put_providers,
+        settings::read_manual_ai_models,
         items::list_items,
         items::summaries,
         items::create_item,

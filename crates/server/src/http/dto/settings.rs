@@ -130,6 +130,13 @@ pub struct ProviderSettingsResponse {
     pub data: ProviderSettingsData,
 }
 
+/// Explicit discovery using the active Manual AI configuration; IDs only, no upstream metadata.
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ManualAiModelsResponse {
+    /// Valid model IDs, sorted and deduplicated; selection does not save configuration.
+    pub data: Vec<String>,
+}
+
 // 不派生 Debug/Serialize：写入 DTO 只用于瞬时输入，不可进入日志或读取响应。
 #[derive(Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

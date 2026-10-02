@@ -685,6 +685,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/providers/manual-ai/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 显式读取说明书 AI 可用模型
+         * @description 仅使用当前生效配置 GET 基础地址/models；待重启与页面未保存配置不参与。无自动重试、无重定向、10 秒及 256 KiB 上限；仅返回最多 1000 个合法模型 ID，不保存或选择模型。需要登录与 CSRF/Origin 校验。
+         */
+        post: operations["read_manual_ai_models"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings/status": {
         parameters: {
             query?: never;
@@ -1349,6 +1369,11 @@ export interface components {
         ManualAiConfigDto: {
             model: string;
             promptVersion: string;
+        };
+        /** @description Explicit discovery using the active Manual AI configuration; IDs only, no upstream metadata. */
+        ManualAiModelsResponse: {
+            /** @description Valid model IDs, sorted and deduplicated; selection does not save configuration. */
+            data: string[];
         };
         /** @description 发送给说明书 AI 的内容。 */
         ManualAiSendScopeDto: {
@@ -4315,6 +4340,71 @@ export interface operations {
             };
             /** @description 持久化失败 */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    read_manual_ai_models: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 模型 ID 列表；no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualAiModelsResponse"];
+                };
+            };
+            /** @description 未登录 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description CSRF/Origin 校验失败 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 生效配置无密钥 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 生效地址无效 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 上游失败或返回不可安全使用的模型列表；不回显上游正文 */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

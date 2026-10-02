@@ -1,9 +1,9 @@
 work_id: prd-completion
-phase: qa_running
+phase: rd_running
 request_revision: 1
 prd_revision: 2
 ui_revision: 2
-current_tasks: [FULL-VALIDATION]
+current_tasks: [CHROME-LIVE-WIIU]
 accepted_tasks:
   - {task_id: PC-01, prd_revision: 1, qa_round: 1, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC-001, AC-PC-002, AC-PC-003, AC-PC-004, AC-PC-005, AC-PC-006, AC-PC-007, AC-PC-008, AC-PC-009, AC-PC-010], status: accepted}
   - {task_id: PC-06, prd_revision: 2, qa_round: 15, report: llmdoc/requirements/prd-completion/qa-report.md, accepted_ac_ids: [AC-PC6-001, AC-PC6-002, AC-PC6-003, AC-PC6-004, AC-PC6-005, AC-PC6-006, AC-PC6-007, AC-PC6-008, AC-PC6-009, AC-PC6-010], status: accepted}
@@ -41,4 +41,4 @@ blocked_reason: null
 resume_phase: null
 blocked_on: null
 unblock_condition: null
-next_action: "QA18 Chrome受影响回归、Edge138、normal T22三浏览器、AC061/bootstrap及AC062同会话100页+十切换已通过。Firefox原库存134目标已通过含9wire及4新增nativeZIP等价，2视口失败/1串行跳过定向重验，heap/zoom工具语义诊断中；新增PC05等浏览器覆盖仍待补。66AC台账5单项完整通过，非fullPASS。T23价格预算、Linux环境仍阻塞；新普通包尚未部署用户预览。"
+next_action: "仅Chrome真实Wii U闭环。用户已确认LLM内部免费、9000 credits任务额度和Keychain许可。QA18正常包8082首调用已真实执行：LLM400模型名无效、Tripo上传401鉴权拒绝，尚无模型生成提交；失败任务已取消并保留。用户在新版设置核对Tripo key/区域，唯一RD新增显式读取网关模型按钮；只做相关验证后更新普通包，继续实际样本。"

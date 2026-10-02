@@ -6,6 +6,7 @@ import { describeError, isApiError } from "../../api/client";
 import { fetchProviderSettings, saveProviderSettings, type ProviderSettingsData, type ProviderSettingsWrite, type ProviderView } from "../../api/endpoints";
 import { Skeleton } from "../../components/Skeleton";
 import { HIDDEN_MODEL_MESSAGE, isSuspectedCredentialModel, MODEL_FIELD_MESSAGE } from "./model-guard";
+import { ManualAiModels } from "./ManualAiModels";
 
 type Name = "tripo" | "manualAi";
 type Edit = { baseUrl: string; model: string; keyAction: "keep" | "replace" | "clear"; apiKey: string; restore: boolean; modelNeedsCorrection?: boolean; clearModel?: boolean };
@@ -142,6 +143,7 @@ export function ProviderSettingsForm() {
             {edit.restore ? <div id={`api-${name}.model`} tabIndex={-1} className="api-restore-note" aria-describedby={fields[`${name}.model`] ? `api-${name}-restore-error` : undefined}><p>保存后恢复部署配置</p><p>将撤销本供应商的网页地址、模型和密钥覆盖；另一家不受影响；重启后使用部署配置。</p>{fields[`${name}.model`] && <p id={`api-${name}-restore-error`} className="field-error">{fields[`${name}.model`]}</p>}<button type="button" onClick={() => setRestore(name, false)}>取消恢复</button></div> : <>
               {edit.modelNeedsCorrection && !edit.clearModel && <p id={`api-${name}-model-correction-hint`} className="api-impact">已保存的模型疑似误填密钥，已隐藏；请填写正确模型</p>}
               <div className="api-editor-grid">{field("baseUrl", `${title} Base URL`, "url", name === "tripo" ? "填写兼容 Tripo v3 的基础地址，不是某个生成接口的完整地址。" : "填写兼容 Responses 的基础地址，不要填写完整的 /responses 接口地址。")}{field("model", `${title} 模型`, "text", "填写模型名称。API 密钥请在下方密钥操作中选择『替换』后输入。可留空；生成仍要求模型与服务端价格目录匹配。保存不会验证模型或余额。")}</div>
+              {name === "manualAi" && !loading && <ManualAiModels keyConfigured={active.keyConfigured} pending={data.pending} onSelect={(model) => { update("manualAi", { model }); pendingFocus.current = "manualAi.model"; }} />}
               {edit.modelNeedsCorrection && <div className="api-model-correction">
                 {edit.clearModel ? <><p role="status">待清空模型，保存后生效</p><button type="button" onClick={() => { update(name, { clearModel: false }); pendingFocus.current = `${name}.model`; }}>撤销清空</button></> : clearConfirm === name ? <><p>仅清空模型，密钥设置保留。保存并重启后，补齐模型前不能生成。</p><div className="form-actions"><button id={`api-${name}-cancel-clear`} type="button" onClick={() => { setClearConfirm(null); pendingFocus.current = `${name}.model`; }}>取消</button><button type="button" onClick={() => { update(name, { model: "", clearModel: true }); pendingFocus.current = `${name}.model`; }}>确认清空模型</button></div></> : <button type="button" onClick={() => setClearConfirm(name)}>清空误填模型</button>}
               </div>}

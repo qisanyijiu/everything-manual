@@ -20,6 +20,44 @@ pub fn routes() -> Router<AppState> {
             "/settings/providers",
             routing::get(get_providers).put(put_providers),
         )
+        .route(
+            "/settings/providers/manual-ai/models",
+            routing::post(read_manual_ai_models),
+        )
+}
+
+#[utoipa::path(post, path = "/api/v1/settings/providers/manual-ai/models", tag = "settings",
+    summary = "显式读取说明书 AI 可用模型",
+    description = "仅使用当前生效配置 GET 基础地址/models；待重启与页面未保存配置不参与。无自动重试、无重定向、10 秒及 256 KiB 上限；仅返回最多 1000 个合法模型 ID，不保存或选择模型。需要登录与 CSRF/Origin 校验。",
+    security(("sessionCookie" = [])),
+    responses((status = 200, description = "模型 ID 列表；no-store", body = super::dto::ManualAiModelsResponse),
+    (status = 401, description = "未登录", body = super::dto::ApiErrorResponse),
+    (status = 403, description = "CSRF/Origin 校验失败", body = super::dto::ApiErrorResponse),
+    (status = 409, description = "生效配置无密钥", body = super::dto::ApiErrorResponse),
+    (status = 422, description = "生效地址无效", body = super::dto::ApiErrorResponse),
+    (status = 502, description = "上游失败或返回不可安全使用的模型列表；不回显上游正文", body = super::dto::ApiErrorResponse)))]
+pub async fn read_manual_ai_models(
+    State(state): State<AppState>,
+    request_id: super::error::RequestId,
+) -> Response {
+    // Snapshot the active, already decrypted configuration. Pending/saved edits are never used.
+    let provider = state
+        .provider_config()
+        .read()
+        .await
+        .active_providers()
+        .manual_ai
+        .clone();
+    match crate::providers::manual_ai::models::read_models(&provider).await {
+        Ok(data) => (
+            [(axum::http::header::CACHE_CONTROL, "no-store")],
+            Json(super::dto::ManualAiModelsResponse { data }),
+        )
+            .into_response(),
+        Err(error) => error
+            .with_header("cache-control", "no-store")
+            .render(&request_id),
+    }
 }
 
 /// `GET /api/v1/settings/status`

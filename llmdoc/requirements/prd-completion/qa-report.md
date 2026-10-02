@@ -750,3 +750,14 @@ root独立执行私有真实wire适配 **3/3PASS15.007s +4/4PASS16.631s +2/2PASS
 独立作者准备、root在实际headed Chrome154.0.8037.93执行 **1/1PASS47.327s**，0skip/retry；新证据 `ac062-combined-prepared/attempt1/`，先前PDF局部结果不改。原PDF/lazy73条断言保留，新增原T18十轮资源/堆观察体。同一浏览器context内精确100页处理、第4页取消后保留1..3、恢复仅补4..100、显式封存ready100；最多1个有尺寸canvas/编码/PUT，首屏不加载PDF/3D引擎；之后两个真实服务端草稿往返10次，每轮活动资源1/1/1且实际deleteBuffer/deleteTexture发生。
 
 root重算保留堆首末三样本中位数比 **1.0849627583 <1.5原门槛**，10个原始样本完整；12context、等待后lost10，最终卸载11/11几何体/材质/纹理/模型、modelsAlive0。该比值并非内存绝对不增长或无限时长无泄漏的证明。实际查看ready100截图、12文本已知canary匹配0；全源/镜像/spec/PDF/bin/browser守卫通过，外转发0，测试只用本机合成fixture。原memoryObservation保留初始化pending文字，后续完成字段/原始trend及独立review明确实际通过，不改写历史输出。台账AC062在具名Chrome完整条款范围改为AC_FULLPASS，AC063其他浏览器的资源/交互门槛另列；当前5个个别AC完整通过，不表示full release。
+
+
+## 2026-10-03 用户指定Chrome单浏览器真实Wii U流程
+
+用户明确取消其他浏览器验证要求，独立真实样本成为当前目标；旧Firefox/Edge失败/准备工件保留，不继续扩展矩阵，不把其未验状态涂为PASS。用户确认LLM内部免费额度，并在实际30 credits /0 USD报价后授权本任务最多9000 credits（用完后再审批）。新普通QA18包2ccceb9d运行于独立8082实例，通过现有密文和用户macOS钥匙串授权启动；SQLite在线backup+APFS克隆原资料，原8080/5173及原data-dir不改。
+
+Chrome154.0.8037.93真实读取Wii U34页ready及front/back两照片，原件/全部页资产hash本轮核验。当前34页有文字层，所以实际quote发送34页提取文字、7个LLM批次，不发送页图；Tripo发送两张原始实拍。页面真实报价3000 creditMinor /0 usdMicros后显式提交job01a0fd7f-0528-7440-a34d-d75279cd18c4返回202。
+
+首次真实任务未完成：LLM7批均HTTP400明确拒绝模型GPT-6-Astra并提示GET/v1/models；Tripo照片上传HTTP401/code2/Invalid API key，付费建模提交从未运行，远端task ID为0。已通过UI取消这条失败任务，保留全部错误/attempt/账本；初始30 credits仍显示reserved且actual=null，不能篡改为实际账单0，未读取账户账单。现无有效生成结果，不称真实端到端PASS。证据var/prd-completion/chrome-live-wiiu/下quote/submission/status/first-attempt-result。
+
+协议只读核对：POST v3/files、Bearer、multipart字段file与官方文档一致，401可能无效key或全球.ai/中国.com区域错配，不据此改上传协议；已请用户在新版设置核对。唯一RD正在新增显式读取已生效网关可用模型列表的受保护设置操作，避免继续盲猜模型名。当前仅推进该修正所需的Chrome与局部检查，旧全矩阵不再作为本次样本闭环门槛。

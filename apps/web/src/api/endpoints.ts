@@ -51,6 +51,7 @@ export type PhotoList = OkBody<"list_photos">;
 export type SettingsStatusData = OkData<"status">;
 export type ProviderSettingsData = OkData<"get_providers">;
 export type ProviderSettingsWrite = JsonRequest<"put_providers">;
+export type ManualAiModels = OkData<"read_manual_ai_models">;
 export type ProviderView = components["schemas"]["ProviderView"];
 export type LivenessData = OkData<"live">;
 export type ReadinessData = OkData<"ready">;
@@ -118,6 +119,9 @@ export function fetchSettingsStatus(): Promise<ApiResource<SettingsStatusData>> 
 
 export function fetchProviderSettings(): Promise<ApiResource<ProviderSettingsData>> {
   return requestData<ProviderSettingsData>(`${API_PREFIX}/settings/providers`, { cache: "no-store" });
+}
+export function readManualAiModels(): Promise<ApiResource<ManualAiModels>> {
+  return requestData<ManualAiModels>(`${API_PREFIX}/settings/providers/manual-ai/models`, { method: "POST", cache: "no-store" });
 }
 export function saveProviderSettings(body: ProviderSettingsWrite): Promise<ApiResource<ProviderSettingsData>> {
   return requestData<ProviderSettingsData>(`${API_PREFIX}/settings/providers`, { method: "PUT", body, cache: "no-store" });

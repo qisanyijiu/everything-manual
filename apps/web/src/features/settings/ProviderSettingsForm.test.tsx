@@ -33,6 +33,23 @@ async function replaceKey() {
 }
 
 describe("API 配置保存与秘密生命周期", () => {
+  it("模型发现只使用独立读取入口，选择填入但直到明确保存才提交", async () => {
+    const calls = setup(() => jsonResponse({ data: initial }), (url) => url.endsWith("/manual-ai/models") ? jsonResponse({ data: ["gateway/supported-model"] }) : jsonResponse({ data: { ...initial, pending: true } }));
+    const model = await screen.findByLabelText("说明书 AI 模型");
+    fireEvent.change(screen.getByLabelText("说明书 AI Base URL"), { target: { value: "https://unsaved.example/v1" } });
+    const card = screen.getByRole("region", { name: "说明书 AI" });
+    fireEvent.click(within(card).getByRole("button", { name: "读取可用模型" }));
+    const select = await screen.findByRole("combobox", { name: "可用的说明书 AI 模型" });
+    expect(model).toHaveValue("manual-model"); expect(calls).toHaveLength(0);
+    const discovery = vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith("/manual-ai/models"));
+    expect(discovery).toHaveLength(1); expect(discovery[0]?.[1]?.body).toBeUndefined();
+    fireEvent.change(select, { target: { value: "gateway/supported-model" } });
+    expect(model).toHaveValue("gateway/supported-model"); expect(model).toHaveFocus();
+    expect(calls).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "保存配置" }));
+    await waitFor(() => expect(calls).toHaveLength(1));
+    expect(JSON.parse(String(calls[0]?.body)).manualAi).toMatchObject({ model: "gateway/supported-model", baseUrl: "https://unsaved.example/v1", keyAction: "keep" });
+  });
   it("读取失败不创建可保存的猜测表单", async () => {
     const calls = setup(() => jsonResponse({}), () => errorResponse(500, "INTERNAL_ERROR", "读取失败"));
     expect(await screen.findByRole("button", { name: "重新读取" })).toBeInTheDocument();
