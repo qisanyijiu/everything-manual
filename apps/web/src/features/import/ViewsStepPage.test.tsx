@@ -58,7 +58,7 @@ describe("视图排列页的缺项提示", () => {
 
     await waitFor(() => expect(screen.queryByText("缺少 front（正面）视图照片。")).toBeNull());
     expect(screen.queryByText(/缺少侧面视图/)).toBeNull();
-    expect(screen.getByTestId("arrangement-unsaved").textContent).toContain("尚未保存");
+    expect(screen.getByTestId("arrangement-unsaved").textContent).toContain("自动保存");
   });
 
   it("按建议填入空槽后也立即更新缺项提示", async () => {

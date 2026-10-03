@@ -11,7 +11,7 @@
  * - 「保存排列」：一次性提交全部槽位（`PUT /photos/arrangement`），互换视图不会冲突。
  */
 
-import { useEffect, useMemo, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { describeError } from "../../api/client";
@@ -98,7 +98,7 @@ export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: View
   }, [saved, dirty]);
   useEffect(() => {
     if (saveRef !== undefined) {
-      saveRef.current = dirty ? save : null;
+      saveRef.current = dirty ? saveNow : null;
     }
     return () => { if (saveRef !== undefined) { saveRef.current = null; } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,12 +123,20 @@ export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: View
   const trayMain = tray.filter((card) => !isRejected(card)).sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0));
   const trayRejected = tray.filter(isRejected);
 
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slotsRef = useRef(slots);
   const update = (next: Slots): void => {
     setSlots(next);
+    slotsRef.current = next;
     const isDirty = !sameArrangement(next, saved);
     setDirty(isDirty);
     onSlotsChange?.(new Set(VIEW_ORDER.filter((view) => next[view] !== null)));
+    if (isDirty) {
+      if (autoSaveTimer.current !== null) { clearTimeout(autoSaveTimer.current); }
+      autoSaveTimer.current = setTimeout(() => { autoSaveTimer.current = null; void autoSave(); }, 800);
+    }
   };
+  useEffect(() => () => { if (autoSaveTimer.current !== null) { clearTimeout(autoSaveTimer.current); } }, []);
   const place = (assetId: string, target: DropTarget): void => {
     const card = cards.get(assetId);
     if (card !== undefined) {
@@ -245,20 +253,24 @@ export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: View
     await queryClient.invalidateQueries({ queryKey: ["view-candidates", itemId] });
   }
 
-  async function save(): Promise<void> {
+  async function saveNow(showNotice = true): Promise<void> {
+    if (autoSaveTimer.current !== null) { clearTimeout(autoSaveTimer.current); autoSaveTimer.current = null; }
     setBusy("正在保存排列…");
     setError(null);
     try {
-      await arrangePhotos(itemId, slotsPayload(slots));
+      await arrangePhotos(itemId, slotsPayload(slotsRef.current));
       setDirty(false);
-      onSlotsChange?.(new Set(VIEW_ORDER.filter((view) => slots[view] !== null)));
-      notify("视图排列已保存。");
+      onSlotsChange?.(new Set(VIEW_ORDER.filter((view) => slotsRef.current[view] !== null)));
+      if (showNotice) { notify("视图排列已保存。"); }
       await refresh();
     } catch (failure) {
       setError(`保存失败：${describeError(failure).message}`);
     } finally {
       setBusy(null);
     }
+  }
+  async function autoSave(): Promise<void> {
+    if (!sameArrangement(slotsRef.current, saved)) { await saveNow(false); }
   }
 
   const renderCard = (card: Card, where: "tray" | ViewSlot) => {
@@ -322,12 +334,12 @@ export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: View
           <button type="button" className="button" onClick={() => update(autoFill(slots, candidates))} disabled={busy !== null || candidates.length === 0} data-testid="autofill">
             按建议填入空槽
           </button>
-          <button type="button" className="button-primary" onClick={() => void save()} disabled={busy !== null || !dirty} data-testid="save-arrangement">
-            保存排列
+          <button type="button" className="button" onClick={() => void saveNow()} disabled={busy !== null || !dirty} data-testid="save-arrangement">
+            立即保存
           </button>
         </div>
       </div>
-      {dirty && <p className="status-note" data-testid="arrangement-unsaved" role="status">排列尚未保存：点「保存排列」或导航到下一步时自动保存。</p>}
+      {dirty && <p className="status-note" data-testid="arrangement-unsaved" role="status">排列有修改，将在操作停止后自动保存…</p>}
       <p className="field__hint">
         拖动图片到下方槽位；拖到已占用的槽会互换；拖回候选区即移出。也可以用每张图下方的下拉框完成同样的操作。建议视图来自说明书 AI，只作参考。
       </p>
