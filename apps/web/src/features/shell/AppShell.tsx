@@ -18,6 +18,7 @@ import { getItem } from "../../api/endpoints";
 import { itemKeys } from "../library/items";
 import { useLogout } from "../auth/session";
 import { Icon } from "../../components/Icon";
+import { JobCompletionWatcher } from "../jobs/JobCompletionWatcher";
 
 export function AppShell() {
   const location = useLocation();
@@ -87,6 +88,7 @@ export function AppShell() {
           <Outlet />
         </RouteErrorBoundary>
       </main>
+      <JobCompletionWatcher />
     </div>
   );
 }

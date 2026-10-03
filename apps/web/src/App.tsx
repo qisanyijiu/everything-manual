@@ -64,6 +64,18 @@ const ReleaseReaderPage = lazy(() =>
   })),
 );
 
+/** 生成结果预览（含 3D）与生成历史：与阅读器同一懒加载边界。 */
+const GenerationResultPage = lazy(() =>
+  import("./features/jobs/GenerationResultPage").then((module) => ({
+    default: module.GenerationResultPage,
+  })),
+);
+const GenerationHistoryPage = lazy(() =>
+  import("./features/jobs/GenerationHistoryPage").then((module) => ({
+    default: module.GenerationHistoryPage,
+  })),
+);
+
 /**
  * Query 默认值（PRD UI-002「不自动重放已失败请求」）：
  * 不做自动重试，也不因窗口聚焦重新请求；网络错误由页面显式「重试」触发。
@@ -87,11 +99,11 @@ export function App() {
   const [queryClient] = useState(createAppQueryClient);
   return (
     <QueryClientProvider client={queryClient}>
-      <NotificationProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <NotificationProvider>
           <AppRoutes />
-        </BrowserRouter>
-      </NotificationProvider>
+        </NotificationProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }
@@ -130,6 +142,22 @@ export function AppRoutes() {
             <Route path="/items/:itemId/import/confirm" element={<ConfirmStepPage />} />
             <Route path="/jobs" element={<JobsListPage />} />
             <Route path="/jobs/:jobId" element={<JobDetailPage />} />
+            <Route
+              path="/jobs/:jobId/result"
+              element={
+                <Suspense fallback={<Skeleton label="正在加载生成结果…" rows={4} />}>
+                  <GenerationResultPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/items/:itemId/generations"
+              element={
+                <Suspense fallback={<Skeleton label="正在加载生成历史…" rows={3} />}>
+                  <GenerationHistoryPage />
+                </Suspense>
+              }
+            />
             <Route
               path="/items/:itemId/drafts/:draftId/review"
               element={

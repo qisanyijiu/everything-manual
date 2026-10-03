@@ -83,6 +83,9 @@ pub enum AssetPurpose {
     Model,
     /// 发布冻结的 manifest 资产（T19 / REQ-035）：不可变、内容寻址、归属物品。
     ReleaseManifest,
+    /// 分件模型（ADR-042）：与草稿模型 revision **同一坐标系**的多节点 GLB，
+    /// 只作交互附件（高亮/动作/姿势），不是新的模型版本，不改变热点锚点身份。
+    ModelParts,
 }
 
 impl AssetPurpose {
@@ -94,6 +97,7 @@ impl AssetPurpose {
             Self::PageText => "page_text",
             Self::Model => "model",
             Self::ReleaseManifest => "release_manifest",
+            Self::ModelParts => "model_parts",
         }
     }
 }

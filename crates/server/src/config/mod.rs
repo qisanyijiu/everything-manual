@@ -273,6 +273,10 @@ impl Limits {
 pub struct Jobs {
     pub lease_seconds: u64,
     pub renew_seconds: u64,
+    /// 说明书 AI 单次提取请求的整体超时（秒）。长批次经网关可能超过默认值；
+    /// 超时会让该批进入 `submission_unknown`（需人工对账），因此允许按部署调大。
+    /// 租约由独立续约维持，与本值无关。
+    pub manual_ai_request_seconds: u64,
 }
 
 impl Jobs {
@@ -282,6 +286,11 @@ impl Jobs {
     pub const DEFAULT_RENEW_SECONDS: u64 = 20;
     /// 租约上限：允许调小，也允许在合理范围内调大（不得超过 10 倍默认值）。
     pub const MAX_LEASE_SECONDS: u64 = 600;
+    /// 说明书 AI 请求超时默认 180 秒（与 `ManualAiTimeouts::default` 一致）。
+    pub const DEFAULT_MANUAL_AI_REQUEST_SECONDS: u64 = 180;
+    /// 允许范围：过短会把正常请求误判为结果未知，过长会让卡死的连接长期占用并发。
+    pub const MIN_MANUAL_AI_REQUEST_SECONDS: u64 = 30;
+    pub const MAX_MANUAL_AI_REQUEST_SECONDS: u64 = 900;
 }
 
 impl Default for Jobs {
@@ -289,6 +298,7 @@ impl Default for Jobs {
         Self {
             lease_seconds: Jobs::DEFAULT_LEASE_SECONDS,
             renew_seconds: Jobs::DEFAULT_RENEW_SECONDS,
+            manual_ai_request_seconds: Jobs::DEFAULT_MANUAL_AI_REQUEST_SECONDS,
         }
     }
 }
@@ -971,6 +981,17 @@ fn resolve_jobs(config: &FileConfig) -> Result<Jobs, CliError> {
             jobs.renew_seconds, jobs.lease_seconds
         )));
     }
+    if let Some(value) = section.manual_ai_request_seconds {
+        if !(Jobs::MIN_MANUAL_AI_REQUEST_SECONDS..=Jobs::MAX_MANUAL_AI_REQUEST_SECONDS).contains(&value) {
+            return Err(CliError::config(format!(
+                "jobs.manual_ai_request_seconds 取值须在 {}..={}（默认 {}）",
+                Jobs::MIN_MANUAL_AI_REQUEST_SECONDS,
+                Jobs::MAX_MANUAL_AI_REQUEST_SECONDS,
+                Jobs::DEFAULT_MANUAL_AI_REQUEST_SECONDS
+            )));
+        }
+        jobs.manual_ai_request_seconds = value;
+    }
     Ok(jobs)
 }
 
@@ -1015,6 +1036,15 @@ fn absolute_from(cwd: &Path, path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn manual_ai_request_timeout_default_override_and_bounds() {
+        let jobs = |text: &str| resolve_jobs(&file::parse(text, "test").unwrap());
+        assert_eq!(jobs("").unwrap().manual_ai_request_seconds, Jobs::DEFAULT_MANUAL_AI_REQUEST_SECONDS);
+        assert_eq!(jobs("[jobs]\nmanual_ai_request_seconds = 600\n").unwrap().manual_ai_request_seconds, 600);
+        assert!(jobs("[jobs]\nmanual_ai_request_seconds = 10\n").is_err());
+        assert!(jobs("[jobs]\nmanual_ai_request_seconds = 901\n").is_err());
+    }
 
     #[test]
     fn cidr_parse_and_contains() {

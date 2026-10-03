@@ -315,7 +315,7 @@ pub async fn build_release_export(
                 ExportError::integrity("release_manifest_invalid", "发布清单资产缺少 assetId")
             })?;
         let extension = match role {
-            "model" => "glb",
+            "model" | "model_parts" => "glb",
             "document" => "pdf",
             other => {
                 return Err(ExportError::integrity(
@@ -344,6 +344,7 @@ pub async fn build_release_export(
         }
         let expected_purpose = match role {
             "model" => AssetPurpose::Model,
+            "model_parts" => AssetPurpose::ModelParts,
             _ => AssetPurpose::Document,
         };
         if asset.purpose != expected_purpose {

@@ -563,6 +563,10 @@ export function ConfirmStepPage() {
               202 只表示服务端已入队（受理），不代表生成结果：请到任务中心查看阶段状态。
             </p>
             <p>
+              生成完成时会在页面顶部弹出提示（任何页面都会收到），点击即可查看 3D 结果。
+            </p>
+            <p className="accepted-panel__actions">
+              <Link className="button-primary" to={`/jobs/${acceptedJob.id}/result`}>实时查看生成结果</Link>
               <Link to={`/jobs/${acceptedJob.id}`}>查看任务详情</Link>
             </p>
           </div>

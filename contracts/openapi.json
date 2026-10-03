@@ -1,6 +1,13 @@
 {
   "components": {
     "schemas": {
+      "ActionMode": {
+        "enum": [
+          "toggle",
+          "pulse"
+        ],
+        "type": "string"
+      },
       "AdminSummary": {
         "description": "管理员摘要（只暴露公开 ID；口令哈希永不出现在任何响应）。",
         "properties": {
@@ -217,6 +224,13 @@
           "purpose"
         ],
         "type": "object"
+      },
+      "BindingStatus": {
+        "enum": [
+          "auto",
+          "confirmed"
+        ],
+        "type": "string"
       },
       "BudgetLimitsDto": {
         "additionalProperties": false,
@@ -626,6 +640,17 @@
               }
             ]
           },
+          "interactive": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InteractivePatch",
+                "description": "交互层（ADR-042）：部件→分件节点绑定、动作、姿势（整体替换给出的集合）。"
+              }
+            ]
+          },
           "modelReview": {
             "oneOf": [
               {
@@ -834,6 +859,40 @@
           "partId",
           "status"
         ],
+        "type": "object"
+      },
+      "InteractivePatch": {
+        "additionalProperties": false,
+        "description": "PATCH 写入：整体替换绑定/动作/姿势（分件附件由专门接口挂载，PATCH 不可改）。",
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/ModelAction"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/PartBinding"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "poses": {
+            "items": {
+              "$ref": "#/components/schemas/ModelPose"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
         "type": "object"
       },
       "ItemCreateRequest": {
@@ -1704,6 +1763,96 @@
         ],
         "type": "object"
       },
+      "ModelAction": {
+        "additionalProperties": false,
+        "description": "用户可触发的动作（例如\"取下电池盖\"）：`toggle` 在初始/目标之间切换，`pulse` 做一次往返。",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "durationMs": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ActionMode"
+          },
+          "stepIds": {
+            "description": "关联的说明书步骤（阅读时切到该步骤会提示此动作）。",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/TransformStep"
+            },
+            "type": "array"
+          },
+          "triggerPartIds": {
+            "description": "触发该动作的部件（点击部件/热点时提供该动作）。",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "mode",
+          "durationMs",
+          "steps"
+        ],
+        "type": "object"
+      },
+      "ModelPose": {
+        "additionalProperties": false,
+        "description": "整体姿势（例如机器人\"趴下/坐下\"）：一组变换步，切换姿势时从初始位姿重新叠加。",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "durationMs": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/TransformStep"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "durationMs",
+          "steps"
+        ],
+        "type": "object"
+      },
       "ModelReviewPatch": {
         "additionalProperties": false,
         "description": "modelReview 的两个用户声明（服务器补 `checkedAt` 与模型身份）。",
@@ -1823,6 +1972,31 @@
         },
         "required": [
           "data"
+        ],
+        "type": "object"
+      },
+      "PartBinding": {
+        "additionalProperties": false,
+        "description": "部件 → 分件节点的绑定（一个部件可对应多个节点）。",
+        "properties": {
+          "nodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "partId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BindingStatus",
+            "description": "`auto`（自动绑定产出，待复核）/ `confirmed`（人工确认）。"
+          }
+        },
+        "required": [
+          "partId",
+          "nodes",
+          "status"
         ],
         "type": "object"
       },
@@ -3115,6 +3289,71 @@
         },
         "required": [
           "data"
+        ],
+        "type": "object"
+      },
+      "TransformKind": {
+        "enum": [
+          "translate",
+          "rotate"
+        ],
+        "type": "string"
+      },
+      "TransformStep": {
+        "additionalProperties": false,
+        "description": "一个刚体变换步（相对节点**初始**位姿；按顺序叠加）。",
+        "properties": {
+          "angleDeg": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "axis": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TransformKind",
+            "description": "`translate`：`vector` 为位移；`rotate`：绕 `pivot` 沿 `axis` 旋转 `angleDeg`。"
+          },
+          "nodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "pivot": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "vector": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nodes",
+          "kind"
         ],
         "type": "object"
       },
@@ -4418,6 +4657,123 @@
           }
         ],
         "summary": "复核写入：状态、热点校准、步骤视角、知识确认与修订、modelReview（If-Match）",
+        "tags": [
+          "drafts"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/drafts/{draftId}/parts-model": {
+      "post": {
+        "description": "multipart：`file`（GLB，必填）+ `source`（来源说明，可选）。服务端校验 GLB 预算、节点名唯一且只含平移，并核对分件包围盒与草稿模型 `bounds` 一致（坐标系相同）；通过后写入 `knowledge.interactive.partsModel`，旧绑定/动作中引用已不存在节点的条目被移除。不改变模型版本与热点锚点身份；动作写入 audit_events。",
+        "operationId": "attach_parts_model",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "草稿 ID（UUIDv7）",
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftResponse"
+                }
+              }
+            },
+            "description": "已挂载（返回更新后的草稿）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "草稿不存在或不属于该物品"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "文件超过模型体积上限"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "不是合法分件 GLB 或坐标系不一致（details.fields）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "挂载分件模型（与草稿模型同一坐标系的多节点 GLB；If-Match）",
         "tags": [
           "drafts"
         ]

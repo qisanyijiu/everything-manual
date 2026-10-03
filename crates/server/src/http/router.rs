@@ -53,6 +53,7 @@ pub fn build_app(state: AppState) -> Router {
         // T06：上传路由自带更大的 `DefaultBodyLimit`（覆盖下面的 JSON 上限），
         // 内容路由受同一上限保护（无请求体，无实际影响）。
         .merge(assets::routes(&state.settings().limits))
+        .merge(drafts::parts_routes(&state.settings().limits))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth::auth_guard,

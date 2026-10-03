@@ -333,6 +333,9 @@ pub struct DraftPatch {
     pub entities: Option<BTreeMap<String, EntityReviewPatch>>,
     #[serde(default)]
     pub model_review: Option<ModelReviewPatch>,
+    /// 交互层写入（ADR-042；绑定/动作/姿势整体替换）。
+    #[serde(default)]
+    pub interactive: Option<super::interactive::InteractivePatch>,
 }
 
 impl DraftPatch {
@@ -343,6 +346,7 @@ impl DraftPatch {
             && self.clear_step_poses.is_none()
             && self.entities.is_none()
             && self.model_review.is_none()
+            && self.interactive.as_ref().is_none_or(super::interactive::InteractivePatch::is_empty)
     }
 }
 
@@ -410,6 +414,9 @@ pub fn apply_draft_patch(
     if let Some(model_review) = &patch.model_review {
         validate_model_review(knowledge, overlay, model_review, &mut issues);
     }
+    if let Some(interactive) = &patch.interactive {
+        super::interactive::validate_interactive_patch(knowledge, interactive, &mut issues);
+    }
 
     if !issues.is_empty() {
         return Err(issues);
@@ -469,6 +476,9 @@ pub fn apply_draft_patch(
                 review.checked_at = now.as_millis();
             }
         }
+    }
+    if let Some(interactive_patch) = &patch.interactive {
+        super::interactive::apply_interactive_patch(knowledge, interactive_patch);
     }
     // 防御性规整：任何 confirmed/candidate 热点若不匹配当前模型（或缺少 anchor）
     // 一律降级 stale——绝不把"确认过的旧绑定"留在有效状态里（AC-053）。

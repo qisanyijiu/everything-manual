@@ -17,6 +17,8 @@
 //! - 内容变化时清空 `review_json`（复核声明绑定具体内容/模型，必须重新声明）。
 
 pub mod aggregate;
+pub mod interactive;
+pub mod parts_model;
 pub mod knowledge;
 pub mod service;
 

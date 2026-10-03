@@ -23,11 +23,11 @@ export function renderApp(options: RenderAppOptions = {}): RenderAppResult {
   const queryClient = options.queryClient ?? createAppQueryClient();
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <NotificationProvider>
-        <MemoryRouter initialEntries={[options.route ?? "/"]}>
+      <MemoryRouter initialEntries={[options.route ?? "/"]}>
+        <NotificationProvider>
           <AppRoutes />
-        </MemoryRouter>
-      </NotificationProvider>
+        </NotificationProvider>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
   return { ...result, queryClient };

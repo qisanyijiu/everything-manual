@@ -2462,3 +2462,29 @@ ADR-xxx — 简短结论
 - 写入预检与提交分界遵循 PRD §3.4：发布前错误不改变状态，原子 rename/link 后是已提交状态，目录同步失败只安全告警并维持内存/磁盘一致。此边界不承诺异常存储设备或掉电后的持久性。不会为恢复操作重新产生明文临时文件。
 - 在 provider client 边界处理已知 key 的原文和 JSON 解码反射；外层 JSON 不可解析时同样整体丢弃，避免可恢复的 Unicode 转义绕过检查（BUG-ES-001）。成功数据含 key 宁可按既有未知提交/异常协议语义停止，也不污染业务 ID、日志、诊断和备份。保持 429、5xx、4xx、Tripo 非零业务 code 的分类。不承诺任意编码检测、历史数据清理、全部资产加密或完整内存消除。
 - 实现和实际测试见 [ES-01 implementation](requirements/encrypted-secrets/implementation.md)。真实 Keychain / 浏览器与重启消费由独立 QA 验证，不以内存 fake 代替平台结论。
+
+## ADR-040 — 发布版离线 3D 页面：浏览器端组装单文件 HTML
+
+- 日期：2026-10-02；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求"通过类似 three.js 的形式直接展示在网页上"。
+- 结论：阅读页提供「下载离线 3D 页面」，在浏览器内把 release manifest 知识 + GLB（base64）+ three.js 阅读器（rolldown 打成的 IIFE）拼成一个 HTML，双击即可打开。不改服务端合同、不新增端点、不放宽鉴权。
+- 原因：Tripo 产物是标准 glTF 2.0 + 核心 PBR，`GLTFLoader` 可直接加载；单文件内联可绕开 `file://` 下的 fetch 限制。免登录分享链接需要新的权限面，另行决策。
+- 约束：CSP `default-src 'none'`（零网络）；文字只走 textContent；内嵌 JSON 转义 `<`/U+2028/U+2029；热点只保留锚点属于发布模型版本的条目（与在线阅读器同一读取防线）。
+- 证据与格式调研：[standalone-3d-viewer/research.md](requirements/standalone-3d-viewer/research.md)。
+
+## ADR-041 — 生成完成全局提示、生成结果页与生成历史（纯前端，复用永久保留的产物）
+
+- 日期：2026-10-02；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求"更好的交互：自动展示或弹出提示；能保存历史生成物"。
+- 事实（代码核查）：每个任务一份不可变 `generation_snapshots` + 一份草稿 + 自己的 model_revision/GLB；新任务不覆盖旧草稿，发布版本不可变，资产维护只隔离"无引用 blob"。因此历史保存**无需后端改动**，`GET /jobs?itemId=` 的 `draftId` 即可枚举。
+- 做法：AppShell 挂 `JobCompletionWatcher`（轮询 `/jobs?limit=20`，无进行中任务即停）；只对本会话见过的非终态任务弹提示，成功提示常驻并链接 `/jobs/:id/result`，失败用 alert；后台标签页改标题。新增 `/jobs/:id/result`（该任务草稿的只读 3D + 部件/步骤/规格 + 费用）与 `/items/:id/generations`（按时间倒序，关联由该草稿发布的版本）。确认页、任务详情、任务列表、物品概览增加入口。
+- 影响：每个已登录页面多一次 `/jobs?limit=20` 请求（shell.test 已记录）；通知组件新增 `action` 与 `sticky`，`NotificationProvider` 移到 Router 内。
+- 未做：生成历史缩略图、浏览器系统通知（Notification API 需权限）。
+
+## ADR-042 — 分件模型 + 自动热点绑定 + 交互层（动作 / 姿势）
+
+- 日期：2026-10-03；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求以 PENTAX 17 与 CyberDog 2 说明书为例，自动绑定热点，并支持"电池仓打开、机器人多种姿势"等由多个模块组成的交互。
+- **分件来源**：Tripo `POST /mesh/segment`（v2.0-20260430，40 credits）输出与原模型**同一坐标系**的多节点 GLB（只含平移）。它是模型 revision 的**附件**（新资产用途 `model_parts`，迁移 0008），不是新模型版本：热点锚点身份（revisionId + sha256）不变。挂载接口核对分件包围盒与草稿模型 `bounds` 偏差 ≤ 0.02，否则 422（实测对另一次生成的模型偏差 0.165，被拒）。
+- **交互层**：`knowledge.interactive = { partsModel, bindings[], actions[], poses[] }`；动作/姿势只描述刚体变换（translate / 绕 pivot+axis rotate），节点按分件 GLB 节点名引用并在写入时校验；附件不属于当前模型版本时交互层不可编辑、不显示、不随发布冻结。发布 manifest 增加 `model_parts` 资产，导出 ZIP 一并带上。
+- **自动绑定**（`scripts/autobind/`，原型，不进生产依赖）：视觉模型定位标注端点 → 轮廓 IoU 搜索视角（PENTAX 前 0.956 / 后 0.967，CyberDog 0.859 / 0.711）→ z-buffer 投影到模型表面 → LLM 图例编号↔部件条目。产物一律 `candidate`，复核页提供「确认全部候选热点」；不自动发布（ADR-005 不变）。
+- **否决**：Tripo 自动绑骨骼（`rig-check` 对 CyberDog 返回 `riggable:false`；四足预设只有 walk）→ 姿势改为分件 + 关节枢轴的程序化变换；`generate_parts`（与纹理/PBR 不兼容）。
+- **说明书 AI 超时**：新增 `jobs.manual_ai_request_seconds`（30..=900，默认 180）。CyberDog 长批次在 180s 内多次超时 → `submission_unknown`；设为 600s 后同一批次约 3 分钟完成。
+- 证据：[interactive-parts.md](requirements/standalone-3d-viewer/interactive-parts.md)。

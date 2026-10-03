@@ -161,6 +161,9 @@ pub struct DraftPatchRequest {
     /// modelReview 的两个用户声明（`checkedAt` 由服务器赋值）。
     #[schema(nullable = true)]
     pub model_review: Option<ModelReviewPatch>,
+    /// 交互层（ADR-042）：部件→分件节点绑定、动作、姿势（整体替换给出的集合）。
+    #[schema(nullable = true)]
+    pub interactive: Option<crate::drafts::interactive::InteractivePatch>,
 }
 
 impl DraftPatchRequest {
@@ -178,6 +181,7 @@ impl DraftPatchRequest {
                     .collect()
             }),
             model_review: self.model_review.clone(),
+            interactive: self.interactive.clone(),
         }
     }
 }

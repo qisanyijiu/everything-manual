@@ -112,6 +112,7 @@ export function ItemOverviewPage() {
         </div>
         <div className="page__actions">
           <Link className="button-primary" to={`/items/${item.id}/releases`}><Icon name="book" size={17} />打开说明书</Link>
+          <Link className="button" to={`/items/${item.id}/generations`}>生成历史</Link>
           <Link className="button" to={`/items/${item.id}/edit`}>
             编辑
           </Link>

@@ -89,6 +89,7 @@ use super::{
         drafts::get_draft,
         drafts::patch_draft,
         drafts::publish_draft,
+        drafts::attach_parts_model,
         releases::list_releases,
         releases::get_release,
         releases::export_release,

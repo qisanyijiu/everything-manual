@@ -148,6 +148,8 @@ pub struct ConcurrencySection {
 pub struct JobsSection {
     pub lease_seconds: Option<u64>,
     pub renew_seconds: Option<u64>,
+    /// 说明书 AI 单次提取请求的整体超时（秒；默认 180）。
+    pub manual_ai_request_seconds: Option<u64>,
 }
 
 /// 会话与登录限速（T04）。`cookie_secure` 是字符串枚举：`auto` / `always` / `never`。
