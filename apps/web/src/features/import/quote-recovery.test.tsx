@@ -51,6 +51,28 @@ it("未知账务、缺失事实或错误任务归属均阻断", () => {
   job.reservations[0]!.state = "unknown";
   expect(completedJobRequoteProblem(job, "job", "item")).not.toBeNull();
 });
+it("完成草稿的零费用 Manual AI 未知账本允许显式报价，未知付费或提交仍阻断", () => {
+  const job = finalJob();
+  job.status = "succeeded";
+  job.draftId = "draft";
+  job.stages[0]!.status = "succeeded";
+  job.reservations[0] = { provider: "manual_ai", currency: "usdMicros", state: "unknown", reservedMinor: 0, reservedDisplay: "0 USD" };
+  expect(completedJobRequoteProblem(job, "job", "item")).toBeNull();
+  job.attempts[0]!.submitState = "unknown";
+  expect(completedJobRequoteProblem(job, "job", "item")).not.toBeNull();
+  job.attempts[0]!.submitState = "failed";
+  job.reservations[0]!.reservedMinor = 1;
+  expect(completedJobRequoteProblem(job, "job", "item")).not.toBeNull();
+  job.reservations[0]!.reservedMinor = 0;
+  job.reservations[0]!.provider = "tripo";
+  expect(completedJobRequoteProblem(job, "job", "item")).not.toBeNull();
+  job.reservations[0]!.provider = "manual_ai";
+  job.draftId = null;
+  expect(completedJobRequoteProblem(job, "job", "item")).not.toBeNull();
+  job.draftId = "draft";
+  job.stages[0]!.status = "failed";
+  expect(completedJobRequoteProblem(job, "job", "item")).not.toBeNull();
+});
 it("Tripo提交成功和本地poll失败/取消均不证明远端结束；必须匹配终态task事实", () => {
   const job = finalJob();
   job.stages[0]!.stageKind = "tripo_submit"; job.stages[0]!.status = "succeeded";

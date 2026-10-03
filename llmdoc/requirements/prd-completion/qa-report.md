@@ -783,3 +783,29 @@ Chrome154.0.8037.93真实读取Wii U34页ready及front/back两照片，原件/�
 注意事项完整修复的最终常规publishing套件 **9 PASS /0 FAIL /6既有显式门控live-CLI用例未运行**，新字段合同已重新生成。部分PATCH按提供字段合并，安全only保留已有标题动作、title-only保留安全修订、[]明确清空；旧版本与供应商原文不变。前端初始5目标文件37项通过，草稿步骤预览修复后的3相关文件20项通过（重叠不相加）；tsc/目标lint/diff-check通过。审计应用计划16项独立结构核查通过，只有旧编辑器阻塞的关机等待提示按新功能转为待应用修订，其第二条正确Wii Menu例外保留。
 
 最终前端生产build与普通release embedded-ui包构建通过，SHA `a2e7c4a2045f770def0a6a2feaedbd98857a12dfdb0c7549bda37f0fc72ba113`，26,151,024B。首次就地覆盖执行在macOS被杀（版本探针exit137）；相同字节通过新文件原子替换后版本检查exit0，未修改签名/钥匙串ACL或系统安全设置。最终服务session87473/PID57163仍无8082监听且等待NativeKeychain；此前等待进程已正常中止，实际生成任务未重购。后续用同一新包恢复，Chrome驱动v3及229项核查计划已准备但未应用。用户完成当前系统授权前，不能标记真实样本闭环通过。
+
+### Chrome 样本恢复：系统代理 fake-IP 与下载安全保护
+
+用户完成前一包的钥匙串授权后，原任务下载阶段经认证 API 定向重试返回200（只重新排队 `model_download`，未重提Tripo生成）。阶段随后因本机Shadowrocket把精确Tripo下载域名解析到保留段 `198.18.0.28` 而进入 `needs_input`；应用SSRF保护正确拒绝。Tripo上传/生成/轮询及7批LLM仍成功，30credits账本settled，draft仍不存在。
+
+只读网络验证：公共DoH直连返回Tripo下载主机的CloudFront CNAME及四个公网A地址；对其中两地址做保持原主机名/TLS校验的无签名HEAD，证书验证成功且根路径返回预期403。新增窄范围下载器恢复：仅已精确允许的HTTPS主机且系统所有答案均为198.18/15时，使用固定DoH查询，限制超时/大小/CNAME，逐项检查公网地址并固定直连IP；混合或真实私网结果仍拒绝，TLS/SNI与逐跳重定向校验保留。模型客户端明确无代理，避免HTTPS CONNECT绕开IP固定。没有放行fake-IP或修改系统代理设置。
+
+下载器目标单测8/8、已结算下载恢复集成1/1、正式embedded-ui release build通过；新包SHA `b462a3783d5309f7fbc8306a64ea74f1f738235070a178dfd989fe31b4a1e5a3`。当前该包进程PID5829仍等待macOS钥匙串授权，8082未监听；真实签名模型字节尚未下载，不能记端到端通过。
+
+### 预览口令轮换及 Chrome 续验
+
+按用户要求，使用内置 `init --password-file` 分别轮换真实样本和原本地预览两个数据目录的管理员口令；受限临时文件随即删除，既有会话全部撤销，数据和加密 API 配置保留。受认证 HTTP 实测新口令登录 200、旧口令 401；Chrome 154 headed 实际用新口令登录 8082，打开设置和 Wii U 物品页，页面脚本错误 0。口令值不写入仓库文件。网页登录与 macOS 钥匙串是独立机制，口令轮换不改变加密主密钥。
+
+使用已结算任务对 `model_download` 单阶段定向重试一次，HTTP 200，Tripo submit/poll 保持成功且没有重新购买。该阶段再次被本机 Shadowrocket 假 IP 阻挡；诊断发现系统同时返回 `198.18.0.28` 及其 IPv4-translated IPv6 表示，旧 DoH 门槛把后者误判为独立 IPv6。最小修复仅将映射/转换后的 198.18/15 视为同一假地址，其他私网、公网混合答案仍不进入回退；下载模块 8/8 测试、格式与差异检查、release 构建通过。新包 SHA `0a272250d38f5a28bfe47c97a1ef6547da6dd39222e99914ca23436b06fbf9fd`。本轮新包首次启动等待系统钥匙串授权，尚无 8082 监听；不将代码测试写成真实模型下载成功。
+
+### Chrome 真实模型与钥匙串身份（2026-10-03）
+
+用户授权现有 `everything-manual-dns-translated` 后，8082 实际恢复监听；只定向重试原已结算任务的 `model_download`，旧任务随后成功并组装草稿。真实 GLB 5,393,272B、SHA-256 `63910f02e10b1e28f240f4290ddbfb41118500ceb5346abb6dca1335d1150738` 通过头、长度和 v2 校验；Chrome 截图发现两张原照片中的人手被融合进主机模型，故没有复核或发布这份草稿。
+
+本机预览管理员口令现为用户指定值（不在文档重复口令）；新口令经真实 HTTP/Chrome 登录、旧口令被拒。默认钥匙串是当前系统用户的 `login.keychain-db`，应用条目 service=`org.everything-manual.secrets.v1`、account=`master`，只存随机 32 字节 AES-256-GCM 主密钥；网页 API key 密文仍在 gitignored、0600 的 `provider-overrides.json`。当前二进制 `codesign` 为 ad-hoc 且 designated requirement 含 cdhash，本机 `security find-identity -v -p codesigning` 为 0 valid identities，故每次后端新构建可能再次要求授权。已准备只使用现有身份的 `scripts/macos-sign-local.sh` 与运维说明；没有读取/导出主密钥或密钥明文，没有开放条目给所有应用。
+
+为去除人手，在 Chrome 中将两张照片换为 Wikimedia Commons 的无遮挡 Wii U 主机正反照片（各 3700×2500，PD-self；来源、哈希见忽略目录 `var/prd-completion/chrome-live-wiiu/clean-photos/metadata.json`）。新报价 `01a10183-2384-7103-8230-e82ca80dd4a8` 明列两张新照片及 34 页文字，仍为 30 Tripo credits / 0 USD；Chrome 显式勾选资料发送并提交新任务 `01a10185-6cda-77af-8ead-c85764c932cc`，用户已有 9000 credits 授权。Tripo **仅一次新付费提交**，模型下载/校验成功、账本 actual=30 credits settled；新 GLB 4,861,236B、SHA-256 `a8bd9d05095f3bdc40622b5a7eb675d05794eb3d29242a0d1538ede828c34bbf`。Chrome 154 实际 WebGL 渲染正反面无 pageerror，截图 `wiiu-clean-model-standalone.png` / `wiiu-clean-model-back.png`；整机轮廓可用，但接口排列、标识和局部孔位仍有生成失真，不能据此宣称精确接线热点。
+
+LLM 网关先前三批成功，两批在硬编码的 180 秒整体请求超时处落 `submission_unknown`，无法证明上游未处理；按内部免费 0 USD 预算分别走显式替代对账，保留原 unknown 账务，串行恢复后两批成功，未重跑已成功批次或 Tripo。下一批在单独请求时仍 180 秒超时，当前 7 批中 5 批成功、1 批结果未知、1 批等待人工，`manual_merge`/`assemble_draft` 排队，**新任务尚无草稿、未发布、未导出，真实端到端仍未通过**。前次 7 个成功批耗时 117–168 秒，当前成功批耗时 130–159 秒；失败批输入并非最大，超时余量不足是较可能根因，但不宣称网关一定完成或一定未完成请求。
+
+已把 Manual AI 默认整体超时从 180 提高到 600 秒，增加 `EM_MANUAL_AI_REQUEST_TIMEOUT_SECONDS` 的 30..=3600 秒受限覆盖；超时继续保持 unknown、绝不自动重发。定向 5/5 与既有 unknown 不重发集成通过，release 构建通过；新普通包 SHA-256 `c4f8c76c51ed0e860a59acccfb84269009a7a72827d245babfc40b0c3fa9624f` 尚未启动。可同时把 `manual_ai_batches` 从默认 2 降至 1。当前已授权服务继续运行，等待可复用本机签名身份/明确外部主密钥方案以避免再次反复弹窗；不会为消除弹窗降低密钥保护。旧 229 项知识审计固定原 job/实体 ID，不直接应用到新草稿；已准备只读逐项对照器 `compare-drafts.py`，新草稿出现后先核对原文与出处。

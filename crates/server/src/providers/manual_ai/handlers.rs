@@ -94,7 +94,11 @@ impl ManualAiHandlers {
         if provider.model.is_none() {
             return Err("providers.manual_ai.model 未配置（说明书 AI 不可用）".to_owned());
         }
-        let client = ManualAiClient::new(&provider.base_url, api_key, ManualAiTimeouts::default())?;
+        let client = ManualAiClient::new(
+            &provider.base_url,
+            api_key,
+            ManualAiTimeouts::from_environment()?,
+        )?;
         Ok(Self {
             client: Arc::new(client),
             data_dir: settings.data_dir.clone(),

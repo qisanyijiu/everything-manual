@@ -25,8 +25,13 @@ pub const MANUAL_AI_RESPONSES_PATH: &str = "/responses";
 pub const MAX_RESPONSE_BYTES: usize = 8 * 1024 * 1024;
 /// 错误诊断里保留的文本上限（脱敏后）。
 pub const MAX_ERROR_HINT_CHARS: usize = 200;
+/// 内部网关推理时间较长时可覆盖整次请求的超时；只在进程启动时读取。
+pub const ENV_MANUAL_AI_REQUEST_TIMEOUT_SECONDS: &str = "EM_MANUAL_AI_REQUEST_TIMEOUT_SECONDS";
+const MIN_REQUEST_TIMEOUT_SECONDS: u64 = 30;
+const MAX_REQUEST_TIMEOUT_SECONDS: u64 = 3600;
+const DEFAULT_REQUEST_TIMEOUT_SECONDS: u64 = 600;
 
-/// 超时配置（官方文档未给出 SLA 建议值；T23 按实测调整）。
+/// 超时配置。长推理网关默认留 10 分钟，部署可在 30 秒至 1 小时内覆盖。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ManualAiTimeouts {
     /// TCP/TLS 连接超时。
@@ -39,9 +44,35 @@ impl Default for ManualAiTimeouts {
     fn default() -> Self {
         Self {
             connect: Duration::from_secs(10),
-            request: Duration::from_secs(180),
+            request: Duration::from_secs(DEFAULT_REQUEST_TIMEOUT_SECONDS),
         }
     }
+}
+
+impl ManualAiTimeouts {
+    pub fn from_environment() -> Result<Self, String> {
+        let mut timeouts = Self::default();
+        if let Some(value) =
+            crate::config::file::env_nonempty(ENV_MANUAL_AI_REQUEST_TIMEOUT_SECONDS)
+        {
+            timeouts.request = Duration::from_secs(parse_request_timeout_seconds(&value)?);
+        }
+        Ok(timeouts)
+    }
+}
+
+fn parse_request_timeout_seconds(value: &str) -> Result<u64, String> {
+    let seconds = value.parse::<u64>().map_err(|_| {
+        format!(
+            "{ENV_MANUAL_AI_REQUEST_TIMEOUT_SECONDS} 必须是 {MIN_REQUEST_TIMEOUT_SECONDS}..={MAX_REQUEST_TIMEOUT_SECONDS} 的整数秒"
+        )
+    })?;
+    if !(MIN_REQUEST_TIMEOUT_SECONDS..=MAX_REQUEST_TIMEOUT_SECONDS).contains(&seconds) {
+        return Err(format!(
+            "{ENV_MANUAL_AI_REQUEST_TIMEOUT_SECONDS} 必须是 {MIN_REQUEST_TIMEOUT_SECONDS}..={MAX_REQUEST_TIMEOUT_SECONDS} 的整数秒"
+        ));
+    }
+    Ok(seconds)
 }
 
 /// 调用供应商的错误分类（能否证明"请求未被接受"是唯一允许自动重试的判据）。
@@ -335,6 +366,66 @@ async fn read_body_capped(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeMap;
+    use test_support::FixtureServer;
+    use test_support::scenario::{
+        BodySpec, PathMatchSpec, ResponseSpec, RouteScript, Scenario, Step,
+    };
+
+    #[test]
+    fn request_timeout_default_and_override_are_bounded() {
+        assert_eq!(
+            ManualAiTimeouts::default().request,
+            Duration::from_secs(600)
+        );
+        for seconds in [30, 600, 3600] {
+            assert_eq!(
+                parse_request_timeout_seconds(&seconds.to_string()).unwrap(),
+                seconds
+            );
+        }
+        for invalid in ["0", "29", "3601", "10.5", "unlimited", "-1"] {
+            assert!(
+                parse_request_timeout_seconds(invalid)
+                    .unwrap_err()
+                    .contains(ENV_MANUAL_AI_REQUEST_TIMEOUT_SECONDS),
+                "{invalid}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn request_timeout_remains_unknown_and_does_not_retry() {
+        let server = FixtureServer::start(Scenario::new(vec![RouteScript {
+            method: "POST".to_owned(),
+            path: "/v1/responses".to_owned(),
+            path_match: PathMatchSpec::Exact,
+            repeat_last: false,
+            steps: vec![Step::Delay {
+                delay_ms: 1_000,
+                response: ResponseSpec {
+                    status: 200,
+                    headers: BTreeMap::new(),
+                    body: BodySpec::Text {
+                        text: "{}".to_owned(),
+                    },
+                },
+            }],
+        }]));
+        let client = ManualAiClient::new(
+            &format!("{}/v1", server.base_url()),
+            SecretString::new("canary-key"),
+            ManualAiTimeouts {
+                connect: Duration::from_secs(1),
+                request: Duration::from_millis(200),
+            },
+        )
+        .unwrap();
+        let error = client.extract_batch(b"{}").await.unwrap_err();
+        assert!(matches!(error, ManualAiError::Transport { .. }), "{error}");
+        assert!(!error.is_definitively_refused());
+        assert_eq!(server.call_count("POST", "/v1/responses"), 1);
+    }
 
     #[test]
     fn client_rejects_invalid_base_urls() {

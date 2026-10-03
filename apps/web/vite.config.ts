@@ -10,6 +10,7 @@ import { pdfjsVendor } from "./vite.pdfjs-vendor.ts";
 // 后端与前端实例，避免与开发者正在运行的 dev 服务互相干扰。
 const webPort = Number(process.env.EM_WEB_PORT ?? 5173);
 const apiTarget = process.env.EM_API_PROXY_TARGET ?? "http://127.0.0.1:8080";
+const previewProxyOrigin = process.env.EM_PREVIEW_PROXY_ORIGIN;
 
 export default defineConfig({
   plugins: [react(), pdfjsVendor()],
@@ -18,7 +19,12 @@ export default defineConfig({
     port: webPort,
     strictPort: true,
     proxy: {
-      "/api": { target: apiTarget },
+      "/api": {
+        target: apiTarget,
+        ...(previewProxyOrigin
+          ? { changeOrigin: true, headers: { Origin: previewProxyOrigin } }
+          : {}),
+      },
     },
   },
   build: {

@@ -35,6 +35,7 @@ use std::time::{Duration, Instant};
 use manual_core::timestamps::Timestamp;
 use reqwest::header::{LOCATION, RETRY_AFTER};
 use reqwest::{Url, redirect};
+use serde::Deserialize;
 
 use crate::assets::blob_store::{self, SpaceProbe, StagedWriter};
 use crate::assets::error::AssetError;
@@ -269,6 +270,247 @@ impl HostResolver for SystemHostResolver {
     }
 }
 
+const FAKE_IP_DOH_ENDPOINT: &str = "https://1.1.1.1/dns-query";
+const MAX_DOH_RESPONSE_BYTES: usize = 32 * 1024;
+const MAX_DOH_ANSWERS: usize = 32;
+const MAX_CNAME_HOPS: usize = 8;
+
+fn all_fake_ips(addresses: &[IpAddr]) -> bool {
+    fn is_fake_v4(ip: Ipv4Addr) -> bool {
+        let octets = ip.octets();
+        octets[0] == 198 && (octets[1] == 18 || octets[1] == 19)
+    }
+
+    !addresses.is_empty()
+        && addresses.iter().all(|ip| match ip {
+            IpAddr::V4(ip) => is_fake_v4(*ip),
+            IpAddr::V6(ip) => {
+                // macOS may return both the TUN fake IPv4 and its IPv6-mapped or
+                // IPv4-translated representation for the same DNS answer. These
+                // are still 198.18/15 fake IPs, not independent public IPv6
+                // answers. All other IPv6 forms keep the mixed-answer guard.
+                let segments = ip.segments();
+                let embedded = ip.to_ipv4_mapped().or_else(|| {
+                    (segments[..6] == [0, 0, 0, 0, 0xffff, 0]).then(|| {
+                        Ipv4Addr::new(
+                            (segments[6] >> 8) as u8,
+                            segments[6] as u8,
+                            (segments[7] >> 8) as u8,
+                            segments[7] as u8,
+                        )
+                    })
+                });
+                embedded.is_some_and(is_fake_v4)
+            }
+        })
+}
+
+fn should_use_fake_ip_doh(
+    enabled: bool,
+    scheme: &str,
+    host: &str,
+    allowed_hosts: &[String],
+    addresses: &[IpAddr],
+) -> bool {
+    enabled
+        && scheme == "https"
+        && allowed_hosts.iter().any(|allowed| allowed == host)
+        && all_fake_ips(addresses)
+}
+
+fn doh_error(host: &str, detail: impl Into<String>) -> DownloadError {
+    DownloadError::ResolutionFailed {
+        host: host.to_owned(),
+        detail: detail.into(),
+    }
+}
+
+/// Resolve an allowlisted HTTPS CDN name after the system resolver returned
+/// *only* fake IPs. The fixed IP-literal DoH endpoint needs no system DNS.
+/// Direct TLS, no proxy or redirects, and bounded time/body avoid handing the
+/// hostname or its answer to an unvalidated intermediary.
+async fn resolve_public_doh(host: &str) -> Result<Vec<IpAddr>, DownloadError> {
+    let mut endpoint = Url::parse(FAKE_IP_DOH_ENDPOINT).expect("fixed DoH endpoint is valid");
+    endpoint
+        .query_pairs_mut()
+        .append_pair("name", host)
+        .append_pair("type", "A");
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .redirect(redirect::Policy::none())
+        .retry(reqwest::retry::never())
+        .connect_timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(8))
+        .build()
+        .map_err(|error| doh_error(host, format!("构造固定 DoH 客户端失败：{error}")))?;
+    let mut response = client
+        .get(endpoint)
+        .header(reqwest::header::ACCEPT, "application/dns-json")
+        .send()
+        .await
+        .map_err(|error| doh_error(host, format!("固定 DoH 查询失败：{error}")))?;
+    if !response.status().is_success() {
+        return Err(doh_error(
+            host,
+            format!("固定 DoH 返回 HTTP {}", response.status().as_u16()),
+        ));
+    }
+    if response
+        .content_length()
+        .is_some_and(|length| length > MAX_DOH_RESPONSE_BYTES as u64)
+    {
+        return Err(doh_error(host, "固定 DoH 响应超过字节上限"));
+    }
+    let mut body = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|error| doh_error(host, format!("读取固定 DoH 响应失败：{error}")))?
+    {
+        if chunk.len() > MAX_DOH_RESPONSE_BYTES.saturating_sub(body.len()) {
+            return Err(doh_error(host, "固定 DoH 响应超过字节上限"));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    parse_doh_a_response(host, &body)
+}
+
+#[derive(Deserialize)]
+struct DohAnswer {
+    name: String,
+    #[serde(rename = "type")]
+    record_type: u16,
+    data: String,
+}
+
+#[derive(Deserialize)]
+struct DohQuestion {
+    name: String,
+    #[serde(rename = "type")]
+    record_type: u16,
+}
+
+#[derive(Deserialize)]
+struct DohReply {
+    #[serde(rename = "Status")]
+    status: u32,
+    #[serde(rename = "Question")]
+    questions: Vec<DohQuestion>,
+    #[serde(rename = "Answer", default)]
+    answers: Vec<DohAnswer>,
+}
+
+fn canonical_dns_name(raw: &str) -> Option<String> {
+    let name = raw.strip_suffix('.').unwrap_or(raw).to_ascii_lowercase();
+    if name.is_empty() || name.len() > 253 {
+        return None;
+    }
+    if name.split('.').any(|label| {
+        label.is_empty()
+            || label.len() > 63
+            || !label
+                .as_bytes()
+                .first()
+                .is_some_and(u8::is_ascii_alphanumeric)
+            || !label
+                .as_bytes()
+                .last()
+                .is_some_and(u8::is_ascii_alphanumeric)
+            || !label
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+    }) {
+        return None;
+    }
+    Some(name)
+}
+
+/// Cloudflare's JSON reply may include a CNAME before the A records. Accept
+/// only records on that chain, reject every private/reserved address in the
+/// entire answer, and never use an address without a matching question.
+fn parse_doh_a_response(host: &str, body: &[u8]) -> Result<Vec<IpAddr>, DownloadError> {
+    if body.len() > MAX_DOH_RESPONSE_BYTES {
+        return Err(doh_error(host, "固定 DoH 响应超过字节上限"));
+    }
+    let expected = canonical_dns_name(host).ok_or_else(|| doh_error(host, "查询域名不合法"))?;
+    let reply: DohReply = serde_json::from_slice(body)
+        .map_err(|error| doh_error(host, format!("固定 DoH 响应不是有效 JSON：{error}")))?;
+    if reply.status != 0 {
+        return Err(doh_error(
+            host,
+            format!("固定 DoH DNS Status={}", reply.status),
+        ));
+    }
+    if reply.questions.len() != 1
+        || reply.questions[0].record_type != 1
+        || canonical_dns_name(&reply.questions[0].name).as_deref() != Some(expected.as_str())
+    {
+        return Err(doh_error(host, "固定 DoH 响应的查询名称或类型不匹配"));
+    }
+    if reply.answers.len() > MAX_DOH_ANSWERS {
+        return Err(doh_error(host, "固定 DoH 响应记录过多"));
+    }
+    let mut cnames = std::collections::HashMap::<String, String>::new();
+    let mut addresses = Vec::<(String, IpAddr)>::new();
+    for answer in reply.answers {
+        let owner = canonical_dns_name(&answer.name)
+            .ok_or_else(|| doh_error(host, "固定 DoH 响应含非法记录名称"))?;
+        match answer.record_type {
+            1 => {
+                let ip = answer
+                    .data
+                    .parse::<Ipv4Addr>()
+                    .map(IpAddr::V4)
+                    .map_err(|_| doh_error(host, "固定 DoH A 记录含非法地址"))?;
+                check_address(host, ip, false)?;
+                addresses.push((owner, ip));
+            }
+            28 => {
+                let ip = answer
+                    .data
+                    .parse::<std::net::Ipv6Addr>()
+                    .map(IpAddr::V6)
+                    .map_err(|_| doh_error(host, "固定 DoH AAAA 记录含非法地址"))?;
+                check_address(host, ip, false)?;
+            }
+            5 => {
+                let target = canonical_dns_name(&answer.data)
+                    .ok_or_else(|| doh_error(host, "固定 DoH CNAME 目标不合法"))?;
+                if let Some(previous) = cnames.insert(owner, target.clone())
+                    && previous != target
+                {
+                    return Err(doh_error(host, "固定 DoH CNAME 目标冲突"));
+                }
+            }
+            _ => {}
+        }
+    }
+    let mut terminal = expected;
+    let mut visited = std::collections::HashSet::new();
+    for _ in 0..MAX_CNAME_HOPS {
+        let Some(next) = cnames.get(&terminal) else {
+            break;
+        };
+        if !visited.insert(terminal.clone()) {
+            return Err(doh_error(host, "固定 DoH CNAME 存在环"));
+        }
+        terminal = next.clone();
+    }
+    if cnames.contains_key(&terminal) {
+        return Err(doh_error(host, "固定 DoH CNAME 链过长或存在环"));
+    }
+    let mut selected = Vec::new();
+    for (owner, ip) in addresses {
+        if owner == terminal && !selected.contains(&ip) {
+            selected.push(ip);
+        }
+    }
+    if selected.is_empty() {
+        return Err(doh_error(host, "固定 DoH 没有匹配的公开 A 记录"));
+    }
+    Ok(selected)
+}
+
 /// 一次成功下载的结果（文件已在内容寻址位置）。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DownloadedModel {
@@ -290,6 +532,9 @@ pub struct ModelDownloader {
     data_dir: PathBuf,
     policy: DownloadPolicy,
     resolver: Arc<dyn HostResolver>,
+    /// Production-only recovery for a system resolver wholly intercepted by a fake-IP VPN.
+    /// Custom resolvers used by tests retain their exact answers for SSRF assertions.
+    doh_on_fake_ip: bool,
     space: SpaceProbe,
 }
 
@@ -300,6 +545,7 @@ impl ModelDownloader {
             data_dir: data_dir.into(),
             policy,
             resolver: Arc::new(SystemHostResolver),
+            doh_on_fake_ip: true,
             space: SpaceProbe::Statvfs,
         }
     }
@@ -315,6 +561,7 @@ impl ModelDownloader {
     /// 测试注入：自定义解析器（DNS 重绑定模拟）。
     pub fn with_resolver(mut self, resolver: Arc<dyn HostResolver>) -> Self {
         self.resolver = resolver;
+        self.doh_on_fake_ip = false;
         self
     }
 
@@ -456,12 +703,30 @@ impl ModelDownloader {
             });
         }
 
-        let addresses = self.resolver.resolve(&host, port).await?;
+        let mut addresses = self.resolver.resolve(&host, port).await?;
         if addresses.is_empty() {
             return Err(DownloadError::ResolutionFailed {
                 host,
                 detail: "解析结果为空".to_owned(),
             });
+        }
+        // A TUN fake-IP resolver can map an otherwise public CDN name wholly into
+        // 198.18/15. Never allow that reserved address through the SSRF gate. Only
+        // after the exact host allowlist and HTTPS checks above, ask a fixed trusted
+        // DoH endpoint for a public A answer. Mixed results still fail below.
+        if should_use_fake_ip_doh(
+            self.doh_on_fake_ip,
+            &scheme,
+            &host,
+            &self.policy.allowed_hosts,
+            &addresses,
+        ) {
+            tracing::info!(
+                event = "model_download_fake_ip_doh",
+                host = %host,
+                "系统 DNS 全部返回 198.18/15；通过固定 DoH 重新查询允许域"
+            );
+            addresses = resolve_public_doh(&host).await?;
         }
         // 任一地址被拒 → 整次拒绝（避免"混合公网/私网答案"绕过防护）。
         for address in &addresses {
@@ -487,14 +752,15 @@ impl ModelDownloader {
             // 连接 pin 到已校验 IP；URL 的 hostname（Host 头与 TLS SNI）保持不变，
             // 因此不存在"校验后再解析一次"的 DNS 重绑定窗口。
             .resolve_to_addrs(&target.host, &[SocketAddr::new(target.addr, 0)]);
-        let builder = if target.addr.is_loopback() {
-            builder.no_proxy()
-        } else {
-            builder
-        };
-        builder.build().map_err(|error| DownloadError::Io {
-            detail: format!("构造下载客户端失败：{error}"),
-        })
+        // An HTTP proxy CONNECTs to the original hostname and can resolve it
+        // independently, bypassing the validated-IP pin. Use a direct connector
+        // for every model request, including public CDN addresses.
+        builder
+            .no_proxy()
+            .build()
+            .map_err(|error| DownloadError::Io {
+                detail: format!("构造下载客户端失败：{error}"),
+            })
     }
 
     /// 流式落盘：边下边计数与 sha256（不整文件入内存）→ fsync → 原子 rename。
@@ -802,6 +1068,149 @@ mod tests {
             DownloadError::LinkExpired { status: 403 }
                 .message()
                 .contains("不会重新购买")
+        );
+    }
+
+    #[test]
+    fn fake_ip_doh_gate_requires_exact_allowlisted_https_and_only_fake_ips() {
+        let host = "tripo-data.rg1.data.tripo3d.com";
+        let allowed = vec![host.to_owned()];
+        let fake: IpAddr = "198.18.0.28".parse().unwrap();
+        let another_fake: IpAddr = "198.19.255.254".parse().unwrap();
+        let mapped_fake: IpAddr = "::ffff:198.18.0.28".parse().unwrap();
+        let translated_fake: IpAddr = "::ffff:0:c612:1c".parse().unwrap();
+        let public: IpAddr = "13.32.54.101".parse().unwrap();
+        let private: IpAddr = "10.0.0.1".parse().unwrap();
+        let ipv6: IpAddr = "2606:4700::1111".parse().unwrap();
+        assert!(should_use_fake_ip_doh(
+            true,
+            "https",
+            host,
+            &allowed,
+            &[fake, another_fake]
+        ));
+        assert!(should_use_fake_ip_doh(
+            true,
+            "https",
+            host,
+            &allowed,
+            &[fake, mapped_fake, translated_fake]
+        ));
+        for (enabled, scheme, name, answers) in [
+            (false, "https", host, vec![fake]),
+            (true, "http", host, vec![fake]),
+            (true, "https", "other.example", vec![fake]),
+            (true, "https", host, vec![]),
+            (true, "https", host, vec![fake, public]),
+            (true, "https", host, vec![fake, private]),
+            (true, "https", host, vec![fake, ipv6]),
+            (
+                true,
+                "https",
+                host,
+                vec![fake, "::ffff:0:a00:1".parse().unwrap()],
+            ),
+            (
+                true,
+                "https",
+                host,
+                vec![fake, "::fffe:0:c612:1c".parse().unwrap()],
+            ),
+        ] {
+            assert!(!should_use_fake_ip_doh(
+                enabled, scheme, name, &allowed, &answers
+            ));
+        }
+    }
+
+    #[test]
+    fn doh_accepts_matching_question_cname_chain_and_public_a_records() {
+        let host = "tripo-data.rg1.data.tripo3d.com";
+        let body = serde_json::json!({
+            "Status": 0,
+            "Question": [{"name": format!("{host}."), "type": 1}],
+            "Answer": [
+                {"name": host, "type": 5, "data": "d2qmplgzwxzx0z.cloudfront.net."},
+                {"name": "d2qmplgzwxzx0z.cloudfront.net.", "type": 1, "data": "13.32.54.101"},
+                {"name": "d2qmplgzwxzx0z.cloudfront.net.", "type": 1, "data": "13.32.54.86"},
+                {"name": "d2qmplgzwxzx0z.cloudfront.net.", "type": 1, "data": "13.32.54.101"}
+            ]
+        })
+        .to_string();
+        assert_eq!(
+            parse_doh_a_response(host, body.as_bytes()).unwrap(),
+            vec![
+                "13.32.54.101".parse::<IpAddr>().unwrap(),
+                "13.32.54.86".parse::<IpAddr>().unwrap()
+            ]
+        );
+    }
+
+    #[test]
+    fn doh_rejects_mismatched_empty_malformed_and_reserved_answers() {
+        let host = "cdn.example";
+        let cases = [
+            (
+                serde_json::json!({"Status": 2, "Question": [{"name": host, "type": 1}]}),
+                "download_dns",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": "other.example", "type": 1}], "Answer": [{"name": host, "type": 1, "data": "13.32.54.101"}]}),
+                "download_dns",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 28}], "Answer": [{"name": host, "type": 1, "data": "13.32.54.101"}]}),
+                "download_dns",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 1}]}),
+                "download_dns",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 1}], "Answer": [{"name": "other.example", "type": 1, "data": "13.32.54.101"}]}),
+                "download_dns",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 1}], "Answer": [{"name": host, "type": 1, "data": "not-an-ip"}]}),
+                "download_dns",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 1}], "Answer": [{"name": host, "type": 1, "data": "13.32.54.101"}, {"name": host, "type": 1, "data": "10.0.0.1"}]}),
+                "download_forbidden_address",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 1}], "Answer": [{"name": host, "type": 1, "data": "198.18.0.28"}]}),
+                "download_forbidden_address",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 1}], "Answer": [{"name": host, "type": 1, "data": "13.32.54.101"}, {"name": host, "type": 28, "data": "fc00::1"}]}),
+                "download_forbidden_address",
+            ),
+            (
+                serde_json::json!({"Status": 0, "Question": [{"name": host, "type": 1}], "Answer": [{"name": host, "type": 5, "data": "alias.example"}, {"name": "alias.example", "type": 5, "data": host}]}),
+                "download_dns",
+            ),
+        ];
+        for (body, code) in cases {
+            let error = parse_doh_a_response(host, body.to_string().as_bytes()).unwrap_err();
+            assert_eq!(error.code(), code, "case: {body}");
+        }
+        let too_many = serde_json::json!({
+            "Status": 0,
+            "Question": [{"name": host, "type": 1}],
+            "Answer": (0..=MAX_DOH_ANSWERS).map(|_| serde_json::json!({"name": host, "type": 1, "data": "13.32.54.101"})).collect::<Vec<_>>()
+        });
+        assert_eq!(
+            parse_doh_a_response(host, too_many.to_string().as_bytes())
+                .unwrap_err()
+                .code(),
+            "download_dns"
+        );
+        assert_eq!(
+            parse_doh_a_response(host, &vec![b' '; MAX_DOH_RESPONSE_BYTES + 1])
+                .unwrap_err()
+                .code(),
+            "download_dns"
         );
     }
 }

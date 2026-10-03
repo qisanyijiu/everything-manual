@@ -47,6 +47,39 @@ scripts/linux-musl.sh --prepare-sample-backup   # 样例备份缺 DB 时重新�
 macOS 二进制**未做代码签名与公证**（需要用户账号授权）：在其它机器首次运行需在
 「系统设置 → 隐私与安全性」按 Gatekeeper 提示放行，或由所有者用自有证书签名。
 
+### 本机预览反复弹出钥匙串授权
+
+管理员网页登录密码只控制应用会话，不控制 macOS 钥匙串。当前直接由 Cargo 构建的
+Mach-O 使用临时（ad-hoc）签名；代码更新会改变其身份，即使始终运行在同一路径，
+钥匙串仍可能把新版当作新的访问者。保留同一份已授权的二进制并重启，通常无需再次
+确认。不要为消除弹窗而将主密钥改为网页登录密码、写入仓库/数据目录，或开放该
+钥匙串条目给所有应用。
+
+长期在本机迭代时，可以由所有者**先准备一个现有的 macOS 代码签名身份**，再将每次
+预览构建签成相同的身份和固定标识。仓库提供可选的
+[`scripts/macos-sign-local.sh`](../scripts/macos-sign-local.sh)：
+
+若 `security find-identity -v -p codesigning` 显示 0 个可用身份，先按
+[Apple 的钥匙串访问指南](https://support.apple.com/guide/keychain-access/create-self-signed-certificates-kyca8916/mac)
+在「钥匙串访问 → 证书助理 → 创建证书」建立**仅用于本机预览的代码签名身份**；
+私钥留在用户钥匙串，不导出到仓库。创建后重新运行 `find-identity`，确认有可用的
+40 位指纹，再签新包。证书、签名标识与首次「始终允许」授权应作为同一套身份持续复用。
+
+```sh
+security find-identity -v -p codesigning # 选择已有身份的 40 位 SHA-1 指纹
+mkdir -p var/local-signed-bin
+scripts/macos-sign-local.sh target/release/everything-manual \
+  var/local-signed-bin/everything-manual.next YOUR_40_CHARACTER_IDENTITY_SHA1
+# 停服后，原子替换稳定路径上的可执行文件，再重启服务。
+```
+
+脚本只签署一个**新路径**，不会创建/导出证书、改动钥匙串条目或替换运行中的程序；
+它也不签署、公证 `cargo xtask dist` 的正式发行包。首次改用此身份访问原钥匙串条目时，
+macOS 仍可能要求所有者在系统弹窗选择“始终允许”。以后保持同一签名身份与标识，
+新版本才可继承这项信任；换证书、换系统用户、条目权限变化或钥匙串锁定都可能再次
+要求授权。签名会改变二进制哈希，需对**签名后的文件**重新校验并记录哈希，不能沿用
+原构建包的 `SHA256SUMS`。这项本机预览做法不等同于正式发行所需的签名与公证。
+
 ## 2. 首次部署
 
 ```sh
