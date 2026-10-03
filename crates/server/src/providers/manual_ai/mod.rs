@@ -24,6 +24,7 @@ pub mod handlers;
 pub(crate) mod models;
 pub mod prompt;
 pub mod store;
+pub mod view_classify;
 
 pub use client::{
     MANUAL_AI_RESPONSES_PATH, MAX_RESPONSE_BYTES, ManualAiClient, ManualAiError, ManualAiTimeouts,

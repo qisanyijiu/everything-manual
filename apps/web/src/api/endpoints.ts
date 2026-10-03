@@ -194,6 +194,44 @@ export function patchPhoto(
   );
 }
 
+// --- 视图候选与一次性视图排列（ADR-044） ---
+
+export type ViewCandidateDto = components["schemas"]["ViewCandidateDto"];
+export type ViewCandidateCreateRequest = components["schemas"]["ViewCandidateCreateRequest"];
+
+/** `GET /items/{id}/view-candidates`：从说明书 PDF 拆出的待选图（未删除的）。 */
+export async function listViewCandidates(itemId: string): Promise<ViewCandidateDto[]> {
+  const { body } = await requestJson<{ data: ViewCandidateDto[] }>(
+    `${API_PREFIX}/items/${encodeURIComponent(itemId)}/view-candidates`,
+  );
+  return body.data;
+}
+
+/** `POST /items/{id}/view-candidates`：登记候选（服务端可调用说明书 AI 给出建议视图）。 */
+export function createViewCandidate(itemId: string, body: ViewCandidateCreateRequest): Promise<ApiResource<ViewCandidateDto>> {
+  return requestData<ViewCandidateDto>(`${API_PREFIX}/items/${encodeURIComponent(itemId)}/view-candidates`, {
+    method: "POST",
+    body,
+  });
+}
+
+/** 删除 / 撤销删除候选（软删除）。 */
+export async function setViewCandidateDismissed(itemId: string, candidateId: string, dismissed: boolean): Promise<void> {
+  await requestJson<unknown>(
+    `${API_PREFIX}/items/${encodeURIComponent(itemId)}/view-candidates/${encodeURIComponent(candidateId)}/${dismissed ? "dismiss" : "restore"}`,
+    { method: "POST" },
+  );
+}
+
+/** `PUT /items/{id}/photos/arrangement`：一次性确定全部视图槽位（资产 id 或 null）。 */
+export async function arrangePhotos(itemId: string, slots: Record<string, string | null>): Promise<PhotoDto[]> {
+  const { body } = await requestJson<{ data: PhotoDto[] }>(
+    `${API_PREFIX}/items/${encodeURIComponent(itemId)}/photos/arrangement`,
+    { method: "PUT", body: { slots } },
+  );
+  return body.data;
+}
+
 // --- 报价、确认与建单（T11 合同） ---
 
 /** `POST /items/{id}/estimates`：只计算计划（不调用生成服务、不写费用记录）。 */

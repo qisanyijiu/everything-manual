@@ -331,3 +331,53 @@ mod tests {
         assert!(parse_view("Front").is_err());
     }
 }
+
+/// 一次性确定全部视图槽位（ADR-044；视图排列页的拖拽/删除/交换在客户端完成后整体提交）。
+///
+/// `slots`：每个视图要放的照片资产（`None` = 清空该视图）。在调用方的写事务内执行：
+/// 先删除本物品全部照片行，再按槽位重新插入——避免"两张照片互换视图"时逐条 UPDATE 撞
+/// `(item_id, view)` 唯一索引。照片行不被任何外键引用：报价/生成快照保存的是冻结的
+/// `photo_ids + photo_hashes`，旧任务不受影响（新报价会因输入变化失效，这是期望行为）。
+/// 资产相同的槽位保留原 photo id 与 revision+1，便于前端追踪。
+pub async fn arrange(
+    conn: &mut SqliteConnection,
+    item_id: &str,
+    slots: &[(PhotoView, String)],
+) -> Result<Vec<Photo>, StorageError> {
+    let existing = list_for_item(conn, item_id).await?;
+    sqlx::query("DELETE FROM photos WHERE item_id = ?")
+        .bind(item_id)
+        .execute(&mut *conn)
+        .await?;
+    let now = Timestamp::now();
+    let mut out = Vec::with_capacity(slots.len());
+    for (view, asset_id) in slots {
+        let kept = existing.iter().find(|photo| &photo.asset_id == asset_id);
+        let photo = Photo {
+            id: kept
+                .map(|photo| photo.id.clone())
+                .unwrap_or_else(ids::new_id),
+            item_id: item_id.to_owned(),
+            asset_id: asset_id.clone(),
+            view: *view,
+            revision: kept.map(|photo| photo.revision + 1).unwrap_or(1),
+            created_at: kept.map(|photo| photo.created_at).unwrap_or(now),
+            updated_at: now,
+        };
+        sqlx::query(
+            "INSERT INTO photos (id, item_id, asset_id, view, revision, created_at, updated_at) \
+             VALUES (?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(&photo.id)
+        .bind(&photo.item_id)
+        .bind(&photo.asset_id)
+        .bind(photo.view.as_str())
+        .bind(photo.revision)
+        .bind(photo.created_at.as_millis())
+        .bind(photo.updated_at.as_millis())
+        .execute(&mut *conn)
+        .await?;
+        out.push(photo);
+    }
+    Ok(out)
+}

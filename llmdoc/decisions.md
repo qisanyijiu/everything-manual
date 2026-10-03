@@ -2496,3 +2496,11 @@ ADR-xxx — 简短结论
 - 结论：`EM_SECRETS_MASTER_KEY` 仍最优先；未注入时使用 `EM_SECRETS_MASTER_KEY_FILE` 或默认 `~/.config/everything-manual/master.key`。读取只读、不创建；创建只新建（并发首次创建读既有赢家）；文件必须是 0600 普通文件，否则拒绝。默认路径在 data-dir 之外，备份/导出不包含它（与 ADR-039"主钥与密文分离"一致）。
 - 影响：旧的钥匙串加密覆盖文件无法用新主钥解密；本地开发环境已重置（`var/dev-old-20261003/provider-overrides.keychain-encrypted.json` 保留原文件），密钥经网页配置重新保存。钥匙串实现（`Secrets::native`）保留供显式使用，不再是默认。
 - 验证：新增 2 项单测（0600/0700、只读不创建、权限放宽拒绝、内容非法拒绝、重启复用）；Rust 全量 591 项通过；真实服务重启 2 秒就绪、两家供应商密钥可解密，无钥匙串弹窗。
+
+## ADR-044 — 从说明书 PDF 拆出视图候选图，用户拖拽确定视图排列
+
+- 日期：2026-10-03；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求"PDF 解析时拆分出可能为正面/左/背/右/特写的图片作为待选项，支持前端拖拽、删除确定最终排列"。
+- 结论：拆图在浏览器内用 PDF.js 完成（内嵌位图框 + 矢量线稿区域，生产不依赖 PDF 可执行程序）；候选上传为普通 `photo` 资产，`view_candidates` 记录来源页与说明书 AI 的**建议**视图（只是建议，不自动排列）；排列以 `PUT /photos/arrangement` 一次性提交。
+- 原因：说明书多为矢量线稿（PENTAX）或网页截图（CyberDog），只取内嵌位图会漏掉大半；建议视图会偏差（三分之四视角常判为正面），因此最终排列必须由用户决定。
+- 约束：候选不进报价/生成快照；删除为软删除可撤销；排列在单写事务内替换照片行（照片不被任何外键引用，已开始任务用冻结的 photo_ids + hashes 不受影响；已有报价因输入变化失效）；视图判断与提取同一服务端密钥，失败时候选记为未判断。
+- 证据：[view-candidates/notes.md](requirements/view-candidates/notes.md)。

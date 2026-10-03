@@ -21,7 +21,7 @@ use super::logging::request_logging;
 use super::state::AppState;
 use super::{
     assets, auth, documents, drafts, estimates, health, items, jobs, photos, preparations,
-    releases, settings,
+    releases, settings, view_candidates,
 };
 
 /// 组装应用路由。
@@ -41,6 +41,7 @@ pub fn build_app(state: AppState) -> Router {
         // T07：说明书绑定与多视图照片（物品子资源）。
         .merge(documents::routes())
         .merge(photos::routes())
+        .merge(view_candidates::routes())
         // T09：PDF 准备的创建/读取/逐页上传/封存（REQ-014、REQ-015）。
         .merge(preparations::routes())
         // T11：报价与云端发送确认（REQ-020、REQ-021）＋ 冻结/预留/幂等建单（REQ-022）。

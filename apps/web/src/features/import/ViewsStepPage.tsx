@@ -21,6 +21,7 @@ import { assetContentUrl, createPhoto, patchPhoto, type PhotoDto } from "../../a
 import { Skeleton } from "../../components/Skeleton";
 import { readReason } from "../../components/form";
 import { AssetUploadCard } from "./AssetUploadCard";
+import { ViewArrangement } from "./ViewArrangement";
 import { JobSnapshotNotice } from "../library/JobSnapshotNotice";
 import { MissingItemsList } from "./MissingItemsList";
 import { WizardNav, WizardSteps } from "./WizardSteps";
@@ -150,7 +151,11 @@ export function ViewsStepPage() {
         </div>
       )}
 
+      {photosQuery.data !== undefined && <ViewArrangement itemId={id} photos={photos} />}
+
       {photosQuery.data !== undefined && (
+        <details className="view-slots-manual">
+          <summary>逐个视图上传 / 替换照片</summary>
         <ul className="view-slots">
           {VIEW_ORDER.map((view) => {
             const photo = slots.get(view);
@@ -223,6 +228,7 @@ export function ViewsStepPage() {
             );
           })}
         </ul>
+        </details>
       )}
 
       <MissingItemsList

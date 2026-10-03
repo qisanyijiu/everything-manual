@@ -43,6 +43,7 @@ pub mod releases;
 pub mod router;
 pub mod settings;
 pub mod state;
+pub mod view_candidates;
 
 #[cfg(feature = "embedded-ui")]
 pub mod embedded;

@@ -425,6 +425,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/items/{id}/photos/arrangement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 一次性确定全部视图照片（拖拽排列的保存）
+         * @description slots 给出 front/left/back/right/detail 各自的照片资产（省略/null = 空）。资产须为本物品照片且不重复。在一个写事务内替换本物品的全部照片行（同资产保留原照片 id），因此互换两个视图不会撞唯一索引。已开始任务使用冻结快照，不受影响；已有报价会因输入变化失效。
+         */
+        put: operations["arrange_photos"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/items/{id}/photos/{photoId}": {
         parameters: {
             query?: never;
@@ -483,6 +503,61 @@ export interface paths {
         get: operations["get_release"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{id}/view-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 视图候选图（从说明书 PDF 拆出的待选图） */
+        get: operations["list_candidates"];
+        put?: never;
+        /**
+         * 登记一张视图候选图（可选由说明书 AI 判断建议视图）
+         * @description 资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。classify 默认 true：调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），不阻塞用户手动排列。候选不进入报价/生成快照。
+         */
+        post: operations["create_candidate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{id}/view-candidates/{candidateId}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 删除一张候选（软删除，可撤销；不影响已排列的照片） */
+        post: operations["dismiss_candidate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{id}/view-candidates/{candidateId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 撤销删除候选 */
+        post: operations["restore_candidate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1496,6 +1571,12 @@ export interface components {
             /** @description `auto`（自动绑定产出，待复核）/ `confirmed`（人工确认）。 */
             status: components["schemas"]["BindingStatus"];
         };
+        PhotoArrangementRequest: {
+            /** @description 每个视图要放的照片资产；省略或 null = 该视图为空。资产须为本物品 `photo`，且同一资产不能放两个视图。 */
+            slots?: {
+                [key: string]: string | null;
+            };
+        };
         /** @description `POST /api/v1/items/{id}/photos` 请求体。 */
         PhotoCreateRequest: {
             /** @description 照片资产 ID；必须属于同一物品且 `purpose=photo`，否则 404/422。 */
@@ -2072,6 +2153,43 @@ export interface components {
             safetyNotes?: string[] | null;
             title?: string | null;
             value?: string | null;
+        };
+        ViewCandidateCreateRequest: {
+            /** @description 候选图资产（本物品、`purpose=photo`、JPEG/PNG）。 */
+            assetId: string;
+            /** @description 是否请说明书 AI 判断建议视图（默认 true）。 */
+            classify?: boolean | null;
+            documentId?: string | null;
+            /** Format: int64 */
+            pageNumber?: number | null;
+            /** @description `embedded` / `region` / `upload`。 */
+            source: string;
+        };
+        ViewCandidateDto: {
+            assetId: string;
+            /** Format: double */
+            confidence?: number | null;
+            createdAt: string;
+            documentId?: string | null;
+            id: string;
+            itemId: string;
+            /** @description 判断理由（简短，供用户核对）。 */
+            note?: string | null;
+            /**
+             * Format: int64
+             * @description 来源页（1-based）；手动上传的候选为 null。
+             */
+            pageNumber?: number | null;
+            /** @description `embedded`（PDF 内嵌位图）/ `region`（渲染页的图形区域裁剪）/ `upload`（用户上传）。 */
+            source: string;
+            /** @description 建议视图（front/left/back/right/detail）；null = 未判断或不像产品视图。 */
+            suggestedView?: string | null;
+        };
+        ViewCandidateListResponse: {
+            data: components["schemas"]["ViewCandidateDto"][];
+        };
+        ViewCandidateResponse: {
+            data: components["schemas"]["ViewCandidateDto"];
         };
         /** @description 页图 viewport（旋转后的页图尺寸与旋转角）。 */
         ViewportDto: {
@@ -3601,6 +3719,48 @@ export interface operations {
             };
         };
     };
+    arrange_photos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhotoArrangementRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoListResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     get_photo: {
         parameters: {
             query?: never;
@@ -3792,6 +3952,148 @@ export interface operations {
                 };
             };
             /** @description 发布版本不存在或不属于该物品 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    list_candidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewCandidateListResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    create_candidate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ViewCandidateCreateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewCandidateResponse"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewCandidateResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    dismiss_candidate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+                /** @description 候选 ID */
+                candidateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 已删除 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    restore_candidate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+                /** @description 候选 ID */
+                candidateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 已恢复 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             404: {
                 headers: {
                     [name: string]: unknown;
