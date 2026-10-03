@@ -256,8 +256,13 @@ impl StageHandler for AutoBindHandler {
                 json!({ "partId": part_id, "nodes": nodes, "status": "auto" })
             }).collect();
             // 推导动作和姿势
-            let actions = derive_actions(&parts, &bindings, &node_bounds);
+            let steps_list = knowledge.knowledge.as_ref().map(|k| k.steps.clone()).unwrap_or_default();
+            let actions = derive_actions(&parts, &bindings, &node_bounds, &steps_list);
             let poses = derive_poses(&node_bounds, &glb_path);
+            let hotspot_count = hotspots.len();
+            let action_count = actions.len();
+            let pose_count = poses.len();
+            tracing::info!(jobId = %ctx.job.id, hotspots = hotspot_count, actions = action_count, poses = pose_count, "auto_bind：准备 PATCH");
             // PATCH 草稿
             let patch_body = crate::drafts::aggregate::DraftPatch {
                 hotspots: Some(crate::drafts::aggregate::HotspotPatch {
@@ -284,6 +289,9 @@ impl StageHandler for AutoBindHandler {
                 }
                 Err(reason) => {
                     tracing::warn!(jobId = %ctx.job.id, reason = %reason, "自动绑定 PATCH 失败，跳过");
+                    if let crate::drafts::service::DraftServiceError::FieldIssues(ref issues) = reason {
+                        for issue in issues { tracing::warn!(field = %issue.field, message = %issue.message, "字段问题"); }
+                    }
                     Ok(StageOutcome::Succeeded { result_asset_id: None, usage: Some(json!({"skipped": true, "reason": format!("{reason}")})) })
                 }
             }
@@ -363,22 +371,166 @@ fn heuristic_bind(
     result
 }
 
+/// 从分件节点包围盒推导动作（相机/设备类产品）。
+/// 按部件名称中的关键词匹配典型操作（盖子→外翻取下，按钮→按下，转盘→转动，杆→扳动）。
 fn derive_actions(
-    _parts: &[manual_core::knowledge::Part],
-    _bindings: &[(String, Vec<String>, [f64; 3])],
-    _bounds: &std::collections::BTreeMap<String, ([f64; 3], [f64; 3])>,
+    parts: &[manual_core::knowledge::Part],
+    bindings: &[(String, Vec<String>, [f64; 3])],
+    bounds: &std::collections::BTreeMap<String, ([f64; 3], [f64; 3])>,
+    steps: &[manual_core::knowledge::Step],
 ) -> Vec<serde_json::Value> {
-    // 启发式动作推导：暂时留空，后续可从 interactions.py 移植
-    Vec::new()
+    use serde_json::json;
+    let all_bounds: Vec<[f64; 3]> = bounds.values().flat_map(|b| vec![b.0, b.1]).collect();
+    if all_bounds.is_empty() { return Vec::new(); }
+    let lo = [all_bounds.iter().map(|b| b[0]).fold(f64::INFINITY, f64::min),
+              all_bounds.iter().map(|b| b[1]).fold(f64::INFINITY, f64::min),
+              all_bounds.iter().map(|b| b[2]).fold(f64::INFINITY, f64::min)];
+    let hi = [all_bounds.iter().map(|b| b[0]).fold(f64::NEG_INFINITY, f64::max),
+              all_bounds.iter().map(|b| b[1]).fold(f64::NEG_INFINITY, f64::max),
+              all_bounds.iter().map(|b| b[2]).fold(f64::NEG_INFINITY, f64::max)];
+    let volume = (hi[0] - lo[0]) * (hi[1] - lo[1]) * (hi[2] - lo[2]);
+    let mut actions = Vec::new();
+    let mut used: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let part_name: std::collections::HashMap<&str, &str> = parts.iter().map(|p| (p.id.as_str(), p.name.as_str())).collect();
+    let steps_for = |keywords: &[&str]| -> Vec<String> {
+        steps.iter().filter(|s| keywords.iter().any(|k| s.title.contains(k))).take(6).map(|s| s.id.clone()).collect()
+    };
+    for (pid, nodes, c) in bindings {
+        let name = part_name.get(pid.as_str()).copied().unwrap_or("");
+        let ns: Vec<String> = nodes.iter().filter(|n| bounds.contains_key(n.as_str()) && !used.contains(n.as_str())).cloned().collect();
+        if ns.is_empty() { continue; }
+        let b = (ns.iter().map(|n| bounds[n].0).fold([f64::INFINITY; 3], |a, b| [a[0].min(b[0]), a[1].min(b[1]), a[2].min(b[2])]),
+                 ns.iter().map(|n| bounds[n].1).fold([f64::NEG_INFINITY; 3], |a, b| [a[0].max(b[0]), a[1].max(b[1]), a[2].max(b[2])]));
+        let node_vol = (b.1[0] - b.0[0]) * (b.1[1] - b.0[1]) * (b.1[2] - b.0[2]);
+        if node_vol > 0.25 * volume { continue; } // skip body-sized nodes
+        let r = |n: &[String], pivot: [f64; 3], axis: [f64; 3], deg: f64| json!({"nodes": n, "kind": "rotate", "pivot": pivot, "axis": axis, "angleDeg": deg});
+        let t = |n: &[String], v: [f64; 3]| json!({"nodes": n, "kind": "translate", "vector": v});
+        if name.contains("电池盖") || name.contains("手柄") {
+            let side = if c[0] < 0.0 { -1.0 } else { 1.0 };
+            let hinge = [if side < 0.0 { b.1[0] } else { b.0[0] }, b.0[1], b.1[2]];
+            actions.push(json!({"id": format!("open-{}", actions.len()), "label": format!("取下{name}"), "description": "露出电池仓（外观示意）。",
+                "triggerPartIds": [pid], "mode": "toggle", "durationMs": 900,
+                "steps": [t(&ns, [side * 0.18, -0.05, 0.08]), r(&ns, hinge, [0.0, 1.0, 0.0], side * 25.0)],
+                "stepIds": steps_for(&["电池"])}));
+        } else if name.contains("后盖") {
+            let hinge = [b.1[0], c[1], b.0[2]];
+            actions.push(json!({"id": format!("open-{}", actions.len()), "label": format!("打开{name}"), "description": "装入胶片时打开（外观示意）。",
+                "triggerPartIds": [pid], "mode": "toggle", "durationMs": 1000,
+                "steps": [r(&ns, hinge, [0.0, 1.0, 0.0], -70.0)], "stepIds": steps_for(&["胶片"])}));
+        } else if name.contains("按钮") || name.contains("快门") {
+            actions.push(json!({"id": format!("press-{}", actions.len()), "label": format!("按下{name}"), "description": null,
+                "triggerPartIds": [pid], "mode": "pulse", "durationMs": 300,
+                "steps": [t(&ns, [0.0, -0.012, 0.0])], "stepIds": steps_for(&[&name[..name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
+        } else if name.contains("转盘") || name.contains("拨盘") {
+            actions.push(json!({"id": format!("turn-{}", actions.len()), "label": format!("转动{name}"), "description": null,
+                "triggerPartIds": [pid], "mode": "pulse", "durationMs": 900,
+                "steps": [r(&ns, *c, [0.0, 1.0, 0.0], 60.0)], "stepIds": steps_for(&[&name[..name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
+        } else if name.contains("杆") {
+            let pivot = [b.0[0] + 0.03, c[1], c[2]];
+            actions.push(json!({"id": format!("lever-{}", actions.len()), "label": format!("扳动{name}"), "description": null,
+                "triggerPartIds": [pid], "mode": "pulse", "durationMs": 700,
+                "steps": [r(&ns, pivot, [0.0, 1.0, 0.0], -35.0)], "stepIds": steps_for(&[&name[..name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
+        } else {
+            continue;
+        }
+        for n in &ns { used.insert(n.clone()); }
+    }
+    actions.into_iter().take(12).collect()
 }
 
+/// 从分件节点包围盒推导四足机器人姿势。
+/// 找身体轴和头部方向，识别四条腿（大腿/小腿/足垫），生成站立/趴下/坐下/握手/作揖。
 fn derive_poses(
-    _bounds: &std::collections::BTreeMap<String, ([f64; 3], [f64; 3])>,
-    _glb_path: &Path,
+    bounds: &std::collections::BTreeMap<String, ([f64; 3], [f64; 3])>,
+    _glb_path: &std::path::Path,
 ) -> Vec<serde_json::Value> {
-    // 启发式姿势推导：暂时留空，后续可从 interactions.py 移植
-    Vec::new()
+    use serde_json::json;
+    if bounds.len() < 8 { return Vec::new(); } // too few parts for a robot
+    let all: Vec<[f64; 3]> = bounds.values().flat_map(|b| vec![b.0, b.1]).collect();
+    let lo = [all.iter().map(|b| b[0]).fold(f64::INFINITY, f64::min),
+              all.iter().map(|b| b[1]).fold(f64::INFINITY, f64::min),
+              all.iter().map(|b| b[2]).fold(f64::INFINITY, f64::min)];
+    let hi = [all.iter().map(|b| b[0]).fold(f64::NEG_INFINITY, f64::max),
+              all.iter().map(|b| b[1]).fold(f64::NEG_INFINITY, f64::max),
+              all.iter().map(|b| b[2]).fold(f64::NEG_INFINITY, f64::max)];
+    let span = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
+    // Find legs: nodes with large y-span touching the bottom
+    let shins: Vec<&str> = bounds.iter()
+        .filter(|(_, b)| (b.1[1] - b.0[1]) > 0.3 * span[1] && b.0[1] < lo[1] + 0.1 * span[1])
+        .map(|(n, _)| n.as_str()).collect();
+    if shins.len() < 3 || shins.len() > 8 { return Vec::new(); } // 3-8 tall parts = quadruped; too many = not a robot
+    // Determine body axis (horizontal axis with largest span)
+    let body_axis = if span[0] >= span[2] { 0 } else { 2 };
+    let side_axis = if body_axis == 0 { 2 } else { 0 };
+    // Head direction: tallest parts on one end
+    let tall: Vec<(&str, f64)> = bounds.iter()
+        .filter(|(_, b)| b.1[1] > lo[1] + 0.7 * span[1])
+        .map(|(n, b)| (n.as_str(), (b.0[body_axis] + b.1[body_axis]) / 2.0)).collect();
+    let head_mean = if tall.is_empty() { (lo[body_axis] + hi[body_axis]) / 2.0 } else { tall.iter().map(|(_, c)| c).sum::<f64>() / tall.len() as f64 };
+    let head_sign = if head_mean >= (lo[body_axis] + hi[body_axis]) / 2.0 { 1.0 } else { -1.0 };
+    let mut swing = [0.0; 3]; // axis perpendicular to body and up
+    swing[side_axis] = if body_axis == 0 { 1.0 } else { -1.0 };
+    // Classify legs into corners
+    let mid_body = (lo[body_axis] + hi[body_axis]) / 2.0;
+    let mid_side = (lo[side_axis] + hi[side_axis]) / 2.0;
+    struct Leg { thigh: Option<String>, shin: String, feet: Vec<String> }
+    let mut legs: std::collections::BTreeMap<String, Leg> = std::collections::BTreeMap::new();
+    for sh in &shins {
+        let c = center(bounds.get(*sh).unwrap());
+        let front = (c[body_axis] - mid_body) * head_sign > 0.0;
+        let left = c[side_axis] < mid_side;
+        let corner = format!("{}{}", if front { "F" } else { "R" }, if left { "L" } else { "R" });
+        let thighs: Vec<&str> = bounds.iter()
+            .filter(|(n, b)| !shins.contains(&n.as_str()) && (center(b)[0] - c[0]).abs() < 0.1 && (center(b)[2] - c[2]).abs() < 0.1
+                && center(b)[1] > c[1] && (b.1[1] - b.0[1]) < 0.35 * span[1])
+            .map(|(n, _)| n.as_str()).collect();
+        let thigh = thighs.into_iter().max_by(|a, b| {
+            let va = bounds[*a]; let vb = bounds[*b];
+            let sa = (va.1[0]-va.0[0])*(va.1[1]-va.0[1])*(va.1[2]-va.0[2]);
+            let sb = (vb.1[0]-vb.0[0])*(vb.1[1]-vb.0[1])*(vb.1[2]-vb.0[2]);
+            sa.partial_cmp(&sb).unwrap_or(std::cmp::Ordering::Equal)
+        }).map(str::to_owned);
+        legs.entry(corner).or_insert(Leg { thigh, shin: sh.to_string(), feet: Vec::new() });
+    }
+    // Attach feet (small floor-level nodes) to nearest shin
+    for (n, b) in bounds {
+        if shins.contains(&n.as_str()) || (b.1[1] - b.0[1]) > 0.15 * span[1] || b.0[1] > lo[1] + 0.06 * span[1] { continue; }
+        let c = center(b);
+        if let Some((_, leg)) = legs.iter_mut().min_by(|(_, la), (_, lb)| {
+            let da = (center(bounds.get(la.shin.as_str()).unwrap())[0] - c[0]).powi(2) + (center(bounds.get(la.shin.as_str()).unwrap())[2] - c[2]).powi(2);
+            let db = (center(bounds.get(lb.shin.as_str()).unwrap())[0] - c[0]).powi(2) + (center(bounds.get(lb.shin.as_str()).unwrap())[2] - c[2]).powi(2);
+            da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+        }) { leg.feet.push(n.clone()); }
+    }
+    if legs.len() != 4 { return Vec::new(); } // exactly 4 legs = quadruped; cameras/devices return empty
+    let all_nodes: Vec<String> = bounds.keys().cloned().collect();
+    let hip = |n: &str| -> [f64; 3] { let b = bounds.get(n).unwrap(); [center(b)[0], b.1[1] - 0.04, center(b)[2]] };
+    let knee = |n: &str| -> [f64; 3] { let b = bounds.get(n).unwrap(); [center(b)[0], b.1[1] - 0.015, center(b)[2]] };
+    let r = |nodes: &[String], pivot: [f64; 3], axis: &[f64; 3], deg: f64| json!({"nodes": nodes, "kind": "rotate", "pivot": pivot, "axis": axis, "angleDeg": deg});
+    let t = |nodes: &[String], v: [f64; 3]| json!({"nodes": nodes, "kind": "translate", "vector": v});
+    let leg_steps = |corner: &str, h: f64, k: f64| -> Vec<serde_json::Value> {
+        let Some(leg) = legs.get(corner) else { return Vec::new() };
+        let mut lower: Vec<String> = vec![leg.shin.clone()]; lower.extend(leg.feet.iter().cloned());
+        match &leg.thigh {
+            None => vec![r(&lower, hip(&leg.shin), &swing, h)],
+            Some(th) => { let mut upper = vec![th.clone()]; upper.extend(lower.iter().cloned()); vec![r(&lower, knee(&leg.shin), &swing, k), r(&upper, hip(th), &swing, h)] }
+        }
+    };
+    let pose = |id: &str, label: &str, desc: &str, ms: u32, per: &[(&str, f64, f64)], pitch: f64, pivot: [f64; 3]| -> serde_json::Value {
+        let mut steps = Vec::new();
+        for (corner, h, k) in per { steps.extend(leg_steps(corner, *h, *k)); }
+        if pitch.abs() > 0.001 { steps.push(r(&all_nodes, pivot, &swing, pitch)); }
+        json!({"id": id, "label": label, "description": desc, "durationMs": ms, "steps": steps})
+    };
+    vec![
+        json!({"id": "stand", "label": "站立", "description": "默认站立姿态（模型原始姿态）。", "durationMs": 500, "steps": [r(&all_nodes[..1].to_vec(), [0.0; 3], &swing, 0.0)]}),
+        pose("lie-down", "趴下", "腿部收起、腹部贴地。", 1200, &[("FL", -50.0, 115.0), ("FR", -50.0, 115.0), ("RL", -50.0, 115.0), ("RR", -50.0, 115.0)], 0.0, [0.0; 3]),
+        pose("sit", "坐下", "后腿收起、前腿支撑。", 1100, &[("RL", -55.0, 120.0), ("RR", -55.0, 120.0), ("FL", 10.0, 0.0), ("FR", 10.0, 0.0)], 24.0, [lo[body_axis] + 0.15, lo[1] + 0.3, 0.0]),
+        pose("shake-hand", "握手", "抬起右前腿。", 900, &[("FR", 65.0, -20.0)], 0.0, [0.0; 3]),
+        pose("bow", "作揖", "前腿弯曲下压。", 1100, &[("FL", -45.0, 110.0), ("FR", -45.0, 110.0)], -16.0, [hi[body_axis] - 0.2, lo[1] + 0.3, 0.0]),
+    ]
 }
+
 
 // ---------------------------------------------------------------------------
 // 注册

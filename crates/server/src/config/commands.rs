@@ -235,6 +235,8 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
             .map_err(|e| CliError::config(e.to_string()))?,
         true,
     )?;
+    // ADR-045：网页配置覆盖后重新判定（部署配置里可能没有密钥，网页配置里有）。
+    settings.auto_stages_enabled = settings.providers.tripo.configured();
 
     // 数据库：自动检测并迁移到程序支持版本；库比程序新 → 拒绝打开（不修改数据）。
     let (database, migration) = Database::open_and_migrate_reporting(&settings.data_dir)

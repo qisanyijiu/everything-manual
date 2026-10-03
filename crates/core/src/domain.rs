@@ -251,12 +251,14 @@ impl StageKind {
             "model_download" => Some(Self::ModelDownload),
             "model_validate" => Some(Self::ModelValidate),
             "assemble_draft" => Some(Self::AssembleDraft),
+            "tripo_segment" => Some(Self::TripoSegment),
+            "auto_bind" => Some(Self::AutoBind),
             _ => None,
         }
     }
 
     /// 全部阶段类型（DAG 遍历与集合断言用）。
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 11] = [
         Self::FreezeInputs,
         Self::ManualExtract,
         Self::ManualMerge,
@@ -266,6 +268,8 @@ impl StageKind {
         Self::ModelDownload,
         Self::ModelValidate,
         Self::AssembleDraft,
+        Self::TripoSegment,
+        Self::AutoBind,
     ];
 }
 
