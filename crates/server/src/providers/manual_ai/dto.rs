@@ -304,7 +304,7 @@ mod tests {
             vec![InputContent::InputText {
                 text: "你好".to_owned(),
             }],
-            4096,
+            16384,
         );
         let value: serde_json::Value = serde_json::from_slice(&request.to_bytes()).unwrap();
         assert_eq!(value["model"], json!("gpt-test"));
@@ -313,7 +313,7 @@ mod tests {
         assert_eq!(value["text"]["format"]["type"], json!("json_schema"));
         assert_eq!(value["text"]["format"]["name"], json!("manual_extract_v1"));
         assert_eq!(value["text"]["format"]["strict"], json!(true));
-        assert_eq!(value["max_output_tokens"], json!(4096));
+        assert_eq!(value["max_output_tokens"], json!(16384));
         assert_eq!(value["store"], json!(false));
         assert!(
             value.get("response_format").is_none(),
