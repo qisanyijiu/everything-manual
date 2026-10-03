@@ -104,7 +104,7 @@ async function login(page: Page): Promise<void> {
 function countJobRequests(page: Page): () => number {
   let count = 0;
   page.on("request", (request) => {
-    if (request.url().includes("/api/v1/jobs")) {
+    if (request.method() === "GET" && /^\/api\/v1\/jobs(?:\/[^/]+)?$/.test(new URL(request.url()).pathname) && new URL(request.url()).pathname !== "/api/v1/jobs/activity") {
       count += 1;
     }
   });

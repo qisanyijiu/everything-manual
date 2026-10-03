@@ -21,14 +21,16 @@ import {
   type ItemPatchRequest,
 } from "../../api/endpoints";
 
+import { workflowKeys } from "./workflow";
+
 export const ITEMS_PAGE_SIZE = 20;
 
 export const itemKeys = {
   root: ["items"] as const,
   /** 列表查询的统一前缀（变更成功后只失效列表，详情用响应数据就地更新）。 */
   listRoot: ["items", "list"] as const,
-  list: (archived: boolean, startCursor: string | null) =>
-    ["items", "list", archived, startCursor] as const,
+  list: (archived: boolean, startCursor: string | null, q = "") =>
+    ["items", "list", archived, startCursor, q] as const,
   detail: (itemId: string) => ["items", "detail", itemId] as const,
   documents: (itemId: string) => ["items", "documents", itemId] as const,
   photos: (itemId: string) => ["items", "photos", itemId] as const,
@@ -38,12 +40,16 @@ export const itemKeys = {
 };
 
 /** 列表：游标继续加载；`startCursor` 由 URL 承载（§6.1.1）。 */
-export function useItemList(params: { archived: boolean; startCursor: string | null }) {
+export function useItemList(params: { archived: boolean; startCursor: string | null; q: string }) {
   return useInfiniteQuery({
-    queryKey: itemKeys.list(params.archived, params.startCursor),
+    queryKey: itemKeys.list(params.archived, params.startCursor, params.q),
+    retry: false,
+    staleTime: 15_000,
+    enabled: [...params.q].length <= 200,
     queryFn: ({ pageParam }) =>
       listItems({
         archived: params.archived,
+        q: params.q || undefined,
         cursor: pageParam === null ? undefined : pageParam,
         limit: ITEMS_PAGE_SIZE,
       }),
@@ -82,6 +88,7 @@ export function useCreateItem() {
     mutationFn: (body: ItemCreateRequest) => createItem(body),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: itemKeys.listRoot });
+      void queryClient.invalidateQueries({ queryKey: workflowKeys.root });
     },
   });
 }
@@ -101,6 +108,7 @@ export function usePatchItem() {
     onSuccess: (result, variables) => {
       queryClient.setQueryData(itemKeys.detail(variables.itemId), result);
       void queryClient.invalidateQueries({ queryKey: itemKeys.listRoot });
+      void queryClient.invalidateQueries({ queryKey: workflowKeys.root });
     },
   });
 }

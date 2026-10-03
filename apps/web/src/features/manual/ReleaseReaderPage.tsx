@@ -1,3 +1,4 @@
+import { LibraryBackLink } from "../library/library-navigation";
 /**
  * 发布版阅读器（T19；路由 `/items/:itemId/releases/:releaseId`；REQ-036 / AC-057）。
  *
@@ -11,7 +12,7 @@
  *   `manifest.model.assetId` → 本地资产），不读会变的草稿内容。
  */
 
-import { Suspense, lazy, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 
@@ -26,22 +27,16 @@ import {
   readDraftHotspots,
   readDraftMissing,
   readDraftModel,
-  readDraftParts,
-  readDraftReview,
-  readDraftSpecs,
   readDraftStepPoses,
-  readDraftSteps,
 } from "../viewer/draft-view";
 import { InteractionPanel } from "../viewer/InteractionPanel";
 import { readInteractive } from "../viewer/interactive";
 import { useInteractive } from "../viewer/useInteractive";
 import { ViewerPanel } from "../viewer/ViewerPanel";
+import { ReleaseDownload, RELEASE_DOWNLOAD_DESCRIPTION } from "./ReleaseDownload";
+import { readReleaseKnowledge } from "./release-view";
 
-const OriginalDocumentPanel = lazy(() =>
-  import("../viewer/OriginalDocumentPanel").then((module) => ({
-    default: module.OriginalDocumentPanel,
-  })),
-);
+import { EvidenceLinks, useDocumentNavigation } from "../viewer/document-navigation";
 
 interface ManifestShape {
   readonly knowledge?: unknown;
@@ -49,6 +44,7 @@ interface ManifestShape {
   readonly model?: { readonly assetId?: unknown } | null;
   readonly documents?: readonly {
     readonly documentId?: unknown;
+    readonly title?: unknown;
     readonly sourceAssetId?: unknown;
   }[];
   readonly counts?: Record<string, unknown>;
@@ -58,14 +54,17 @@ export function ReleaseReaderPage() {
   const params = useParams();
   const itemId = params.itemId ?? "";
   const releaseId = params.releaseId ?? "";
+  // A different immutable version starts its own selection and source-navigation state.
+  return <ReleaseReader key={`${itemId}/${releaseId}`} itemId={itemId} releaseId={releaseId} />;
+}
+
+function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonly releaseId: string }) {
   const releaseQuery = useQuery({
     queryKey: ["release", itemId, releaseId],
     queryFn: () => getRelease(itemId, releaseId),
     enabled: itemId !== "" && releaseId !== "",
   });
 
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageCount, setPageCount] = useState<number | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -75,12 +74,11 @@ export function ReleaseReaderPage() {
   const manifest = (releaseQuery.data?.data.manifest ?? null) as ManifestShape | null;
   const knowledge = manifest?.knowledge;
   const model = useMemo(() => readDraftModel(knowledge), [knowledge]);
-  const parts = useMemo(() => readDraftParts(knowledge), [knowledge]);
-  const steps = useMemo(() => readDraftSteps(knowledge), [knowledge]);
-  const specs = useMemo(() => readDraftSpecs(knowledge), [knowledge]);
+  const { parts, steps, specs, review } = useMemo(
+    () => readReleaseKnowledge(knowledge, manifest?.review), [knowledge, manifest?.review],
+  );
   const hotspots = useMemo(() => readDraftHotspots(knowledge), [knowledge]);
   const stepPoses = useMemo(() => readDraftStepPoses(knowledge), [knowledge]);
-  const review = useMemo(() => readDraftReview(manifest?.review), [manifest]);
   const missing = useMemo(() => readDraftMissing(knowledge), [knowledge]);
   const interactiveView = useMemo(() => readInteractive(knowledge, model), [knowledge, model]);
   const interaction = useInteractive(interactiveView, selectedPartId);
@@ -101,11 +99,11 @@ export function ReleaseReaderPage() {
     });
   }, [hotspots, model]);
 
-  const documentAssetId = useMemo(() => {
-    const document = manifest?.documents?.[0];
-    const assetId = document?.sourceAssetId;
-    return typeof assetId === "string" && assetId !== "" ? assetId : null;
-  }, [manifest]);
+  const documents = useMemo(() => (manifest?.documents ?? []).flatMap((entry) =>
+    typeof entry.documentId === "string" && typeof entry.sourceAssetId === "string"
+      ? [{ id: entry.documentId, sourceAssetId: entry.sourceAssetId, title: typeof entry.title === "string" ? entry.title : entry.documentId }] : []), [manifest]);
+  const original = useDocumentNavigation(documents);
+  const { pageNumber, pageCount } = original;
 
   const textOnlyParts = useMemo(
     () => parts.filter((part) => review.entities[part.id]?.textOnly === true),
@@ -138,7 +136,7 @@ export function ReleaseReaderPage() {
     setStepIndex(bounded);
     const evidence = target.evidence[0];
     if (evidence !== undefined) {
-      setPageNumber(evidence.pageNumber);
+      original.selectEvidence(evidence);
     }
     setSelectedPartId(target.partIds[0] ?? null);
     setSelectedHotspotId(null);
@@ -153,14 +151,22 @@ export function ReleaseReaderPage() {
           <Link className="button" to={`/items/${itemId}/releases`}>返回版本列表</Link>
         </div>
       </header>
+      <p><LibraryBackLink itemId={itemId} /></p>
       <p className="page-subtitle">旋转模型探索部件，跟随步骤查看说明，随时对照原文。</p>
       {release !== undefined && (
+        <>
         <details className="reader-version"><summary>已发布 · 草稿 r{release.draftRevision} · 查看版本信息</summary>
         <p className="page-note" data-testid="release-context">
           发布版本 {release.id} · 草稿 r{release.draftRevision} · 模型 {release.modelRevisionId} ·
           manifest {release.manifestSha256.slice(0, 12)}…（不可变）
         </p>
         <p>内容保留发布时的版本，之后修改草稿不会影响这里。</p></details>
+        <section className="reader-download" aria-label="下载当前发布版本">
+          <p className="reader-download__identity">当前发布版 · 草稿 r{release.draftRevision}</p>
+          <ReleaseDownload key={release.id} releaseId={release.id} descriptionId="reader-download-description" />
+          <p id="reader-download-description" className="release-download-description">{RELEASE_DOWNLOAD_DESCRIPTION}</p>
+        </section>
+        </>
       )}
       {missing.length > 0 && (
         <section className="notice-panel" aria-label="发布内容说明">
@@ -179,6 +185,9 @@ export function ReleaseReaderPage() {
       )}
 
       <PageLayout
+        navigation={original.navigation}
+        onOriginalClose={original.returnToSource}
+        original={{ id: "original", label: "原文", content: original.panel }}
         rail={{
           id: "parts",
           label: "部件",
@@ -220,20 +229,14 @@ export function ReleaseReaderPage() {
                                 : "无热点"}
                           </span>
                           {part.description !== "" && <p>{part.description}</p>}
-                          {part.evidence.length > 0 && (
-                            <p className="step-evidence">
-                              原文：
-                              {part.evidence.map((evidence, index) => (
-                                <button
-                                  key={`${part.id}-page-${index}`}
-                                  type="button"
-                                  onClick={() => setPageNumber(evidence.pageNumber)}
-                                >
-                                  第 {evidence.pageNumber} 页
-                                </button>
-                              ))}
-                            </p>
-                          )}
+                          {part.hasUserEdit && <ReleaseRevision entityId={part.id}>
+                            <p>{part.original.name}</p>
+                            {part.original.description !== "" && <p>{part.original.description}</p>}
+                          </ReleaseRevision>}
+                          <EvidenceLinks entityId={part.id} evidence={part.evidence} documents={documents} onOpen={(evidence, focusId) => {
+                            setSelectedPartId(part.id); setSelectedHotspotId(partHotspots[0]?.id ?? null);
+                            original.openEvidence(evidence, { panelId: "parts", focusId });
+                          }} />
                         </li>
                       );
                     })}
@@ -280,7 +283,7 @@ export function ReleaseReaderPage() {
                     </div>
                     <ol className="entity-list" data-testid="steps-list">
                       {steps.map((step, index) => (
-                        <li key={step.id}>
+                        <li key={step.id} data-testid={`reader-step-${step.id}`}>
                           <button
                             type="button"
                             aria-current={index === safeStepIndex}
@@ -288,6 +291,15 @@ export function ReleaseReaderPage() {
                           >
                             {step.title}
                           </button>
+                          {step.hasUserEdit && <ReleaseRevision entityId={step.id}>
+                            <p>{step.original.title}</p>
+                            {step.original.orderedActions.length > 0 && <ol>
+                              {step.original.orderedActions.map((action, index) => <li key={index}>{action}</li>)}
+                            </ol>}
+                            {step.original.safetyNotes.length > 0 && <ul>
+                              {step.original.safetyNotes.map((note, index) => <li key={index}>原注意事项：{note}</li>)}
+                            </ul>}
+                          </ReleaseRevision>}
                           {index === safeStepIndex && (
                             <div className="step-detail">
                               {step.orderedActions.length > 0 && (
@@ -323,20 +335,10 @@ export function ReleaseReaderPage() {
                                   ))}
                                 </p>
                               )}
-                              {step.evidence.length > 0 && (
-                                <p className="step-evidence">
-                                  原文：
-                                  {step.evidence.map((evidence, evidenceIndex) => (
-                                    <button
-                                      key={`${step.id}-page-${evidenceIndex}`}
-                                      type="button"
-                                      onClick={() => setPageNumber(evidence.pageNumber)}
-                                    >
-                                      第 {evidence.pageNumber} 页
-                                    </button>
-                                  ))}
-                                </p>
-                              )}
+                              <EvidenceLinks entityId={step.id} evidence={step.evidence} documents={documents} onOpen={(evidence, focusId) => {
+                                setStepIndex(index); setSelectedPartId(step.partIds[0] ?? null);
+                                original.openEvidence(evidence, { panelId: "steps", focusId });
+                              }} />
                               {stepPoses[step.id] !== undefined && (
                                 <p className="page-note">该步骤保存了视角（发布时冻结）。</p>
                               )}
@@ -348,27 +350,19 @@ export function ReleaseReaderPage() {
                   </>
                 )}
               </section>
-              <Suspense
-                fallback={
-                  <p className="original-panel__message" role="status">
-                    正在加载原文模块…
-                  </p>
-                }
-              >
-                <OriginalDocumentPanel
-                  assetId={documentAssetId}
-                  pageNumber={pageNumber}
-                  onPageChange={(next) => setPageNumber(Math.max(1, next))}
-                  onPageCount={setPageCount}
-                />
-              </Suspense>
               {specs.length > 0 && (
                 <section aria-label="规格">
                   <h3>规格</h3>
                   <ul className="entity-list" data-testid="specs-list">
                     {specs.map((spec) => (
-                      <li key={spec.id}>
-                        {spec.label}：{spec.value}
+                      <li key={spec.id} data-testid={`reader-spec-${spec.id}`}>
+                        <span>{spec.label}：{spec.value}</span>
+                        {spec.hasUserEdit && <ReleaseRevision entityId={spec.id}>
+                          <p>{spec.original.label}：{spec.original.value}</p>
+                        </ReleaseRevision>}
+                        <EvidenceLinks entityId={spec.id} evidence={spec.evidence} documents={documents} onOpen={(evidence, focusId) => {
+                          original.openEvidence(evidence, { panelId: "steps", focusId });
+                        }} />
                       </li>
                     ))}
                   </ul>
@@ -408,6 +402,16 @@ export function ReleaseReaderPage() {
       </PageLayout>
     </div>
   );
+}
+
+function ReleaseRevision({ entityId, children }: { readonly entityId: string; readonly children: ReactNode }) {
+  return <div data-testid={`reader-revision-${entityId}`}>
+    <span className="status-label">已修订（人工）</span>
+    <details className="original-panel__text">
+      <summary>查看原文本</summary>
+      {children}
+    </details>
+  </div>;
 }
 
 export default ReleaseReaderPage;

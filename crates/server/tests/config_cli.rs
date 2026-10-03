@@ -311,8 +311,9 @@ fn init_creates_structure_and_never_leaks_password() {
         data.join("manual.sqlite3").is_file(),
         "init 必须创建并迁移数据库（T03）：{out:?}"
     );
-    // 事实更新（ADR-042，2026-10-03）：0008_model_parts 后为 schema v8；断言口径不变（迁移只追加，ADR-009）。
-    assert!(out.stdout.contains("schema v8"), "{out:?}");
+    // PC-03A adds migration 0008; the CLI must report the embedded current schema.
+    // ADR-042 appends 0009_model_parts after PC-03A's 0008.
+    assert!(out.stdout.contains("schema v9"), "{out:?}");
 
     // 敏感值不得出现在 stdout/stderr 与日志文件中。
     assert!(!out.stdout.contains(CANARY) && !out.stderr.contains(CANARY));

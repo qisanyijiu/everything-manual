@@ -21,6 +21,7 @@
 pub mod client;
 pub mod dto;
 pub mod handlers;
+pub(crate) mod models;
 pub mod prompt;
 pub mod store;
 

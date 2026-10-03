@@ -46,6 +46,7 @@ pub enum RemoteTaskObservation {
 /// 生命周期：`begin_intent` → `mark_submitting` → 发请求 → 观察事实
 /// （`record_remote_task_id` 或 `record_sync_response`）→ 执行器推进业务状态。
 pub struct SubmissionWindow {
+    call_gate: Option<std::sync::Arc<dyn super::scope::CallGate>>,
     pool: SqlitePool,
     job_id: String,
     stage_id: String,
@@ -65,6 +66,7 @@ impl SubmissionWindow {
         now: Timestamp,
     ) -> Self {
         Self {
+            call_gate: None,
             pool,
             job_id,
             stage_id,
@@ -73,6 +75,27 @@ impl SubmissionWindow {
             attempt_id: None,
             conflict: None,
         }
+    }
+
+    pub fn with_call_gate(
+        mut self,
+        gate: Option<std::sync::Arc<dyn super::scope::CallGate>>,
+    ) -> Self {
+        self.call_gate = gate;
+        self
+    }
+
+    pub async fn check_call(&self) -> Result<(), JobError> {
+        if let Some(gate) = &self.call_gate {
+            gate.check()
+                .await
+                .map_err(|code| JobError::Authorization { code })?;
+        }
+        Ok(())
+    }
+
+    pub fn call_gate(&self) -> Option<std::sync::Arc<dyn super::scope::CallGate>> {
+        self.call_gate.clone()
     }
 
     /// 本窗口所属的 worker 身份（日志与测试断点按 owner 分区）。
@@ -113,6 +136,7 @@ impl SubmissionWindow {
     /// 先标记为 `failed`（未发出请求，可安全重领）再建新 intent；
     /// 若存在 `submitting`/`unknown`，说明结果未定，**拒绝**新建（恢复流程必须先对账）。
     pub async fn begin_intent(&mut self, request_hash: &str) -> Result<String, JobError> {
+        self.check_call().await?;
         // `BEGIN IMMEDIATE`：本事务**先读后写**（先查未决 attempt、再插入 intent）。
         // WAL 下 deferred 事务的"读→写升级"遇到活跃写者会立即返回 SQLITE_BUSY
         // （sqlx 报 `database is locked`，busy_timeout 不生效），把一次付费批次误判为
@@ -169,6 +193,7 @@ impl SubmissionWindow {
 
     /// 第 2 步：标记 `submitting`。**返回后才能发 HTTP POST**。
     pub async fn mark_submitting(&mut self) -> Result<(), JobError> {
+        self.check_call().await?;
         let attempt_id = self.require_attempt()?;
         let mut conn = self.pool.acquire().await?;
         let changed = repo::attempts::mark_submitting(&mut conn, attempt_id, self.now).await?;
@@ -178,11 +203,20 @@ impl SubmissionWindow {
                 "attempt 不处于 intent 状态，无法标记 submitting",
             ));
         }
+        drop(conn);
         // 崩在"已标记 submitting、请求未发出"：恢复按 unknown 处理（客户端无法证明未发出）。
         crate::job_failpoint!(
             self.owner.as_str(),
             crate::jobs::failpoints::PAID_AFTER_SUBMITTING_BEFORE_REQUEST
         );
+        // A paused process can outlive its authorization between the durable
+        // submitting checkpoint and the actual HTTP call. Here no request has
+        // been emitted, so that attempt is provably failed, not an unknown bill.
+        if let Err(error) = self.check_call().await {
+            self.mark_failed("授权门禁在请求发出前停止；未发送供应商请求")
+                .await?;
+            return Err(error);
+        }
         Ok(())
     }
 

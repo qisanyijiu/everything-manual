@@ -291,6 +291,8 @@ async function requestData<T>(
 export interface ByteResponse {
   readonly bytes: ArrayBuffer;
   readonly contentType: string | null;
+  /** 下载文件名、诊断 ID 等由消费者按各自合同安全读取。 */
+  readonly headers: Headers;
   /** 服务端给出的 `content-length`（缺失时为 null：进度只显示"已接收"）。 */
   readonly contentLength: number | null;
 }
@@ -352,7 +354,7 @@ async function requestBytes(path: string, options: ByteRequestOptions = {}): Pro
   if (body === null || options.onProgress === undefined) {
     const bytes = await response.arrayBuffer();
     options.onProgress?.(bytes.byteLength, total ?? bytes.byteLength);
-    return { bytes, contentType, contentLength: total };
+    return { bytes, contentType, contentLength: total, headers: response.headers };
   }
   // 有流且需要进度：逐块读取（模型可能是几十 MB，整块 await 会没有中间反馈）。
   const reader = body.getReader();
@@ -375,7 +377,7 @@ async function requestBytes(path: string, options: ByteRequestOptions = {}): Pro
     merged.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return { bytes: merged.buffer, contentType, contentLength: total };
+  return { bytes: merged.buffer, contentType, contentLength: total, headers: response.headers };
 }
 
 export { requestBytes, requestData, requestJson };

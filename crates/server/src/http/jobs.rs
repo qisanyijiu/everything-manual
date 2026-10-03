@@ -36,11 +36,12 @@ use crate::jobs::control as control_service;
 use super::auth::SessionContext;
 use super::body::JsonBody;
 use super::dto::{
-    BUDGET_NOTICE, CancelResponse, CancelResultDto, JobAttemptDto, JobCreateRequest, JobDetailDto,
-    JobDetailResponse, JobDto, JobItemDto, JobListResponse, JobMissingItemDto, JobResponse,
-    JobStageDto, JobStageRetryDto, JobStageSummaryDto, JobSummaryDto, PreservedStageDto,
-    ReconcileActionDto, ReconcileRequestDto, ReconcileResponse, ReconcileResultDto, ReservationDto,
-    RetryRequest, RetryResponse, RetryResultDto,
+    BUDGET_NOTICE, CancelResponse, CancelResultDto, JobActivityDto, JobActivityResponse,
+    JobAttemptDto, JobCreateRequest, JobDetailDto, JobDetailResponse, JobDto, JobItemDto,
+    JobListResponse, JobMissingItemDto, JobResponse, JobSafeRetryDto, JobStageDto,
+    JobStageRetryDto, JobStageSummaryDto, JobSummaryDto, PreservedStageDto, ReconcileActionDto,
+    ReconcileRequestDto, ReconcileResponse, ReconcileResultDto, ReservationDto, RetryRequest,
+    RetryResponse, RetryResultDto,
 };
 use super::error::{ApiError, RequestId};
 use super::estimates::acquire;
@@ -65,6 +66,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/items/{id}/jobs", routing::post(create_job))
         .route("/jobs", routing::get(list_jobs))
+        .route("/jobs/activity", routing::get(get_job_activity))
         .route("/jobs/{id}", routing::get(get_job))
         .route("/jobs/{id}/cancel", routing::post(cancel_job))
         .route("/jobs/{id}/retry", routing::post(retry_job))
@@ -171,6 +173,31 @@ pub async fn create_job(
 // ---------------------------------------------------------------------------
 // GET /jobs（列表）
 // ---------------------------------------------------------------------------
+
+/// Whole-library activity, without returning job payloads or expanding their stages.
+#[utoipa::path(
+    get, path = "/api/v1/jobs/activity", tag = "jobs",
+    summary = "全库自动进行中的任务计数",
+    description = "单次聚合 queued/running/retry_wait/waiting_provider 的 jobs 数；不是列表已加载行数或阶段数。needs_input/submission_unknown 和终态不计入。读取不触发供应商请求。",
+    security(("sessionCookie" = [])),
+    responses(
+        (status = 200, description = "全库计数", body = JobActivityResponse),
+        (status = 401, description = "未登录", body = super::dto::ApiErrorResponse),
+    )
+)]
+pub async fn get_job_activity(State(state): State<AppState>, request_id: RequestId) -> Response {
+    let mut connection = match acquire(&state).await {
+        Ok(connection) => connection,
+        Err(error) => return error.render(&request_id),
+    };
+    match repo::jobs::active_count(&mut connection).await {
+        Ok(active) => Json(JobActivityResponse {
+            data: JobActivityDto { active },
+        })
+        .into_response(),
+        Err(error) => ApiError::from_storage(error).render(&request_id),
+    }
+}
 
 /// `GET /api/v1/jobs` —— `{data, nextCursor}`；可选按物品过滤。
 #[utoipa::path(
@@ -539,6 +566,13 @@ pub async fn reconcile_job(
     if let Err(error) = config.ensure_job(&mut config_connection, &job_id).await {
         return error.render(&request_id);
     }
+    if matches!(body.action, Some(ReconcileActionDto::AuthorizeReplacement))
+        && let Err(error) = config
+            .ensure_job_generation(&mut config_connection, &job_id)
+            .await
+    {
+        return error.render(&request_id);
+    }
     drop(config_connection);
     let expected_revision = match parse_if_match(&headers) {
         Ok(revision) => revision,
@@ -715,6 +749,7 @@ async fn load_job_detail(
     config: &crate::config::provider_overrides::ProviderConfigStore,
 ) -> Result<JobDetailDto, ApiError> {
     let config_error = config.ensure_job(conn, &job.id).await.err();
+    let submission_error = config.ensure_job_generation(conn, &job.id).await.err();
     let item = repo::items::get(conn, &job.item_id)
         .await
         .map_err(ApiError::from_storage)?
@@ -746,7 +781,12 @@ async fn load_job_detail(
             .iter()
             .map(|stage| {
                 let mut dto = stage_dto(stage, job.status, &stages, &reservations);
-                if let Some(error) = &config_error {
+                let gate_error = if crate::config::model_guard::submission_stage(stage.stage_kind) {
+                    submission_error.as_ref()
+                } else {
+                    config_error.as_ref()
+                };
+                if let Some(error) = gate_error {
                     dto.retry.allowed = false;
                     dto.retry.reason = error
                         .details
@@ -755,6 +795,22 @@ async fn load_job_detail(
                         .and_then(serde_json::Value::as_str)
                         .map(str::to_owned);
                     dto.retry.message = Some(error.message.clone());
+                } else if dto.retry.allowed {
+                    let latest = attempts
+                        .iter()
+                        .rev()
+                        .find(|attempt| attempt.stage_id == stage.id);
+                    let missing = control_service::retry_configuration_missing(
+                        config.active_providers(),
+                        stage.stage_kind,
+                        latest,
+                    );
+                    if !missing.is_empty() {
+                        let error = ApiError::provider_not_configured(missing);
+                        dto.retry.allowed = false;
+                        dto.retry.reason = Some("providerNotConfigured".to_owned());
+                        dto.retry.message = Some(error.message);
+                    }
                 }
                 dto
             })
@@ -856,6 +912,14 @@ fn stage_dto(
         page_set: stage.page_set.clone(),
         attempt_count: stage.attempt_count,
         poll_count: stage.poll_count,
+        safe_retry: (stage.status == JobStatus::RetryWait
+            && !job_status.is_terminal()
+            && job_status != JobStatus::SubmissionUnknown
+            && (1..=i64::from(manual_core::jobs::MAX_SAFE_RETRIES)).contains(&stage.attempt_count))
+        .then_some(JobSafeRetryDto {
+            number: stage.attempt_count,
+            limit: manual_core::jobs::MAX_SAFE_RETRIES,
+        }),
         next_run_at: stage.next_run_at,
         // 读取侧兜底（同 `usage`）：历史行里可能仍有修复前的临时签名 URL
         // （BUG-009：传输错误曾把 reqwest 的 ` for url (…)` 原样落库）。
@@ -936,6 +1000,47 @@ mod tests {
             needs_input_json,
             created_at: now,
             updated_at: now,
+        }
+    }
+
+    #[test]
+    fn safe_retry_dto_uses_executor_count_and_excludes_polling_unknown_and_terminal() {
+        let mut stage = stage_with(None, None);
+        stage.attempt_count = 3;
+        stage.poll_count = 41;
+        let dto = stage_dto(
+            &stage,
+            JobStatus::RetryWait,
+            std::slice::from_ref(&stage),
+            &[],
+        );
+        let retry = dto.safe_retry.unwrap();
+        assert_eq!(retry.number, 3);
+        assert_eq!(retry.limit, manual_core::jobs::MAX_SAFE_RETRIES);
+        for parent in [
+            JobStatus::SubmissionUnknown,
+            JobStatus::Succeeded,
+            JobStatus::Failed,
+            JobStatus::Cancelled,
+        ] {
+            assert!(
+                stage_dto(&stage, parent, std::slice::from_ref(&stage), &[])
+                    .safe_retry
+                    .is_none()
+            );
+        }
+        for status in [
+            JobStatus::WaitingProvider,
+            JobStatus::Running,
+            JobStatus::SubmissionUnknown,
+            JobStatus::Failed,
+        ] {
+            stage.status = status;
+            assert!(
+                stage_dto(&stage, status, std::slice::from_ref(&stage), &[])
+                    .safe_retry
+                    .is_none()
+            );
         }
     }
 

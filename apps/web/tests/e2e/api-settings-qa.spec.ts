@@ -21,7 +21,10 @@ let b: CheckedProviderFixture;
 let backend: ApiSettingsQaBackend;
 let externalHosts: string[];
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, browser }) => {
+  if (process.env.EM_PC05B_QA_WEB_ROOT) {
+    expect(browser.version()).toMatch(/^154\./); const ua = await page.evaluate(() => navigator.userAgent); expect(ua).toMatch(/Chrome\/154\./); expect(ua).not.toContain("Headless");
+  }
   a = new CheckedProviderFixture({ tripo: "qa-tripo-a", manualAi: "qa-manual-a" });
   b = new CheckedProviderFixture({ tripo: "qa-tripo-b", manualAi: "qa-manual-b" });
   await Promise.all([a.start(), b.start()]);
@@ -48,6 +51,7 @@ async function openSettings(page: Page) {
 }
 
 async function screenshot(page: Page, name: string) {
+  if (process.env.EM_AS_QA_NO_SCREENSHOTS === "1") return;
   fs.mkdirSync(QA_DIR, { recursive: true });
   await page.screenshot({ path: path.join(QA_DIR, `${name}.png`), fullPage: true, mask: [page.locator('input[type="password"]')] });
 }
@@ -104,11 +108,12 @@ test("AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/U
   await page.getByLabel("新的 Tripo 密钥", { exact: true }).fill(b.keys.tripo);
   await noSecretInBrowser(page);
   await page.getByRole("link", { name: "资料库", exact: true }).first().click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toContainText("有未保存的 API 配置");
-  await expect(dialog.getByRole("button", { name: "继续编辑", exact: true })).toBeFocused();
+  const dialog = page.getByRole("dialog", { name: "离开当前页面？", exact: true });
+  await expect(dialog).toHaveCount(1);
+  await expect(dialog).toContainText("未保存的 API 配置及新输入的密钥");
+  await expect(dialog.getByRole("button", { name: "继续处理", exact: true })).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
+  await expect(dialog).toBeHidden();
   expect(await page.getByLabel("新的 Tripo 密钥", { exact: true }).inputValue() === b.keys.tripo, "cancel retains secret in form memory").toBe(true);
   const dismissed = page.waitForEvent("dialog");
   // A cancelled native beforeunload has no successful navigation completion.
@@ -120,7 +125,7 @@ test("AS-QA-02 未保存导航与刷新取消/丢弃，密钥不缓存（AC013/U
   await reload;
   await expect(page.getByLabel("Tripo 模型", { exact: true })).toHaveValue("qa-unsaved-model");
   await page.getByRole("link", { name: "资料库", exact: true }).first().click();
-  await dialog.getByRole("button", { name: "丢弃并离开", exact: true }).click();
+  await dialog.getByRole("button", { name: "离开页面", exact: true }).click();
   await expect(page).not.toHaveURL(/\/settings$/);
   await page.goto("/settings");
   await expect(page.getByLabel("Tripo 模型", { exact: true })).toHaveValue(a.models.tripo);
@@ -429,7 +434,7 @@ test("AS-QA-08 读取失败/重复提交/字段错误/写失败/冲突重读（A
   await noSecretInBrowser(page);
   await page.getByRole("button", { name: "重新加载已保存配置", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("button", { name: "继续编辑", exact: true }).click();
+  await page.getByRole("button", { name: "继续处理", exact: true }).click();
   await expect(page.getByLabel("说明书 AI 模型", { exact: true })).toHaveValue("qa-unsaved-manual");
   await page.getByRole("button", { name: "重新加载已保存配置", exact: true }).click();
   await page.getByRole("button", { name: "丢弃并重新加载", exact: true }).click();

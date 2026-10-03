@@ -286,6 +286,7 @@ export interface EntityReviewView {
     readonly description?: string;
     readonly title?: string;
     readonly orderedActions?: readonly string[];
+    readonly safetyNotes?: readonly string[];
     readonly label?: string;
     readonly value?: string;
   } | null;
@@ -335,6 +336,10 @@ function readUserEdited(value: unknown): EntityReviewView["userEdited"] {
   const actions = Array.isArray(record.orderedActions)
     ? record.orderedActions.filter((item): item is string => typeof item === "string")
     : undefined;
+  // A malformed safety list must not become an empty override that hides warnings.
+  const safetyNotes = Array.isArray(record.safetyNotes) && record.safetyNotes.every((item) => typeof item === "string")
+    ? record.safetyNotes as string[]
+    : undefined;
   const name = asOptional(record.name);
   const description = asOptional(record.description);
   const title = asOptional(record.title);
@@ -345,6 +350,7 @@ function readUserEdited(value: unknown): EntityReviewView["userEdited"] {
     ...(description === undefined ? {} : { description }),
     ...(title === undefined ? {} : { title }),
     ...(actions === undefined ? {} : { orderedActions: actions }),
+    ...(safetyNotes === undefined ? {} : { safetyNotes }),
     ...(label === undefined ? {} : { label }),
     ...(fieldValue === undefined ? {} : { value: fieldValue }),
   };

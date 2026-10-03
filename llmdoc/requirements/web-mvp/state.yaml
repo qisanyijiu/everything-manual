@@ -68,7 +68,7 @@ carry_over:
   - "T12/T13 T23 收敛项（upload token/计费字段候选、下载允许域）"
   - "T17 观察：UI-032 字面倒计时未实现（交 PM 裁决）；顶栏任务计数徽标未做"
   - "T19 cameraPose：热点级字段未实现（视角落在步骤级），建议 PM 合同留痕"
-  - "T20：UI-060 网页导出按钮缺失 → T21/T22 要求"
+  - "T20：UI-060 网页导出入口于 2026-10-02 由 prd-completion/PC-01 补齐并独立 QA 10/10 PASS；见 requirements/prd-completion/qa-report.md round 1，整体发行门禁未因此关闭"
   - "OB-13/OB-14（P4）：新字符串契约列需登记形态、新增事实表需加备份表清单"
 user_decisions:
   - "2026-09-13 用户授权：启动 Docker Desktop，在 Linux 容器内构建并运行验证（取得 Linux x86_64-musl 的真实运行证据）"

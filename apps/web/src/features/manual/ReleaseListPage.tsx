@@ -1,3 +1,4 @@
+import { LibraryBackLink } from "../library/library-navigation";
 /**
  * 版本列表（T19；路由 `/items/:itemId/releases`；PRD §6.1.2 / UI-055）。
  *
@@ -15,6 +16,7 @@ import { describeError } from "../../api/client";
 import { EmptyNote } from "../../components/EmptyState";
 import { Skeleton } from "../../components/Skeleton";
 import { Icon } from "../../components/Icon";
+import { ReleaseDownload, RELEASE_DOWNLOAD_DESCRIPTION } from "./ReleaseDownload";
 
 export function ReleaseListPage() {
   const params = useParams();
@@ -32,7 +34,7 @@ export function ReleaseListPage() {
     return (
       <div className="page-error" role="alert">
         <p>版本列表读取失败：{describeError(releasesQuery.error).message}</p>
-        <Link to={`/items/${itemId}`}>返回物品概览</Link>
+        <Link to={`/items/${itemId}`}>返回物品概览</Link> <LibraryBackLink itemId={itemId} />
       </div>
     );
   }
@@ -50,6 +52,8 @@ export function ReleaseListPage() {
           该物品还没有发布版本。进入草稿的校准工作区完成知识确认与热点校准后，显式发布才会产出版本。
         </EmptyNote>
       ) : (
+        <>
+        <p id="release-list-download-description" className="release-download-description">{RELEASE_DOWNLOAD_DESCRIPTION}</p>
         <ul className="entity-list release-list" data-testid="release-list">
           {releases.map((release) => (
             <li key={release.id}>
@@ -60,15 +64,21 @@ export function ReleaseListPage() {
               </p>
               <details><summary>版本信息</summary><p>发布版本 {release.id}<br />模型 {release.modelRevisionId}</p></details>
               </div></div>
-              <div className="row-actions">
+              <div className="row-actions release-list__actions">
                 <Link className="button-primary" to={`/items/${itemId}/releases/${release.id}`}>打开阅读器 <Icon name="arrow" size={16} /></Link>
+                <ReleaseDownload
+                  releaseId={release.id}
+                  descriptionId="release-list-download-description"
+                  versionLabel={`草稿 r${release.draftRevision}，发布于 ${new Date(release.createdAt).toLocaleString("zh-CN", { hour12: false })}`}
+                />
               </div>
             </li>
           ))}
         </ul>
+        </>
       )}
       <p className="page-note">
-        <Link to={`/items/${itemId}`}>返回物品概览</Link>
+        <Link to={`/items/${itemId}`}>返回物品概览</Link> <LibraryBackLink itemId={itemId} />
       </p>
     </div>
   );

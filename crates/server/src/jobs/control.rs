@@ -91,7 +91,8 @@ impl RetryGate {
 /// 重试准入判定（按 [`retry_stage`] 的既有顺序与文案；判定为纯函数，便于单测与详情复用）。
 ///
 /// `ledger_holds` 表示该阶段所属付费分支的预留是否仍占用预算
-/// （`reserved`/`unknown` → true；`settled`/`released`/缺失 → false；本地阶段传 true）。
+/// （`reserved`/`unknown` → true；`settled`/`released`/缺失 → false）。只有可能
+/// 开始新购买的阶段需要该背书；查询、下载、校验和本地合并不重新购买。
 pub fn retry_gate(
     job_status: JobStatus,
     stages: &[JobStage],
@@ -141,6 +142,10 @@ pub fn retry_gate(
         );
     }
     if let Some(provider) = branch_provider(target.stage_kind)
+        && matches!(
+            target.stage_kind,
+            StageKind::ManualExtract | StageKind::TripoUpload | StageKind::TripoSubmit
+        )
         && !ledger_holds
     {
         return RetryGate::denied(
@@ -154,6 +159,26 @@ pub fn retry_gate(
         );
     }
     RetryGate::allowed()
+}
+
+/// Only a fresh paid submission requires this provider's current configuration.
+/// Tripo receipts resume locally; synchronous Manual AI retries can purchase again.
+pub(crate) fn retry_configuration_missing(
+    providers: &crate::config::Providers,
+    kind: StageKind,
+    latest_attempt: Option<&ProviderAttempt>,
+) -> Vec<String> {
+    let provider = match kind {
+        StageKind::ManualExtract => manual_core::domain::ProviderKey::ManualAi,
+        StageKind::TripoSubmit
+            if !latest_attempt
+                .is_some_and(|attempt| attempt.submit_state == SubmitState::Accepted) =>
+        {
+            manual_core::domain::ProviderKey::Tripo
+        }
+        _ => return Vec::new(),
+    };
+    crate::generation::estimate::provider_configuration_missing(providers, provider)
 }
 
 /// 控制动作错误（HTTP 层映射为合同错误结构）。
@@ -497,9 +522,29 @@ pub async fn retry_stage_with_config(
             entity: "job_stage",
             id: stage_id.to_owned(),
         })?;
-    // 3b) 付费分支的预算背书：重试会再次发起请求，对应预留必须仍占用预算
-    //     （reserved/unknown）。已被释放（明确未计费）或缺失的预留 = 这次重试没有
-    //     预算背书 → 拒绝，请重新报价（REQ-023：不自动降质量/不无预算花费）。
+    if crate::config::model_guard::submission_stage(stage.stage_kind) {
+        crate::config::model_guard::ensure_job_models(&mut conn, job_id)
+            .await
+            .map_err(|error| {
+                JobControlError::not_allowed(
+                    crate::config::model_guard::FROZEN_MODEL_REASON,
+                    error.message,
+                    json!({}),
+                )
+            })?;
+        if let Some(config) = config {
+            config.ensure_generation_available().map_err(|error| {
+                JobControlError::not_allowed(
+                    crate::config::model_guard::MODEL_ISSUE_REASON,
+                    error.message,
+                    json!({}),
+                )
+            })?;
+        }
+    }
+    // 3b) 读取分支账务供 retry_gate 判断：新购买（以及 Tripo 上传这个购买前置）
+    //     仍需 reserved/unknown；已有任务的查询/下载与本地处理不受结算状态阻塞。
+    //     不改写账本，取消、同分支未决提交、配置与执行器依赖检查仍各自生效。
     let ledger_holds = match branch_provider(stage.stage_kind) {
         Some(provider) => {
             let entries = repo::ledger::list_for_snapshot(&mut conn, &job.snapshot_id).await?;
@@ -518,6 +563,17 @@ pub async fn retry_stage_with_config(
             gate.message.unwrap_or_default(),
             gate.details,
         ));
+    }
+    if let Some(config) = config {
+        let attempt = repo::attempts::latest_for_stage(&mut conn, &stage.id).await?;
+        let missing = retry_configuration_missing(
+            config.active_providers(),
+            stage.stage_kind,
+            attempt.as_ref(),
+        );
+        if !missing.is_empty() {
+            return Err(JobControlError::ProviderNotConfigured { missing });
+        }
     }
     let previous_status = stage.status;
 
@@ -765,8 +821,17 @@ pub async fn reconcile(
             .await
         }
         ReconcileAction::AuthorizeReplacement => {
+            if settings.providers.tripo.model_issue() || settings.providers.manual_ai.model_issue()
+            {
+                return Err(JobControlError::not_allowed(
+                    crate::config::model_guard::MODEL_ISSUE_REASON,
+                    crate::config::model_guard::MODEL_CONFIG_MESSAGE,
+                    json!({}),
+                ));
+            }
             authorize_replacement(
                 &mut conn,
+                &settings.providers,
                 &job,
                 stage,
                 attempt.as_ref(),
@@ -1058,8 +1123,10 @@ async fn record_no_task(
 }
 
 /// `authorizeReplacement`：再次预算确认 + 明确重复收费风险；保留旧 attempt 未决账务。
+#[allow(clippy::too_many_arguments)]
 async fn authorize_replacement(
     conn: &mut SqliteConnection,
+    providers: &crate::config::Providers,
     job: &Job,
     stage: &JobStage,
     attempt: Option<&ProviderAttempt>,
@@ -1067,6 +1134,15 @@ async fn authorize_replacement(
     actor: &str,
     now: Timestamp,
 ) -> Result<ReconcileReport, JobControlError> {
+    crate::config::model_guard::ensure_job_models(conn, &job.id)
+        .await
+        .map_err(|error| {
+            JobControlError::not_allowed(
+                crate::config::model_guard::FROZEN_MODEL_REASON,
+                error.message,
+                json!({}),
+            )
+        })?;
     if job.status == JobStatus::Cancelled {
         return Err(JobControlError::not_allowed(
             "jobCancelled",
@@ -1144,6 +1220,16 @@ async fn authorize_replacement(
                 "upperBound": upper,
             }),
         ));
+    }
+
+    // Replacement explicitly authorizes a new paid attempt, even when the old
+    // attempt's result is unknown. Reject before changing that fact or the queue.
+    if let Some(provider) = branch_provider(stage.stage_kind) {
+        let missing =
+            crate::generation::estimate::provider_configuration_missing(providers, provider);
+        if !missing.is_empty() {
+            return Err(JobControlError::ProviderNotConfigured { missing });
+        }
     }
 
     // 写事务统一 `BEGIN IMMEDIATE`（`storage::tx`，BUG-006）。
@@ -1248,12 +1334,8 @@ async fn verify_remote_task(
     use crate::providers::tripo::{TripoClient, TripoTimeouts};
 
     let provider = &settings.providers.tripo;
-    if !provider.configured() {
-        return Err(RemoteTaskVerificationError {
-            code: "providerNotConfigured",
-            message: format!("Tripo 未配置（缺：{}）", provider.missing().join("、")),
-        });
-    }
+    // Querying an existing task sends no model identifier and must remain available
+    // while a mistaken model is being corrected (including unknown submissions).
     let api_key = provider
         .api_key
         .clone()
@@ -1354,6 +1436,100 @@ async fn require_job(conn: &mut SqliteConnection, job_id: &str) -> Result<Job, J
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn retry_stage_fixture(kind: StageKind, status: JobStatus) -> JobStage {
+        JobStage {
+            id: kind.as_str().to_owned(),
+            job_id: "job-retry".to_owned(),
+            stage_kind: kind,
+            batch_index: 0,
+            page_set: None,
+            input_hash: "input".to_owned(),
+            result_asset_id: None,
+            usage_json: None,
+            status,
+            lease_owner: None,
+            lease_epoch: 0,
+            lease_until: None,
+            next_run_at: None,
+            attempt_count: 0,
+            poll_count: 0,
+            last_error: None,
+            needs_input_json: None,
+            created_at: Timestamp::EPOCH,
+            updated_at: Timestamp::EPOCH,
+        }
+    }
+
+    #[test]
+    fn retry_budget_gate_only_blocks_new_purchase_stages() {
+        for kind in [
+            StageKind::ManualExtract,
+            StageKind::TripoUpload,
+            StageKind::TripoSubmit,
+        ] {
+            let stage = retry_stage_fixture(kind, JobStatus::NeedsInput);
+            let gate = retry_gate(JobStatus::NeedsInput, &[], &stage, false);
+            assert_eq!(gate.reason, Some("budgetNotHolding"), "{kind:?}");
+            assert!(retry_gate(JobStatus::NeedsInput, &[], &stage, true).allowed);
+        }
+        for kind in [
+            StageKind::TripoPoll,
+            StageKind::ModelDownload,
+            StageKind::ModelValidate,
+            StageKind::ManualMerge,
+            StageKind::FreezeInputs,
+            StageKind::AssembleDraft,
+        ] {
+            for status in [JobStatus::Failed, JobStatus::NeedsInput] {
+                let stage = retry_stage_fixture(kind, status);
+                for ledger_holds in [false, true] {
+                    assert!(
+                        retry_gate(JobStatus::NeedsInput, &[], &stage, ledger_holds).allowed,
+                        "{kind:?}/{status:?}/{ledger_holds}"
+                    );
+                }
+                assert_eq!(
+                    retry_gate(JobStatus::Cancelled, &[], &stage, false).reason,
+                    Some("jobCancelled")
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn download_retry_keeps_unknown_submission_and_stage_status_guards() {
+        let download = retry_stage_fixture(StageKind::ModelDownload, JobStatus::NeedsInput);
+        let unknown = retry_stage_fixture(StageKind::TripoSubmit, JobStatus::SubmissionUnknown);
+        assert_eq!(
+            retry_gate(JobStatus::SubmissionUnknown, &[unknown], &download, false).reason,
+            Some("branchSubmissionUnknown")
+        );
+        let other_branch =
+            retry_stage_fixture(StageKind::ManualExtract, JobStatus::SubmissionUnknown);
+        assert!(
+            retry_gate(
+                JobStatus::SubmissionUnknown,
+                &[other_branch],
+                &download,
+                false
+            )
+            .allowed
+        );
+        for status in [
+            JobStatus::Queued,
+            JobStatus::Running,
+            JobStatus::Succeeded,
+            JobStatus::Cancelled,
+            JobStatus::SubmissionUnknown,
+        ] {
+            let stage = retry_stage_fixture(StageKind::ModelDownload, status);
+            assert_eq!(
+                retry_gate(JobStatus::NeedsInput, &[], &stage, false).reason,
+                Some("stageNotRetryable")
+            );
+        }
+    }
 
     #[test]
     fn branches_are_isolated_for_pause_semantics() {

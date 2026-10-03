@@ -14,8 +14,8 @@ use super::encrypted_secrets::{
 };
 use super::{ProviderSettings, Providers, SecretString, Settings};
 use crate::http::dto::{
-    ConfigSource, KeyEditAction, ProviderEdit, ProviderEditAction, ProviderSettingsData,
-    ProviderSettingsWrite, ProviderView, ProviderViews,
+    ConfigSource, KeyEditAction, ModelIssue, ProviderEdit, ProviderEditAction,
+    ProviderSettingsData, ProviderSettingsWrite, ProviderView, ProviderViews,
 };
 use crate::http::error::ApiError;
 
@@ -149,6 +149,9 @@ impl ProviderConfigStore {
     pub fn revision(&self) -> &str {
         &self.saved.revision
     }
+    pub(crate) fn active_providers(&self) -> &Providers {
+        &self.active
+    }
     pub fn view(&self) -> ProviderSettingsData {
         let saved = self.effective(&self.saved);
         ProviderSettingsData {
@@ -167,6 +170,26 @@ impl ProviderConfigStore {
         } else {
             Ok(())
         }
+    }
+    /// Model safety applies to new submissions, not accepted remote queries.
+    pub fn ensure_generation_available(&self) -> Result<(), ApiError> {
+        self.ensure_available()?;
+        if self.active.tripo.model_issue() || self.active.manual_ai.model_issue() {
+            return Err(gate_error(
+                super::model_guard::MODEL_ISSUE_REASON,
+                super::model_guard::MODEL_CONFIG_MESSAGE,
+            ));
+        }
+        Ok(())
+    }
+    pub async fn ensure_job_generation(
+        &self,
+        conn: &mut sqlx::SqliteConnection,
+        job_id: &str,
+    ) -> Result<(), ApiError> {
+        self.ensure_generation_available()?;
+        self.ensure_job(conn, job_id).await?;
+        super::model_guard::ensure_job_models(conn, job_id).await
     }
     pub fn ensure_revision(&self, config: &Value) -> Result<(), ApiError> {
         self.ensure_available()?;
@@ -322,7 +345,14 @@ fn view(provider: &ProviderSettings, overlay: Option<&ProviderOverride>) -> Prov
     let web = overlay.is_some();
     ProviderView {
         base_url: display_url(&provider.base_url),
-        model: provider.model.clone(),
+        model: if provider.model_issue() {
+            None
+        } else {
+            provider.model.clone()
+        },
+        model_issue: provider
+            .model_issue()
+            .then_some(ModelIssue::SuspectedCredential),
         key_configured: provider.api_key.is_some(),
         // Settings 不保存环境/TOML/default 的字段级 provenance，统一称部署配置，不能按值猜测。
         base_url_source: if web {
@@ -362,6 +392,12 @@ fn edit(
     issues: &mut Vec<FieldIssue>,
 ) -> Option<ProviderOverride> {
     if request.action == ProviderEditAction::Restore {
+        if deployment.model_issue() {
+            issues.push(FieldIssue::new(
+                &format!("{prefix}.model"),
+                "部署模型疑似误填密钥，不能恢复。请取消恢复并填写正确模型，或修正部署配置。",
+            ));
+        }
         return None;
     }
     let base_url = request.base_url.take().unwrap_or_default();
@@ -373,6 +409,30 @@ fn edit(
         }
     };
     let model = request.model.take().unwrap_or_default().trim().to_owned();
+    if super::model_guard::suspected_credential(&model) {
+        issues.push(FieldIssue::new(
+            &format!("{prefix}.model"),
+            super::model_guard::MODEL_FIELD_MESSAGE,
+        ));
+    }
+    if request.clear_model == Some(true) && !model.is_empty() {
+        issues.push(FieldIssue::new(
+            &format!("{prefix}.model"),
+            "清空模型与填写新模型不能同时提交",
+        ));
+    }
+    let prior_model = old
+        .map(|value| value.model.as_deref())
+        .unwrap_or(deployment.model.as_deref());
+    if prior_model.is_some_and(super::model_guard::suspected_credential)
+        && model.is_empty()
+        && request.clear_model != Some(true)
+    {
+        issues.push(FieldIssue::new(
+            &format!("{prefix}.model"),
+            "请先修正或明确清空已隐藏的模型",
+        ));
+    }
     if model.chars().count() > 128 || model.chars().any(char::is_control) {
         issues.push(FieldIssue::new(
             &format!("{prefix}.model"),

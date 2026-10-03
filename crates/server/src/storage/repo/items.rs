@@ -162,9 +162,12 @@ pub enum ArchivedFilter {
 /// `cursor` 为 `(created_at_millis, id)`：只返回严格排在其后的行
 /// （SQLite 行值比较，排序键与 ID 同时参与，重复时间戳也不会漏行/重行）。
 /// 过滤条件在 SQL 内判定（`archived_at IS NULL` / `IS NOT NULL`），游标只负责位置。
+/// query 已由入口 trim + ASCII lowercase。SQLite 内置 lower 只折叠 ASCII，
+/// instr 做字面包含（%/_ 没有通配含义），空串匹配全部；不把全库拉到应用过滤。
 pub async fn list_page(
     conn: &mut SqliteConnection,
     filter: ArchivedFilter,
+    query: &str,
     cursor: Option<(i64, String)>,
     limit: u32,
 ) -> Result<Vec<Item>, StorageError> {
@@ -180,6 +183,8 @@ pub async fn list_page(
         .bind(cursor_millis)
         .bind(cursor_millis)
         .bind(cursor_id)
+        .bind(query)
+        .bind(query)
         .bind(limit)
         .fetch_all(&mut *conn)
         .await?;
@@ -190,12 +195,14 @@ pub async fn list_page(
 const LIST_ACTIVE_SQL: &str = "SELECT id, name, brand, model, variant, revision, archived_at, created_at, updated_at \
        FROM items \
       WHERE (? IS NULL OR (created_at, id) < (?, ?)) AND archived_at IS NULL \
+        AND (instr(lower(name), ?) > 0 OR instr(lower(model), ?) > 0) \
       ORDER BY created_at DESC, id DESC \
       LIMIT ?";
 
 const LIST_ARCHIVED_SQL: &str = "SELECT id, name, brand, model, variant, revision, archived_at, created_at, updated_at \
        FROM items \
       WHERE (? IS NULL OR (created_at, id) < (?, ?)) AND archived_at IS NOT NULL \
+        AND (instr(lower(name), ?) > 0 OR instr(lower(model), ?) > 0) \
       ORDER BY created_at DESC, id DESC \
       LIMIT ?";
 
@@ -214,7 +221,7 @@ async fn current_revision(
     Ok(revision)
 }
 
-fn item_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Item, StorageError> {
+pub(crate) fn item_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Item, StorageError> {
     let created_at: i64 = row.try_get("created_at")?;
     let updated_at: i64 = row.try_get("updated_at")?;
     let archived_at: Option<i64> = row.try_get("archived_at")?;

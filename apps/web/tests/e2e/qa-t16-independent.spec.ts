@@ -230,9 +230,9 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
       await route.continue();
     });
     await page.reload();
-    await expect(page.getByText("正在加载物品…")).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: /^正在查找物品…$/ })).toBeVisible();
     await captureTo("t16-qa", page, "02-library-loading");
-    await expect(page.getByText("正在加载物品…")).toHaveCount(0, { timeout: 15_000 });
+    await expect(page.getByRole("status").filter({ hasText: /^正在查找物品…$/ })).toHaveCount(0, { timeout: 15_000 });
 
     // (c) 失败态：500 + 合同错误体 → 可行动恢复（重试后恢复真实列表）。
     await page.unroute(itemsPattern);
@@ -256,7 +256,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     });
     await page.reload();
     const failure = page.locator(".error-panel");
-    await expect(failure.getByRole("heading", { name: "加载失败" })).toBeVisible();
+    await expect(failure.getByRole("heading", { name: "此次搜索未完成" })).toBeVisible();
     await expect(failure).toContainText("服务暂不可用（QA 注入）");
     const retry = failure.getByRole("button", { name: "重试" });
     await expect(retry).toBeVisible();
@@ -285,9 +285,9 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     expect(Object.keys(createdBody).sort()).toEqual(["brand", "model", "name", "variant"]);
     expect(JSON.stringify(createdBody)).not.toContain("sourceUrl");
 
-    // 阅读器现已交付：入口进入真实版本列表，未发布的物品显示空态。
+    // 未发布物品保留真实历史入口；不得虚构可阅读的已发布说明书。
     await page.goto(`/items/${newItemId}`);
-    await expect(page.getByRole("link", { name: "打开说明书" })).toHaveAttribute("href", /\/releases$/);
+    await expect(page.getByRole("link", { name: "历史版本", exact: true })).toHaveAttribute("href", `/items/${newItemId}/releases`);
     await expect(page.getByRole("link", { name: "本物品的任务" })).toHaveAttribute("href", /\/jobs\?itemId=/);
 
     // (e) 第 2 步：未绑定说明书时「下一步」禁用并说明缺什么（UI-019）。
@@ -297,19 +297,20 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await expect(page.locator("#wizard-next-reason")).toContainText("先绑定一份说明书原件");
     await expect(nextToViews).toHaveAttribute("aria-describedby", "wizard-next-reason");
 
-    // (f) 行内入口：不可用能力禁用并写明原因（不假装可用）。
+    // (f) 真实空物品优先补齐原件，历史入口可达；无任务/发布时不虚构主入口。
     await page.goto("/");
-    const row = page.locator(".item-row").filter({ hasText: "QA 资料库行内入口" });
+    const row = page.locator(`.item-row[data-library-item="${newItemId}"]`);
     await expect(row).toBeVisible();
-    await expect(row.getByRole("link", { name: "继续准备" })).toHaveAttribute(
-      "href",
-      /\/import\/prepare$/,
-    );
-    const viewJobs = row.getByRole("link", { name: "查看任务" });
-    const openManual = row.getByRole("link", { name: "打开说明书" });
-    await expect(viewJobs).toHaveAttribute("href", /\/jobs\?itemId=/);
-    await expect(openManual).toHaveAttribute("href", /\/releases$/);
-    await openManual.click();
+    const addDocument = row.getByRole("link", { name: "补齐资料", exact: true });
+    await expect(addDocument).toHaveAttribute("href", `/items/${newItemId}/import/document`);
+    await expect(row.getByRole("link", { name: /^(查看任务|打开说明书|阅读说明书|阅读已发布版)$/ })).toHaveCount(0);
+    await addDocument.click();
+    await expect(page).toHaveURL(new RegExp(`/items/${newItemId}/import/document$`));
+    await expect(page.getByRole("heading", { name: "说明书原件" })).toBeVisible();
+    await page.goto("/");
+    const history = row.getByRole("link", { name: "历史版本", exact: true });
+    await expect(history).toHaveAttribute("href", `/items/${newItemId}/releases`);
+    await history.click();
     await expect(page.getByText(/还没有发布版本/)).toBeVisible();
 
   });
@@ -398,11 +399,8 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     const detail = await seedPhoto(request, apiBase(), csrf, seed.itemId, "detail", "sample-photo-front.jpg");
     const preparationId = await seedReadyPreparation(request, apiBase(), csrf, seed);
 
-    // 服务端事实：报价/发送范围由独立 API 调用取得，用于交叉核对页面展示。
-    const quote = await fetchQuoteViaApi(request, csrf, seed.itemId, preparationId, [
-      front.photoId,
-      left.photoId,
-    ]);
+    // This fresh item has no existing quote. Do not pre-create one: revision 2
+    // correctly recovers it with GET instead of issuing a new browser POST.
 
     await loginViaUi(page, "", password());
     await setPreparationPointer(page, seed.itemId, preparationId);
@@ -417,6 +415,10 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     );
     await openConfirmWithQuote(page, seed.itemId);
 
+    expect(estimatePosts).toHaveLength(1);
+    // Independent API quote remains the cross-check for the same source inputs;
+    // obtain it after the browser POST so it cannot alter that precondition.
+    const quote = await fetchQuoteViaApi(request, csrf, seed.itemId, preparationId, [front.photoId, left.photoId]);
     // 前端只把 front+left（不含 detail）放进报价请求体。
     const estimateBody = JSON.parse(estimatePosts[0]?.postData() ?? "{}") as { photoIds?: string[] };
     expect(estimateBody.photoIds).toEqual([front.photoId, left.photoId]);
@@ -497,6 +499,15 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await confirmSendScope(page);
 
     const jobPosts: { key: string | undefined; body: string | null }[] = [];
+    let acceptedJobId = "";
+    let finishRecovery!: () => void;
+    const recoveryGate = new Promise<void>(resolve => { finishRecovery = resolve; });
+    const quoteId = new URL(page.url()).searchParams.get("quoteId");
+    expect(quoteId).toBeTruthy();
+    await page.route(`**/api/v1/items/${seed.itemId}/estimates/${quoteId}`, async route => {
+      expect(route.request().method()).toBe("GET");
+      await recoveryGate; await route.continue();
+    });
     let attempt = 0;
     await page.route(/\/api\/v1\/items\/[^/]+\/jobs$/, async (route) => {
       if (route.request().method() !== "POST") {
@@ -530,8 +541,11 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
         );
       }
       if (attempt === 1) {
-        // 模拟"服务端已受理但响应丢失"：真实发出请求，丢弃响应。
-        await route.fetch();
+        // The real backend commits before the browser loses the response.
+        const committed = await route.fetch();
+        expect(committed.status()).toBe(202);
+        acceptedJobId = (await committed.json()).data.id;
+        expect(acceptedJobId).toBeTruthy();
         await route.abort("failed");
         return;
       }
@@ -542,38 +556,26 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
 
     const generate = page.getByTestId("generate-button");
     await generate.click();
-    const submitError = page.getByTestId("submit-error");
-    await expect(submitError).toBeVisible();
-    await expect(submitError).toContainText("网络");
-    // 未受理：界面不写"成功"，生成按钮保留供重试。
-    await expect(page.getByTestId("job-accepted")).toHaveCount(0);
-    await captureTo("t16-qa", page, "10-submit-network-error");
-
-    const replayPromise = page.waitForResponse(
-      (response) =>
-        response.request().method() === "POST" && /\/api\/v1\/items\/[^/]+\/jobs$/.test(response.url()),
-    );
-    await generate.click();
-    // 提交中：按钮禁用且 aria-busy（防重复点击的前端侧；重试请求被延迟 1.2s）。
+    await expect(page.getByTestId("submission-recovery")).toContainText("结果待核对");
     await expect(generate).toBeDisabled();
-    await expect(generate).toHaveAttribute("aria-busy", "true");
-    await expect(generate).toContainText("正在创建任务");
-    const replay = await replayPromise;
-
-    await expect(page.getByTestId("job-accepted")).toBeVisible();
+    await expect(page.getByTestId("job-accepted")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "重试同一提交（使用原授权）", exact: true })).toHaveCount(0);
+    expect(jobPosts).toHaveLength(1);
+    await captureTo("t16-qa", page, "10-submit-network-error");
+    const consumptionRead = page.waitForResponse(response => response.request().method() === "GET"
+      && new URL(response.url()).pathname === `/api/v1/items/${seed.itemId}/estimates/${quoteId}`);
+    finishRecovery();
+    const recovered = await consumptionRead;
+    expect(recovered.status()).toBe(200);
+    expect((await recovered.json()).data.consumedJobId).toBe(acceptedJobId);
     await expect(page.getByTestId("job-accepted")).toContainText("任务已受理（202）");
-    expect(replay.status()).toBe(202);
-    expect(replay.headers()["x-idempotent-replay"], "重放应命中服务端幂等").toBe("true");
-
-    // 前端复用同一幂等键：两次 POST 的键必须一致。
-    expect(jobPosts.length).toBe(2);
+    await expect(page.getByTestId("job-accepted")).toContainText(acceptedJobId);
+    await page.waitForTimeout(300);
+    expect(jobPosts, "committed submission recovery must not submit again").toHaveLength(1);
     expect(jobPosts[0]?.key).toBeTruthy();
-    expect(jobPosts[1]?.key).toBe(jobPosts[0]?.key);
-
-    // 服务端事实：只有一个 job，页面显示的就是它。
     const jobs = await fetchJobsForItem(request, apiBase(), seed.itemId);
-    expect(jobs.length, "重复提交只允许 1 个 job").toBe(1);
-    await expect(page.getByTestId("job-accepted")).toContainText(jobs[0]!.id);
+    expect(jobs.length, "原受理及恢复只允许1个job").toBe(1);
+    expect(jobs[0]!.id).toBe(acceptedJobId);
 
     // 服务端幂等（独立于页面，直接打合同）：同键同 body 重放 → 202 + x-idempotent-replay，仍 1 个 job。
     const replayBody = JSON.parse(jobPosts[0]?.body ?? "{}") as Record<string, unknown>;
@@ -646,11 +648,11 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
 
     // 第 4 步：进度必须是"第 n / N 页"（无线性百分比、无预计剩余）。
     await page.getByRole("link", { name: /下一步：准备/ }).click();
-    await expect(page.getByRole("heading", { name: "资料准备" })).toBeVisible();
-    await expect(page.getByRole("note")).toContainText("关闭标签页会中断准备");
+    await expect(page.getByRole("heading", { name: "准备说明书资料", exact: true })).toBeVisible();
+    await expect(page.getByText("准备需要保持本标签页打开；关闭标签页会中断准备，重新进入只补齐未完成的页。", { exact: true })).toBeVisible();
     await page.getByTestId("prepare-start").click();
     // 逐页进度是「第 n / N 页」/「已完成 n / N 页」（页数取自 PDF.js 实际解析，不写死）。
-    await expect(page.getByTestId("prepare-status")).toContainText(/第 \d+ \/ \d+ 页|已完成 \d+ \/ \d+ 页/);
+    await expect(page.getByTestId("prepare-progress")).toContainText(/已完成 \d+\s*\/\s*\d+ 页/);
     const preparingText = await bodyText();
     expect(preparingText).not.toMatch(/\d+\s*%/);
     for (const phrase of ["总进度", "预计剩余"]) {
@@ -659,8 +661,8 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await captureTo("t16-qa", page, "12-preparing-progress");
     await expect(page.getByTestId("prepare-seal")).toBeEnabled({ timeout: 60_000 });
     await page.getByTestId("prepare-seal").click();
-    await expect(page.getByTestId("prepare-sealed")).toContainText("准备完成（ready）");
-    await expect(page.getByTestId("prepare-sealed")).toContainText("不证明其确实来自原 PDF");
+    await expect(page.getByTestId("prepare-sealed")).toContainText("准备完成 ·");
+    await expect(page.getByText(/不证明其确实来自原 PDF/)).toBeVisible();
     await captureTo("t16-qa", page, "13-preparation-sealed");
 
     // 第 5 步 → 受理。
@@ -766,7 +768,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await captureTo("t16-qa", page, "17-missing-side");
   });
 
-  test("QA-11 无准备指针：如实显示缺项、不伪造状态、不请求报价（REQ-016 诚实性）", async ({
+  test("QA-11 无准备指针：发现服务端记录，真正缺准备时不请求报价（REQ-016 诚实性）", async ({
     page,
     request,
   }) => {
@@ -780,17 +782,32 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     const csrf = await apiLogin(request, apiBase(), password());
     await seedPhoto(request, apiBase(), csrf, seed.itemId, "front", "sample-photo-front.jpg");
     await seedPhoto(request, apiBase(), csrf, seed.itemId, "left", "sample-photo-left.png");
-    // 服务端确实有一份 ready preparation，但本浏览器会话没有指针（换浏览器/清存储场景）。
-    await seedReadyPreparation(request, apiBase(), csrf, seed);
-
+    // New browser session has no hint; the server owns the complete record.
+    const preparationId = await seedReadyPreparation(request, apiBase(), csrf, seed);
     await loginViaUi(page, "", password());
-    const estimatePosts = recordRequests(
-      page,
-      (url, method) => method === "POST" && /\/estimates$/.test(url),
-    );
+    expect(await page.evaluate(key => sessionStorage.getItem(key), `em.prepare.${seed.itemId}`)).toBeNull();
+    const estimatePosts = recordRequests(page, (url, method) => method === "POST" && /\/estimates$/.test(url));
+    const preparationWrites = recordRequests(page, (url, method) => ["POST", "PUT", "PATCH", "DELETE"].includes(method) && /\/preparations(?:\/|$)/.test(new URL(url).pathname));
+    const confirmations = recordRequests(page, (url, method) => method === "POST" && /\/estimates\/[^/]+\/confirm$/.test(url));
+    const jobPosts = recordRequests(page, (url, method) => method === "POST" && /\/items\/[^/]+\/jobs$/.test(url));
     await page.goto(`/items/${seed.itemId}/import/confirm`);
     await expect(page.getByRole("heading", { name: "预算与隐私确认" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "已保存的准备记录" }).locator(`input[value="${preparationId}"]`)).toBeChecked();
+    await expect(page.getByTestId("quote-panel")).toBeVisible();
+    expect(estimatePosts).toHaveLength(1);
+    expect(JSON.parse(estimatePosts[0]!.postData() ?? "{}").preparationId).toBe(preparationId);
+    expect(JSON.parse(estimatePosts[0]!.postData() ?? "{}").photoIds).toHaveLength(2);
+    await expect(page.getByRole("checkbox", { name: CONFIRM_LABEL })).not.toBeChecked();
+    await expect(page.getByTestId("generate-button")).toBeDisabled();
+    expect(preparationWrites).toHaveLength(0); expect(confirmations).toHaveLength(0); expect(jobPosts).toHaveLength(0);
 
+    // Keep the former absence gates against an item that truly has no saved preparation.
+    const noReady = await seedItemWithDocument(request, apiBase(), password(), "sample-manual-text.pdf", "QA 无服务端准备记录");
+    const noReadyCsrf = await apiLogin(request, apiBase(), password());
+    await seedPhoto(request, apiBase(), noReadyCsrf, noReady.itemId, "front", "sample-photo-front.jpg");
+    await seedPhoto(request, apiBase(), noReadyCsrf, noReady.itemId, "left", "sample-photo-left.png");
+    const estimatesBeforeMissing = estimatePosts.length;
+    await page.goto(`/items/${noReady.itemId}/import/confirm`);
     const gaps = page.getByTestId("generation-gaps");
     await expect(gaps).toContainText("还没有可用的资料准备记录");
     await expect(gaps.getByRole("link", { name: "去准备" })).toBeVisible();
@@ -798,7 +815,8 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await expect(page.getByTestId("generate-reason")).toContainText("准备");
     await expect(page.getByTestId("quote-missing")).toContainText("资料未齐");
     await expect(page.getByTestId("quote-panel")).toHaveCount(0);
-    expect(estimatePosts.length, "无准备指针时不应请求报价").toBe(0);
+    expect(estimatePosts.length, "无服务端准备记录时不应请求报价").toBe(estimatesBeforeMissing);
+    expect(preparationWrites).toHaveLength(0); expect(confirmations).toHaveLength(0); expect(jobPosts).toHaveLength(0);
     await captureTo("t16-qa", page, "23-confirm-without-pointer");
   });
 
@@ -864,7 +882,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     const quoteError = page.getByTestId("quote-error");
     await expect(quoteError).toBeVisible({ timeout: 20_000 });
     await expect(quoteError).toContainText("无法获取报价");
-    await expect(quoteError.getByRole("link", { name: "查看服务状态" })).toBeVisible();
+    await expect(quoteError.getByRole("link", { name: "前往设置查看并补齐配置" })).toBeVisible();
     await captureTo("t16-qa", page, "19-quote-error");
     await quoteError.getByRole("button", { name: /重试获取报价/ }).click();
     await expect(page.getByTestId("quote-panel")).toBeVisible({ timeout: 20_000 });
@@ -996,7 +1014,8 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
           gridTemplateColumns: getComputedStyle(node).gridTemplateColumns,
           identity: pick(".item-row__identity"),
           actions: pick(".item-row__actions"),
-          readerLink: pick(".item-row__open"),
+          primaryAction: pick(".workflow-actions .button-primary"),
+          historyLink: pick('.workflow-actions a[href$="/releases"]'),
         };
       });
       measurements[String(width)] = {
@@ -1006,7 +1025,8 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
         status: await measure(".item-row__status"),
         time: await measure(".item-row__time"),
         actions: await measure(".item-row__actions"),
-        readerLink: await measure(".item-row__open"),
+        primaryAction: await measure(".workflow-actions .button-primary"),
+        historyLink: await measure('.workflow-actions a[href$="/releases"]'),
         styles,
       };
       if (width === 1280) {

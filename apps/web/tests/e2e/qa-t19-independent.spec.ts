@@ -922,7 +922,7 @@ test("QA19-1 拾取绑定：有限数值 anchor、拖动不建点、raycast 只�
   const wheelPoint = await canvasViewportPoint(page, [ (await canvasBox(page)).width / 2, (await canvasBox(page)).height / 2 ]);
   await page.mouse.move(wheelPoint[0], wheelPoint[1]);
   for (let attempt = 0; attempt < 20 && markerRadius < 45; attempt += 1) {
-    await page.mouse.wheel(0, -500);
+    await page.mouse.wheel(0, markerRadius < 30 ? -500 : -50);
     await page.waitForTimeout(120);
     markerRadius = await markerScreenRadius(page, anchorPoint);
     radiusTrace.push(markerRadius);
@@ -1012,7 +1012,7 @@ test("QA19-1 拾取绑定：有限数值 anchor、拖动不建点、raycast 只�
   // AC-057（1-based 跳页一致）：步骤出处按钮的页码与原文页签一致。
   const pageButton = page
     .getByTestId("steps-panel")
-    .getByRole("button", { name: /^第 \d+ 页$/ })
+    .locator(".step-evidence button")
     .first();
   await expect(pageButton).toBeVisible();
   const evidencePage = Number(/第 (\d+) 页/.exec((await pageButton.textContent()) ?? "")?.[1] ?? "0");
@@ -1442,10 +1442,19 @@ test("QA19-4 窄屏禁用几何校准（含视角保存）并解释；文字确�
   expect(await page.getByRole("button", { name: /自动发布|一键发布|自动校准|一键发布到线上/ }).count()).toBe(0);
   expect(await page.getByRole("link", { name: /自动发布|一键发布|自动校准/ }).count()).toBe(0);
 
+  // Original PDF is a separate panel. Follow the current step's real source,
+  // verify it, then return to the exact source before continuing review.
+  const narrowSource = page.getByTestId("steps-panel").locator(".step-evidence button").first();
+  const narrowSourcePage = Number(/第 (\d+) 页/.exec((await narrowSource.textContent()) ?? "")?.[1] ?? "0");
+  expect(narrowSourcePage).toBeGreaterThanOrEqual(1);
+  await narrowSource.click();
+  await expect(page.getByTestId("original-page-label")).toContainText(`第 ${narrowSourcePage} /`);
   // 窄屏仍可读原文（1-based 页签，加载完成后显示总页数）。
   await expect
     .poll(async () => (await page.getByTestId("original-page-label").textContent()) ?? "")
     .toMatch(/第 \d+ \/ \d+ 页/);
+  await page.getByRole("button", { name: "返回出处", exact: true }).click();
+  await expect(narrowSource).toBeFocused();
 
   // 「事实确认」与「几何校准」文案区分：不存在无定语的裸「确认」按钮；
   // 文字动作用「确认事实」，几何动作用「绑定热点/拾取/视角」字样。
@@ -1490,7 +1499,7 @@ test("QA19-4 窄屏禁用几何校准（含视角保存）并解释；文字确�
   // 观察（非阻断，见 QA 报告 P3）：冲突后发布按钮未按 UI-056「刷新前禁用发布按钮」禁用。
   const buttonDisabledDuringConflict = await publishButton.isDisabled();
   const revisionBeforeRefresh = (await page.getByTestId("draft-context").textContent()) ?? "";
-  await page.getByTestId("publish-conflict").getByRole("button", { name: "刷新草稿" }).click();
+  await page.getByTestId("publish-conflict").getByRole("button", { name: "核对最新版本", exact: true }).click();
   // 刷新必须真的重取服务端事实（draft-context 的 rN 反映并发修改后的新 revision）。
   await expect
     .poll(async () => (await page.getByTestId("draft-context").textContent()) ?? "", { timeout: 20_000 })
@@ -1905,10 +1914,10 @@ test("QA19-7 发布版阅读器：部件↔热点↔步骤↔原文联动与 1-b
   await expect(page.getByTestId("reader-step-position")).toContainText(`第 1 / ${steps.length} 步`);
 
   // 原文跳页：1-based，且与文字层一致。
-  const evidenceButton = page.getByTestId("steps-panel").getByRole("button", { name: /^第 \d+ 页$/ }).first();
-  await evidenceButton.click();
+  const evidenceButton = page.getByTestId("steps-panel").locator(".step-evidence button").first();
   const evidencePage = Number(/第 (\d+) 页/.exec((await evidenceButton.textContent()) ?? "")?.[1] ?? "0");
   expect(evidencePage).toBeGreaterThanOrEqual(1);
+  await evidenceButton.click();
   await expect(page.getByTestId("original-page-label")).toContainText(`第 ${evidencePage} /`);
   await expect
     .poll(async () => {

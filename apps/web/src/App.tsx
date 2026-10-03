@@ -1,3 +1,4 @@
+import { WorkProtection } from "./features/shell/work-protection";
 /**
  * 应用入口：Provider 组合与路由表（PRD §6.1.2）。
  *
@@ -37,6 +38,8 @@ import { SettingsPage } from "./features/settings/SettingsPage";
  * PDF 准备页懒加载（PRD §5.5：「3D/PDF 不在首屏库列表强制加载」）：
  * pdfjs-dist 主包与 worker 只在进入准备页时下载，资料库首屏不背这部分体积。
  */
+const DocumentReaderPage = lazy(() => import("./features/viewer/DocumentReaderPage"));
+
 const PreparePage = lazy(() =>
   import("./features/import/PreparePage").then((module) => ({ default: module.PreparePage })),
 );
@@ -110,7 +113,7 @@ export function App() {
 
 export function AppRoutes() {
   return (
-    <>
+    <WorkProtection>
       <SessionExpiryWatcher />
       <RouteErrorBoundary>
         <Routes>
@@ -125,6 +128,7 @@ export function AppRoutes() {
             <Route path="/" element={<LibraryPage />} />
             <Route path="/items/new" element={<ItemFormPage mode="create" />} />
             <Route path="/items/:itemId" element={<ItemOverviewPage />} />
+            <Route path="/items/:itemId/documents/:documentId" element={<Suspense fallback={<Skeleton label="正在加载原件…" rows={3} />}><DocumentReaderPage /></Suspense>} />
             <Route path="/items/:itemId/edit" element={<ItemFormPage mode="edit" />} />
             <Route
               path="/items/:itemId/import/document"
@@ -187,6 +191,6 @@ export function AppRoutes() {
           </Route>
         </Routes>
       </RouteErrorBoundary>
-    </>
+    </WorkProtection>
   );
 }

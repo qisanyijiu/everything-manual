@@ -367,6 +367,217 @@ fn urlencode(value: &str) -> String {
     value.replace(':', "%3A")
 }
 
+fn pc05_query(value: &str) -> String {
+    value
+        .as_bytes()
+        .iter()
+        .map(|byte| format!("%{byte:02X}"))
+        .collect()
+}
+
+#[tokio::test]
+async fn pc05_search_finds_outside_first_page_with_literal_ascii_and_archive_scope() {
+    let (app, cookie, csrf) = logged_in_app("pc05-literal").await;
+    let target = create_item(
+        &app,
+        &cookie,
+        &csrf,
+        "中文相机 100%_ Pro",
+        None,
+        "MiXeD-X Ä",
+        None,
+    )
+    .await
+    .0;
+    for index in 0..45 {
+        create_item(
+            &app,
+            &cookie,
+            &csrf,
+            &format!("干扰 {index} 100xx Pro"),
+            None,
+            "other",
+            None,
+        )
+        .await;
+    }
+    let first = app
+        .call(Method::GET, "/api/v1/items")
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(first.json()["data"].as_array().unwrap().len(), 20);
+    assert!(
+        first.json()["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|row| row["id"] != target)
+    );
+    for q in [" 中文相机 ", "mIxEd-x", "%", "_", "Ä", "100%_ Pro"] {
+        let found = app
+            .call(Method::GET, &format!("/api/v1/items?q={}", pc05_query(q)))
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_eq!(found.status, StatusCode::OK);
+        assert_eq!(
+            found.json()["data"].as_array().unwrap().len(),
+            1,
+            "query {q}"
+        );
+        assert_eq!(found.json()["data"][0]["id"], target);
+    }
+    let no_fold = app
+        .call(Method::GET, &format!("/api/v1/items?q={}", pc05_query("ä")))
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert!(no_fold.json()["data"].as_array().unwrap().is_empty());
+    let archived = patch_item(
+        &app,
+        &cookie,
+        &csrf,
+        &target,
+        Some("\"r1\""),
+        &json!({"archived":true}),
+    )
+    .await;
+    assert_eq!(archived.status, StatusCode::OK);
+    for (scope, expected) in [("false", 0), ("true", 1)] {
+        let response = app
+            .call(
+                Method::GET,
+                &format!("/api/v1/items?q=mixed&archived={scope}"),
+            )
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_eq!(response.json()["data"].as_array().unwrap().len(), expected);
+    }
+}
+
+#[tokio::test]
+async fn pc05_search_cursor_binds_normalized_query_archive_and_fixed_sort_without_gaps() {
+    let (app, cookie, csrf) = logged_in_app("pc05-cursor").await;
+    for index in 0..17 {
+        create_item(
+            &app,
+            &cookie,
+            &csrf,
+            &format!("Match {index}"),
+            None,
+            "X",
+            None,
+        )
+        .await;
+    }
+    let all = app
+        .call(Method::GET, "/api/v1/items?q=match&limit=100")
+        .cookie(&cookie)
+        .send()
+        .await
+        .json();
+    let expected: Vec<_> = all["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|row| row["id"].clone())
+        .collect();
+    let mut actual = Vec::new();
+    let mut cursor: Option<String> = None;
+    loop {
+        let uri = format!(
+            "/api/v1/items?q=%20MaTcH%20&limit=3{}",
+            cursor
+                .as_ref()
+                .map(|value| format!("&cursor={}", pc05_query(value)))
+                .unwrap_or_default()
+        );
+        let response = app.call(Method::GET, &uri).cookie(&cookie).send().await;
+        assert_eq!(response.status, StatusCode::OK, "{}", response.text());
+        let value = response.json();
+        actual.extend(
+            value["data"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|row| row["id"].clone()),
+        );
+        let Some(next) = value["nextCursor"].as_str() else {
+            break;
+        };
+        cursor = Some(next.to_owned());
+    }
+    assert_eq!(actual, expected);
+    let cursor = pc05_query(cursor.as_ref().unwrap());
+    for suffix in ["q=other", "q=match&archived=true", "q="] {
+        let response = app
+            .call(
+                Method::GET,
+                &format!("/api/v1/items?cursor={cursor}&{suffix}"),
+            )
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_field_error(&response, "cursor");
+        assert!(field_issues(&response)[0].1.contains("从头"));
+    }
+    // Old unfiltered positions keep their original meaning, never a new query's meaning.
+    let legacy = pc05_query("v1:items:active:9999999999999:z");
+    for (suffix, status) in [
+        ("", StatusCode::OK),
+        ("&q=%20%20", StatusCode::OK),
+        ("&q=match", StatusCode::UNPROCESSABLE_ENTITY),
+    ] {
+        let response = app
+            .call(
+                Method::GET,
+                &format!("/api/v1/items?cursor={legacy}{suffix}"),
+            )
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_eq!(response.status, status);
+    }
+}
+
+#[tokio::test]
+async fn pc05_search_rejects_overlong_duplicate_and_unknown_queries() {
+    let (app, cookie, _csrf) = logged_in_app("pc05-query-validation").await;
+    for character in ["a", "中", "😀"] {
+        for (length, status) in [
+            (200, StatusCode::OK),
+            (201, StatusCode::UNPROCESSABLE_ENTITY),
+        ] {
+            let response = app
+                .call(
+                    Method::GET,
+                    &format!("/api/v1/items?q={}", pc05_query(&character.repeat(length))),
+                )
+                .cookie(&cookie)
+                .send()
+                .await;
+            assert_eq!(response.status, status);
+            if length == 201 {
+                assert_field_error(&response, "q");
+            }
+        }
+    }
+    for (query, field) in [
+        ("q=a&q=b", "q"),
+        ("q=a&sort=name", "sort"),
+        ("q=a&cursor=bad", "cursor"),
+    ] {
+        let response = app
+            .call(Method::GET, &format!("/api/v1/items?{query}"))
+            .cookie(&cookie)
+            .send()
+            .await;
+        assert_field_error(&response, field);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // AC-016：创建与字段级校验
 // ---------------------------------------------------------------------------

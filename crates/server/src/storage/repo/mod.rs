@@ -21,6 +21,7 @@ pub mod blobs;
 pub mod documents;
 pub mod drafts;
 pub mod idempotency;
+pub mod item_summaries;
 pub mod items;
 pub mod job_stages;
 pub mod jobs;

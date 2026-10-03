@@ -1,0 +1,564 @@
+{
+  "project": "万物说明书",
+  "capturedDate": "2026-10-02",
+  "featurePageTypes": 16,
+  "includesNotFoundPage": true,
+  "pageViews": 30,
+  "imageCount": 73,
+  "format": "JPEG",
+  "captureMode": "浏览器原尺寸截图；长页面从上到下分段，数字后缀表示续页",
+  "source": "http://127.0.0.1:5173",
+  "notes": [
+    "覆盖当前应用全部路由类型，另含七件物品概览与六份原件的阅读页面。",
+    "原件阅读器展示各 PDF 的第一页；本包为网页界面截图，不是 PDF 全文逐页导出。",
+    "预算确认页和设置页保留现有配置提示。",
+    "所有截图来自当前本地预览；未创建生成任务或发布新版本。"
+  ],
+  "pages": [
+    {
+      "title": "登录",
+      "route": "/login",
+      "screenshots": [
+        {
+          "file": "00-登录.jpg",
+          "part": 1,
+          "bytes": 32310
+        }
+      ]
+    },
+    {
+      "title": "资料库",
+      "route": "/",
+      "screenshots": [
+        {
+          "file": "01-资料库.jpg",
+          "part": 1,
+          "bytes": 46445
+        },
+        {
+          "file": "01-资料库-2.jpg",
+          "part": 2,
+          "bytes": 63364
+        },
+        {
+          "file": "01-资料库-3.jpg",
+          "part": 3,
+          "bytes": 57505
+        }
+      ]
+    },
+    {
+      "title": "新建物品",
+      "route": "/items/new",
+      "screenshots": [
+        {
+          "file": "02-新建物品.jpg",
+          "part": 1,
+          "bytes": 34569
+        },
+        {
+          "file": "02-新建物品-2.jpg",
+          "part": 2,
+          "bytes": 34718
+        }
+      ]
+    },
+    {
+      "title": "物品概览 · IKEA TILLREDA 404.934.20 官方说明书 · 中断恢复样本",
+      "route": "/items/01a0f8f9-c6a0-74bf-937f-96475449bf45",
+      "screenshots": [
+        {
+          "file": "03-1-物品概览-IKEA.jpg",
+          "part": 1,
+          "bytes": 49829
+        },
+        {
+          "file": "03-1-物品概览-IKEA-2.jpg",
+          "part": 2,
+          "bytes": 38746
+        }
+      ]
+    },
+    {
+      "title": "物品概览 · Nintendo Wii U 官方说明书样本",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292",
+      "screenshots": [
+        {
+          "file": "03-2-物品概览-Nintendo.jpg",
+          "part": 1,
+          "bytes": 46841
+        },
+        {
+          "file": "03-2-物品概览-Nintendo-2.jpg",
+          "part": 2,
+          "bytes": 36454
+        },
+        {
+          "file": "03-2-物品概览-Nintendo-3.jpg",
+          "part": 3,
+          "bytes": 35040
+        }
+      ]
+    },
+    {
+      "title": "物品概览 · IKEA BILLY 官方组装说明书",
+      "route": "/items/01a0f8cb-1621-70a3-8dea-27cb2f8ec4b5",
+      "screenshots": [
+        {
+          "file": "03-3-物品概览-IKEA.jpg",
+          "part": 1,
+          "bytes": 45700
+        },
+        {
+          "file": "03-3-物品概览-IKEA-2.jpg",
+          "part": 2,
+          "bytes": 39073
+        }
+      ]
+    },
+    {
+      "title": "物品概览 · Roland TR-808 官方扫描说明书",
+      "route": "/items/01a0f8ad-ff39-7323-be86-6154e68ace95",
+      "screenshots": [
+        {
+          "file": "03-4-物品概览-Roland.jpg",
+          "part": 1,
+          "bytes": 44675
+        },
+        {
+          "file": "03-4-物品概览-Roland-2.jpg",
+          "part": 2,
+          "bytes": 37972
+        }
+      ]
+    },
+    {
+      "title": "物品概览 · IKEA LACK 官方说明书样本",
+      "route": "/items/01a0f894-0433-72ec-8693-9b65e02b9b38",
+      "screenshots": [
+        {
+          "file": "03-5-物品概览-IKEA.jpg",
+          "part": 1,
+          "bytes": 44833
+        },
+        {
+          "file": "03-5-物品概览-IKEA-2.jpg",
+          "part": 2,
+          "bytes": 39048
+        }
+      ]
+    },
+    {
+      "title": "物品概览 · 交互改进演示",
+      "route": "/items/01a0ba5d-8933-77b6-8ef1-00ac182fbedd",
+      "screenshots": [
+        {
+          "file": "03-6-物品概览-交互改进演示.jpg",
+          "part": 1,
+          "bytes": 39155
+        },
+        {
+          "file": "03-6-物品概览-交互改进演示-2.jpg",
+          "part": 2,
+          "bytes": 36915
+        }
+      ]
+    },
+    {
+      "title": "物品概览 · 备份测试物品",
+      "route": "/items/01a09677-6737-7665-a84b-335aaf2a4af8",
+      "screenshots": [
+        {
+          "file": "03-7-物品概览-备份测试物品.jpg",
+          "part": 1,
+          "bytes": 36342
+        },
+        {
+          "file": "03-7-物品概览-备份测试物品-2.jpg",
+          "part": 2,
+          "bytes": 36727
+        },
+        {
+          "file": "03-7-物品概览-备份测试物品-3.jpg",
+          "part": 3,
+          "bytes": 34739
+        }
+      ]
+    },
+    {
+      "title": "编辑物品",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292/edit",
+      "screenshots": [
+        {
+          "file": "04-编辑物品.jpg",
+          "part": 1,
+          "bytes": 42310
+        },
+        {
+          "file": "04-编辑物品-2.jpg",
+          "part": 2,
+          "bytes": 41996
+        }
+      ]
+    },
+    {
+      "title": "导入说明书",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292/import/document",
+      "screenshots": [
+        {
+          "file": "05-导入说明书.jpg",
+          "part": 1,
+          "bytes": 47072
+        },
+        {
+          "file": "05-导入说明书-2.jpg",
+          "part": 2,
+          "bytes": 47299
+        }
+      ]
+    },
+    {
+      "title": "视图排列",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292/import/views",
+      "screenshots": [
+        {
+          "file": "06-视图排列.jpg",
+          "part": 1,
+          "bytes": 58113
+        },
+        {
+          "file": "06-视图排列-2.jpg",
+          "part": 2,
+          "bytes": 50689
+        }
+      ]
+    },
+    {
+      "title": "准备说明书资料",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292/import/prepare",
+      "screenshots": [
+        {
+          "file": "07-准备说明书资料.jpg",
+          "part": 1,
+          "bytes": 53358
+        },
+        {
+          "file": "07-准备说明书资料-2.jpg",
+          "part": 2,
+          "bytes": 54801
+        }
+      ]
+    },
+    {
+      "title": "准备资料 · 恢复样本",
+      "route": "/items/01a0f8f9-c6a0-74bf-937f-96475449bf45/import/prepare",
+      "screenshots": [
+        {
+          "file": "07b-准备资料-恢复样本.jpg",
+          "part": 1,
+          "bytes": 55477
+        },
+        {
+          "file": "07b-准备资料-恢复样本-2.jpg",
+          "part": 2,
+          "bytes": 56049
+        }
+      ]
+    },
+    {
+      "title": "预算与隐私确认",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292/import/confirm",
+      "screenshots": [
+        {
+          "file": "08-预算与隐私确认.jpg",
+          "part": 1,
+          "bytes": 55726
+        },
+        {
+          "file": "08-预算与隐私确认-2.jpg",
+          "part": 2,
+          "bytes": 44094
+        }
+      ]
+    },
+    {
+      "title": "任务中心",
+      "route": "/jobs",
+      "screenshots": [
+        {
+          "file": "09-任务中心.jpg",
+          "part": 1,
+          "bytes": 52399
+        }
+      ]
+    },
+    {
+      "title": "任务详情",
+      "route": "/jobs/01a09677-67e3-741e-826a-3d6af9f52523",
+      "screenshots": [
+        {
+          "file": "10-任务详情.jpg",
+          "part": 1,
+          "bytes": 67609
+        },
+        {
+          "file": "10-任务详情-2.jpg",
+          "part": 2,
+          "bytes": 60871
+        },
+        {
+          "file": "10-任务详情-3.jpg",
+          "part": 3,
+          "bytes": 59654
+        }
+      ]
+    },
+    {
+      "title": "草稿复核与热点校准",
+      "route": "/items/01a09677-6737-7665-a84b-335aaf2a4af8/drafts/01a09677-683e-73c9-bd6a-6b0576f02b69/review",
+      "screenshots": [
+        {
+          "file": "11-草稿复核与热点校准.jpg",
+          "part": 1,
+          "bytes": 59176
+        },
+        {
+          "file": "11-草稿复核与热点校准-2.jpg",
+          "part": 2,
+          "bytes": 80823
+        },
+        {
+          "file": "11-草稿复核与热点校准-3.jpg",
+          "part": 3,
+          "bytes": 55104
+        },
+        {
+          "file": "11-草稿复核与热点校准-4.jpg",
+          "part": 4,
+          "bytes": 48917
+        },
+        {
+          "file": "11-草稿复核与热点校准-5.jpg",
+          "part": 5,
+          "bytes": 38892
+        }
+      ]
+    },
+    {
+      "title": "发布版本列表",
+      "route": "/items/01a09677-6737-7665-a84b-335aaf2a4af8/releases",
+      "screenshots": [
+        {
+          "file": "12-发布版本列表.jpg",
+          "part": 1,
+          "bytes": 37992
+        }
+      ]
+    },
+    {
+      "title": "发布版本列表 · 暂无发布",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292/releases",
+      "screenshots": [
+        {
+          "file": "12b-发布版本列表-暂无发布.jpg",
+          "part": 1,
+          "bytes": 28726
+        }
+      ]
+    },
+    {
+      "title": "已发布说明书阅读器",
+      "route": "/items/01a09677-6737-7665-a84b-335aaf2a4af8/releases/01a09677-685a-7542-8e2f-0b866c8a1fbc",
+      "screenshots": [
+        {
+          "file": "13-已发布说明书阅读器.jpg",
+          "part": 1,
+          "bytes": 51150
+        },
+        {
+          "file": "13-已发布说明书阅读器-2.jpg",
+          "part": 2,
+          "bytes": 54113
+        },
+        {
+          "file": "13-已发布说明书阅读器-3.jpg",
+          "part": 3,
+          "bytes": 41393
+        }
+      ]
+    },
+    {
+      "title": "原件阅读器 · IKEA TILLREDA 404.934.20 官方说明书 · 中断恢复样本",
+      "route": "/items/01a0f8f9-c6a0-74bf-937f-96475449bf45/documents/01a0f8f9-c722-706a-a5c2-8808cb277a51?page=1",
+      "screenshots": [
+        {
+          "file": "14-1-原件阅读器-IKEA.jpg",
+          "part": 1,
+          "bytes": 42374
+        },
+        {
+          "file": "14-1-原件阅读器-IKEA-2.jpg",
+          "part": 2,
+          "bytes": 19438
+        },
+        {
+          "file": "14-1-原件阅读器-IKEA-3.jpg",
+          "part": 3,
+          "bytes": 23881
+        }
+      ]
+    },
+    {
+      "title": "原件阅读器 · Nintendo Wii U 官方说明书样本",
+      "route": "/items/01a0f8e4-8162-7217-9010-bab19107c292/documents/01a0f8e4-82c7-74b0-a968-bde72bbc68dd?page=1",
+      "screenshots": [
+        {
+          "file": "14-2-原件阅读器-Nintendo.jpg",
+          "part": 1,
+          "bytes": 35533
+        },
+        {
+          "file": "14-2-原件阅读器-Nintendo-2.jpg",
+          "part": 2,
+          "bytes": 29202
+        },
+        {
+          "file": "14-2-原件阅读器-Nintendo-3.jpg",
+          "part": 3,
+          "bytes": 26417
+        }
+      ]
+    },
+    {
+      "title": "原件阅读器 · IKEA BILLY 官方组装说明书",
+      "route": "/items/01a0f8cb-1621-70a3-8dea-27cb2f8ec4b5/documents/01a0f8cb-16ab-7252-9884-c0a1e97bc9ee?page=1",
+      "screenshots": [
+        {
+          "file": "14-3-原件阅读器-IKEA.jpg",
+          "part": 1,
+          "bytes": 38988
+        },
+        {
+          "file": "14-3-原件阅读器-IKEA-2.jpg",
+          "part": 2,
+          "bytes": 34125
+        },
+        {
+          "file": "14-3-原件阅读器-IKEA-3.jpg",
+          "part": 3,
+          "bytes": 35103
+        }
+      ]
+    },
+    {
+      "title": "原件阅读器 · Roland TR-808 官方扫描说明书",
+      "route": "/items/01a0f8ad-ff39-7323-be86-6154e68ace95/documents/01a0f8ae-008e-7482-acd5-157e8d8c59b5?page=1",
+      "screenshots": [
+        {
+          "file": "14-4-原件阅读器-Roland.jpg",
+          "part": 1,
+          "bytes": 53231
+        },
+        {
+          "file": "14-4-原件阅读器-Roland-2.jpg",
+          "part": 2,
+          "bytes": 90172
+        },
+        {
+          "file": "14-4-原件阅读器-Roland-3.jpg",
+          "part": 3,
+          "bytes": 64837
+        }
+      ]
+    },
+    {
+      "title": "原件阅读器 · IKEA LACK 官方说明书样本",
+      "route": "/items/01a0f894-0433-72ec-8693-9b65e02b9b38/documents/01a0f894-046d-75ec-b4a0-d953164c26e0?page=1",
+      "screenshots": [
+        {
+          "file": "14-5-原件阅读器-IKEA.jpg",
+          "part": 1,
+          "bytes": 38624
+        },
+        {
+          "file": "14-5-原件阅读器-IKEA-2.jpg",
+          "part": 2,
+          "bytes": 37161
+        },
+        {
+          "file": "14-5-原件阅读器-IKEA-3.jpg",
+          "part": 3,
+          "bytes": 29828
+        }
+      ]
+    },
+    {
+      "title": "原件阅读器 · 备份测试物品",
+      "route": "/items/01a09677-6737-7665-a84b-335aaf2a4af8/documents/01a09677-6750-74f5-a484-99c11a7355ec?page=1",
+      "screenshots": [
+        {
+          "file": "14-7-原件阅读器-备份测试物品.jpg",
+          "part": 1,
+          "bytes": 48502
+        },
+        {
+          "file": "14-7-原件阅读器-备份测试物品-2.jpg",
+          "part": 2,
+          "bytes": 22474
+        },
+        {
+          "file": "14-7-原件阅读器-备份测试物品-3.jpg",
+          "part": 3,
+          "bytes": 19249
+        }
+      ]
+    },
+    {
+      "title": "设置与状态",
+      "route": "/settings",
+      "screenshots": [
+        {
+          "file": "15-设置与状态.jpg",
+          "part": 1,
+          "bytes": 42980
+        },
+        {
+          "file": "15-设置与状态-2.jpg",
+          "part": 2,
+          "bytes": 53749
+        },
+        {
+          "file": "15-设置与状态-3.jpg",
+          "part": 3,
+          "bytes": 54399
+        },
+        {
+          "file": "15-设置与状态-4.jpg",
+          "part": 4,
+          "bytes": 42346
+        },
+        {
+          "file": "15-设置与状态-5.jpg",
+          "part": 5,
+          "bytes": 38008
+        },
+        {
+          "file": "15-设置与状态-6.jpg",
+          "part": 6,
+          "bytes": 41051
+        }
+      ]
+    },
+    {
+      "title": "页面不存在",
+      "route": "/screenshot-not-found",
+      "screenshots": [
+        {
+          "file": "16-页面不存在.jpg",
+          "part": 1,
+          "bytes": 21170
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "geometry": [
+    {
+      "viewport": 375,
+      "scrollWidth": 375
+    },
+    {
+      "viewport": 1440,
+      "scrollWidth": 1440
+    }
+  ],
+  "browserLeak": false,
+  "logLeak": false,
+  "providerRequests": 0,
+  "writes": 1,
+  "restartVerified": true
+}

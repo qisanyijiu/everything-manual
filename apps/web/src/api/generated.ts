@@ -91,7 +91,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Read-only discovery with a global recommendation, independent of the requested page. */
+        get: operations["list_preparations"];
         put?: never;
         /**
          * 创建或复用 PDF 准备记录
@@ -153,7 +154,7 @@ export interface paths {
         };
         /**
          * 物品列表（游标分页，默认排除归档）
-         * @description 稳定排序 (createdAt DESC, id DESC)。`archived` 缺省或 false 只返回未归档物品，`archived=true` 只返回已归档物品；nextCursor 是**不透明**字符串（形如 `v1:items:active:<millis>:<id>`），已绑定产生它的过滤条件——切换过滤条件时必须从头分页，复用旧游标会得到 422。未知/重复/非法查询参数 → 422 字段级明细。
+         * @description 稳定排序 (createdAt DESC, id DESC)。`archived` 缺省或 false 只返回未归档物品，true 只返回已归档。q 去首尾空格后按名称或型号字面包含匹配，ASCII 大小写不敏感，非 ASCII 按原字符；最多200字符，空串无筛选，%/_不是通配符。nextCursor 不透明，绑定规范化q、归档范围与固定排序；条件改变须从头分页，错游标422明确要求重置。旧无q游标仅可用于无筛选查询。未知/重复/非法查询参数 → 422 字段级明细。
          */
         get: operations["list_items"];
         put?: never;
@@ -162,6 +163,26 @@ export interface paths {
          * @description 服务器生成 UUIDv7 id 与整数 revision（从 1 起）。名称与型号必填：缺失、空白或超长（name/model ≤200、brand ≤100、variant ≤200 字符）→ 422 + `details.fields`。同品牌型号不强制唯一（允许不同配置并存）。未知字段 → 422。
          */
         post: operations["create_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/summaries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 批量读取物品处理摘要与向导事实（只读，最多100个ID）
+         * @description ids为逗号分隔UUID，重复ID去重；空值/超过100个/非法参数422。混合不存在ID整个请求404，不返回假空状态。documentId仅允许单物品，需属于该物品；缺省选updatedAt/ID最新原件。状态目标按需处理任务、运行任务、未发布当前revision的草稿、最新发布版、资料缺项/报价优先。不可变release/quote的创建时间作为更新时间。
+         */
+        get: operations["summaries"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -488,6 +509,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 全库自动进行中的任务计数
+         * @description 单次聚合 queued/running/retry_wait/waiting_provider 的 jobs 数；不是列表已加载行数或阶段数。needs_input/submission_unknown 和终态不计入。读取不触发供应商请求。
+         */
+        get: operations["get_job_activity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{id}": {
         parameters: {
             query?: never;
@@ -658,6 +699,26 @@ export interface paths {
         get: operations["get_providers"];
         put: operations["put_providers"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/providers/manual-ai/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 显式读取说明书 AI 可用模型
+         * @description 仅使用当前生效配置 GET 基础地址/models；待重启与页面未保存配置不参与。无自动重试、无重定向、10 秒及 256 KiB 上限；仅返回最多 1000 个合法模型 ID，不保存或选择模型。需要登录与 CSRF/Origin 校验。
+         */
+        post: operations["read_manual_ai_models"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1070,6 +1131,40 @@ export interface components {
         ItemResponse: {
             data: components["schemas"]["ItemDto"];
         };
+        ItemSummaryDto: {
+            action: components["schemas"]["WorkflowAction"];
+            consumedJobId?: string | null;
+            documentId?: string | null;
+            itemId: string;
+            latestQuoteId?: string | null;
+            latestReleaseCreatedAt?: string | null;
+            /**
+             * Format: int64
+             * @description Readable identity of the same latest release; no manifest/per-row detail fetch.
+             */
+            latestReleaseDraftRevision?: number | null;
+            latestReleaseId?: string | null;
+            preparationId?: string | null;
+            /** @description Clock boundary for an unconsumed quote; null for an already accepted task. */
+            quoteExpiresAt?: string | null;
+            steps: components["schemas"]["WorkflowStepsDto"];
+            /** @description Stable entity identity only, never an executable URL. */
+            targetId?: string | null;
+        };
+        ItemSummaryResponse: {
+            data: components["schemas"]["ItemSummaryDto"][];
+        };
+        JobActivityDto: {
+            /**
+             * Format: int64
+             * @description jobs in queued/running/retry_wait/waiting_provider. Human input/unknown are excluded.
+             */
+            active: number;
+        };
+        /** @description Constant-size, whole-library activity summary; not a page or stage count. */
+        JobActivityResponse: {
+            data: components["schemas"]["JobActivityDto"];
+        };
         /** @description 付费提交 attempt（对账面板数据）。 */
         JobAttemptDto: {
             id: string;
@@ -1161,6 +1256,19 @@ export interface components {
         JobResponse: {
             data: components["schemas"]["JobDto"];
         };
+        /** @description The executor's currently scheduled safe retry, independent of provider polling. */
+        JobSafeRetryDto: {
+            /**
+             * Format: int32
+             * @description Executor policy: manual_core::jobs::MAX_SAFE_RETRIES.
+             */
+            limit: number;
+            /**
+             * Format: int64
+             * @description 1-based retry number, copied from persisted attempt_count (not poll_count).
+             */
+            number: number;
+        };
         /** @description 阶段明细行。 */
         JobStageDto: {
             /** Format: int64 */
@@ -1191,6 +1299,7 @@ export interface components {
              *     真实恢复路径（T15 P3①：不允许"写着可重试、点了被拒"的分叉文案）。
              */
             retry: components["schemas"]["JobStageRetryDto"];
+            safeRetry?: null | components["schemas"]["JobSafeRetryDto"];
             stageKind: string;
             status: string;
             /**
@@ -1292,6 +1401,11 @@ export interface components {
             model: string;
             promptVersion: string;
         };
+        /** @description Explicit discovery using the active Manual AI configuration; IDs only, no upstream metadata. */
+        ManualAiModelsResponse: {
+            /** @description Valid model IDs, sorted and deduplicated; selection does not save configuration. */
+            data: string[];
+        };
         /** @description 发送给说明书 AI 的内容。 */
         ManualAiSendScopeDto: {
             /** @description 发送页图的页（1-based；扫描页/无文字层页）。 */
@@ -1326,6 +1440,8 @@ export interface components {
             /** @description 触发该动作的部件（点击部件/热点时提供该动作）。 */
             triggerPartIds?: string[];
         };
+        /** @enum {string} */
+        ModelIssue: "suspectedCredential";
         /** @description 整体姿势（例如机器人"趴下/坐下"）：一组变换步，切换姿势时从初始位姿重新叠加。 */
         ModelPose: {
             description?: string | null;
@@ -1442,6 +1558,10 @@ export interface components {
             sha256: string;
             view: string;
         };
+        PreparationCandidateDto: {
+            preparation: components["schemas"]["PreparationDto"];
+            readiness: components["schemas"]["PreparationReadinessDto"];
+        };
         /** @description `POST /api/v1/preparations/{id}/complete` 请求体。 */
         PreparationCompleteRequest: {
             /**
@@ -1452,6 +1572,8 @@ export interface components {
         };
         /** @description `POST /api/v1/documents/{id}/preparations` 请求体。 */
         PreparationCreateRequest: {
+            /** @description Explicitly start a separate record; never rewrite an existing preparation. */
+            createNew?: boolean | null;
             /**
              * @description 原件内容 sha256；必须与 document 绑定的原件一致（否则 422），
              *     用于确认浏览器准备的是同一份字节（contracts.md §3）。
@@ -1476,6 +1598,7 @@ export interface components {
             pageCount?: number | null;
             /** @description 已上传页（按 `pageNumber` 升序）。 */
             pages: components["schemas"]["PageDto"][];
+            readiness: components["schemas"]["PreparationReadinessDto"];
             /** Format: int64 */
             revision: number;
             sourceSha256: string;
@@ -1512,6 +1635,25 @@ export interface components {
              */
             state: string;
             updatedAt: string;
+        };
+        PreparationListResponse: {
+            data: components["schemas"]["PreparationCandidateDto"][];
+            nextCursor?: string | null;
+            recommended?: null | components["schemas"]["PreparationCandidateDto"];
+            /** @description Global recommendation across every record, independent of this response page. */
+            recommendedPreparationId?: string | null;
+        };
+        /** @description Read-time v1 compatibility, based on stored facts and physical file metadata (not a byte audit). */
+        PreparationReadinessDto: {
+            compatible: boolean;
+            completedPageCount: number;
+            completedPages: number[];
+            explanation?: string | null;
+            formatVersion?: string | null;
+            /** @description Known total only; unknown totals remain null on the preparation. */
+            missingPages: number[];
+            /** @description Fixed reason code: sourceMismatch / unsupportedFormat / invalidPages / missingAssets / incompleteReady. */
+            reason?: string | null;
         };
         /** @description 单个 preparation 响应（`{ data }` 包装）。 */
         PreparationResponse: {
@@ -1568,6 +1710,8 @@ export interface components {
             action: components["schemas"]["ProviderEditAction"];
             apiKey?: string | null;
             baseUrl?: string | null;
+            /** @description 明确清空已隐藏问题模型的意图；model:null 本身不代表授权清空。 */
+            clearModel?: boolean | null;
             keyAction?: null | components["schemas"]["KeyEditAction"];
             model?: string | null;
         };
@@ -1578,6 +1722,10 @@ export interface components {
          * @enum {string}
          */
         ProviderKeyDto: "tripo" | "manual_ai";
+        ProviderModelIssues: {
+            manualAi?: null | components["schemas"]["ModelIssue"];
+            tripo?: null | components["schemas"]["ModelIssue"];
+        };
         ProviderSettingsData: {
             active: components["schemas"]["ProviderViews"];
             pending: boolean;
@@ -1600,6 +1748,7 @@ export interface components {
             keyConfigured: boolean;
             keySource: components["schemas"]["ConfigSource"];
             model?: string | null;
+            modelIssue?: null | components["schemas"]["ModelIssue"];
             modelSource: components["schemas"]["ConfigSource"];
         };
         ProviderViews: {
@@ -1644,12 +1793,14 @@ export interface components {
             /** @description 报价到期时间（默认 10 分钟；过期后提交任务被拒，需重新报价）。 */
             expiresAt: string;
             id: string;
+            inputIssue?: null | components["schemas"]["QuoteInputIssue"];
             itemId: string;
             /**
              * Format: int64
              * @description 说明书 AI 的最大输出 token（批次数 × 每批上限；预算口径之一）。
              */
             maxOutputTokens: number;
+            modelIssue?: null | components["schemas"]["ModelIssue"];
             modelPreset: string;
             /**
              * Format: int64
@@ -1665,6 +1816,8 @@ export interface components {
             /** @description 云端发送范围（确认页必须逐项展示；未确认不允许提交）。 */
             sendScope: components["schemas"]["SendScopeDto"];
         };
+        /** @enum {string} */
+        QuoteInputIssue: "inputChanged" | "preparationIncompatible" | "providerConfigChanged" | "providerUnavailable" | "priceVersionChanged";
         /** @description 报价响应（`{ data }` 包装）。 */
         QuoteResponse: {
             data: components["schemas"]["QuoteDto"];
@@ -1854,6 +2007,8 @@ export interface components {
             priceCatalog: components["schemas"]["PriceCatalogStatus"];
             /** @description 额外的配置切换门禁；原有字段仍表示当前运行配置。 */
             providerConfigPending: boolean;
+            /** @description 模型误填状态，不含疑似值或其任何摘要。 */
+            providerModelIssues: components["schemas"]["ProviderModelIssues"];
             /** @description 各供应商是否具备发起真实请求的全部配置（密钥 + 模型）。 */
             providersConfigured: components["schemas"]["ProvidersConfigured"];
         };
@@ -1908,6 +2063,13 @@ export interface components {
             label?: string | null;
             name?: string | null;
             orderedActions?: string[] | null;
+            /**
+             * @description Step-only local safety notes: at most 12 nonblank strings, each at most
+             *     600 characters. An explicit empty list removes the displayed notes;
+             *     omission preserves an existing override, or otherwise the supplier notes.
+             *     The original snapshot is retained.
+             */
+            safetyNotes?: string[] | null;
             title?: string | null;
             value?: string | null;
         };
@@ -1928,6 +2090,20 @@ export interface components {
              * @description 页图宽度（像素，已含页面旋转）。
              */
             width: number;
+        };
+        /** @enum {string} */
+        WorkflowAction: "handleJob" | "viewJob" | "reviewDraft" | "readRelease" | "addDocument" | "addViews" | "prepare" | "confirm";
+        /**
+         * @description Read-only workflow state: a visited route is never completion evidence.
+         * @enum {string}
+         */
+        WorkflowStepState: "complete" | "missing" | "needsReview";
+        WorkflowStepsDto: {
+            basic: components["schemas"]["WorkflowStepState"];
+            confirm: components["schemas"]["WorkflowStepState"];
+            document: components["schemas"]["WorkflowStepState"];
+            prepare: components["schemas"]["WorkflowStepState"];
+            views: components["schemas"]["WorkflowStepState"];
         };
     };
     responses: never;
@@ -2125,6 +2301,55 @@ export interface operations {
             };
         };
     };
+    list_preparations: {
+        parameters: {
+            query?: {
+                /** @description Default 20, maximum 100 */
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreparationListResponse"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     create_preparation: {
         parameters: {
             query?: never;
@@ -2255,6 +2480,8 @@ export interface operations {
                 cursor?: string;
                 /** @description true 只看已归档；缺省/false 只看未归档 */
                 archived?: boolean;
+                /** @description 名称或型号字面包含；去首尾空格，最多200字符，ASCII大小写不敏感 */
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -2332,6 +2559,54 @@ export interface operations {
                 };
             };
             /** @description 字段级校验失败（details.fields） */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    summaries: {
+        parameters: {
+            query: {
+                /** @description 1至100个物品UUID，以逗号分隔 */
+                ids: string;
+                /** @description 显式选择的原件，仅单物品摘要可用 */
+                documentId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemSummaryResponse"];
+                };
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -3572,6 +3847,35 @@ export interface operations {
             };
         };
     };
+    get_job_activity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 全库计数 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobActivityResponse"];
+                };
+            };
+            /** @description 未登录 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     get_job: {
         parameters: {
             query?: never;
@@ -4205,6 +4509,71 @@ export interface operations {
             };
             /** @description 持久化失败 */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    read_manual_ai_models: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 模型 ID 列表；no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualAiModelsResponse"];
+                };
+            };
+            /** @description 未登录 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description CSRF/Origin 校验失败 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 生效配置无密钥 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 生效地址无效 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 上游失败或返回不可安全使用的模型列表；不回显上游正文 */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

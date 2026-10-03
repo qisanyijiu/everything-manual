@@ -1,6 +1,8 @@
 # 万物说明书 · 项目知识入口
 
-当前产品路线：React + Rust、前后端分离开发、单二进制自托管发布。2026-09-11 起替代旧 macOS 原生实现路线。截至 2026-09-14：T01–T21 已实现并经 QA 验收 PASS；T22 的 **Linux 半边已跑通并经 QA 回合 30 独立验收 PASS**（真实 Linux 容器内构建与运行）；**macOS 半边已在现行 `dist.rs` 下复跑，二进制 sha256 与已录证据逐字节一致**（`ab693cc3…`，smoke 7/7、`xtask check` 7/7、workspace 558/0/2，见 [implementation §R30](requirements/web-mvp/implementation.md)）；唯一未关闭缺陷 **BUG-013**（P3，阻断发布门禁）**修复已实现（测试侧 settle，ADR-037）**，但其**必须的 Linux 容器取证被 Docker 引擎故障阻塞**（与 ADR-035 §5 同一签名；证据见 `artifacts/web-mvp/t22-rd/bug013/docker-engine-blocked.txt`），T22 整卡待 QA 复核回合 31；T23 未开始。当前进度与实现概览见 [web-mvp 进度与实现总结](requirements/web-mvp/progress-summary.md)（暂停交接快照）。
+当前产品路线：React + Rust、前后端分离开发、单二进制自托管发布。2026-09-11 起替代旧 macOS 原生实现路线。2026-10-02 正在按用户要求继续补齐 PRD，最新范围和协调状态见 [prd-completion](requirements/prd-completion/prd.md) 与 [state](requirements/prd-completion/state.yaml)。已完成的交互 A、API 网页配置和密钥加密见下方索引；本轮发布包下载、原件阅读、知识复核闭环、准备/建单恢复、模型栏密钥防护与受控验证命令均已通过各自独立切片验收（QA1–9），当前实施资料库搜索、保存/离开保护和任务体验，随后执行当前版本的完整发布门禁。官方说明书原件与本地准备结果保存在忽略的运行目录中。
+
+原 web-mvp 的 T01–T21 历史验收已通过；T22 尚未完整关闭，BUG-013 的测试侧修复仍缺 Linux 复验，T23 真实供应商验收待正确配置与明确预算。九月两平台构建、哈希与测试计数属于历史版本，不能作为十月新增代码的发布证明；历史细节见 [进度快照](requirements/web-mvp/progress-summary.md) 和 [implementation §R30](requirements/web-mvp/implementation.md)。
 
 ## 阅读顺序
 
@@ -15,6 +17,8 @@
 9. [交互体验改进方案](../docs/interaction-experience-improvement-plan.md)：体验评审、优先级、实施切片与验收标准；[切片 A](requirements/interaction-a/prd.md) 于 2026-09-20 完成并通过 [独立 QA](requirements/interaction-a/qa-report.md)，B/C/D 待实施。
 10. [网页 API 配置](../docs/api-settings.md)：Tripo 与说明书 AI 的地址、模型、密钥设置已实现，保存后重启服务生效；2026-09-22 全部 15 项 AC 通过 [独立 QA](requirements/api-settings/qa-report.md)。该请求替代旧版仅只读、禁止网页输入密钥的范围限制，未改变 T22/T23 的验收状态。
 11. [API 密钥加密存储](requirements/encrypted-secrets/prd.md)：2026-10-02 已交付并更新本地预览；网页与部署密钥文件认证加密、独立主密钥、安全迁移及供应商回显保护，[全部 12 AC 独立验收通过](requirements/encrypted-secrets/qa-report.md)，状态见 [协调记录](requirements/encrypted-secrets/state.yaml)。
+
+12. [受控本地生成验证](test-live.md)：具名案例与受限预算文件的 `test-live` 命令，复用冻结任务、幂等与账本；本机fixture交付不代表AC-042/T23真实供应商验收完成。
 
 ## llmdoc 记录规则
 

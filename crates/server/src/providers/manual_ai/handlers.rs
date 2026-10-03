@@ -222,6 +222,19 @@ async fn load_frozen_inputs(ctx: &StageContext) -> Loaded<FrozenInputs> {
         )
     })?;
     let scope = payload.send_scope.manual_ai;
+    if crate::config::model_guard::provider_config_has_issue(&snapshot.provider_config)
+        || crate::generation::estimate::quote_model_issue(&quote).map_err(|_| {
+            needs_input(
+                crate::config::model_guard::FROZEN_MODEL_REASON,
+                crate::config::model_guard::FROZEN_MODEL_MESSAGE,
+            )
+        })?
+    {
+        return Err(needs_input(
+            crate::config::model_guard::FROZEN_MODEL_REASON,
+            crate::config::model_guard::FROZEN_MODEL_MESSAGE,
+        ));
+    }
 
     // prompt/schema 版本绑定：快照、报价发送范围与代码支持的版本必须一致。
     if snapshot.prompt_version != MANUAL_EXTRACT_PROMPT_VERSION

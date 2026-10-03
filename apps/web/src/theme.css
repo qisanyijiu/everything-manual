@@ -371,6 +371,27 @@ input[type="file"]::file-selector-button { background: #edf1e7; color: var(--tex
   .drawer { padding: 20px; }
 }
 .provider-settings { max-width: 1080px; min-width: 0; }
+/* Published downloads stay in normal flow, including long filenames/diagnostic IDs. */
+.release-download, .release-list__actions, .reader-download { min-width: 0; }
+.release-download { max-width: 100%; }
+.release-list__actions { flex: 0 1 340px; align-items: flex-start; gap: 12px; }
+.release-list__identity > div { min-width: 0; overflow-wrap: anywhere; }
+.release-list__actions > .release-download { width: 100%; }
+.release-download .release-download__button { min-height: 44px; min-width: 44px; font-size: 14px; white-space: normal; }
+.release-download__button[aria-disabled="true"] { opacity: .7; cursor: wait; }
+.release-download-description, .reader-page .release-download-description { font-size: 14px; line-height: 1.65; color: var(--muted); overflow-wrap: anywhere; }
+.release-download__feedback, .reader-page .release-download__feedback { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; margin: 10px 0 0; }
+.release-download__feedback:empty { margin: 0; }
+.release-download__feedback span { display: block; font-size: 12px; }
+.release-download__feedback--error { color: #993c25; }
+.reader-download { border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin: 0 0 24px; background: var(--surface); }
+.reader-download__identity { margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+.reader-download .release-download-description { margin: 12px 0 0; }
+@media (max-width: 767px) {
+  .release-list__actions { flex-basis: auto; width: 100%; }
+  .release-list__actions > a, .release-download__button { width: 100%; }
+  .reader-download { padding: 18px; }
+}
 .api-provider-card { margin: 20px 0; padding: 26px; }
 .api-card-heading, .api-save-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 .api-card-heading { justify-content: space-between; }
@@ -406,3 +427,73 @@ input[type="file"]::file-selector-button { background: #edf1e7; color: var(--tex
   .api-config-status > span { display: block; margin: 8px 0 0; }
   .api-save-row > button { width: 100%; }
 }
+
+/* Original documents and evidence navigation: readable controls at every width. */
+.document-reader { max-width: 960px; }
+.document-reader__footer { margin-top: 24px; }
+.original-section { min-width: 0; margin-top: 24px; overflow-wrap: anywhere; }
+.original-section h2 { font-size: 18px; scroll-margin: 24px; }
+.original-section__select { display: grid; gap: 8px; margin-top: 16px; font-size: 14px; }
+.original-section__select select { width: 100%; min-width: 0; min-height: 44px; font-size: 14px; }
+.original-panel { min-width: 0; font-size: 14px; }
+.original-panel__nav { font-size: 12px; }
+.original-panel__nav button, .original-panel__jump button, .original-section > button,
+.original-panel__message button, .step-evidence button, .original-document-link {
+  min-height: 44px; min-width: 44px; font-size: 14px; white-space: normal;
+}
+.original-panel__jump { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.original-panel__jump label { font-size: 14px; }
+.original-panel__jump input { min-width: 0; width: 80px; min-height: 44px; font-size: 14px; }
+.original-panel__jump p { flex-basis: 100%; margin: 0; font-size: 14px; color: var(--danger); }
+.original-panel__canvas[hidden] { display: none; }
+.original-panel__text summary { min-height: 44px; display: flex; align-items: center; font-size: 12px; }
+.original-panel__text pre { font-size: 14px; }
+.step-evidence { min-width: 0; overflow-wrap: anywhere; }
+.step-evidence button { max-width: 100%; text-align: left; margin: 4px 0; }
+.reader-page .step-evidence button { min-height: 44px; font-size: 14px; }
+.original-panel .page-note { font-size: 12px; }
+
+/* PC-03A: bounded preparation discovery, status labels remain readable at 375px. */
+.preparation-discovery { margin-block: 1rem; padding: 1rem; border: 1px solid var(--color-border, #ddd); border-radius: 1rem; }
+.preparation-record { display: flex; gap: .75rem; padding: .875rem; align-items: flex-start; border-radius: .75rem; overflow-wrap: anywhere; cursor: pointer; }
+.preparation-record:has(input:checked) { background: var(--color-surface-muted, #f4f5f1); }
+.preparation-record > span { display: grid; gap: .4rem; min-width: 0; }
+.preparation-record input { margin-top: .2rem; min-width: 20px; min-height: 20px; }
+.preparation-record code { font-size: .75rem; }
+.preparation-discovery summary { min-height: 44px; padding-block: .75rem; cursor: pointer; }
+.prepare-page button, .prepare-page .button-primary, .prepare-page .button, .preparation-discovery button { min-height: 44px; }
+.prepare-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1rem; }
+.prepare-progress code { overflow-wrap: anywhere; }
+.prepare-progress progress { width: 100%; accent-color: var(--color-accent, #485b40); }
+@media (max-width: 600px) {
+  .prepare-actions > button, .prepare-actions > p { width: 100%; }
+  .preparation-discovery { padding: .5rem; }
+}
+
+/* PC05A: search fields and actions share the existing keyboard/touch baseline. */
+.library-page .library-search input { padding-left: 12px; height: 44px; font-size: 14px; }
+.library-page .library-search label, .library-page .library-search .field__hint,
+.library-page .library-toolbar__toggle { font-size: 14px; }
+.library-search-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 24px; }
+.library-search-actions button, .library-page__more button { min-height: 44px; }
+.library-toolbar__toggle { min-height: 44px; }
+@media (max-width: 640px) {
+  .library-search-actions { padding-top: 0; }
+  .library-page .library-toolbar__toggle { padding-top: 0; }
+}
+
+/* PC05B: save feedback stays with its action; narrow controls remain usable. */
+.item-form-fields { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; gap: 18px; }
+.work-leave-dialog p, .item-form-page [role="status"], .edit-form [role="status"] { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.item-form-page button, .edit-form button { min-height: 44px; min-width: 44px; white-space: normal; }
+.edit-form label { font-size: 14px; }
+.work-leave-dialog .form-actions > button { flex: 1 1 140px; }
+
+/* PC05C: a bounded global task summary, readable at desktop and narrow widths. */
+.job-activity-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; min-width: 44px; padding: 6px 10px; border-radius: 12px; font-size: 14px; color: var(--text); text-decoration: none; white-space: nowrap; }
+.job-activity-link:hover { background: var(--surface-soft, #edf0e6); }
+.job-activity-link__compact { display: none; }
+.top-bar__utilities { flex-shrink: 0; }
+.job-retry-wait { padding: 10px 12px; border-radius: 10px; background: var(--surface-soft, #edf0e6); font-size: 14px; }
+.job-retry-wait p { margin: 2px 0; }
+@media (max-width: 767px) { .job-activity-link__label { display: none; } .job-activity-link__compact { display: inline; } }

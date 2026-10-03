@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { setViewportWidth } from "../../test/render";
@@ -40,5 +40,28 @@ describe("interaction-a：中屏多面板标签", () => {
     fireEvent.click(screen.getByRole("button", { name: "显示摘要" }));
     expect(screen.getByText("唯一摘要")).toBeInTheDocument();
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+  });
+});
+
+
+describe("PC02A explicit panel navigation", () => {
+  it("focuses the requested panel and does not replay old focus on manual reopening", async () => {
+    render(<PageLayout rail={{ id: "parts", label: "部件", content: <button>选择部件</button> }}
+      original={{ id: "original", label: "原文", content: <h2 id="original-title" tabIndex={-1}>PDF 原文</h2> }}
+      navigation={{ panelId: "original", focusId: "original-title", serial: 1 }}>主内容</PageLayout>);
+    await waitFor(() => expect(screen.getByRole("heading", { name: "PDF 原文" })).toHaveFocus());
+    fireEvent.click(screen.getByRole("button", { name: "隐藏部件" }));
+    fireEvent.click(screen.getByRole("button", { name: "显示部件" }));
+    const original = screen.getByRole("tab", { name: "原文" });
+    original.focus(); fireEvent.click(original);
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    expect(original).toHaveFocus();
+  });
+  it("a removed source control falls back to the corresponding panel", async () => {
+    render(<PageLayout rail={{ id: "parts", label: "部件", content: <p>实体已变化</p> }}
+      aside={{ id: "steps", label: "步骤", content: <p>步骤说明</p> }}
+      navigation={{ panelId: "parts", focusId: "removed-evidence", serial: 1 }}>主内容</PageLayout>);
+    await waitFor(() => expect(screen.getByRole("tabpanel")).toHaveFocus());
+    expect(screen.getByRole("tabpanel")).toHaveTextContent("实体已变化");
   });
 });

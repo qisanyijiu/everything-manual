@@ -1,5 +1,5 @@
 -- no-transaction
--- 0008_model_parts —— `assets.purpose` 增加 `model_parts`（分件模型，ADR-042）。
+-- 0009_model_parts —— `assets.purpose` 增加 `model_parts`（分件模型，ADR-042）。
 --
 -- 为什么：交互式说明书需要"可单独高亮/移动的部件"。Tripo `mesh/segment` 产出与草稿
 -- 模型**同一坐标系**的多节点 GLB；它不是新的模型版本（热点锚点仍属于草稿模型

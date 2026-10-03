@@ -1680,8 +1680,9 @@ async fn qa_t15_blocked_model_branch_yields_partial_draft_and_gates_retry() {
     );
     assert_eq!(release_count(&pool).await, 0);
 
-    // 观察（非阻断，记录到 qa-report）：模型分支头的重试受"预留必须仍占预算"约束。
+    // 本地校验不重新购买：即使 Tripo 已结算也可重试，但仍拒绝截断的 GLB。
     let validate = stage_of(&pool, &job_id, StageKind::ModelValidate).await;
+    let ledger_before = ledger_entries(&pool, &job_row(&pool, &job_id).await.snapshot_id).await;
     let (_, job_etag) = job_detail(&app, &cookie, &job_id).await;
     let retry = retry_stage(
         &app,
@@ -1693,45 +1694,29 @@ async fn qa_t15_blocked_model_branch_yields_partial_draft_and_gates_retry() {
         "qa-t15-partial-retry",
     )
     .await;
-    assert_eq!(
-        retry.status,
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "观察：预留已结算（poll 成功即结算）时模型分支重试被拒；实际 {}",
-        retry.text()
-    );
-    assert_eq!(
-        error_field(&retry, "details")["reason"],
-        "budgetNotHolding",
-        "{}",
-        retry.text()
-    );
+    assert_eq!(retry.status, StatusCode::OK, "{}", retry.text());
     assert_eq!(
         stage_of(&pool, &job_id, StageKind::ModelValidate)
             .await
             .status,
-        JobStatus::NeedsInput,
-        "拒绝必须无副作用"
+        JobStatus::Queued,
+        "只重新排队本地校验"
     );
-    assert_eq!(fixture.paid_submits(), 1, "拒绝不得产生新的付费提交");
-    // QA 观察（非阻断，供 qa-report P3 记录）：模型分支头被阻塞时的重试门槛。
-    eprintln!(
-        "QA-OBSERVE[model-head-retry] status={} reason={} ledger={:?} model_validate={} assemble={} draft_completeness={}",
-        retry.status.as_u16(),
-        error_field(&retry, "details")["reason"],
-        ledger_entries(&pool, &job_row(&pool, &job_id).await.snapshot_id)
-            .await
-            .iter()
-            .map(|entry| (entry.provider.as_str(), entry.state.as_str()))
-            .collect::<Vec<_>>(),
-        stage_of(&pool, &job_id, StageKind::ModelValidate)
-            .await
-            .status
-            .as_str(),
-        stage_of(&pool, &job_id, StageKind::AssembleDraft)
-            .await
-            .status
-            .as_str(),
-        usage["completeness"],
+    tick_until_stage(
+        &pool,
+        &executor,
+        &clock,
+        &job_id,
+        StageKind::ModelValidate,
+        JobStatus::NeedsInput,
+        20,
+    )
+    .await;
+    assert_eq!(fixture.paid_submits(), 1, "本地校验重试不得重新购买");
+    assert_eq!(
+        ledger_entries(&pool, &job_row(&pool, &job_id).await.snapshot_id).await,
+        ledger_before,
+        "不改写已发生的费用"
     );
     assert!(
         fixture.unexpected().is_empty(),

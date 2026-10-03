@@ -1,3 +1,5 @@
+import { usePageWork } from "../shell/work-protection";
+import { workflowKeys } from "../library/workflow";
 /**
  * 向导第 2 步：说明书原件（PRD §6.1.2 `/items/:itemId/import/document`；
  * §6.2 UI-009（上传）、UI-011（绑定 document）、UI-016（拒绝说明）、UI-019（向导导航））。
@@ -126,6 +128,7 @@ function Binder({ itemId }: { itemId: string }) {
   const [title, setTitle] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [binding, setBinding] = useState(false);
+  usePageWork({ active: asset !== null || binding, message: "离开将丢弃尚未绑定的资料信息并停止本页操作。已上传的资产及已绑定原件保留；在途绑定可能已经完成，返回后可核对。" });
   const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -143,6 +146,7 @@ function Binder({ itemId }: { itemId: string }) {
         sourceUrl: sourceUrl.trim() === "" ? null : sourceUrl.trim(),
       });
       await queryClient.invalidateQueries({ queryKey: itemKeys.documents(itemId) });
+      await queryClient.invalidateQueries({ queryKey: workflowKeys.root });
       setAsset(null);
       setTitle("");
       setSourceUrl("");

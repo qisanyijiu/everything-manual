@@ -15,7 +15,6 @@
  * 界面注明"这是你的复核声明，不是服务端 GPU 测试结论"；换模型后记录被清空。
  */
 
-import { useState } from "react";
 
 import type { EntityReviewView, ModelReviewView } from "../viewer/draft-view";
 import type { ModelIdentity } from "./review-state";
@@ -30,6 +29,7 @@ interface StepLike {
   readonly id: string;
   readonly title: string;
   readonly orderedActions: readonly string[];
+  readonly safetyNotes: readonly string[];
   readonly evidence: readonly { pageNumber: number; quote: string | null }[];
 }
 interface SpecLike {
@@ -39,7 +39,16 @@ interface SpecLike {
   readonly evidence: readonly { pageNumber: number; quote: string | null }[];
 }
 
+export type EditValues = { name: string; description: string; title: string; actions: string; safetyNotes: string; label: string; value: string };
+export type EditFields = { name?: string; description?: string; title?: string; orderedActions?: string[]; safetyNotes?: string[]; label?: string; value?: string };
+
 export interface KnowledgeReviewPanelProps {
+  readonly editing: string | null;
+  readonly buffers: Readonly<Record<string, EditValues>>;
+  readonly busy: boolean;
+  readonly saveStatus?: string;
+  readonly onEditing: (id: string | null) => void;
+  readonly onBuffer: (id: string, values: EditValues | null) => void;
   readonly parts: readonly PartLike[];
   readonly steps: readonly StepLike[];
   readonly specs: readonly SpecLike[];
@@ -59,10 +68,11 @@ export interface KnowledgeReviewPanelProps {
       description?: string;
       title?: string;
       orderedActions?: string[];
+      safetyNotes?: string[];
       label?: string;
       value?: string;
     },
-  ) => void;
+  ) => Promise<boolean>;
 }
 
 type Kind = "part" | "step" | "spec";
@@ -79,16 +89,15 @@ export function KnowledgeReviewPanel({
   onDeclareModelReady,
   onDeclareModelConfirmed,
   onSetEntityReview,
-  onSaveEntityEdit,
+  onSaveEntityEdit, editing, buffers, busy, saveStatus, onEditing, onBuffer,
 }: KnowledgeReviewPanelProps) {
-  const [editing, setEditing] = useState<string | null>(null);
   const entries: { kind: Kind; entity: PartLike | StepLike | SpecLike }[] = [
     ...parts.map((part) => ({ kind: "part" as const, entity: part })),
     ...steps.map((step) => ({ kind: "step" as const, entity: step })),
     ...specs.map((spec) => ({ kind: "spec" as const, entity: spec })),
   ];
-  const loadedDeclared = modelReview?.loaded === true;
-  const confirmedDeclared = modelReview?.userConfirmed === true;
+  const loadedDeclared = modelReview !== null && matchesModel(modelReview, model) && modelReview.loaded === true;
+  const confirmedDeclared = modelReview !== null && matchesModel(modelReview, model) && modelReview.userConfirmed === true;
 
   return (
     <section aria-label="知识确认与修订" data-testid="knowledge-panel">
@@ -99,12 +108,13 @@ export function KnowledgeReviewPanel({
       <section aria-label="模型复核" className="notice-panel" data-testid="model-review-panel">
         <h3>模型复核（两个独立声明）</h3>
         <p>
-          这是**你的复核声明**，不是服务端 GPU 测试结论；两个动作都记录声明时间，换模型后清空。
+          这是你的复核声明，不是服务端 GPU 测试结论；两个动作都记录声明时间，换模型后清空。
         </p>
         <div className="row-actions">
           <button
             type="button"
-            disabled={model === null || (!modelLoaded && !loadedDeclared)}
+            id="review-modelLoaded"
+            disabled={busy || model === null || loadedDeclared || !modelLoaded}
             title={model === null ? "草稿没有可用模型" : undefined}
             onClick={onDeclareModelReady}
           >
@@ -112,7 +122,8 @@ export function KnowledgeReviewPanel({
           </button>
           <button
             type="button"
-            disabled={!loadedDeclared || confirmedDeclared}
+            id="review-modelConfirmed"
+            disabled={busy || !loadedDeclared || confirmedDeclared}
             onClick={onDeclareModelConfirmed}
           >
             我已核对模型与资料一致
@@ -141,7 +152,7 @@ export function KnowledgeReviewPanel({
           const original = originalText(kind, entity);
           const edited = review?.userEdited ?? null;
           return (
-            <li key={entity.id} data-testid={`knowledge-${entity.id}`}>
+            <li key={entity.id} id={`review-entity-${entity.id}`} tabIndex={-1} data-testid={`knowledge-${entity.id}`}>
               <div className="knowledge-head">
                 <span className="status-label" data-testid={`knowledge-status-${entity.id}`}>
                   {review?.userEdited != null
@@ -169,21 +180,23 @@ export function KnowledgeReviewPanel({
               <div className="row-actions">
                 <button
                   type="button"
-                  disabled={reviewed && review?.reviewStatus === "confirmed"}
+                  id={`review-fact-${entity.id}`}
+                  disabled={busy || (reviewed && review?.reviewStatus === "confirmed")}
                   onClick={() => onSetEntityReview(entity.id, "confirmed")}
                 >
                   确认事实
                 </button>
                 <button
                   type="button"
-                  disabled={review?.reviewStatus !== "confirmed"}
+                  disabled={busy || review?.reviewStatus !== "confirmed"}
                   onClick={() => onSetEntityReview(entity.id, "needs_review")}
                 >
                   取消确认
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditing(editing === entity.id ? null : entity.id)}
+                  disabled={busy}
+                  onClick={() => onEditing(editing === entity.id ? null : entity.id)}
                 >
                   {editing === entity.id ? "收起修订" : "复制为本地修订"}
                 </button>
@@ -192,10 +205,13 @@ export function KnowledgeReviewPanel({
                 <EditForm
                   kind={kind}
                   entity={entity}
-                  onCancel={() => setEditing(null)}
-                  onSave={(fields) => {
-                    onSaveEntityEdit(entity.id, fields);
-                    setEditing(null);
+                  edited={edited}
+                  values={buffers[entity.id]}
+                  busy={busy} status={saveStatus}
+                  onChange={(values) => onBuffer(entity.id, values)}
+                  onCancel={() => { onBuffer(entity.id, null); onEditing(null); }}
+                  onSave={async (fields) => {
+                    if (await onSaveEntityEdit(entity.id, fields)) { onBuffer(entity.id, null); onEditing(null); }
                   }}
                 />
               )}
@@ -224,7 +240,7 @@ function originalText(kind: Kind, entity: PartLike | StepLike | SpecLike): strin
   }
   if (kind === "step") {
     const step = entity as StepLike;
-    return `${step.title}：${step.orderedActions.join(" → ")}`;
+    return `${step.title}：${step.orderedActions.join(" → ")}${step.safetyNotes.length > 0 ? `；注意事项：${step.safetyNotes.join("；")}` : ""}`;
   }
   const spec = entity as SpecLike;
   return `${spec.label}：${spec.value}`;
@@ -240,7 +256,7 @@ function editedText(
   if (kind === "step") {
     return `${edited.title ?? ""}${
       edited.orderedActions !== undefined ? `：${edited.orderedActions.join(" → ")}` : ""
-    }`;
+    }${edited.safetyNotes !== undefined ? `；注意事项：${edited.safetyNotes.length > 0 ? edited.safetyNotes.join("；") : "已清空（人工）"}` : ""}`;
   }
   return `${edited.label ?? ""}${edited.value !== undefined ? `：${edited.value}` : ""}`;
 }
@@ -268,30 +284,40 @@ function formatTime(millis: number | null): string {
 function EditForm({
   kind,
   entity,
-  onSave,
-  onCancel,
+  edited,
+  onSave, onCancel, values, onChange, busy, status,
 }: {
+  values: EditValues | undefined;
+  status?: string;
+  busy: boolean;
+  onChange: (values: EditValues) => void;
   kind: Kind;
   entity: PartLike | StepLike | SpecLike;
+  edited: EntityReviewView["userEdited"];
   onSave: (fields: {
     name?: string;
     description?: string;
     title?: string;
     orderedActions?: string[];
+    safetyNotes?: string[];
     label?: string;
     value?: string;
-  }) => void;
+  }) => Promise<void>;
   onCancel: () => void;
 }) {
   const part = kind === "part" ? (entity as PartLike) : null;
   const step = kind === "step" ? (entity as StepLike) : null;
   const spec = kind === "spec" ? (entity as SpecLike) : null;
-  const [name, setName] = useState(part?.name ?? "");
-  const [description, setDescription] = useState(part?.description ?? "");
-  const [title, setTitle] = useState(step?.title ?? "");
-  const [actions, setActions] = useState((step?.orderedActions ?? []).join("\n"));
-  const [label, setLabel] = useState(spec?.label ?? "");
-  const [value, setValue] = useState(spec?.value ?? "");
+  const current: EditValues = values ?? {
+    name: edited?.name ?? part?.name ?? "", description: edited?.description ?? part?.description ?? "",
+    title: edited?.title ?? step?.title ?? "", actions: (edited?.orderedActions ?? step?.orderedActions ?? []).join("\n"),
+    safetyNotes: (edited?.safetyNotes ?? step?.safetyNotes ?? []).join("\n"),
+    label: edited?.label ?? spec?.label ?? "", value: edited?.value ?? spec?.value ?? "",
+  };
+  const { name, description, title, actions, safetyNotes, label, value } = current;
+  const notes = safetyNotes.split("\n").map((line) => line.trim()).filter((line) => line !== "");
+  const invalidNotes = step !== null && (notes.length > 12 || notes.some((note) => [...note].length > 600));
+  const change = (field: keyof EditValues, text: string) => onChange({ ...current, [field]: text });
 
   return (
     <div className="edit-form">
@@ -299,15 +325,16 @@ function EditForm({
         <>
           <label>
             部件名
-            <input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} />
+            <input disabled={busy} value={name} maxLength={120} onChange={(event) => change("name", event.target.value)} />
           </label>
           <label>
             说明
             <textarea
+              disabled={busy}
               value={description}
               maxLength={1200}
               rows={3}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) => change("description", event.target.value)}
             />
           </label>
         </>
@@ -316,52 +343,69 @@ function EditForm({
         <>
           <label>
             步骤标题
-            <input value={title} maxLength={200} onChange={(event) => setTitle(event.target.value)} />
+            <input disabled={busy} value={title} maxLength={200} onChange={(event) => change("title", event.target.value)} />
           </label>
           <label>
             操作（每行一步）
             <textarea
+              disabled={busy}
               value={actions}
               rows={3}
-              onChange={(event) => setActions(event.target.value)}
+              onChange={(event) => change("actions", event.target.value)}
             />
           </label>
+          <label>
+            注意事项（每行一条）
+            <textarea
+              disabled={busy}
+              value={safetyNotes}
+              rows={3}
+              aria-describedby={`safety-notes-help-${entity.id}`}
+              aria-invalid={invalidNotes}
+              onChange={(event) => change("safetyNotes", event.target.value)}
+            />
+          </label>
+          <p className="page-note" id={`safety-notes-help-${entity.id}`}>最多12条，每条600字符。可留空删除注意事项，仅影响人工覆盖层；供应商原文仍保留。</p>
+          {invalidNotes && <p role="alert">注意事项最多12条，每条不得超过600字符。</p>}
         </>
       )}
       {spec !== null && (
         <>
           <label>
             规格名
-            <input value={label} maxLength={120} onChange={(event) => setLabel(event.target.value)} />
+            <input disabled={busy} value={label} maxLength={120} onChange={(event) => change("label", event.target.value)} />
           </label>
           <label>
             规格值
-            <input value={value} maxLength={600} onChange={(event) => setValue(event.target.value)} />
+            <input disabled={busy} value={value} maxLength={600} onChange={(event) => change("value", event.target.value)} />
           </label>
         </>
       )}
+      <p role="status" aria-live="polite">{status ?? (values ? "有未保存修改" : "")}</p>
       <div className="row-actions">
         <button
           type="button"
+          disabled={busy || invalidNotes}
           onClick={() => {
             if (part !== null) {
-              onSave({ name, description });
+              void onSave({ name, description });
             } else if (step !== null) {
-              onSave({
+              void onSave({
                 title,
                 orderedActions: actions
                   .split("\n")
                   .map((line) => line.trim())
                   .filter((line) => line !== ""),
+                safetyNotes: notes,
               });
             } else {
-              onSave({ label, value });
+              void onSave({ label, value });
             }
           }}
         >
           保存人工修订（并确认事实）
         </button>
-        <button type="button" onClick={onCancel}>
+        <button type="button" disabled={busy} onClick={onCancel}>
           取消
         </button>
       </div>

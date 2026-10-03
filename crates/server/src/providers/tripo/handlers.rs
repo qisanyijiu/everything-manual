@@ -123,6 +123,22 @@ impl TripoHandlers {
             StageKind::TripoSubmit,
             TripoSubmitHandler::new(Arc::clone(&self.client)),
         );
+        self.register_retrieval(registry);
+    }
+
+    /// Existing accepted tasks remain queryable when a model identifier needs correction.
+    pub fn register_readonly(&self, registry: &mut StageRegistry) {
+        registry.register(
+            StageKind::TripoSubmit,
+            TripoSubmitHandler {
+                client: Arc::clone(&self.client),
+                allow_submission: false,
+            },
+        );
+        self.register_retrieval(registry);
+    }
+
+    fn register_retrieval(&self, registry: &mut StageRegistry) {
         registry.register(
             StageKind::TripoPoll,
             TripoPollHandler::new(Arc::clone(&self.client), Arc::clone(&self.links)),
@@ -156,6 +172,17 @@ impl From<StageOutcome> for HandlerStop {
 }
 
 type Loaded<T> = Result<T, HandlerStop>;
+
+fn authorization_stop(error: JobError) -> StageOutcome {
+    let code = match error {
+        JobError::Authorization { code } => code,
+        _ => "live_authorization_check_failed",
+    };
+    StageOutcome::needs_input(vec![crate::jobs::MissingItem::new(
+        code,
+        "授权或绑定资料需要重新核对；保留已有成果，未发起该请求",
+    )])
+}
 
 fn needs_input(code: &str, message: impl Into<String>) -> HandlerStop {
     HandlerStop(StageOutcome::NeedsInput {
@@ -234,6 +261,19 @@ async fn load_confirmed_inputs(ctx: &StageContext) -> Loaded<ConfirmedInputs> {
         )
     })?;
 
+    if crate::config::model_guard::provider_config_has_issue(&snapshot.provider_config)
+        || crate::generation::estimate::quote_model_issue(&quote).map_err(|_| {
+            needs_input(
+                crate::config::model_guard::FROZEN_MODEL_REASON,
+                crate::config::model_guard::FROZEN_MODEL_MESSAGE,
+            )
+        })?
+    {
+        return Err(needs_input(
+            crate::config::model_guard::FROZEN_MODEL_REASON,
+            crate::config::model_guard::FROZEN_MODEL_MESSAGE,
+        ));
+    }
     let views: Vec<ConfirmedView> = payload
         .send_scope
         .tripo
@@ -504,6 +544,7 @@ impl StageHandler for TripoUploadHandler {
                     Err(stop) => return Ok(stop.0),
                 };
                 let file_name = format!("{}.{}", view.view, file_extension(&mime));
+                ctx.submission.check_call().await?;
                 match self.client.upload_image(&file_name, &mime, bytes).await {
                     Ok(data) => {
                         uploads.push(UploadFact {
@@ -586,11 +627,15 @@ fn upload_failure_outcome(error: &TripoError) -> StageOutcome {
 /// `tripo_submit`：`POST /generation/multiview-to-model`（**付费**）。
 pub struct TripoSubmitHandler {
     client: Arc<TripoClient>,
+    allow_submission: bool,
 }
 
 impl TripoSubmitHandler {
     pub fn new(client: Arc<TripoClient>) -> Self {
-        Self { client }
+        Self {
+            client,
+            allow_submission: true,
+        }
     }
 }
 
@@ -617,6 +662,13 @@ impl StageHandler for TripoSubmitHandler {
                 });
             }
 
+            if !self.allow_submission {
+                return Ok(needs_input(
+                    crate::config::model_guard::MODEL_ISSUE_REASON,
+                    crate::config::model_guard::MODEL_CONFIG_MESSAGE,
+                )
+                .0);
+            }
             let confirmed = match load_confirmed_inputs(ctx).await {
                 Ok(inputs) => inputs,
                 Err(stop) => return Ok(stop.0),
@@ -813,6 +865,7 @@ impl StageHandler for TripoPollHandler {
                 .0);
             };
 
+            ctx.submission.check_call().await?;
             match self.client.get_task(&task_id).await {
                 Ok(task) => {
                     let normalized = super::status::NormalizedStatus::new(&task.status_raw);
@@ -1146,6 +1199,10 @@ impl TripoModelDownloadHandler {
             remoteTaskId = %task_id,
             "临时链接不在本进程缓存（重启/恢复）：按 task ID 重新查询（不重新购买）"
         );
+        ctx.submission
+            .check_call()
+            .await
+            .map_err(|e| HandlerStop(authorization_stop(e)))?;
         match self.client.get_task(task_id).await {
             Ok(task) => match task.model_url.clone() {
                 Some(model_url) => {
@@ -1277,6 +1334,10 @@ impl TripoModelDownloadHandler {
             errorCode = first_error.code(),
             "模型链接过期：重新查询已知远端任务（不会重新购买）"
         );
+        ctx.submission
+            .check_call()
+            .await
+            .map_err(authorization_stop)?;
         match self.client.get_task(&facts.task_id).await {
             Ok(task) => {
                 let Some(model_url) = task.model_url.clone() else {
@@ -1286,7 +1347,7 @@ impl TripoModelDownloadHandler {
                 self.links
                     .remember(&ctx.job.id, &facts.task_id, &model_url, ctx.now);
                 self.downloader
-                    .download(&model_url)
+                    .download_with_gate(&model_url, ctx.submission.call_gate())
                     .await
                     .map_err(download_failure_outcome)
             }
@@ -1363,7 +1424,11 @@ impl StageHandler for TripoModelDownloadHandler {
 
             // 2) 下载（失败分类见 `download_failure_outcome`；链接过期只重新查询）。
             let mut link_refreshed = false;
-            let downloaded = match self.downloader.download(&model_url).await {
+            let downloaded = match self
+                .downloader
+                .download_with_gate(&model_url, ctx.submission.call_gate())
+                .await
+            {
                 Ok(downloaded) => downloaded,
                 Err(error @ DownloadError::LinkExpired { .. }) => {
                     match self.refresh_link_and_download(ctx, &facts, &error).await {

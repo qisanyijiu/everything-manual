@@ -16,6 +16,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import {
   cancelJob,
   getJob,
+  getJobActivity,
   listJobs,
   reconcileJob,
   retryJob,
@@ -37,6 +38,7 @@ export const JOBS_PAGE_SIZE = 20;
 
 export const jobKeys = {
   root: ["jobs"] as const,
+  activity: ["jobs", "activity"] as const,
   /** 列表按起始游标与物品过滤分区（两者都由 URL 承载，§6.1.1）。 */
   list: (startCursor: string | null, itemId: string | null = null) =>
     ["jobs", "list", startCursor, itemId] as const,
@@ -64,6 +66,19 @@ export function useDocumentVisible(): boolean {
 /** 可见 2 秒 / 不可见 15 秒（UI-029；AC-049 的观察点）。 */
 export function usePollingInterval(): number {
   return useDocumentVisible() ? JOBS_POLL_VISIBLE_MS : JOBS_POLL_HIDDEN_MS;
+}
+
+/** One constant-size summary poll, including when zero so newly created jobs appear. */
+export function useJobActivity() {
+  const interval = usePollingInterval();
+  return useQuery({
+    queryKey: jobKeys.activity,
+    queryFn: getJobActivity,
+    retry: false,
+    refetchInterval: interval,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: "always",
+  });
 }
 
 /**

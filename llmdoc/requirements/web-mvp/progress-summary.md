@@ -1,4 +1,6 @@
-# web-mvp 进度与实现总结（暂停交接）
+# web-mvp 进度与实现总结（2026-09-14 历史交接快照）
+
+2026-10-02 更新提示：用户已要求继续完成产品，当前开发与验收账见 [prd-completion](../prd-completion/prd.md) / [state](../prd-completion/state.yaml)。九月后已新增交互 A、网页 API 配置与密钥加密；本轮发布包下载、原件阅读、复核与恢复、模型栏防误填及受控验证命令已通过切片QA1–9，日常搜索/保存/任务体验及当前版本完整门禁正在推进。下文保留原暂停时的事实；其中“现行代码”“不再需要整轮重验”、哈希和测试计数仅对应九月产物，不能用于当前生产代码的发行证明。
 
 状态：**暂停中**，2026-09-14 由主协调会话整理（第三次暂停）；暂停点＝ T22 待收尾（Linux 半边已 QA PASS；macOS 半边已在现行代码下复跑、哈希逐字节一致；BUG-013 修复已实现，但其 Linux 容器取证被 Docker 引擎故障阻塞）；T23 未开始。
 依据：`state.yaml`、`qa-report.md`（回合 1–30）、`implementation.md`（§T01–§T22，含 §T22-13 与 §R30）、`llmdoc/decisions.md`（ADR-001~037）、`artifacts/web-mvp/**`（含 `t22-rd/linux/`、`t22-rd/macos-rerun/`、`t22-rd/bug013/`、`t22-qa/`）。

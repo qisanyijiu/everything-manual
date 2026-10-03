@@ -26,6 +26,7 @@ pub mod failpoints;
 pub mod handler;
 pub mod pipeline;
 pub mod recover;
+pub mod scope;
 pub mod submission;
 
 pub use control::{
@@ -50,6 +51,10 @@ use crate::storage::StorageError;
 /// 执行器错误：存储错误 + 处理器错误（后者只在日志与报告中出现，不冒充业务状态）。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum JobError {
+    /// Fixed safe code from the optional restricted local-runner capability.
+    Authorization {
+        code: &'static str,
+    },
     Storage(StorageError),
     /// 阶段处理器自身失败（例如 fixture/适配器返回无法解析的响应）。
     /// 不直接改业务状态：由处理器决定返回 `Retryable`／`NeedsInput`／`SubmissionUnknown`。
@@ -74,6 +79,7 @@ impl JobError {
     /// 日志用的稳定标识（不含用户数据）。
     pub fn code(&self) -> &'static str {
         match self {
+            Self::Authorization { .. } => "authorization",
             Self::Storage(_) => "storage",
             Self::Handler { .. } => "handler",
             Self::Config { .. } => "config",
@@ -84,6 +90,7 @@ impl JobError {
 impl fmt::Display for JobError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Authorization { code } => write!(f, "执行授权门禁：{code}"),
             Self::Storage(error) => write!(f, "存储错误：{error}"),
             Self::Handler { stage_id, message } => {
                 write!(f, "阶段处理器失败（stage={stage_id}）：{message}")

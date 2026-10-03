@@ -25,10 +25,22 @@ export interface PageLayoutProps {
   readonly rail?: PanelSpec;
   /** 右栏（摘要、步骤、原文等）。 */
   readonly aside?: PanelSpec;
+  readonly original?: PanelSpec;
+  readonly navigation?: PanelNavigation | null;
+  readonly onOriginalClose?: () => void;
 }
 
-export function PageLayout({ children, rail, aside }: PageLayoutProps) {
+export interface PanelNavigation {
+  readonly panelId: string;
+  readonly focusId: string;
+  readonly narrowFocusId?: string;
+  readonly serial: number;
+}
+
+export function PageLayout({ children, rail, aside, original, navigation, onOriginalClose }: PageLayoutProps) {
   const breakpoint = useBreakpoint();
+  const [openPanelId, setOpenPanelId] = useState<string | null>(null);
+  const focusedNavigation = useRef<{ serial: number; breakpoint: string } | null>(null);
   const panels: PanelSpec[] = [];
   if (rail !== undefined) {
     panels.push(rail);
@@ -36,6 +48,31 @@ export function PageLayout({ children, rail, aside }: PageLayoutProps) {
   if (aside !== undefined) {
     panels.push(aside);
   }
+
+  if (original !== undefined) panels.push(original);
+  useEffect(() => {
+    if (navigation !== undefined && navigation !== null) setOpenPanelId(navigation.panelId === "main" ? null : navigation.panelId);
+  }, [navigation]);
+  useEffect(() => {
+    if (navigation === undefined || navigation === null || (breakpoint !== "wide" && openPanelId !== (navigation.panelId === "main" ? null : navigation.panelId))) return;
+    if (focusedNavigation.current?.serial === navigation.serial && focusedNavigation.current.breakpoint === breakpoint) return;
+    const frame = requestAnimationFrame(() => {
+      const requested = document.getElementById(breakpoint === "narrow" ? navigation.narrowFocusId ?? navigation.focusId : navigation.focusId);
+      const target = requested?.matches(":disabled")
+        ? requested.closest<HTMLElement>("[tabindex]") ?? document.getElementById(`panel-${navigation.panelId}`)
+        : requested ?? document.getElementById(`panel-${navigation.panelId}`);
+      if (target !== null) {
+        target.focus();
+        target.scrollIntoView?.({ block: "nearest" });
+        focusedNavigation.current = { serial: navigation.serial, breakpoint };
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [navigation, breakpoint, openPanelId]);
+  const closePanel = useCallback(() => {
+    if (openPanelId === "original" && onOriginalClose !== undefined) onOriginalClose();
+    else setOpenPanelId(null);
+  }, [openPanelId, onOriginalClose]);
 
   if (panels.length === 0) {
     return <div className="page-layout page-layout--single">{children}</div>;
@@ -45,14 +82,15 @@ export function PageLayout({ children, rail, aside }: PageLayoutProps) {
     return (
       <div className={`page-layout page-layout--wide${rail === undefined ? " page-layout--no-rail" : ""}`}>
         {rail !== undefined && (
-          <aside className="page-layout__rail" aria-label={rail.label}>
+          <aside id={`panel-${rail.id}`} tabIndex={-1} className="page-layout__rail" aria-label={rail.label}>
             {rail.content}
           </aside>
         )}
-        <div className="page-layout__main">{children}</div>
-        {aside !== undefined && (
-          <aside className="page-layout__aside" aria-label={aside.label}>
-            {aside.content}
+        <div id="panel-main" tabIndex={-1} className="page-layout__main">{children}</div>
+        {(aside !== undefined || original !== undefined) && (
+          <aside className="page-layout__aside" aria-label={aside?.label ?? original?.label}>
+            {aside !== undefined && <div id={`panel-${aside.id}`} tabIndex={-1}>{aside.content}</div>}
+            {original !== undefined && <div id={`panel-${original.id}`} tabIndex={-1}>{original.content}</div>}
           </aside>
         )}
       </div>
@@ -60,56 +98,62 @@ export function PageLayout({ children, rail, aside }: PageLayoutProps) {
   }
 
   if (breakpoint === "mid") {
-    return <MidLayout panels={panels} asideLabel={aside?.label ?? rail?.label ?? "侧栏"}>{children}</MidLayout>;
+    return <MidLayout panels={panels} activeId={openPanelId} onSelect={setOpenPanelId} asideLabel={aside?.label ?? rail?.label ?? "侧栏"}>{children}</MidLayout>;
   }
 
-  return <NarrowLayout panels={panels}>{children}</NarrowLayout>;
+  return <NarrowLayout panels={panels} openPanelId={openPanelId} onSelect={setOpenPanelId} onClose={closePanel}>{children}</NarrowLayout>;
 }
 
 function MidLayout({
   panels,
   asideLabel,
+  activeId,
+  onSelect,
   children,
 }: {
   panels: PanelSpec[];
   asideLabel: string;
+  activeId: string | null;
+  onSelect: (id: string | null) => void;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const open = activeId !== null;
   return (
     <div className="page-layout page-layout--mid">
-      <div className="page-layout__main">{children}</div>
+      <div id="panel-main" tabIndex={-1} className="page-layout__main">{children}</div>
       <div className="page-layout__panel-bar">
         <button
           type="button"
           aria-expanded={open}
           aria-controls="page-side-panel"
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => onSelect(open ? null : (panels[0]?.id ?? null))}
         >
           {open ? `隐藏${asideLabel}` : `显示${asideLabel}`}
         </button>
       </div>
       {open && (
         <aside className="page-layout__side-panel" id="page-side-panel" aria-label={asideLabel}>
-          <PanelStack panels={panels} />
+          <PanelStack panels={panels} activeId={activeId ?? ""} onSelect={onSelect} />
         </aside>
       )}
     </div>
   );
 }
 
-function NarrowLayout({ panels, children }: { panels: PanelSpec[]; children: ReactNode }) {
-  const [openPanelId, setOpenPanelId] = useState<string | null>(null);
+function NarrowLayout({ panels, children, openPanelId, onSelect, onClose }: { panels: PanelSpec[]; children: ReactNode; openPanelId: string | null; onSelect: (id: string) => void; onClose: () => void }) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  const closeDrawer = useCallback(() => closeRef.current(), []);
   const triggerRefs = useRef<Map<string, HTMLButtonElement>>(null);
   triggerRefs.current ??= new Map<string, HTMLButtonElement>();
   const triggers = triggerRefs.current;
   const activePanel = panels.find((panel) => panel.id === openPanelId) ?? null;
   // 稳定的回调：避免 Drawer 的焦点副作用因父组件重渲染而反复执行（焦点会来回跳）。
-  const closeDrawer = useCallback(() => setOpenPanelId(null), []);
-  const activePanelId = activePanel?.id ?? null;
+  const activePanelId = useRef<string | null>(null);
+  activePanelId.current = activePanel?.id ?? activePanelId.current;
   const returnFocus = useCallback(
-    () => (activePanelId === null ? null : (triggers.get(activePanelId) ?? null)),
-    [activePanelId, triggers],
+    () => (activePanelId.current === null ? null : (triggers.get(activePanelId.current) ?? null)),
+    [triggers],
   );
 
   return (
@@ -128,28 +172,27 @@ function NarrowLayout({ panels, children }: { panels: PanelSpec[]; children: Rea
                 triggers.set(panel.id, element);
               }
             }}
-            onClick={() => setOpenPanelId(panel.id)}
+            onClick={() => onSelect(panel.id)}
           >
             {panel.label}
           </button>
         ))}
       </div>
-      <div className="page-layout__main">{children}</div>
+      <div id="panel-main" tabIndex={-1} className="page-layout__main">{children}</div>
       <Drawer
         open={activePanel !== null}
         onClose={closeDrawer}
         title={activePanel?.label ?? "侧栏"}
         returnFocus={returnFocus}
       >
-        {activePanel?.content}
+        <div id={`panel-${activePanel?.id ?? "closed"}`} tabIndex={-1}>{activePanel?.content}</div>
       </Drawer>
     </div>
   );
 }
 
 /** 面板堆叠：单个面板直接渲染；多个面板用标签页切换（mid 侧栏）。 */
-function PanelStack({ panels }: { panels: PanelSpec[] }) {
-  const [activeId, setActiveId] = useState(panels[0]?.id ?? "");
+function PanelStack({ panels, activeId, onSelect }: { panels: PanelSpec[]; activeId: string; onSelect: (id: string) => void }) {
   const tabRefs = useRef(new Map<string, HTMLButtonElement>());
   const panelRef = useRef<HTMLDivElement>(null);
   const [hasFocusableContent, setHasFocusableContent] = useState(false);
@@ -186,7 +229,7 @@ function PanelStack({ panels }: { panels: PanelSpec[] }) {
             aria-selected={panel.id === selected.id}
             aria-controls={`panel-${panel.id}`}
             tabIndex={panel.id === selected.id ? 0 : -1}
-            onClick={() => setActiveId(panel.id)}
+            onClick={() => onSelect(panel.id)}
             onKeyDown={(event) => {
               const index = panels.findIndex((candidate) => candidate.id === panel.id);
               const nextIndex =
@@ -198,7 +241,7 @@ function PanelStack({ panels }: { panels: PanelSpec[] }) {
               event.preventDefault();
               const next = panels[nextIndex];
               if (next === undefined) return;
-              setActiveId(next.id);
+              onSelect(next.id);
               tabRefs.current.get(next.id)?.focus();
             }}
           >

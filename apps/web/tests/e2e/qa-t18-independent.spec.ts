@@ -898,7 +898,15 @@ test("QA-T18-4 资源释放与 10 次切换趋势（真实 GL 计数 + 账本对
   ).toBeLessThan(1.5);
   // 每个草稿页各挂载一次 Canvas（新 WebGL 上下文）：上下文数必须与切换次数同阶，
   // 而不是"每次渲染/每帧"增长。
-  const finalCounts = glRawSamples[glRawSamples.length - 1] ?? {};
+  const beforeContextCleanup = glRawSamples[glRawSamples.length - 1] ?? {};
+  // R3F delays unmount forceContextLoss by 500 ms. Observe the real event counter
+  // within a bounded window; retain the immediate sample and the >=10 gate.
+  await expect.poll(async () => (await glCounts(page))?.contextsLost ?? 0, {
+    timeout: 3_000, message: "all ten unmounted renderer contexts must actually be lost",
+  }).toBeGreaterThanOrEqual(10);
+  const finalCounts = await glCounts(page);
+  expect(finalCounts, "QA WebGL counters must remain installed").not.toBeNull();
+  if (finalCounts === null) throw new Error("QA WebGL counters missing");
   expect(
     finalCounts.contexts ?? 0,
     `WebGL 上下文数必须与渲染器挂载次数同阶（实测 ${String(finalCounts.contexts)}）`,
@@ -921,6 +929,8 @@ test("QA-T18-4 资源释放与 10 次切换趋势（真实 GL 计数 + 账本对
         aliveSamples,
         deleteDeltas,
         glRawSamples,
+        beforeContextCleanup,
+        settledContextCleanup: finalCounts,
         contexts: finalCounts.contexts ?? null,
         heapSamples,
         heapRatio,

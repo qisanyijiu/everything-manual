@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 
 import { describeError, isApiError } from "../../api/client";
 import {
@@ -25,19 +25,20 @@ import {
   createEstimate,
   createJob,
   fetchSettingsStatus,
-  type JobDto,
   type QuoteDto,
 } from "../../api/endpoints";
 import { readReason } from "../../components/form";
 import { Skeleton } from "../../components/Skeleton";
 import { useNotify } from "../../components/notifications";
 import { formatLocalDateTime } from "../../lib/format";
+import { useQuoteRecovery } from "./quote-recovery";
+import { workflowKeys, useItemSummaries } from "../library/workflow";
 import { MissingItemsList } from "./MissingItemsList";
 import { WizardSteps } from "./WizardSteps";
 import { PageLayout } from "../shell/PageLayout";
-import { itemKeys, useItemDetail, useItemDocuments, useItemPhotos } from "../library/items";
-import { getPreparation, type PreparationDetail } from "./api";
-import { recallPreparationId } from "./preparation-pointer";
+import { useItemDetail, useItemPhotos } from "../library/items";
+import { useReaderDocuments } from "../viewer/reader-documents";
+import { PreparationDiscovery, usePreparationDiscovery } from "./preparation-discovery";
 import { CREDIT_MINOR_SCALE, USD_MICROS_SCALE, minorToInputString, parseMinorInput } from "./money";
 import { tripoPhotoIds, generationGaps, VIEW_LABELS, type MissingItem, type ViewSlot } from "./views";
 
@@ -63,22 +64,32 @@ interface SubmissionError {
 }
 
 export function ConfirmStepPage() {
-  const { itemId } = useParams();
-  const id = itemId ?? "";
+  const { itemId = "" } = useParams();
+  return <ConfirmWorkspace key={itemId} id={itemId} />;
+}
+
+function ConfirmWorkspace({ id }: { id: string }) {
   const notify = useNotify();
   const queryClient = useQueryClient();
 
   const itemQuery = useItemDetail(id === "" ? null : id);
-  const documentsQuery = useItemDocuments(id === "" ? null : id);
+  const documentsQuery = useReaderDocuments(id === "" ? null : id);
   const photosQuery = useItemPhotos(id === "" ? null : id);
   const statusQuery = useQuery({ queryKey: ["settings", "status"], queryFn: fetchSettingsStatus });
 
-  const [preparationPointer] = useState<string | null>(() => recallPreparationId(id));
-  const preparationQuery = useQuery({
-    queryKey: itemKeys.preparation(id, preparationPointer),
-    queryFn: () => getPreparation(preparationPointer ?? ""),
-    enabled: preparationPointer !== null,
-  });
+  const [search, setSearch] = useSearchParams();
+  const recovery = useQuoteRecovery(id, search.get("quoteId"));
+  const recoveryBlocked = recovery.phase !== "verified";
+  const operationPending = recovery.operation !== null;
+  const adoptQuote = recovery.adopt;
+  const hasPendingOperation = recovery.hasPendingOperation;
+  const consumeCompletedJobCheck = recovery.consumeCompletedJobCheck;
+  const summary = useItemSummaries([id], search.get("documentId"));
+  const documents = documentsQuery.data?.documents ?? [];
+  const selectedDocument = documents.find((entry) => entry.id === (search.get("documentId") ?? summary.data?.[0]?.documentId)) ?? null;
+  const discovery = usePreparationDiscovery(id, selectedDocument, search.get("preparationId"));
+  const selectedPreparation = discovery.selected;
+  const preparationPointer = selectedPreparation?.readiness.compatible && selectedPreparation.preparation.state === "ready" && !discovery.error && !discovery.invalidSelection ? selectedPreparation.preparation.id : null;
 
   const [quote, setQuote] = useState<QuoteDto | null>(null);
   const [quoting, setQuoting] = useState(false);
@@ -94,7 +105,11 @@ export function ConfirmStepPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<SubmissionError | null>(null);
-  const [acceptedJob, setAcceptedJob] = useState<JobDto | null>(null);
+  const [acceptedJob, setAcceptedJob] = useState<{ id: string } | null>(null);
+  const [checkingCompletedJob, setCheckingCompletedJob] = useState(false);
+  const [completedJobError, setCompletedJobError] = useState<string | null>(null);
+  const completedJobRequest = useRef(false);
+  const [previousJobId, setPreviousJobId] = useState<string | null>(null);
   /** 服务端已判定"该操作已存在任务"时锁住生成入口（UI-026：不新建第二份）。 */
   const [lockedJobId, setLockedJobId] = useState<string | null>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
@@ -103,28 +118,50 @@ export function ConfirmStepPage() {
   const submissionRef = useRef(false);
   const requestedRef = useRef<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; confirmationAttemptRef.current += 1; }; }, []);
+
+  const appliedRecoveryId = useRef<string | null>(null);
+  useEffect(() => {
+    const saved = recovery.quote;
+    if (!saved) return;
+    if (appliedRecoveryId.current !== saved.id && !saved.consumedJobId) { setAcceptedJob(null); setLockedJobId(null); }
+    setQuote(saved);
+    if (appliedRecoveryId.current !== saved.id || recovery.operation) {
+    setTripoBudget(minorToInputString(recovery.operation?.body.limits?.tripoCreditMinor ?? saved.amounts.tripo.upperBoundMinor, CREDIT_MINOR_SCALE));
+    setUsdBudget(minorToInputString(recovery.operation?.body.limits?.manualAiUsdMicros ?? saved.amounts.manualAi.upperBoundMinor, USD_MICROS_SCALE));
+    }
+    appliedRecoveryId.current = saved.id;
+    setConfirmedAt(saved.confirmedAt ?? null);
+    setConfirmChecked(!!saved.confirmedAt);
+    if (saved.consumedJobId) { setAcceptedJob({ id: saved.consumedJobId }); setLockedJobId(saved.consumedJobId); }
+  }, [recovery.quote, recovery.operation]);
 
   const photos = useMemo(() => photosQuery.data?.photos ?? [], [photosQuery.data]);
   const photoIds = useMemo(() => tripoPhotoIds(photos), [photos]);
-  const preparationState: string | null = prepareState({
-    pointer: preparationPointer,
-    detail: preparationQuery.data,
-  });
+  const currentInput = `${selectedDocument?.id ?? ""}/${preparationPointer ?? ""}/${photoIds.join(",")}`;
+  const currentInputRef = useRef(currentInput);
+  currentInputRef.current = currentInput;
+  const preparationState = selectedPreparation?.readiness.compatible ? selectedPreparation.preparation.state : null;
   const capability = statusQuery.data?.data.capabilities.generation ?? null;
   const providerConfigPending = statusQuery.data?.data.providerConfigPending ?? false;
+  const providerModelIssue = Object.values(statusQuery.data?.data.providerModelIssues ?? {}).some(Boolean);
 
   const loading =
+    summary.isPending ||
     itemQuery.isPending ||
     documentsQuery.isPending ||
     photosQuery.isPending ||
     statusQuery.isPending ||
-    (preparationPointer !== null && preparationQuery.isPending);
+    discovery.loading;
 
   const gaps = loading
     ? []
     : generationGaps({ itemId: id, preparationState, photos, generationCapability: capability });
-  const blocked = gaps.length > 0 || providerConfigPending;
+  const blocked = summary.isError || gaps.length > 0 || providerConfigPending || providerModelIssue || !!discovery.error || discovery.invalidSelection || selectedDocument === null || !!documentsQuery.error;
 
+  const quoteMatchesSelection = quote === null || quote.preparationId === preparationPointer;
+  const quoteNeedsReview = !!quote?.inputIssue || !!(quote && summary.data?.[0]?.latestQuoteId === quote.id && summary.data[0].steps.confirm === "needsReview");
   // 报价倒计时：每秒重算剩余时间（过期后生成按钮禁用，需显式重新报价）。
   useEffect(() => {
     if (quote === null) {
@@ -134,10 +171,12 @@ export function ConfirmStepPage() {
     return () => window.clearInterval(timer);
   }, [quote]);
 
-  const requestQuote = useCallback(async (): Promise<void> => {
-    if (preparationPointer === null || quoteRequestRef.current || submissionRef.current) {
+  const requestQuote = useCallback(async (completedJobId?: string): Promise<void> => {
+    if (recoveryBlocked || operationPending || hasPendingOperation() || preparationPointer === null || quoteRequestRef.current || submissionRef.current) {
       return;
     }
+    if (acceptedJob !== null && (completedJobId !== acceptedJob.id || !consumeCompletedJobCheck(acceptedJob.id))) return;
+    const inputAtRequest = currentInputRef.current;
     quoteRequestRef.current = true;
     // 换报价即使旧确认仍在途也立即失效；晚返回的响应不得确认新报价。
     confirmationAttemptRef.current += 1;
@@ -155,7 +194,14 @@ export function ConfirmStepPage() {
         photoIds,
         modelPreset: MODEL_PRESET,
       });
+      if (!mounted.current || currentInputRef.current !== inputAtRequest) return;
+      adoptQuote(resource.data);
+      if (completedJobId) {
+        setPreviousJobId(completedJobId); setAcceptedJob(null); setLockedJobId(null);
+      }
       setQuote(resource.data);
+      setSearch((previous) => { const next = new URLSearchParams(previous); next.set("quoteId", resource.data.id); return next; }, { replace: true });
+      void queryClient.invalidateQueries({ queryKey: workflowKeys.root });
       setTripoBudget(minorToInputString(resource.data.amounts.tripo.upperBoundMinor, CREDIT_MINOR_SCALE));
       setUsdBudget(
         minorToInputString(resource.data.amounts.manualAi.upperBoundMinor, USD_MICROS_SCALE),
@@ -167,14 +213,16 @@ export function ConfirmStepPage() {
       idempotencyKeyRef.current = null;
       setNow(Date.now());
     } catch (error) {
+      if (!mounted.current || currentInputRef.current !== inputAtRequest) return;
       setQuote(null);
       const info = describeError(error);
       const reason = isApiError(error) ? readReason(error.details) : null;
       const code = isApiError(error) ? error.code : null;
       if (code === "PROVIDER_NOT_CONFIGURED" || code === "PRICE_CATALOG_MISSING") {
         setQuoteError({
-          message:
-            "生成能力未就绪：服务端缺少供应商密钥或价格目录（设置页只显示状态，密钥由部署者配置）。",
+          message: code === "PROVIDER_NOT_CONFIGURED"
+            ? "生成能力未就绪：请前往设置补齐 API 网关地址与密钥，保存后按指引重启。"
+            : "生成能力未就绪：缺少可用价格目录，请在设置查看状态并由部署者补齐。",
           hint: info.message,
           existingJobId: null,
           recovery: "none",
@@ -201,11 +249,26 @@ export function ConfirmStepPage() {
       quoteRequestRef.current = false;
       setQuoting(false);
     }
-  }, [id, photoIds, preparationPointer]);
+  }, [id, photoIds, preparationPointer, recoveryBlocked, operationPending, acceptedJob, adoptQuote, setSearch, queryClient, hasPendingOperation, consumeCompletedJobCheck]);
+
+  async function requoteCompletedJob() {
+    if (!acceptedJob || completedJobRequest.current || recoveryBlocked || operationPending || submitting || quoting || loading || blocked) return;
+    completedJobRequest.current = true; setCheckingCompletedJob(true); setCompletedJobError(null);
+    try {
+      // Keep the consumed quote/job locked until this fresh read permits one explicit estimate.
+      await recovery.verifyCompletedJob(acceptedJob.id);
+      if (mounted.current) await requestQuote(acceptedJob.id);
+    } catch (error) {
+      if (mounted.current) setCompletedJobError(describeError(error).message);
+    } finally {
+      completedJobRequest.current = false;
+      if (mounted.current) setCheckingCompletedJob(false);
+    }
+  }
 
   // 前置满足且尚无报价时自动获取一次（同一输入签名只请求一次，避免 StrictMode 双调用）。
   useEffect(() => {
-    if (loading || blocked || quote !== null || quoting || quoteError !== null) {
+    if (recoveryBlocked || operationPending || recovery.quote !== null || acceptedJob !== null || loading || blocked || quote !== null || quoting || quoteError !== null) {
       return;
     }
     const signature = `${preparationPointer ?? ""}|${photoIds.join(",")}`;
@@ -214,7 +277,7 @@ export function ConfirmStepPage() {
     }
     requestedRef.current = signature;
     void requestQuote();
-  }, [blocked, loading, photoIds, preparationPointer, quote, quoteError, quoting, requestQuote]);
+  }, [blocked, loading, photoIds, preparationPointer, quote, quoteError, quoting, requestQuote, recoveryBlocked, operationPending, recovery.quote, acceptedJob]);
 
   const tripoParsed = parseMinorInput(tripoBudget, CREDIT_MINOR_SCALE);
   const usdParsed = parseMinorInput(usdBudget, USD_MICROS_SCALE);
@@ -231,11 +294,14 @@ export function ConfirmStepPage() {
   const budgetBelow = tripoBelow || usdBelow;
   const budgetInvalid = !tripoParsed.ok || !usdParsed.ok;
   const canGenerate =
-    quote !== null &&
+    !recoveryBlocked && !operationPending &&
+    quote !== null && !quoteNeedsReview &&
+    quote.preparationId === preparationPointer &&
     !loading &&
     !blocked &&
     !quoting &&
     !expired &&
+    !quote.modelIssue &&
     confirmChecked &&
     !confirming &&
     confirmedAt !== null &&
@@ -246,11 +312,16 @@ export function ConfirmStepPage() {
     lockedJobId === null;
 
   const generateDisabledReason = ((): string | null => {
+    if (recoveryBlocked) return "结果待核对：请先重新核对任务结果。";
+    if (operationPending) return "已核对报价尚未消费；仅可显式重试同一提交，继续使用原授权与幂等标识。";
+    if (quoteNeedsReview || !quoteMatchesSelection) return "报价所用资料或配置已改变，请重新获取报价并确认。";
     if (lockedJobId !== null) {
       return "该操作已存在一个任务：不会新建第二份；请打开已有任务查看状态。";
     }
     if (loading) return "正在读取资料与视图，请稍候。";
     if (providerConfigPending) return "API 配置待重启生效，请前往设置。";
+    if (providerModelIssue) return "模型需修正，暂不能生成。请前往设置。";
+    if (quote?.modelIssue) return "此报价的模型信息不可用，请重新获取报价。";
     if (blocked) return gaps[0]?.message ?? "请先处理上方缺项。";
     if (quoting) return "正在获取报价，请稍候再确认。";
     if (submitting) return "正在创建任务，请等待本次提交结果。";
@@ -277,7 +348,7 @@ export function ConfirmStepPage() {
 
   async function checkConfirmation(checked: boolean): Promise<void> {
     if (
-      quote === null || expired || quoting || confirming || submitting ||
+      recoveryBlocked || operationPending || quote === null || quoteNeedsReview || !quoteMatchesSelection || !!quote.modelIssue || blocked || expired || quoting || confirming || submitting ||
       acceptedJob !== null || lockedJobId !== null
     ) {
       return;
@@ -299,6 +370,7 @@ export function ConfirmStepPage() {
       const confirmation = await confirmEstimate(id, quote.id);
       if (confirmationAttemptRef.current !== attempt) return;
       setConfirmedAt(confirmation.data.confirmedAt);
+      void queryClient.invalidateQueries({ queryKey: workflowKeys.root });
     } catch (error) {
       if (confirmationAttemptRef.current !== attempt) return;
       setConfirmChecked(false);
@@ -313,53 +385,32 @@ export function ConfirmStepPage() {
     }
   }
 
-  async function submit(): Promise<void> {
-    if (quote === null || !canGenerate || !tripoParsed.ok || !usdParsed.ok || submissionRef.current) {
-      return;
-    }
+  async function submit(retryExisting = false): Promise<void> {
+    const prior = recovery.operation;
+    if (submissionRef.current || recoveryBlocked || acceptedJob || (retryExisting ? !prior : quote === null || !canGenerate || !tripoParsed.ok || !usdParsed.ok)) return;
+    if (!prior && (!quote || !tripoParsed.ok || !usdParsed.ok)) return;
+    const operation = prior ?? { quoteId: quote!.id, key: idempotencyKeyRef.current ?? randomKey(), body: {
+      quoteId: quote!.id, preparationId: quote!.preparationId, photoIds,
+      limits: { tripoCreditMinor: tripoParsed.ok ? tripoParsed.minor : 0, manualAiUsdMicros: usdParsed.ok ? usdParsed.minor : 0 },
+    } };
     submissionRef.current = true;
-    // 一次操作一个幂等键：断线/失败重试复用同一键（服务端按 key 去重，不产生第二份生成单）。
-    idempotencyKeyRef.current ??= randomKey();
-    setSubmitting(true);
-    setSubmitError(null);
+    idempotencyKeyRef.current = operation.key;
+    recovery.remember(operation);
+    setSubmitting(true); setSubmitError(null);
     try {
-      const result = await createJob(
-        id,
-        {
-          quoteId: quote.id,
-          preparationId: quote.preparationId,
-          photoIds,
-          limits: {
-            tripoCreditMinor: tripoParsed.minor,
-            manualAiUsdMicros: usdParsed.minor,
-          },
-        },
-        idempotencyKeyRef.current,
-      );
-      setAcceptedJob(result.job);
+      const result = await createJob(id, operation.body, operation.key);
+      setAcceptedJob(result.job); recovery.remember(null);
       notify("任务已受理（202）：后台继续执行");
-      await queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ["jobs"] }), queryClient.invalidateQueries({ queryKey: workflowKeys.root })]);
     } catch (error) {
-      const failure = describeSubmitFailure(error);
-      setSubmitError(failure);
-      // 报价被消费/过期/输入变化后不可再用：让用户走"重新获取报价"（不自动重报）。
-      // 新一次提交的请求体必然不同 → 必须换新幂等键（同键不同 body 会 409）。
-      if (isApiError(error) && (error.code === "IDEMPOTENCY_CONFLICT" || error.status === 422)) {
-        idempotencyKeyRef.current = null;
-      }
-      // 服务端已存在同一操作的任务：锁住生成入口，避免用户再建第二份（不重复收费）。
-      if (failure.existingJobId !== null) {
-        setLockedJobId(failure.existingJobId);
-      }
-    } finally {
-      submissionRef.current = false;
-      setSubmitting(false);
-    }
+      // A transport/5xx/auth failure is uncertain. Never rotate the key or re-quote around it.
+      const rejected = isApiError(error) && [400, 403, 404, 409, 412, 422, 428].includes(error.status);
+      if (rejected) setSubmitError(describeSubmitFailure(error));
+      await recovery.read(operation.quoteId, rejected);
+    } finally { submissionRef.current = false; setSubmitting(false); }
   }
 
   const itemName = itemQuery.data?.data.name ?? "物品";
-  const documents = documentsQuery.data?.documents ?? [];
-
   const quotePanel = (
     <section className="confirm-panel" aria-labelledby="quote-section-title">
       <h2 id="quote-section-title">报价与预算</h2>
@@ -431,6 +482,7 @@ export function ConfirmStepPage() {
           </p>
           <div className="confirm-budget-fields">
             <BudgetField
+              disabled={recoveryBlocked || operationPending || submitting || acceptedJob !== null}
               id="budget-tripo"
               label="Tripo credits"
               value={tripoBudget}
@@ -439,6 +491,7 @@ export function ConfirmStepPage() {
               hint={tripoBelow ? "低于服务端上界" : null}
             />
             <BudgetField
+              disabled={recoveryBlocked || operationPending || submitting || acceptedJob !== null}
               id="budget-manual"
               label="说明书 AI USD"
               value={usdBudget}
@@ -464,7 +517,7 @@ export function ConfirmStepPage() {
               id="send-scope-confirm"
               type="checkbox"
               checked={confirmChecked}
-              disabled={confirming || expired || quoting || submitting || acceptedJob !== null || lockedJobId !== null}
+              disabled={recoveryBlocked || operationPending || quoteNeedsReview || blocked || !quoteMatchesSelection || !!quote.modelIssue || confirming || expired || quoting || submitting || acceptedJob !== null || lockedJobId !== null}
               aria-describedby="send-scope-confirm-hint"
               onChange={(event) => void checkConfirmation(event.target.checked)}
             />
@@ -485,7 +538,7 @@ export function ConfirmStepPage() {
           )}
           {confirmError !== null && (
             <p className="field__error" role="alert" data-testid="confirm-error">
-              {confirmError}
+              {confirmError} <Link to="/settings">前往设置</Link>
             </p>
           )}
         </div>
@@ -502,9 +555,22 @@ export function ConfirmStepPage() {
           {itemName}：报价只计算计划、不调用生成服务；确认后才允许提交（生成在后台继续执行）。
         </p>
 
+        {recoveryBlocked && <div className="error-panel" role={recovery.phase === "unknown" ? "alert" : "status"} data-testid="submission-recovery">
+          <h2>结果待核对</h2><p>请求可能已受理，正在核对任务结果。核对完成前不会创建新任务或重新报价。</p>
+          {recovery.error && <p>{recovery.error}</p>}
+          <button type="button" disabled={recovery.phase === "checking" || recovery.phase === "discovering"} onClick={recovery.retry}>重新核对结果</button>
+        </div>}
+        {operationPending && !recoveryBlocked && !acceptedJob && <div role="status" className="status-note"><p>报价尚未消费。可继续原提交；资料、授权上限和幂等标识保持原值。</p><button type="button" disabled={submitting} onClick={() => void submit(true)}>重试同一提交（使用原授权）</button></div>}
+        {quote && !acceptedJob && (quoteNeedsReview || !quoteMatchesSelection) && <div className="error-panel" role="alert"><p>报价所用资料或配置已改变，需要重新获取报价并确认发送范围。</p><button type="button" disabled={recoveryBlocked || operationPending || blocked || quoting || submitting} onClick={() => void requestQuote()}>重新获取报价</button></div>}
         {loading && <Skeleton label="正在读取资料与视图…" rows={4} />}
 
-        {!loading && documents.length === 0 && (
+        {documentsQuery.error && <div className="error-panel" role="alert"><p>原件清单读取失败</p><button type="button" onClick={() => void documentsQuery.refetch()}>重新读取原件</button></div>}
+        {documents.length > 0 && <div className="field"><label htmlFor="confirm-document">所选原件</label><select id="confirm-document" className="field__input" value={selectedDocument?.id ?? ""} disabled={recoveryBlocked || operationPending || submitting || acceptedJob !== null || quoting || confirming} onChange={(event) => { confirmationAttemptRef.current += 1; setConfirming(false); setConfirmError(null); setQuote(null); setConfirmChecked(false); setConfirmedAt(null); setQuoteError(null); requestedRef.current = null; setSearch({ documentId: event.target.value }); }}>
+          {!selectedDocument && <option value="">请选择当前物品的原件</option>}{documents.map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}
+        </select></div>}
+        {selectedDocument && <PreparationDiscovery state={discovery} document={selectedDocument} disabled={recoveryBlocked || operationPending || submitting || acceptedJob !== null || quoting || confirming} />}
+        {selectedDocument && selectedPreparation?.readiness.compatible && selectedPreparation.preparation.state === "preparing" && <p><Link className="button" to={`/items/${id}/import/prepare?documentId=${encodeURIComponent(selectedDocument.id)}&preparationId=${encodeURIComponent(selectedPreparation.preparation.id)}`}>继续准备，仅补齐缺页</Link></p>}
+        {!loading && !documentsQuery.error && documents.length === 0 && (
           <div className="error-panel" role="alert">
             <h2>还没有说明书原件</h2>
             <p>
@@ -514,7 +580,7 @@ export function ConfirmStepPage() {
           </div>
         )}
 
-        {!loading && (
+        {!loading && !discovery.error && !documentsQuery.error && (
           <MissingItemsList
             title="生成前还缺"
             gaps={gaps}
@@ -539,16 +605,19 @@ export function ConfirmStepPage() {
             <p>{quoteError.message}</p>
             {quoteError.hint !== null && <p className="error-panel__meta">{quoteError.hint}</p>}
             <div className="error-panel__actions">
-              <button type="button" onClick={() => void requestQuote()} disabled={quoting}>
+              <button type="button" onClick={() => void requestQuote()} disabled={recoveryBlocked || operationPending || acceptedJob !== null || quoting}>
                 {quoting ? "获取中…" : "重试获取报价"}
               </button>
-              <Link to="/settings">查看服务状态</Link>
+              <Link to="/settings">前往设置查看并补齐配置</Link>
             </div>
           </div>
         )}
 
         {providerConfigPending && <div className="error-panel" role="alert"><p>API 配置待重启生效；新报价、确认与生成暂不可用。</p><Link to="/settings">前往设置</Link></div>}
+        {providerModelIssue && <div className="error-panel" role="alert"><p>模型需修正，暂不能生成。</p><Link to="/settings">前往设置修正模型</Link></div>}
+        {quote?.modelIssue && <div className="error-panel" role="alert"><p>此报价的模型信息不可用，请重新获取报价。</p><button type="button" disabled={recoveryBlocked || operationPending || acceptedJob !== null || quoting || submitting || blocked} onClick={() => void requestQuote()}>重新获取报价</button> <Link to="/settings">前往设置</Link></div>}
 
+        {quote === null && !loading && !recoveryBlocked && !operationPending && !acceptedJob && !blocked && <button type="button" disabled={quoting} onClick={() => void requestQuote()}>获取新报价</button>}
         {quotePanel}
         {disclosurePanel}
 
@@ -569,9 +638,13 @@ export function ConfirmStepPage() {
               <Link className="button-primary" to={`/jobs/${acceptedJob.id}/result`}>实时查看生成结果</Link>
               <Link to={`/jobs/${acceptedJob.id}`}>查看任务详情</Link>
             </p>
+            <p>若旧任务已结束，可核对其状态后重新报价。旧任务记录保留，新报价仍需重新确认资料与预算。</p>
+            <button type="button" disabled={checkingCompletedJob || recoveryBlocked || operationPending || submitting || quoting || loading || blocked} aria-busy={checkingCompletedJob} onClick={() => void requoteCompletedJob()}>{checkingCompletedJob ? "正在核对旧任务…" : "为此物品重新报价"}</button>
+            {completedJobError && <p role="alert">{completedJobError}</p>}
           </div>
         ) : (
           <div className="confirm-actions">
+            {previousJobId && <p>已获取新报价，旧任务记录保留。<Link to={`/jobs/${previousJobId}`}>查看旧任务</Link></p>}
             <button
               type="button"
               className="button-primary"
@@ -593,13 +666,13 @@ export function ConfirmStepPage() {
                 type="button"
                 data-testid="requote-button"
                 onClick={() => void requestQuote()}
-                disabled={quoting || submitting}
+                disabled={recoveryBlocked || operationPending || acceptedJob !== null || quoting || submitting}
               >
                 {quoting ? "重新获取中…" : "重新获取报价"}
               </button>
             )}
 
-            {submitError !== null && (
+            {submitError !== null && !recoveryBlocked && !acceptedJob && (
               <div className="error-panel" role="alert" data-testid="submit-error">
                 <h2>提交被拒绝</h2>
                 <p>{submitError.message}</p>
@@ -609,7 +682,7 @@ export function ConfirmStepPage() {
                     <Link to={`/jobs/${submitError.existingJobId}`}>查看已有任务</Link>
                   )}
                   {submitError.recovery === "requote" && (
-                    <button type="button" onClick={() => void requestQuote()} disabled={quoting}>
+                    <button type="button" onClick={() => void requestQuote()} disabled={recoveryBlocked || operationPending || acceptedJob !== null || quoting}>
                       重新获取报价
                     </button>
                   )}
@@ -627,17 +700,8 @@ export function ConfirmStepPage() {
   );
 }
 
-function prepareState(input: {
-  pointer: string | null;
-  detail: PreparationDetail | undefined;
-}): string | null {
-  if (input.pointer === null) {
-    return null;
-  }
-  return input.detail?.detail.state ?? null;
-}
-
 function BudgetField({
+  disabled,
   id,
   label,
   value,
@@ -645,6 +709,7 @@ function BudgetField({
   error,
   hint,
 }: {
+  disabled: boolean;
   id: string;
   label: string;
   value: string;
@@ -662,6 +727,7 @@ function BudgetField({
         className="field__input"
         type="text"
         inputMode="decimal"
+        disabled={disabled}
         value={value}
         aria-invalid={error !== null ? true : undefined}
         aria-describedby={error !== null ? `${id}-error` : hint !== null ? `${id}-hint` : "budget-hint"}
@@ -806,6 +872,9 @@ export function describeSubmitFailure(error: unknown): SubmissionError {
           : null;
     if (reason === "providerConfigPending" || reason === "providerConfigChanged") {
       return { message: error.message, hint: reason === "providerConfigPending" ? "请前往设置，按指引重启服务后重新报价。" : "请重新获取报价并明确确认发送资料。", existingJobId: null, recovery: reason === "providerConfigPending" ? "settings" : "requote" };
+    }
+    if (reason === "providerModelInvalid" || reason === "quoteModelInvalid") {
+      return { message: reason === "providerModelInvalid" ? "模型需修正，暂不能生成。" : "此报价的模型信息不可用，请重新获取报价。", hint: "请前往设置修正模型，保存并重启后重新获取报价。", existingJobId: null, recovery: reason === "providerModelInvalid" ? "settings" : "requote" };
     }
     if (reason === "quoteExpired" || error.code === "QUOTE_EXPIRED") {
       return {

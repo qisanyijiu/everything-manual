@@ -1,3 +1,4 @@
+import { usePageWork } from "../shell/work-protection";
 /**
  * 共用上传控件（PRD §6.2 UI-009 / UI-010）。
  *
@@ -44,6 +45,9 @@ export function AssetUploadCard({
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [failure, setFailure] = useState<UploadFailureInfo | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; abortRef.current?.abort(); }; }, []);
+  usePageWork({ active: uploading, message: "离开将停止本页尚未完成的上传与登记。已上传、已绑定的资料保留；在途请求可能已经完成，返回后可核对。", discard: () => abortRef.current?.abort() });
   const inputRef = useRef<HTMLInputElement | null>(null);
   const failureRef = useRef<HTMLDivElement | null>(null);
 
@@ -55,6 +59,7 @@ export function AssetUploadCard({
   }, [failure, uploading]);
 
   async function runUpload(target: File): Promise<void> {
+    if (abortRef.current) return;
     setUploading(true);
     setFailure(null);
     setProgress({ loaded: 0, total: target.size });
@@ -63,8 +68,9 @@ export function AssetUploadCard({
     try {
       const asset = await uploadAsset(itemId, purpose, target, target.name, {
         signal: controller.signal,
-        onProgress: setProgress,
+        onProgress: progress => { if (mounted.current) setProgress(progress); },
       });
+      if (!mounted.current || controller.signal.aborted) return;
       setFile(null);
       setProgress(null);
       if (inputRef.current !== null) {
@@ -72,10 +78,10 @@ export function AssetUploadCard({
       }
       await onUploaded(asset);
     } catch (error) {
-      setFailure(describeUploadFailure(error));
+      if (mounted.current) setFailure(describeUploadFailure(error));
     } finally {
       abortRef.current = null;
-      setUploading(false);
+      if (mounted.current) setUploading(false);
     }
   }
 
@@ -147,6 +153,7 @@ export function AssetUploadCard({
         </div>
       )}
 
+      {uploading && progress === null && <p role="status">正在登记已上传资料…</p>}
       {failure !== null && !uploading && (
         <div className="error-panel upload-card__error" role="alert" tabIndex={-1} ref={failureRef}>
           <h3>{failure.title}</h3>

@@ -1543,3 +1543,31 @@ button:disabled {
 .candidate-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 12px; padding: 10px 14px; border: 1px dashed #c76640; border-radius: var(--radius); background: #fdf6f1; }
 .candidate-bar p { margin: 0; flex: 1 1 320px; }
 .result-list > li.is-selected strong { color: var(--accent); }
+/* PC-02B: readable task groups, explicit progress and touch-sized actions. */
+.review-tasks { display: grid; gap: 16px; margin-block: 20px; }
+.review-tasks section { border-top: 1px solid var(--border); padding-top: 12px; min-width: 0; }
+.review-tasks li, .review-task-progress { overflow-wrap: anywhere; }
+.review-filter { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.review-filter input { width: 18px; height: 18px; }
+.review-tasks button, .review-task-progress button, .publish-panel button,
+[data-testid="knowledge-panel"] button, [data-testid="parts-panel"] button,
+[data-testid="step-navigation"] button { min-height: 44px; white-space: normal; }
+.review-task-progress { margin-bottom: 16px; }
+.review-task-progress button + button { margin-left: 8px; }
+
+/* PC03B: server workflow facts and recovery actions remain readable at phone widths. */
+.workflow-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; }
+.workflow-actions__status { flex-basis: 100%; color: var(--color-text-muted, #66716c); font-size: .875rem; }
+.workflow-actions a, .workflow-actions button, .confirm-step .error-panel button { min-height: 44px; display: inline-flex; align-items: center; }
+/* PC05A: short library-row links also need a 44px-wide pointer target. */
+.item-row__actions .workflow-actions > a { min-width: 44px; }
+.wizard-steps__state { display: block; margin-top: .3rem; font-size: .75rem; font-weight: 500; }
+.wizard-steps__state--complete { color: #287147; }
+.wizard-steps__state--needsReview { color: #8c581e; }
+.wizard-steps__state--unknown { color: #626c67; }
+@media (max-width: 600px) {
+  .workflow-actions { width: 100%; }
+  .item-row__actions .workflow-actions { justify-content: flex-start; }
+  .wizard-steps__item a, .wizard-steps__item > span { min-height: 44px; display: inline-flex; align-items: center; }
+  .confirm-step .status-note { overflow-wrap: anywhere; }
+}

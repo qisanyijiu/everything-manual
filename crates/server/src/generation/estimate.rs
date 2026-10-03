@@ -94,6 +94,8 @@ pub async fn create_estimate_with_revision(
         ));
     }
 
+    ensure_preparation_reusable(conn, &preparation, &settings.data_dir).await?;
+
     // 5) 计划与金额（页集合来自 ready preparation；金额全部整数运算）。
     let pages = preps::page_quote_inputs(conn, &preparation.id).await?;
     let plan = plan_manual_ai(&pages).map_err(|plan_error| {
@@ -152,6 +154,8 @@ pub async fn create_estimate_with_revision(
         budget_notice: BUDGET_NOTICE.to_owned(),
     };
     let quote = QuoteDto {
+        model_issue: None,
+        input_issue: None,
         // id 在落库前生成：落库载荷与响应必须逐字节同源（报价不可回填）。
         id: manual_core::ids::new_id(),
         item_id: item.id.clone(),
@@ -253,6 +257,7 @@ pub async fn confirm_quote(
         ));
     }
     let payload = quote_payload(&quote).await?;
+    ensure_safe_quote_model(&quote)?;
 
     // 幂等读回：已有确认直接返回首次确认（不覆盖时间与范围）。
     if let (Some(_), Some(json)) = (&quote.confirmed_at, &quote.confirmation_json) {
@@ -341,11 +346,123 @@ fn scope_summary(payload: &QuoteDto) -> serde_json::Value {
 /// 界面（回读/回显），调用方必须用 `QuoteRecord` 的当前列覆盖这三个字段
 /// （见 `http::estimates::get_estimate` 的 BUG-004 修复）。
 pub async fn quote_payload(record: &QuoteRecord) -> Result<QuoteDto, GenerationError> {
-    serde_json::from_str(&record.quote_json).map_err(|error| {
+    serde_json::from_str(&record.quote_json).map_err(|_| {
         GenerationError::Storage(crate::storage::StorageError::Database {
-            detail: format!("quotes.quote_json 无法解析：{error}"),
+            detail: "quotes.quote_json 无法安全解析".to_owned(),
         })
     })
+}
+
+/// Read-only status for a restored quote. Consumption wins over mutable input/configuration
+/// checks: an accepted task continues to refer to its own immutable snapshot.
+pub async fn quote_input_issue(
+    conn: &mut SqliteConnection,
+    record: &QuoteRecord,
+    settings: &Settings,
+    config: &crate::config::provider_overrides::ProviderConfigStore,
+) -> Result<Option<crate::http::dto::QuoteInputIssue>, GenerationError> {
+    use crate::http::dto::QuoteInputIssue::*;
+    if record.consumed_job_id.is_some() {
+        return Ok(None);
+    }
+    let Some(item) = items::get(conn, &record.item_id).await? else {
+        return Ok(Some(InputChanged));
+    };
+    let Some(preparation) = preps::get(conn, &record.preparation_id).await? else {
+        return Ok(Some(InputChanged));
+    };
+    let Some(document) =
+        crate::storage::repo::documents::get(conn, &preparation.document_id).await?
+    else {
+        return Ok(Some(InputChanged));
+    };
+    if document.item_id != record.item_id {
+        return Ok(Some(InputChanged));
+    }
+    if preparation.state != PreparationState::Ready
+        || !crate::preparations::inspect(conn, &document, &preparation.id, &settings.data_dir)
+            .await?
+            .compatible
+    {
+        return Ok(Some(PreparationIncompatible));
+    }
+    let current_photos = photos::list_multiview_with_hash(conn, &record.item_id).await?;
+    if current_photos.len() != record.photo_ids.len()
+        || current_photos
+            .iter()
+            .any(|p| !record.photo_ids.contains(&p.photo.id))
+        || recompute_input_hash(
+            &item,
+            &preparation,
+            &current_photos,
+            &record.model_preset,
+            &record.provider_config,
+            &record.price_version,
+        )
+        .await?
+            != record.input_hash
+    {
+        return Ok(Some(InputChanged));
+    }
+    if config.ensure_generation_available().is_err() {
+        return Ok(Some(ProviderUnavailable));
+    }
+    if config.ensure_revision(&record.provider_config).is_err() {
+        return Ok(Some(ProviderConfigChanged));
+    }
+    if !settings
+        .price_catalog
+        .as_ref()
+        .is_some_and(|catalog| catalog.version == record.price_version)
+    {
+        return Ok(Some(PriceVersionChanged));
+    }
+    Ok(None)
+}
+
+pub fn quote_model_issue(record: &QuoteRecord) -> Result<bool, GenerationError> {
+    let payload: serde_json::Value = serde_json::from_str(&record.quote_json).map_err(|_| {
+        GenerationError::unprocessable("quoteUnavailable", "报价信息无法安全读取，请重新获取报价")
+    })?;
+    Ok(
+        crate::config::model_guard::provider_config_has_issue(&record.provider_config)
+            || crate::config::model_guard::quote_json_has_issue(&payload)
+            || record
+                .confirmation_json
+                .as_ref()
+                .is_some_and(crate::config::model_guard::quote_json_has_issue),
+    )
+}
+
+pub fn ensure_safe_quote_model(record: &QuoteRecord) -> Result<(), GenerationError> {
+    if quote_model_issue(record)? {
+        return Err(GenerationError::unprocessable(
+            crate::config::model_guard::FROZEN_MODEL_REASON,
+            crate::config::model_guard::FROZEN_MODEL_MESSAGE,
+        ));
+    }
+    Ok(())
+}
+
+/// Public copy only: keep stored quote/confirmation/amounts/identity untouched.
+pub fn conceal_quote_models(payload: &mut QuoteDto, issue: bool) {
+    if !issue {
+        return;
+    }
+    payload.model_issue = Some(crate::http::dto::ModelIssue::SuspectedCredential);
+    for model in [
+        &mut payload.provider_config.tripo.model,
+        &mut payload.provider_config.manual_ai.model,
+        &mut payload.send_scope.tripo.model,
+        &mut payload.send_scope.tripo.parameters.model,
+        &mut payload.send_scope.manual_ai.model,
+    ] {
+        if crate::config::model_guard::suspected_credential(model) {
+            use zeroize::Zeroize;
+            model.zeroize();
+            *model = "（模型信息已隐藏）".to_owned();
+        }
+    }
 }
 
 /// 重新计算输入指纹（报价校验与建单校验共用；照片集合由调用方给出）。
@@ -469,34 +586,53 @@ pub(crate) struct PricingContext {
     pub price_snapshot_date: String,
 }
 
+/// Current runtime configuration, independent of a quote's immutable provider revision.
+pub(crate) fn provider_configuration_missing(
+    providers: &crate::config::Providers,
+    provider: manual_core::domain::ProviderKey,
+) -> Vec<String> {
+    let settings = match provider {
+        manual_core::domain::ProviderKey::Tripo => &providers.tripo,
+        manual_core::domain::ProviderKey::ManualAi => &providers.manual_ai,
+    };
+    settings
+        .missing()
+        .into_iter()
+        .map(|item| format!("{}.{item}", provider.as_str()))
+        .collect()
+}
+
+/// A new whole-job purchase needs both providers; existing receipts remain readable.
+pub(crate) fn ensure_providers_configured(
+    providers: &crate::config::Providers,
+) -> Result<(), GenerationError> {
+    let missing = [
+        manual_core::domain::ProviderKey::Tripo,
+        manual_core::domain::ProviderKey::ManualAi,
+    ]
+    .into_iter()
+    .flat_map(|provider| provider_configuration_missing(providers, provider))
+    .collect::<Vec<_>>();
+    if missing.is_empty() {
+        Ok(())
+    } else {
+        Err(GenerationError::ProviderNotConfigured { missing })
+    }
+}
+
 /// 解析供应商配置与价格（缺配置 → 409；预设不存在 → 422）。
 fn resolve_pricing(
     settings: &Settings,
     model_preset: &str,
 ) -> Result<PricingContext, GenerationError> {
     let providers = &settings.providers;
-    let mut missing: Vec<String> = Vec::new();
-    if !providers.tripo.configured() {
-        missing.extend(
-            providers
-                .tripo
-                .missing()
-                .into_iter()
-                .map(|item| format!("tripo.{item}")),
-        );
+    if providers.tripo.model_issue() || providers.manual_ai.model_issue() {
+        return Err(GenerationError::unprocessable(
+            crate::config::model_guard::MODEL_ISSUE_REASON,
+            crate::config::model_guard::MODEL_CONFIG_MESSAGE,
+        ));
     }
-    if !providers.manual_ai.configured() {
-        missing.extend(
-            providers
-                .manual_ai
-                .missing()
-                .into_iter()
-                .map(|item| format!("manual_ai.{item}")),
-        );
-    }
-    if !missing.is_empty() {
-        return Err(GenerationError::ProviderNotConfigured { missing });
-    }
+    ensure_providers_configured(providers)?;
 
     let Some(catalog) = settings.price_catalog.as_ref() else {
         return Err(GenerationError::PriceCatalogMissing {
@@ -511,6 +647,12 @@ fn resolve_pricing(
         ));
     };
     let configured_tripo_model = providers.tripo.model.as_deref().unwrap_or_default();
+    if crate::config::model_guard::suspected_credential(&preset.parameters.model) {
+        return Err(GenerationError::unprocessable(
+            crate::config::model_guard::MODEL_ISSUE_REASON,
+            crate::config::model_guard::MODEL_CONFIG_MESSAGE,
+        ));
+    }
     if configured_tripo_model != preset.parameters.model {
         return Err(GenerationError::PriceCatalogMissing {
             missing: vec![format!(
@@ -671,4 +813,25 @@ fn serialization_error(error: serde_json::Error) -> GenerationError {
     GenerationError::Storage(crate::storage::StorageError::Database {
         detail: format!("序列化失败：{error}"),
     })
+}
+
+/// Ready is necessary but not sufficient when legacy page metadata or files are unavailable.
+pub(crate) async fn ensure_preparation_reusable(
+    conn: &mut SqliteConnection,
+    preparation: &Preparation,
+    data_dir: &std::path::Path,
+) -> Result<(), GenerationError> {
+    let document = crate::storage::repo::documents::get(conn, &preparation.document_id)
+        .await?
+        .ok_or_else(|| GenerationError::not_found("说明书原件不存在"))?;
+    let readiness =
+        crate::preparations::inspect(conn, &document, &preparation.id, data_dir).await?;
+    if !readiness.compatible {
+        return Err(GenerationError::unprocessable_with(
+            "preparationIncompatible",
+            "准备记录不适用于当前原件，请重新读取准备状态",
+            serde_json::json!({ "preparationId": preparation.id, "compatibilityReason": readiness.reason }),
+        ));
+    }
+    Ok(())
 }

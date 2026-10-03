@@ -161,16 +161,19 @@ test.describe("T21 独立验收：PDF worker 缺失（回合 29）", () => {
 
     await page.getByTestId("prepare-start").click();
 
-    // 终态判据：封存就绪（降级成功）/ 客户端拒绝面板 / 页失败列表，三者必居其一。
+    // Preparation is now explicitly sealed. Completed pages awaiting that action
+    // are a bounded fallback outcome; perform the real seal before claiming ready.
     const sealed = page.getByTestId("prepare-sealed");
-    const failures = page.getByTestId("prepare-failures");
-    const rejection = page.getByRole("alert").filter({ hasText: "无法开始准备" });
-    const status = page.getByTestId("prepare-status");
+    const failures = page.locator(".prepare-failures");
+    const rejection = page.getByRole("alert").filter({ hasText: "无法准备此 PDF" });
+    const status = page.getByTestId("prepare-progress");
+    const seal = page.getByTestId("prepare-seal");
 
     await expect
       .poll(
         async () => {
           if (await sealed.isVisible().catch(() => false)) return "sealed";
+          if ((await seal.count()) > 0 && await seal.isEnabled().catch(() => false)) return "awaiting-explicit-seal";
           if (await rejection.isVisible().catch(() => false)) return "rejected";
           if ((await failures.count()) > 0 && (await failures.isVisible().catch(() => false))) {
             return "failed";
@@ -181,7 +184,13 @@ test.describe("T21 独立验收：PDF worker 缺失（回合 29）", () => {
       )
       .not.toBe("pending");
 
-    // 注意：`prepare-status` 只在"已拿到总页数"后渲染，拒绝/失败形态下不存在——
+    expect(blocked.length, "真实 worker 脚本请求必须确实被阻断").toBeGreaterThan(0);
+    if ((await seal.count()) > 0 && await seal.isEnabled().catch(() => false)) {
+      await seal.click();
+      await expect(sealed).toBeVisible({ timeout: 30_000 });
+    }
+
+    // 注意：`prepare-progress` 只在"已拿到总页数"后渲染，拒绝/失败形态下不存在——
     // 直接 `textContent()` 会等待到测试超时（回合 29 首跑即此形态，属测试自身缺陷）。
     // 因此这里统一用**有界超时**读取可选文案。
     const optionalText = async (locator: ReturnType<typeof page.getByTestId>): Promise<string> => {
@@ -224,9 +233,11 @@ test.describe("T21 独立验收：PDF worker 缺失（回合 29）", () => {
     }
 
     // 降级形态：封存后可读、页号 1-based（与正常路径同一合同）。
-    if (terminal === "sealed" && preparationId !== null) {
+    if (terminal === "sealed") {
+      expect(preparationId, "ready requires a real server preparation identity").not.toBeNull();
       const detail = await request.get(`${api()}/api/v1/preparations/${preparationId}`);
-      if (detail.status() === 200) {
+      expect(detail.status(), "sealed preparation must remain readable").toBe(200);
+      {
         const body = (await detail.json()) as {
           data: { pages: { pageNumber: number }[] };
         };

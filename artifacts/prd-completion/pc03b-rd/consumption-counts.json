@@ -1,0 +1,19 @@
+{
+  "jobs": 1,
+  "quotes": 1,
+  "postRequests": 1,
+  "providerCounts": {
+    "upload": 2,
+    "submit": 1,
+    "task": 1,
+    "manual": 1,
+    "cdn": 1
+  },
+  "providerCountsAfterRecovery": {
+    "upload": 2,
+    "submit": 1,
+    "task": 1,
+    "manual": 1,
+    "cdn": 1
+  }
+}

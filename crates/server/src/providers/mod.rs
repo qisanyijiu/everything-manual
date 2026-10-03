@@ -92,6 +92,25 @@ pub fn register_provider_handlers(
             StageKind::ModelValidate,
         ]);
     }
+    if settings.providers.tripo.api_key.is_some() && settings.providers.tripo.model_issue() {
+        let handlers = tripo::TripoHandlers::from_settings(settings).map_err(|message| {
+            ProviderSetupError {
+                provider: "tripo",
+                message,
+            }
+        })?;
+        handlers.register_readonly(registry);
+        registered.extend([
+            StageKind::TripoSubmit,
+            StageKind::TripoPoll,
+            StageKind::ModelDownload,
+            StageKind::ModelValidate,
+        ]);
+        tracing::warn!(
+            provider = "tripo",
+            "模型配置需修正：只注册已提交任务的查询与取回阶段"
+        );
+    }
     Ok(registered)
 }
 

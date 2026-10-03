@@ -434,18 +434,19 @@ async fn malformed_json_escaped_response_is_discarded_and_classification_preserv
                 ],
             ),
         ]));
+        // Preserve fixed diagnostics: never Debug-print provider responses on a failed assertion.
         let tripo = TripoClient::new(
             &format!("{}/v3", server.base_url()),
             key.clone(),
             TripoTimeouts::default(),
         )
-        .ok()
+        .map_err(|_| ())
         .expect("fixture client must construct");
         let error = tripo
             .submit_multiview(b"{}")
             .await
-            .err()
-            .expect("business error");
+            .map(|_| ())
+            .expect_err("business error");
         assert!(matches!(
             error,
             TripoError::Business {
@@ -464,14 +465,14 @@ async fn malformed_json_escaped_response_is_discarded_and_classification_preserv
         let success = tripo
             .submit_multiview(b"{}")
             .await
-            .ok()
+            .map_err(|_| ())
             .expect("valid safe response succeeds");
         assert!(success.task_id == "safe-task");
         let error = tripo
             .submit_multiview(b"{}")
             .await
-            .err()
-            .expect("business error");
+            .map(|_| ())
+            .expect_err("business error");
         assert!(matches!(
             error,
             TripoError::Business {
@@ -484,8 +485,8 @@ async fn malformed_json_escaped_response_is_discarded_and_classification_preserv
         let error = tripo
             .submit_multiview(b"{}")
             .await
-            .err()
-            .expect("business error");
+            .map(|_| ())
+            .expect_err("business error");
         assert!(matches!(
             error,
             TripoError::Business {
@@ -510,13 +511,13 @@ async fn malformed_json_escaped_response_is_discarded_and_classification_preserv
             key.clone(),
             ManualAiTimeouts::default(),
         )
-        .ok()
+        .map_err(|_| ())
         .expect("fixture client must construct");
         let error = manual
             .extract_batch(b"{}")
             .await
-            .err()
-            .expect("unsafe response must not return RawResponse");
+            .map(|_| ())
+            .expect_err("unsafe response must not return RawResponse");
         assert!(matches!(error, ManualAiError::Unexpected { .. }));
         assert!(!error.is_definitively_refused());
         assert!(!error.redacted().contains(&quoted));
@@ -529,14 +530,14 @@ async fn malformed_json_escaped_response_is_discarded_and_classification_preserv
         let raw = manual
             .extract_batch(b"{}")
             .await
-            .ok()
+            .map_err(|_| ())
             .expect("valid safe response succeeds");
         assert!(ManualAiClient::parse_success(&raw).is_ok());
         let error = manual
             .extract_batch(b"{}")
             .await
-            .err()
-            .expect("business error");
+            .map(|_| ())
+            .expect_err("business error");
         assert!(matches!(
             error,
             ManualAiError::Business {

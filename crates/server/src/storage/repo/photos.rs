@@ -297,7 +297,7 @@ async fn current_revision(
     Ok(revision)
 }
 
-fn photo_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Photo, StorageError> {
+pub(crate) fn photo_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Photo, StorageError> {
     let created_at: i64 = row.try_get("created_at")?;
     let updated_at: i64 = row.try_get("updated_at")?;
     let view: String = row.try_get("view")?;

@@ -4,6 +4,16 @@ import { describe, expect, it, vi } from "vitest";
 import { Drawer } from "./Drawer";
 
 describe("IA-BUG-001：抽屉内原生折叠控件的键盘顺序", () => {
+  it("上层原生 dialog 独占 Tab 和 Escape，底层抽屉不关闭或夺焦点", () => {
+    const onClose = vi.fn();
+    render(<><Drawer open onClose={onClose} title="知识编辑"><input aria-label="修订" /></Drawer><dialog open><button>继续处理</button></dialog></>);
+    const modalButton = screen.getByRole("button", { name: "继续处理" }); modalButton.focus();
+    expect(fireEvent.keyDown(modalButton, { key: "Tab", shiftKey: true })).toBe(true);
+    expect(modalButton).toHaveFocus();
+    expect(fireEvent.keyDown(modalButton, { key: "Escape" })).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("修订")).toBeInTheDocument();
+  });
   it("下一页后的 summary 保留原生 Tab 路径，末端与关闭按钮双向循环", () => {
     render(<Drawer open onClose={vi.fn()} title="步骤与原文">
       <button>下一页</button>

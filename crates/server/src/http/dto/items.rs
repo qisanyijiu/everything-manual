@@ -139,3 +139,58 @@ pub struct ItemPatchRequest {
     #[schema(value_type = Option<bool>, nullable = true)]
     pub archived: Option<Option<bool>>,
 }
+
+/// Read-only workflow state: a visited route is never completion evidence.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum WorkflowStepState {
+    Complete,
+    Missing,
+    NeedsReview,
+}
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, ToSchema, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum WorkflowAction {
+    HandleJob,
+    ViewJob,
+    ReviewDraft,
+    ReadRelease,
+    AddDocument,
+    AddViews,
+    Prepare,
+    Confirm,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkflowStepsDto {
+    pub basic: WorkflowStepState,
+    pub document: WorkflowStepState,
+    pub views: WorkflowStepState,
+    pub prepare: WorkflowStepState,
+    pub confirm: WorkflowStepState,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemSummaryDto {
+    pub item_id: String,
+    pub action: WorkflowAction,
+    /// Stable entity identity only, never an executable URL.
+    pub target_id: Option<String>,
+    pub latest_release_id: Option<String>,
+    /// Readable identity of the same latest release; no manifest/per-row detail fetch.
+    pub latest_release_draft_revision: Option<i64>,
+    #[schema(value_type = Option<String>, nullable = true)]
+    pub latest_release_created_at: Option<manual_core::timestamps::Timestamp>,
+    pub document_id: Option<String>,
+    pub preparation_id: Option<String>,
+    pub latest_quote_id: Option<String>,
+    pub consumed_job_id: Option<String>,
+    /// Clock boundary for an unconsumed quote; null for an already accepted task.
+    #[schema(value_type = Option<String>, nullable = true)]
+    pub quote_expires_at: Option<manual_core::timestamps::Timestamp>,
+    pub steps: WorkflowStepsDto,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ItemSummaryResponse {
+    pub data: Vec<ItemSummaryDto>,
+}

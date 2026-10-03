@@ -487,7 +487,9 @@ export function recordModuleRequests(page: Page): string[] {
   const seen: string[] = [];
   page.on("request", (request) => {
     const url = request.url();
-    if (/three|@react-three|ViewerStage|viewer\//.test(url)) {
+    // Pure reader-document/navigation helpers are eagerly shared with the wizard.
+    // Only actual Three/R3F dependencies and the lazy rendering implementation count.
+    if (/three|@react-three|@react_three|ViewerStage|\/viewer\/(?:stage|runtime)\//.test(url)) {
       seen.push(url);
     }
   });

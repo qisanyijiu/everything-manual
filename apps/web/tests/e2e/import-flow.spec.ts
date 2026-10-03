@@ -127,7 +127,7 @@ test.describe("资料库与新建向导（T16）", () => {
 
     // --- 第 4 步：准备（浏览器 PDF.js 逐页准备 + 封存） --------------------------
     await page.getByRole("link", { name: /下一步：准备/ }).click();
-    await expect(page.getByRole("heading", { name: "资料准备" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "准备说明书资料", exact: true })).toBeVisible();
     await page.getByTestId("prepare-start").click();
     await expect(page.getByTestId("prepare-seal")).toBeEnabled({ timeout: 60_000 });
     await page.getByTestId("prepare-seal").click();

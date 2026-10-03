@@ -241,26 +241,44 @@ test("IA-QA-03 确认延迟/取消/失败、低预算及同键显式重试（AC-
   await expect(page.getByTestId("generate-reason")).toContainText("低于");
   await tripo.fill(original);
   const keys: (string | null)[] = [];
+  const bodies: (string | null)[] = [];
   const submitGate = deferred();
+  const retryGate = deferred();
+  const quoteId = new URL(page.url()).searchParams.get("quoteId");
+  expect(quoteId).toBeTruthy();
   await page.route(`**/api/v1/items/${seed.itemId}/jobs`, async (route) => {
     if (route.request().method() !== "POST") { await route.continue(); return; }
     keys.push(await route.request().headerValue("idempotency-key"));
+    bodies.push(route.request().postData());
     if (keys.length === 1) { await submitGate.promise; await route.abort("connectionfailed"); }
-    else await route.continue();
+    else { await retryGate.promise; await route.continue(); }
   });
   await generate.click();
   await expect(generate).toBeDisabled();
   expect(keys).toHaveLength(1);
+  const consumptionRead = page.waitForResponse(response => response.request().method() === "GET"
+    && new URL(response.url()).pathname === `/api/v1/items/${seed.itemId}/estimates/${quoteId}`);
   submitGate.resolve();
-  await expect(page.getByTestId("submit-error")).toBeVisible();
-  await expect(generate).toBeEnabled();
+  const consumption = await consumptionRead;
+  expect(consumption.status()).toBe(200);
+  expect((await consumption.json()).data.consumedJobId ?? null).toBeNull();
+  const retry = page.getByRole("button", { name: "重试同一提交（使用原授权）", exact: true });
+  await expect(retry).toBeEnabled();
+  await expect(generate).toBeDisabled();
+  await expect(tripo).toBeDisabled();
+  await expect(page.getByTestId("job-accepted")).toHaveCount(0);
+  expect(await fetchJobsForItem(request, runtime().apiBase, seed.itemId)).toHaveLength(0);
   await page.waitForTimeout(300);
   expect(keys).toHaveLength(1);
-  await generate.click();
+  await retry.focus(); await retry.press("Enter");
+  await expect(retry).toBeDisabled();
+  await expect(generate).toHaveAttribute("aria-busy", "true");
+  await expect.poll(() => keys.length).toBe(2);
+  expect(keys[0]).toBeTruthy(); expect(keys[1]).toBe(keys[0]);
+  expect(bodies[1]).toBe(bodies[0]);
+  expect(JSON.parse(bodies[0] ?? "{}").limits).toBeTruthy();
+  retryGate.resolve();
   await expect(page.getByTestId("job-accepted")).toBeVisible();
-  expect(keys).toHaveLength(2);
-  expect(keys[0]).toBeTruthy();
-  expect(keys[1]).toBe(keys[0]);
   expect(await fetchJobsForItem(request, runtime().apiBase, seed.itemId)).toHaveLength(1);
   await expect(page.getByTestId("job-accepted")).toContainText("服务");
   await expect(page.getByRole("link", { name: /查看任务详情/ })).toBeVisible();
@@ -311,58 +329,115 @@ test("IA-QA-05 阅读器键盘标签/抽屉与手机触控（AC-009/010/011/012�
   await page.getByRole("button", { name: "显示步骤与原文" }).click();
   const parts = page.getByRole("tab", { name: "部件", exact: true });
   const steps = page.getByRole("tab", { name: "步骤与原文", exact: true });
+  const originalTab = page.getByRole("tab", { name: "原文", exact: true });
+  const tabs = [parts, steps, originalTab];
+  await expect(page.getByRole("tab")).toHaveText(["部件", "步骤与原文", "原文"]);
   await parts.focus();
-  for (const [key, target] of [["ArrowLeft", steps], ["ArrowRight", parts], ["End", steps], ["Home", parts], ["ArrowRight", steps]] as const) {
+  for (const [key, target] of [
+    ["ArrowLeft", originalTab], ["ArrowRight", parts], ["ArrowRight", steps],
+    ["End", originalTab], ["Home", parts], ["ArrowRight", steps],
+  ] as const) {
     await page.keyboard.press(key);
     await expect(target).toBeFocused();
     await expect(target).toHaveAttribute("aria-selected", "true");
     await expect(target).toHaveAttribute("tabindex", "0");
     await expect(page.locator('[role="tab"][tabindex="0"]')).toHaveCount(1);
+    for (const tab of tabs) if (tab !== target) {
+      await expect(tab).toHaveAttribute("aria-selected", "false");
+      await expect(tab).toHaveAttribute("tabindex", "-1");
+    }
+    const panel = page.getByRole("tabpanel");
+    await expect(panel).toHaveCount(1);
+    await expect(target).toHaveAttribute("aria-controls", (await panel.getAttribute("id")) ?? "");
+    await expect(panel).toHaveAttribute("aria-labelledby", (await target.getAttribute("id")) ?? "");
   }
   await page.keyboard.press("Tab");
-  expect(await page.getByRole("tabpanel").evaluate((el) => el.contains(document.activeElement))).toBe(true);
-  await expect(page.getByTestId("original-page-label")).toContainText("/ 2", { timeout: 20000 });
-  await parts.click();
-  await expect(page.getByTestId("parts-panel")).toBeVisible();
-  await steps.click();
+  expect(await page.getByRole("tabpanel").evaluate(el => el.contains(document.activeElement))).toBe(true);
+  await parts.click(); await expect(page.getByTestId("parts-panel")).toBeVisible();
+  await steps.click(); await expect(page.getByTestId("steps-panel")).toBeVisible();
   await fontAtLeast(page.locator(".step-detail li"), 14);
-  await fontAtLeast(page.locator(".step-evidence button, .original-panel__nav, .step-nav"), 12);
+  await fontAtLeast(page.locator(".step-evidence button, .step-nav"), 12);
+  await originalTab.click();
+  await expect(page.getByTestId("original-page-label")).toHaveText("第 1 / 2 页", { timeout: 20000 });
+  await fontAtLeast(page.locator(".original-panel__nav, .original-panel__nav button"), 12);
+  await steps.click();
   await screenshot(page, "05-reader-keyboard-mid");
 
+  const assertDrawerRing = async (activeDialog: Locator) => {
+    const close = activeDialog.getByRole("button", { name: "关闭", exact: true });
+    await close.focus(); await page.keyboard.press("Shift+Tab");
+    expect(await activeDialog.evaluate(el => el.contains(document.activeElement))).toBe(true);
+    await expect(close).not.toBeFocused();
+    await page.keyboard.press("Tab"); await expect(close).toBeFocused();
+    await page.keyboard.press("Tab");
+    expect(await activeDialog.evaluate(el => el.contains(document.activeElement))).toBe(true);
+    await expect(close).not.toBeFocused();
+  };
   await page.setViewportSize({ width: 375, height: 812 });
   const trigger = page.getByRole("button", { name: "步骤与原文", exact: true });
-  await touchTarget(trigger);
-  await trigger.click();
-  const dialog = page.getByRole("dialog", { name: "步骤与原文" });
-  await expect(dialog).toHaveCount(1);
-  await expect(dialog.getByTestId("original-page-label")).toContainText("/ 2", { timeout: 20000 });
-  const textLayer = dialog.getByTestId("original-text");
-  await expect(textLayer).toBeVisible();
-  await textLayer.locator("summary").click();
-  await expect(textLayer.locator("pre")).not.toBeEmpty();
-  await fontAtLeast(textLayer.locator("summary, pre"), 12);
-  for (const target of [dialog.getByRole("button", { name: "关闭", exact: true }), dialog.getByRole("button", { name: "上一步", exact: true }), dialog.getByRole("button", { name: "下一步", exact: true }), dialog.getByRole("button", { name: "上一页", exact: true }), dialog.getByRole("button", { name: "下一页", exact: true }), dialog.locator(".step-evidence button").first()]) await touchTarget(target);
-  await dialog.getByRole("button", { name: "下一页", exact: true }).focus();
-  await page.keyboard.press("Tab");
-  await expect(textLayer.locator("summary")).toBeFocused();
-  await page.keyboard.press("Space");
-  await expect(textLayer).not.toHaveAttribute("open", "");
+  const stepsDialog = page.getByRole("dialog", { name: "步骤与原文", exact: true });
+  // Active selection survives the breakpoint; close that inherited drawer before re-opening.
+  await expect(stepsDialog).toBeVisible(); await expect(page.getByRole("dialog")).toHaveCount(1);
+  await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  for (const label of ["部件", "步骤与原文", "原文"]) await touchTarget(page.getByRole("button", { name: label, exact: true }));
   await page.keyboard.press("Enter");
-  await expect(textLayer).toHaveAttribute("open", "");
-  const close = dialog.getByRole("button", { name: "关闭", exact: true });
-  await close.focus();
-  await page.keyboard.press("Shift+Tab");
-  expect(await dialog.evaluate((el) => el.contains(document.activeElement))).toBe(true);
-  await page.keyboard.press("Tab");
-  await expect(close).toBeFocused();
-  await page.keyboard.press("Tab");
-  expect(await dialog.evaluate((el) => el.contains(document.activeElement))).toBe(true);
-  await noOverflow(page);
+  await expect(stepsDialog).toBeVisible(); await expect(page.getByRole("dialog")).toHaveCount(1);
+  // Exact current step source, not a specification/part source or an arbitrary first button.
+  const source = stepsDialog.locator(".step-detail .step-evidence button");
+  await expect(source).toHaveCount(1);
+  for (const target of [stepsDialog.getByRole("button", { name: "关闭", exact: true }),
+    stepsDialog.getByRole("button", { name: "上一步", exact: true }),
+    stepsDialog.getByRole("button", { name: "下一步", exact: true }), source]) await touchTarget(target);
+  await fontAtLeast(stepsDialog.locator(".step-detail li"), 14);
+  await fontAtLeast(stepsDialog.locator(".step-evidence button, .step-nav"), 12);
+  await assertDrawerRing(stepsDialog); await noOverflow(page);
   await screenshot(page, "05-reader-touch-375");
-  await textLayer.scrollIntoViewIfNeeded();
+  await source.focus(); await page.keyboard.press("Enter");
+  const originalDialog = page.getByRole("dialog", { name: "原文", exact: true });
+  await expect(originalDialog).toBeVisible(); await expect(page.getByRole("dialog")).toHaveCount(1);
+  await expect(stepsDialog).toHaveCount(0);
+  await expect(originalDialog.locator("#original-heading")).toBeFocused();
+  const textLayer = originalDialog.getByTestId("original-text");
+  const assertOriginalPage = async (number: number) => {
+    await expect(originalDialog.getByTestId("original-page-label")).toHaveText(`第 ${number} / 2 页`, { timeout: 20000 });
+    const canvas = originalDialog.getByTestId("original-canvas");
+    await expect(canvas).toBeVisible({ timeout: 20000 });
+    await expect(canvas).toHaveAttribute("aria-label", `原 PDF 第 ${number} 页`);
+    await expect(textLayer).toBeVisible({ timeout: 20000 });
+    if ((await textLayer.getAttribute("open")) === null) await textLayer.locator("summary").click();
+    await expect(textLayer.locator("pre")).toContainText(`Page ${number} of 2`);
+  };
+  await assertOriginalPage(1); await fontAtLeast(textLayer.locator("summary, pre"), 12);
+  const previousPage = originalDialog.getByRole("button", { name: "上一页", exact: true });
+  const nextPage = originalDialog.getByRole("button", { name: "下一页", exact: true });
+  const pageInput = originalDialog.getByLabel("页码", { exact: true });
+  const jump = originalDialog.getByRole("button", { name: "跳转", exact: true });
+  const back = originalDialog.getByRole("button", { name: "返回出处", exact: true });
+  for (const target of [originalDialog.getByRole("button", { name: "关闭", exact: true }), previousPage, nextPage, pageInput, jump, back]) await touchTarget(target);
+  await assertDrawerRing(originalDialog);
+  await nextPage.focus(); await page.keyboard.press("Tab"); await expect(pageInput).toBeFocused();
+  await page.keyboard.press("Tab"); await expect(jump).toBeFocused();
+  await page.keyboard.press("Tab"); await expect(textLayer.locator("summary")).toBeFocused();
+  await page.keyboard.press("Space"); await expect(textLayer).not.toHaveAttribute("open", "");
+  await page.keyboard.press("Enter"); await expect(textLayer).toHaveAttribute("open", "");
+  await nextPage.focus(); await page.keyboard.press("Enter"); await assertOriginalPage(2);
+  await previousPage.focus(); await page.keyboard.press("Enter"); await assertOriginalPage(1);
+  await noOverflow(page); await textLayer.scrollIntoViewIfNeeded();
   await screenshot(page, "05-reader-pdf-text-375");
+  await back.focus(); await page.keyboard.press("Enter");
+  await expect(stepsDialog).toBeVisible(); await expect(page.getByRole("dialog")).toHaveCount(1);
+  await expect(originalDialog).toHaveCount(0); await expect(source).toBeFocused();
+  await expect(stepsDialog.getByTestId("reader-step-position")).toHaveText("第 1 / 2 步");
+  await expect(stepsDialog.getByRole("button", { name: "断开电源再拆开后盖", exact: true })).toHaveAttribute("aria-current", "true");
+  // Esc from source-opened original returns to source; a second Esc returns to the toolbar.
+  await page.keyboard.press("Enter");
+  await expect(originalDialog).toBeVisible(); await expect(page.getByRole("dialog")).toHaveCount(1);
+  await expect(originalDialog.locator("#original-heading")).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(dialog).toHaveCount(0);
+  await expect(stepsDialog).toBeVisible(); await expect(page.getByRole("dialog")).toHaveCount(1);
+  await expect(source).toBeFocused();
+  await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(trigger).toBeFocused();
 });
 
@@ -482,24 +557,37 @@ test("IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012�
 });
 
 test("IA-QA-07 缺项、配置未就绪、报价加载/失败均留在主流程（AC-004）", async ({ page, request }) => {
+  // Genuine missing preparation, not an existing ready record without a local hint.
+  const missing = await seedItemWithDocument(request, runtime().apiBase, runtime().password, "sample-manual-text.pdf", "IA QA 真正缺准备");
+  const csrf = await apiLogin(request, runtime().apiBase, runtime().password);
+  await seedPhoto(request, runtime().apiBase, csrf, missing.itemId, "front", "sample-photo-front.jpg");
+  await seedPhoto(request, runtime().apiBase, csrf, missing.itemId, "left", "sample-photo-left.png");
   const seed = await readyItem(request, "IA QA 报价状态");
   await loginViaUi(page, "", runtime().password);
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto(`/items/${seed.itemId}/import/confirm`);
+  const writes: string[] = [];
+  page.on("request", request => {
+    if (request.method() === "POST" && /\/(?:estimates|jobs)$/.test(new URL(request.url()).pathname)) writes.push(request.url());
+  });
+  await page.goto(`/items/${missing.itemId}/import/confirm`);
   await expect(page.getByRole("link", { name: "去准备", exact: true })).toBeVisible();
   await expect(page.getByTestId("quote-panel")).toHaveCount(0);
   await expect(page.getByTestId("generate-button")).toBeDisabled();
+  expect(writes).toEqual([]);
   await setPreparationPointer(page, seed.itemId, seed.preparationId);
+  // Retain the original explicit settings-status fault injection.
   await page.route("**/api/v1/settings/status", async (route) => {
     const response = await route.fetch();
     const json = await response.json();
     json.data.capabilities.generation = false;
     await route.fulfill({ response, json });
   });
-  await page.reload();
+  // The ready item has never been opened and has no quote to recover.
+  await page.goto(`/items/${seed.itemId}/import/confirm`);
   await expect(page.getByTestId("generation-gaps")).toContainText("生成能力未就绪");
   await expect(page.getByRole("link", { name: "查看服务状态", exact: true })).toBeVisible();
   await expect(page.getByTestId("quote-panel")).toHaveCount(0);
+  expect(writes).toEqual([]);
   await screenshot(page, "07-config-not-ready");
   await page.unroute("**/api/v1/settings/status");
   const gate = deferred();

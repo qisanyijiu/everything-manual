@@ -120,7 +120,7 @@ pub async fn list_page(
     rows.iter().map(document_from_row).collect()
 }
 
-fn document_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Document, StorageError> {
+pub(crate) fn document_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Document, StorageError> {
     let created_at: i64 = row.try_get("created_at")?;
     let updated_at: i64 = row.try_get("updated_at")?;
     Ok(Document {

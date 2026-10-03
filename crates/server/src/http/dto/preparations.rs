@@ -93,6 +93,7 @@ pub struct PreparationDetailDto {
     /// 因此该数组为空，由客户端用自己的总页数计算"还差哪些页"；
     /// `ready` 时为 `1..pageCount` 中缺失的页号（正常应为空）。
     pub missing_pages: Vec<i64>,
+    pub readiness: PreparationReadinessDto,
     #[schema(value_type = String)]
     pub created_at: Timestamp,
     #[schema(value_type = String)]
@@ -101,7 +102,12 @@ pub struct PreparationDetailDto {
 
 impl PreparationDetailDto {
     /// 组装详情；`missing_pages` 由调用方按 state 计算（见字段文档）。
-    pub fn new(preparation: &Preparation, pages: &[Page], missing_pages: Vec<i64>) -> Self {
+    pub fn new(
+        preparation: &Preparation,
+        pages: &[Page],
+        missing_pages: Vec<i64>,
+        readiness: PreparationReadinessDto,
+    ) -> Self {
         Self {
             id: preparation.id.clone(),
             document_id: preparation.document_id.clone(),
@@ -112,6 +118,7 @@ impl PreparationDetailDto {
             revision: preparation.revision,
             pages: pages.iter().map(PageDto::from_page).collect(),
             missing_pages,
+            readiness,
             created_at: preparation.created_at,
             updated_at: preparation.updated_at,
         }
@@ -183,6 +190,8 @@ impl ViewportDto {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PreparationCreateRequest {
+    /// Explicitly start a separate record; never rewrite an existing preparation.
+    pub create_new: Option<bool>,
     /// 原件内容 sha256；必须与 document 绑定的原件一致（否则 422），
     /// 用于确认浏览器准备的是同一份字节（contracts.md §3）。
     pub source_sha256: Option<String>,
@@ -210,4 +219,42 @@ pub struct PreparationCompleteRequest {
     /// 声明的总页数 N；服务端校验 1..N 连续存在且每页资产可用。
     #[schema(nullable = true)]
     pub page_count: Option<i64>,
+}
+
+/// Read-time v1 compatibility, based on stored facts and physical file metadata (not a byte audit).
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PreparationReadinessDto {
+    #[schema(nullable = true)]
+    pub format_version: Option<String>,
+    pub compatible: bool,
+    /// Fixed reason code: sourceMismatch / unsupportedFormat / invalidPages / missingAssets / incompleteReady.
+    #[schema(nullable = true)]
+    pub reason: Option<String>,
+    #[schema(nullable = true)]
+    pub explanation: Option<String>,
+    pub completed_page_count: usize,
+    pub completed_pages: Vec<i64>,
+    /// Known total only; unknown totals remain null on the preparation.
+    pub missing_pages: Vec<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PreparationCandidateDto {
+    pub preparation: PreparationDto,
+    pub readiness: PreparationReadinessDto,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct PreparationListResponse {
+    pub data: Vec<PreparationCandidateDto>,
+    #[schema(nullable = true)]
+    pub next_cursor: Option<String>,
+    /// Global recommendation across every record, independent of this response page.
+    #[schema(nullable = true)]
+    pub recommended_preparation_id: Option<String>,
+    #[schema(nullable = true)]
+    pub recommended: Option<PreparationCandidateDto>,
 }

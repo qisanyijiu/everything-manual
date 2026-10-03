@@ -2482,7 +2482,7 @@ ADR-xxx — 简短结论
 ## ADR-042 — 分件模型 + 自动热点绑定 + 交互层（动作 / 姿势）
 
 - 日期：2026-10-03；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求以 PENTAX 17 与 CyberDog 2 说明书为例，自动绑定热点，并支持"电池仓打开、机器人多种姿势"等由多个模块组成的交互。
-- **分件来源**：Tripo `POST /mesh/segment`（v2.0-20260430，40 credits）输出与原模型**同一坐标系**的多节点 GLB（只含平移）。它是模型 revision 的**附件**（新资产用途 `model_parts`，迁移 0008），不是新模型版本：热点锚点身份（revisionId + sha256）不变。挂载接口核对分件包围盒与草稿模型 `bounds` 偏差 ≤ 0.02，否则 422（实测对另一次生成的模型偏差 0.165，被拒）。
+- **分件来源**：Tripo `POST /mesh/segment`（v2.0-20260430，40 credits）输出与原模型**同一坐标系**的多节点 GLB（只含平移）。它是模型 revision 的**附件**（新资产用途 `model_parts`，迁移 0009；上游 PC-03A 已占用 0008），不是新模型版本：热点锚点身份（revisionId + sha256）不变。挂载接口核对分件包围盒与草稿模型 `bounds` 偏差 ≤ 0.02，否则 422（实测对另一次生成的模型偏差 0.165，被拒）。
 - **交互层**：`knowledge.interactive = { partsModel, bindings[], actions[], poses[] }`；动作/姿势只描述刚体变换（translate / 绕 pivot+axis rotate），节点按分件 GLB 节点名引用并在写入时校验；附件不属于当前模型版本时交互层不可编辑、不显示、不随发布冻结。发布 manifest 增加 `model_parts` 资产，导出 ZIP 一并带上。
 - **自动绑定**（`scripts/autobind/`，原型，不进生产依赖）：视觉模型定位标注端点 → 轮廓 IoU 搜索视角（PENTAX 前 0.956 / 后 0.967，CyberDog 0.859 / 0.711）→ z-buffer 投影到模型表面 → LLM 图例编号↔部件条目。产物一律 `candidate`，复核页提供「确认全部候选热点」；不自动发布（ADR-005 不变）。
 - **否决**：Tripo 自动绑骨骼（`rig-check` 对 CyberDog 返回 `riggable:false`；四足预设只有 walk）→ 姿势改为分件 + 关节枢轴的程序化变换；`generate_parts`（与纹理/PBR 不兼容）。

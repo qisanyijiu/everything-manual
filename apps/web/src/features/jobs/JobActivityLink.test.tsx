@@ -1,0 +1,26 @@
+import { act, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
+import { afterEach, expect, it, vi } from "vitest";
+import { jsonResponse } from "../../test/render";
+import { JobActivityLink } from "./JobActivityLink";
+import { jobKeys } from "./jobs";
+afterEach(() => vi.unstubAllGlobals());
+it("global summary distinguishes pending, genuine zero, prior-data error and recovered count", async () => {
+  let response!: (r: Response) => void;
+  const fetch = vi.fn((input: RequestInfo | URL) => { expect(String(input)).toBe("/api/v1/jobs/activity"); return new Promise<Response>(resolve => { response = resolve; }); }); vi.stubGlobal("fetch", fetch);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const view = render(<QueryClientProvider client={client}><MemoryRouter><JobActivityLink /></MemoryRouter></QueryClientProvider>);
+  expect(screen.getByRole("link", { name: "正在读取任务数" })).toHaveAttribute("href", "/jobs");
+  await act(async () => response(jsonResponse({ data: { active: 0 } })));
+  await screen.findByRole("link", { name: "进行中任务 0 个" });
+  fetch.mockRejectedValueOnce(new TypeError("fixture offline"));
+  await act(async () => { await client.invalidateQueries({ queryKey: jobKeys.activity }); });
+  expect(await screen.findByRole("link", { name: "任务数暂不可用" })).toHaveAttribute("href", "/jobs");
+  fetch.mockResolvedValueOnce(jsonResponse({ data: { active: 27 } }));
+  await act(async () => { await client.invalidateQueries({ queryKey: jobKeys.activity }); });
+  await screen.findByRole("link", { name: "进行中任务 27 个" });
+  await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
+  expect(fetch.mock.calls.every(([url]) => url === "/api/v1/jobs/activity")).toBe(true);
+  view.unmount(); client.clear();
+});

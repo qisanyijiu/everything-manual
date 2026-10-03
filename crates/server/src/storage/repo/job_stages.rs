@@ -293,6 +293,16 @@ pub async fn claim_next(
     pool: &SqlitePool,
     params: &ClaimParams,
 ) -> Result<Option<JobStage>, StorageError> {
+    claim_next_for_job(pool, params, None).await
+}
+
+/// Optional scope for the offline authorized runner. Normal serve still claims
+/// across the pool; a scoped runner never leases another job.
+pub async fn claim_next_for_job(
+    pool: &SqlitePool,
+    params: &ClaimParams,
+    job_id: Option<&str>,
+) -> Result<Option<JobStage>, StorageError> {
     let lease_until = params
         .now
         .checked_add_millis(params.lease.as_millis() as i64)
@@ -306,6 +316,8 @@ pub async fn claim_next(
             .bind(params.now.as_millis())
             .bind(i64::from(params.manual_ai_batch_limit))
             .bind(i64::from(params.remote_generation_limit))
+            .bind(job_id)
+            .bind(job_id)
             .fetch_optional(&mut *tx)
             .await?;
         let Some(row) = candidate else {
@@ -757,15 +769,26 @@ pub async fn expired_running(
     pool: &SqlitePool,
     now: Timestamp,
 ) -> Result<Vec<JobStage>, StorageError> {
+    expired_running_for_job(pool, now, None).await
+}
+
+pub async fn expired_running_for_job(
+    pool: &SqlitePool,
+    now: Timestamp,
+    job_id: Option<&str>,
+) -> Result<Vec<JobStage>, StorageError> {
     let rows = sqlx::query(
         "SELECT id, job_id, stage_kind, batch_index, page_set, input_hash, result_asset_id, usage_json, \
                 status, lease_owner, lease_epoch, lease_until, next_run_at, attempt_count, poll_count, \
                 last_error, needs_input_json, created_at, updated_at \
            FROM job_stages \
           WHERE status = 'running' AND lease_until IS NOT NULL AND lease_until <= ? \
+            AND (? IS NULL OR job_id=?) \
           ORDER BY updated_at",
     )
     .bind(now.as_millis())
+    .bind(job_id)
+    .bind(job_id)
     .fetch_all(pool)
     .await?;
     rows.iter().map(stage_from_row).collect()
@@ -846,6 +869,7 @@ const CLAIM_CANDIDATE_SQL: &str = "SELECT s.id, s.status, s.lease_epoch \
                    AND r.stage_kind IN ('tripo_upload', 'tripo_submit', 'tripo_poll', 'model_download', 'model_validate')) < ? \
              ELSE 1 \
            END) \
+      AND (? IS NULL OR s.job_id=?) \
     ORDER BY COALESCE(s.next_run_at, 0), s.created_at, s.id \
     LIMIT 1";
 
