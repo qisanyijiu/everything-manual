@@ -2488,3 +2488,11 @@ ADR-xxx — 简短结论
 - **否决**：Tripo 自动绑骨骼（`rig-check` 对 CyberDog 返回 `riggable:false`；四足预设只有 walk）→ 姿势改为分件 + 关节枢轴的程序化变换；`generate_parts`（与纹理/PBR 不兼容）。
 - **说明书 AI 超时**：新增 `jobs.manual_ai_request_seconds`（30..=900，默认 180）。CyberDog 长批次在 180s 内多次超时 → `submission_unknown`；设为 600s 后同一批次约 3 分钟完成。
 - 证据：[interactive-parts.md](requirements/standalone-3d-viewer/interactive-parts.md)。
+
+## ADR-043 — 主密钥默认改为本地私有文件（取代 macOS 钥匙串）
+
+- 日期：2026-10-03；状态：implemented（分支 `feat/standalone-3d-viewer`），部分取代 ADR-039 的"macOS 默认钥匙串"。依据：用户要求"不要使用 mac 系统的密码串，直接保存到本地文件"。
+- 原因：开发期每次重新编译二进制，macOS 都会把它当作新程序重新弹出钥匙串授权，服务在启动时阻塞直到人工点击（实测阻塞约 40 分钟）。
+- 结论：`EM_SECRETS_MASTER_KEY` 仍最优先；未注入时使用 `EM_SECRETS_MASTER_KEY_FILE` 或默认 `~/.config/everything-manual/master.key`。读取只读、不创建；创建只新建（并发首次创建读既有赢家）；文件必须是 0600 普通文件，否则拒绝。默认路径在 data-dir 之外，备份/导出不包含它（与 ADR-039"主钥与密文分离"一致）。
+- 影响：旧的钥匙串加密覆盖文件无法用新主钥解密；本地开发环境已重置（`var/dev-old-20261003/provider-overrides.keychain-encrypted.json` 保留原文件），密钥经网页配置重新保存。钥匙串实现（`Secrets::native`）保留供显式使用，不再是默认。
+- 验证：新增 2 项单测（0600/0700、只读不创建、权限放宽拒绝、内容非法拒绝、重启复用）；Rust 全量 591 项通过；真实服务重启 2 秒就绪、两家供应商密钥可解密，无钥匙串弹窗。

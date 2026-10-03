@@ -1,5 +1,7 @@
-//! Versioned AEAD envelopes. Master keys are injected or kept in the system Keychain,
-//! never beside ciphertext. Reading an existing envelope never creates a master key.
+//! Versioned AEAD envelopes. Master keys are injected (`EM_SECRETS_MASTER_KEY`) or kept in a
+//! private local key file (0600, outside the data-dir by default), never beside ciphertext.
+//! Reading an existing envelope never creates a master key. (ADR-043 replaced the macOS
+//! Keychain default: rebuilt binaries re-prompted for Keychain access and blocked startup.)
 use super::SecretString;
 use ring::aead::{AES_256_GCM, Aad, LessSafeKey, Nonce, UnboundKey};
 use serde::{Deserialize, Serialize};
@@ -12,6 +14,8 @@ use std::{
 use zeroize::Zeroizing;
 
 pub const MASTER_ENV: &str = "EM_SECRETS_MASTER_KEY";
+/// Overrides the default key file path (`~/.config/everything-manual/master.key`).
+pub const MASTER_FILE_ENV: &str = "EM_SECRETS_MASTER_KEY_FILE";
 pub const KEYCHAIN_SERVICE: &str = "org.everything-manual.secrets.v1";
 pub const KEYCHAIN_ACCOUNT: &str = "master";
 const MAX_FILE: u64 = 262144;
@@ -103,20 +107,16 @@ impl Secrets {
                 Ok(Self::fixed(key))
             }
             Err(std::env::VarError::NotUnicode(_)) => Err(SecretError::InvalidMaster),
-            Err(std::env::VarError::NotPresent) => {
-                #[cfg(target_os = "macos")]
-                {
-                    static DEFAULT: std::sync::OnceLock<Secrets> = std::sync::OnceLock::new();
-                    Ok(DEFAULT
-                        .get_or_init(|| Self::native(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT))
-                        .clone())
-                }
-                #[cfg(not(target_os = "macos"))]
-                {
-                    Ok(Self::unavailable())
-                }
-            }
+            Err(std::env::VarError::NotPresent) => match default_key_file() {
+                Some(path) => Ok(Self::key_file(path)),
+                None => Ok(Self::unavailable()),
+            },
         }
+    }
+    #[cfg(target_os = "macos")]
+    /// Local private key file (hex, 0600). Load is read-only; create is create-only.
+    pub fn key_file(path: std::path::PathBuf) -> Self {
+        Self::with_source(Arc::new(KeyFile { path }))
     }
     #[cfg(target_os = "macos")]
     pub fn native(service: &str, account: &str) -> Self {
@@ -270,6 +270,56 @@ fn decode_hex(value: &str) -> Result<Vec<u8>, SecretError> {
         })
         .collect()
 }
+/// `EM_SECRETS_MASTER_KEY_FILE`, else `$HOME/.config/everything-manual/master.key`.
+pub fn default_key_file() -> Option<std::path::PathBuf> {
+    if let Some(path) = std::env::var_os(MASTER_FILE_ENV).filter(|value| !value.is_empty()) {
+        return Some(std::path::PathBuf::from(path));
+    }
+    let home = std::env::var_os("HOME").filter(|value| !value.is_empty())?;
+    Some(std::path::PathBuf::from(home).join(".config/everything-manual/master.key"))
+}
+
+struct KeyFile {
+    path: std::path::PathBuf,
+}
+impl KeyFile {
+    fn parse(bytes: &[u8]) -> Result<Zeroizing<[u8; 32]>, SecretError> {
+        let text = std::str::from_utf8(bytes).map_err(|_| SecretError::InvalidMaster)?;
+        let decoded = Zeroizing::new(decode_hex(text.trim()).map_err(|_| SecretError::InvalidMaster)?);
+        let key: [u8; 32] = decoded.as_slice().try_into().map_err(|_| SecretError::InvalidMaster)?;
+        Ok(Zeroizing::new(key))
+    }
+}
+impl MasterKeySource for KeyFile {
+    fn load(&self) -> Result<Option<Zeroizing<[u8; 32]>>, SecretError> {
+        match fs::symlink_metadata(&self.path) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(_) => Err(SecretError::UnsafeFile),
+            Ok(_) => Self::parse(&read_private_file(&self.path)?).map(Some),
+        }
+    }
+    fn create(&self) -> Result<Zeroizing<[u8; 32]>, SecretError> {
+        let mut generated = Zeroizing::new([0u8; 32]);
+        getrandom::fill(generated.as_mut()).map_err(|_| SecretError::MasterUnavailable)?;
+        if let Some(parent) = self.path.parent().filter(|p| !p.as_os_str().is_empty()) {
+            let mut builder = fs::DirBuilder::new();
+            builder.recursive(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::DirBuilderExt;
+                builder.mode(0o700);
+            }
+            builder.create(parent).map_err(|_| SecretError::WriteFailed)?;
+        }
+        let encoded = Zeroizing::new(format!("{}\n", encode_hex(generated.as_ref())));
+        match write_private_file(&self.path, encoded.as_bytes(), false) {
+            Ok(()) => Ok(generated),
+            // Lost a concurrent first-create race: read the winner instead of overwriting.
+            Err(_) => self.load()?.ok_or(SecretError::MasterUnavailable),
+        }
+    }
+}
+
 pub fn read_private_file(path: &Path) -> Result<Zeroizing<Vec<u8>>, SecretError> {
     let metadata = fs::symlink_metadata(path).map_err(|_| SecretError::UnsafeFile)?;
     check_metadata(&metadata)?;
@@ -452,5 +502,53 @@ impl MasterKeySource for NativeKeychain {
             }
             Err(_) => Err(SecretError::MasterUnavailable),
         }
+    }
+}
+
+#[cfg(test)]
+mod key_file_tests {
+    use super::*;
+
+    fn temp_path(tag: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("em-keyfile-{tag}-{}-{}", std::process::id(), encode_hex(&getrandom::u64().unwrap_or(0).to_le_bytes())))
+    }
+
+    #[test]
+    fn creates_private_key_once_and_reuses_it() {
+        let dir = temp_path("create");
+        let path = dir.join("nested/master.key");
+        let secrets = Secrets::key_file(path.clone());
+        let envelope = secrets.encrypt(&SecretString::new("sk-test-value".to_owned()), "tripo").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
+            assert_eq!(fs::metadata(path.parent().unwrap()).unwrap().permissions().mode() & 0o777, 0o700);
+        }
+        // 新实例（模拟重启）读取同一文件即可解密；不会重新生成主钥。
+        let again = Secrets::key_file(path.clone());
+        assert_eq!(again.decrypt(&envelope, "tripo").unwrap().expose(), "sk-test-value");
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn missing_file_is_not_created_on_read_and_loose_permissions_are_rejected() {
+        let dir = temp_path("perm");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("master.key");
+        assert!(KeyFile { path: path.clone() }.load().unwrap().is_none());
+        assert!(!path.exists(), "读取不得创建主钥文件");
+        fs::write(&path, format!("{}\n", "11".repeat(32))).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).unwrap();
+            assert_eq!(KeyFile { path: path.clone() }.load().err(), Some(SecretError::UnsafeFile));
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        assert_eq!(KeyFile { path: path.clone() }.load().unwrap().unwrap().as_ref(), &[0x11u8; 32]);
+        fs::write(&path, "not-hex").unwrap();
+        assert_eq!(KeyFile { path: path.clone() }.load().err(), Some(SecretError::InvalidMaster));
+        fs::remove_dir_all(&dir).ok();
     }
 }
