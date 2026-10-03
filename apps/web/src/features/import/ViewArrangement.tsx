@@ -68,9 +68,13 @@ function slotsFromPhotos(photos: readonly PhotoDto[]): Slots {
 export interface ViewArrangementProps {
   readonly itemId: string;
   readonly photos: readonly PhotoDto[];
+  /** 每次拖拽/交换/删除后通知父组件当前草稿槽位（含未保存），用于实时更新缺项提示。 */
+  readonly onSlotsChange?: (draftViews: ReadonlySet<string>) => void;
+  /** 引用：父组件可调用 `saveRef.current?.()` 在导航前自动保存。 */
+  readonly saveRef?: { current: (() => Promise<void>) | null };
 }
 
-export function ViewArrangement({ itemId, photos }: ViewArrangementProps) {
+export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: ViewArrangementProps) {
   const queryClient = useQueryClient();
   const notify = useNotify();
   const candidatesQuery = useQuery({ queryKey: ["view-candidates", itemId], queryFn: () => listViewCandidates(itemId) });
@@ -88,8 +92,17 @@ export function ViewArrangement({ itemId, photos }: ViewArrangementProps) {
   useEffect(() => {
     if (!dirty) {
       setSlots(saved);
+      onSlotsChange?.(new Set(VIEW_ORDER.filter((view) => saved[view] !== null)));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saved, dirty]);
+  useEffect(() => {
+    if (saveRef !== undefined) {
+      saveRef.current = dirty ? save : null;
+    }
+    return () => { if (saveRef !== undefined) { saveRef.current = null; } };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty]);
 
   const candidates = useMemo(() => candidatesQuery.data ?? [], [candidatesQuery.data]);
   const cards = useMemo(() => {
@@ -112,7 +125,9 @@ export function ViewArrangement({ itemId, photos }: ViewArrangementProps) {
 
   const update = (next: Slots): void => {
     setSlots(next);
-    setDirty(!sameArrangement(next, saved));
+    const isDirty = !sameArrangement(next, saved);
+    setDirty(isDirty);
+    onSlotsChange?.(new Set(VIEW_ORDER.filter((view) => next[view] !== null)));
   };
   const place = (assetId: string, target: DropTarget): void => {
     const card = cards.get(assetId);
@@ -236,6 +251,7 @@ export function ViewArrangement({ itemId, photos }: ViewArrangementProps) {
     try {
       await arrangePhotos(itemId, slotsPayload(slots));
       setDirty(false);
+      onSlotsChange?.(new Set(VIEW_ORDER.filter((view) => slots[view] !== null)));
       notify("视图排列已保存。");
       await refresh();
     } catch (failure) {
@@ -311,6 +327,7 @@ export function ViewArrangement({ itemId, photos }: ViewArrangementProps) {
           </button>
         </div>
       </div>
+      {dirty && <p className="status-note" data-testid="arrangement-unsaved" role="status">排列尚未保存：点「保存排列」或导航到下一步时自动保存。</p>}
       <p className="field__hint">
         拖动图片到下方槽位；拖到已占用的槽会互换；拖回候选区即移出。也可以用每张图下方的下拉框完成同样的操作。建议视图来自说明书 AI，只作参考。
       </p>
