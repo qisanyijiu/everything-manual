@@ -26,8 +26,9 @@ export function readReleaseKnowledge(knowledge: unknown, frozenReview: unknown) 
       ...original,
       title: edit?.title ?? original.title,
       orderedActions: edit?.orderedActions ?? original.orderedActions,
+      safetyNotes: edit?.safetyNotes ?? original.safetyNotes,
       original,
-      hasUserEdit: edit?.title !== undefined || edit?.orderedActions !== undefined,
+      hasUserEdit: edit?.title !== undefined || edit?.orderedActions !== undefined || edit?.safetyNotes !== undefined,
     };
   });
   const specs = readDraftSpecs(knowledge).map((original) => {

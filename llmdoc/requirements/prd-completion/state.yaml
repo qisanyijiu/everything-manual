@@ -37,8 +37,8 @@ qa_round: 18
 qa_scope: full
 qa_result: null
 open_defects: []
-blocked_reason: null
+blocked_reason: "最终普通包启动等待macOS NativeKeychain用户授权，无8082监听；不代点系统安全弹窗"
 resume_phase: null
-blocked_on: null
-unblock_condition: null
-next_action: "仅Chrome真实Wii U闭环。用户已确认LLM内部免费、9000 credits任务额度和Keychain许可。QA18正常包8082首调用已真实执行：LLM400模型名无效、Tripo上传401鉴权拒绝，尚无模型生成提交；失败任务已取消并保留。用户在新版设置核对Tripo key/区域，唯一RD新增显式读取网关模型按钮；只做相关验证后更新普通包，继续实际样本。"
+blocked_on: user_native_keychain
+unblock_condition: "用户允许当前everything-manual钥匙串访问，服务成功监听8082"
+next_action: "最终普通包a2e7c4a2已完成contracts、9项常规publishing、前端目标测试和生产构建。等待用户允许当前钥匙串弹窗（session87473/PID57163）后，仅重试现有job模型下载；启动Chrome v3驱动，核对真实模型并应用已核查229项、真实热点，发布阅读导出。34页LLM已完成，Tripo已结算30 credits；不重新购买，不扩展其他浏览器矩阵。"

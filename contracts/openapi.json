@@ -3589,6 +3589,17 @@
               "null"
             ]
           },
+          "safetyNotes": {
+            "description": "Step-only local safety notes: at most 12 nonblank strings, each at most\n600 characters. An explicit empty list removes the displayed notes;\nomission preserves an existing override, or otherwise the supplier notes.\nThe original snapshot is retained.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 12,
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "title": {
             "type": [
               "string",

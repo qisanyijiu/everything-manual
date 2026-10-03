@@ -284,6 +284,9 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
                             {step.original.orderedActions.length > 0 && <ol>
                               {step.original.orderedActions.map((action, index) => <li key={index}>{action}</li>)}
                             </ol>}
+                            {step.original.safetyNotes.length > 0 && <ul>
+                              {step.original.safetyNotes.map((note, index) => <li key={index}>原注意事项：{note}</li>)}
+                            </ul>}
                           </ReleaseRevision>}
                           {index === safeStepIndex && (
                             <div className="step-detail">

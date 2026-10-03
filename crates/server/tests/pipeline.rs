@@ -624,9 +624,17 @@ fn pool(app: &TestApp) -> SqlitePool {
 /// 生产接线：Provider 处理器 + 组装处理器（T15 起 `serve` 同时注册两者）。
 fn pipeline_executor(app: &TestApp, clock: Arc<ManualClock>) -> Arc<JobExecutor> {
     let settings = app.state().settings().clone();
+    pipeline_executor_with_settings(app, clock, &settings)
+}
+
+fn pipeline_executor_with_settings(
+    app: &TestApp,
+    clock: Arc<ManualClock>,
+    settings: &everything_manual::config::Settings,
+) -> Arc<JobExecutor> {
     let mut registry = StageRegistry::new();
-    register_provider_handlers(&mut registry, &settings).expect("已配置的 Provider 必须能注册");
-    let pipeline = PipelineHandlers::from_settings(&settings);
+    register_provider_handlers(&mut registry, settings).expect("已配置的 Provider 必须能注册");
+    let pipeline = PipelineHandlers::from_settings(settings);
     let registered = pipeline.register(&mut registry);
     assert!(
         registered.contains(&StageKind::AssembleDraft),
@@ -1315,7 +1323,7 @@ async fn knowledge_failure_retries_only_the_knowledge_branch() {
 /// （界面只在 `allowed=true` 时渲染重试按钮；被拒时照实显示原因）。
 ///
 /// 现场：知识批次拒答（`needs_input`，manual_ai 预留仍占用 → 可重试）；
-/// 模型分支远端成功但 GLB 截断（`needs_input`，tripo 已结算 → `budgetNotHolding`）。
+/// 模型分支远端成功但 GLB 截断（`needs_input`，tripo 已结算 → 仍可本地校验重试）。
 #[tokio::test]
 async fn job_detail_retry_availability_matches_the_retry_endpoint() {
     let manual = manual_ai_server(vec![respond_file(&responses_path("refusal.json"))]);
@@ -1387,10 +1395,10 @@ async fn job_detail_retry_availability_matches_the_retry_endpoint() {
     let validate = stage_json("model_validate");
     assert_eq!(validate["status"], "needs_input");
     assert_eq!(
-        validate["retry"]["allowed"], false,
-        "tripo 已结算 → 重试没有预算背书，必须如实显示不可重试：{validate}"
+        validate["retry"]["allowed"], true,
+        "本地校验不重新购买，Tripo 已结算仍可重试：{validate}"
     );
-    assert_eq!(validate["retry"]["reason"], "budgetNotHolding");
+    assert!(validate["retry"]["reason"].is_null());
     assert!(validate["submissionStyle"].is_null());
 
     let submit = stage_json("tripo_submit");
@@ -1400,10 +1408,9 @@ async fn job_detail_retry_availability_matches_the_retry_endpoint() {
     );
     assert_eq!(submit["submissionStyle"], "asyncRemoteTask");
 
-    // 与端点交叉核对：详情说"不可重试"就必须真的被拒（同 reason）；
-    // 详情说"可重试"就必须真的被接受。
+    // 与端点交叉核对：详情说"可重试"就必须真的被接受。
     let etag = job_etag(&app, &cookie, &job_id).await;
-    let rejected = app
+    let model_retry = app
         .call(Method::POST, &format!("/api/v1/jobs/{job_id}/retry"))
         .cookie(&cookie)
         .csrf(&csrf)
@@ -1412,18 +1419,10 @@ async fn job_detail_retry_availability_matches_the_retry_endpoint() {
         .json(&json!({ "stageId": validate["id"] }))
         .send()
         .await;
-    assert_eq!(
-        rejected.status,
-        StatusCode::UNPROCESSABLE_ENTITY,
-        "{}",
-        rejected.text()
-    );
-    assert_eq!(
-        rejected.json()["error"]["details"]["reason"],
-        validate["retry"]["reason"],
-        "详情与端点的判据必须同源"
-    );
+    assert_eq!(model_retry.status, StatusCode::OK, "{}", model_retry.text());
+    assert_eq!(model_retry.json()["data"]["previousStatus"], "needs_input");
 
+    let etag = job_etag(&app, &cookie, &job_id).await;
     let accepted = app
         .call(Method::POST, &format!("/api/v1/jobs/{job_id}/retry"))
         .cookie(&cookie)
@@ -1443,6 +1442,164 @@ async fn job_detail_retry_availability_matches_the_retry_endpoint() {
     );
     tripo.assert_called_times("POST", TRIPO_SUBMIT_PATH, 1);
     assert_eq!(cdn.call_count("GET", "/bad-model.glb"), 1);
+}
+
+#[tokio::test]
+async fn download_retry_preserves_settled_or_unknown_ledger_without_new_purchase() {
+    for unknown_billing in [false, true] {
+        let manual = manual_ai_server(vec![respond_file(&responses_path("success.json"))]);
+        let (cdn, model_url) = glb_cdn();
+        let mut task_success = task_success_with(&model_url);
+        if unknown_billing {
+            let Step::Respond { response } = &mut task_success else {
+                panic!("task response fixture");
+            };
+            let BodySpec::Json { json } = &mut response.body else {
+                panic!("task JSON fixture");
+            };
+            json["data"]
+                .as_object_mut()
+                .unwrap()
+                .remove("credits_consumed");
+        }
+        let tripo = tripo_server(
+            upload_steps(),
+            vec![submit_success()],
+            vec![task_success],
+            true,
+        );
+        let app = pipeline_app(
+            "download-retry-ledger",
+            &tripo_base_url(&tripo),
+            &manual_ai_base_url(&manual),
+        )
+        .await;
+        let (cookie, csrf) = logged_in(&app).await;
+        let inputs = build_ready_inputs(&app, &cookie, &csrf).await;
+        let job_id = create_job(&app, &cookie, &csrf, &inputs, "download-retry-ledger").await;
+        let pool = pool(&app);
+        let clock = Arc::new(ManualClock::new(Timestamp::now()));
+
+        // Real provider handlers settle generation, then the download policy rejects the CDN.
+        let mut blocked_settings = app.state().settings().clone();
+        blocked_settings.download.allowed_hosts.clear();
+        let blocked = pipeline_executor_with_settings(&app, Arc::clone(&clock), &blocked_settings);
+        tick_until_stage(
+            &pool,
+            &blocked,
+            &clock,
+            &job_id,
+            StageKind::ModelDownload,
+            JobStatus::NeedsInput,
+            60,
+        )
+        .await;
+        tick_until_stage(
+            &pool,
+            &blocked,
+            &clock,
+            &job_id,
+            StageKind::ManualMerge,
+            JobStatus::Succeeded,
+            60,
+        )
+        .await;
+        // Download is an upstream dependency: validation and assembly must remain queued.
+        // Partial assembly is allowed only after its immediate branch heads are resolved.
+        assert_eq!(
+            stage_status(&pool, &job_id, StageKind::ModelValidate).await,
+            JobStatus::Queued
+        );
+        assert_eq!(
+            stage_status(&pool, &job_id, StageKind::AssembleDraft).await,
+            JobStatus::Queued
+        );
+        let download = stage_of(&pool, &job_id, StageKind::ModelDownload).await;
+        let job = job_row(&pool, &job_id).await;
+        let knowledge = stage_of(&pool, &job_id, StageKind::ManualMerge).await;
+        let submit = stage_of(&pool, &job_id, StageKind::TripoSubmit).await;
+        let mut before = ledger_entry(&pool, &job.snapshot_id, ProviderKey::Tripo)
+            .await
+            .unwrap();
+        if unknown_billing {
+            // A known task may have unresolved billing: preserve that fact, never infer zero.
+            let mut conn = pool.acquire().await.unwrap();
+            repo::ledger::mark_unknown(&mut conn, &before.id, Timestamp::now())
+                .await
+                .unwrap();
+            before = repo::ledger::get(&mut conn, &before.id)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(before.state, LedgerState::Unknown);
+            assert!(before.actual.is_none());
+        } else {
+            assert_eq!(before.state, LedgerState::Settled);
+            assert_eq!(before.actual, Some(3000));
+        }
+        assert_eq!(
+            cdn.call_count("GET", "/model.glb"),
+            0,
+            "blocked before CDN access"
+        );
+        tripo.assert_called_times("POST", TRIPO_SUBMIT_PATH, 1);
+        let detail = get_job_json(&app, &cookie, &job_id).await;
+        let download_dto = detail["data"]["stages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|stage| stage["id"] == download.id)
+            .unwrap();
+        assert_eq!(download_dto["retry"]["allowed"], true, "{download_dto}");
+
+        // Simulate a restart with only the correct download policy; paid stages are untouched.
+        drop(blocked);
+        let resumed = pipeline_executor(&app, Arc::clone(&clock));
+        let etag = job_etag(&app, &cookie, &job_id).await;
+        let retry = app
+            .call(Method::POST, &format!("/api/v1/jobs/{job_id}/retry"))
+            .cookie(&cookie)
+            .csrf(&csrf)
+            .header("if-match", &etag)
+            .header("idempotency-key", "retry-existing-model-download")
+            .json(&json!({ "stageId": download.id }))
+            .send()
+            .await;
+        assert_eq!(retry.status, StatusCode::OK, "{}", retry.text());
+        assert_eq!(retry.json()["data"]["requeuedDependents"], 0);
+        tick_until_stage(
+            &pool,
+            &resumed,
+            &clock,
+            &job_id,
+            StageKind::AssembleDraft,
+            JobStatus::Succeeded,
+            60,
+        )
+        .await;
+        assert_eq!(job_row(&pool, &job_id).await.status, JobStatus::Succeeded);
+        let draft = draft_for_snapshot(&pool, &job.snapshot_id).await.unwrap();
+        assert_eq!(draft.knowledge_json["completeness"], "complete");
+        assert!(draft.model_revision_id.is_some());
+        assert_eq!(
+            stage_of(&pool, &job_id, StageKind::ManualMerge).await,
+            knowledge
+        );
+        assert_eq!(
+            stage_of(&pool, &job_id, StageKind::TripoSubmit).await,
+            submit
+        );
+        assert_eq!(
+            ledger_entry(&pool, &job.snapshot_id, ProviderKey::Tripo)
+                .await
+                .unwrap(),
+            before
+        );
+        tripo.assert_called_times("POST", TRIPO_SUBMIT_PATH, 1);
+        manual.assert_called_times("POST", MANUAL_AI_PATH, 1);
+        assert_eq!(cdn.call_count("GET", "/model.glb"), 1);
+        assert_eq!(releases_count(&pool).await, 0);
+    }
 }
 
 #[tokio::test]
@@ -1617,12 +1774,10 @@ async fn blocked_model_branch_still_produces_a_partial_draft_with_missing_items(
         missing_message.contains("model_validate"),
         "缺项必须指明阻塞的阶段：{missing_message}"
     );
-    // T17 / T15 P3①：草稿缺项文案不得承诺"可对该阶段重试"——该分支的 tripo 预留
-    // 已结算（`tripo_poll` 成功即结算），retry 端点会以 `budgetNotHolding` 拒绝；
-    // 可执行动作一律以任务详情的 `retry` 字段为准。
+    // 可执行动作以任务详情为准；本地校验可重试，但重试不承诺修复截断的模型。
     assert!(
         !missing_message.contains("可对该阶段重试"),
-        "缺项文案不得承诺可重试（实际被 budgetNotHolding 拒绝）：{missing_message}"
+        "缺项文案应指向任务中心的实际恢复动作：{missing_message}"
     );
     assert!(
         missing_message.contains("任务中心"),
@@ -1652,17 +1807,11 @@ async fn blocked_model_branch_still_produces_a_partial_draft_with_missing_items(
     );
     // T17 / T15 P3①：任务详情如实给出重试准入（与服务端端点同源判据）。
     assert_eq!(
-        validate["retry"]["allowed"], false,
-        "模型分支头阻塞的现场必须如实显示不可重试：{validate}"
+        validate["retry"]["allowed"], true,
+        "本地校验不需重新预留生成费用：{validate}"
     );
-    assert_eq!(validate["retry"]["reason"], "budgetNotHolding");
-    assert!(
-        validate["retry"]["message"]
-            .as_str()
-            .unwrap_or_default()
-            .contains("报价"),
-        "被拒时必须给出真实可行的恢复路径（重新报价）：{validate}"
-    );
+    assert!(validate["retry"]["reason"].is_null());
+    assert!(validate["retry"]["message"].is_null());
     let draft_get = app
         .call(
             Method::GET,

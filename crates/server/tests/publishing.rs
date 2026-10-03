@@ -1043,6 +1043,286 @@ async fn hotspot_state_machine_and_anchor_rules_follow_the_contract() {
 // 2) 知识确认、人工修订、modelReview 与 bbox=null（AC-054）
 // ===========================================================================
 
+#[test]
+fn safety_note_edit_openapi_exposes_optional_bounded_string_array() {
+    let document: Value =
+        serde_json::from_str(&everything_manual::http::openapi::openapi_pretty_json().unwrap())
+            .unwrap();
+    let edit = &document["components"]["schemas"]["UserEdit"];
+    let notes = &edit["properties"]["safetyNotes"];
+    assert_eq!(notes["type"], json!(["array", "null"]));
+    assert_eq!(notes["items"]["type"], "string");
+    assert_eq!(notes["maxItems"], 12);
+    assert!(notes["description"].as_str().unwrap().contains("600"));
+    assert!(
+        edit["required"]
+            .as_array()
+            .is_none_or(|fields| !fields.contains(&json!("safetyNotes")))
+    );
+}
+
+#[tokio::test]
+async fn safety_note_edits_validate_and_publish_without_mutating_source_or_prior_release() {
+    let manual = manual_ai_server(vec![respond_file(&responses_path("success.json"))]);
+    let (cdn, model_url) = cdn_server("/model.glb", fixture_bytes("sample-model.glb"));
+    let tripo = tripo_server(vec![submit_success()], vec![task_success_with(&model_url)]);
+    let chain = chain("safety-note-edits", &tripo, &manual).await;
+    let draft = run_job_to_draft(&chain, "safety-note-job").await;
+    let mut view = get_draft(&chain, &draft.id).await;
+    let source = draft_knowledge(&view).clone();
+    let part = entity_ids(&source, "parts")[0].clone();
+    let step = entity_ids(&source, "steps")[0].clone();
+    let spec = entity_ids(&source, "specs")[0].clone();
+    assert!(
+        !source["knowledge"]["steps"][0]["safetyNotes"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    let calls_before = tripo.request_total() + manual.request_total() + cdn.request_total();
+    let ledger_before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM cost_ledger")
+        .fetch_one(&pool(&chain))
+        .await
+        .unwrap();
+    let attempts_before: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM provider_attempts")
+        .fetch_one(&pool(&chain))
+        .await
+        .unwrap();
+
+    // Wrong entity kinds, wrong JSON types, empty entries and both limits reject
+    // the entire patch without changing its ETag, overlay or source snapshot.
+    for (entity, notes) in [
+        (part.clone(), json!(["not a part field"])),
+        (spec.clone(), json!([])),
+        (step.clone(), json!("not an array")),
+        (step.clone(), json!(["valid", 42])),
+        (step.clone(), json!([null])),
+        (step.clone(), json!(["   "])),
+        (step.clone(), json!(["注".repeat(601)])),
+        (step.clone(), json!(vec!["注意"; 13])),
+    ] {
+        patch_422(
+            &chain,
+            &draft.id,
+            &view.etag,
+            json!({ "entities": {
+            entity: { "reviewStatus": "confirmed", "userEdited": { "safetyNotes": notes } }
+        } }),
+        )
+        .await;
+        let unchanged = get_draft(&chain, &draft.id).await;
+        assert_eq!(unchanged.etag, view.etag);
+        assert_eq!(unchanged.json, view.json);
+    }
+    // Seed earlier local edits: subsequent partial safety updates must merge,
+    // not replace the existing title/actions or the other entity kinds' fields.
+    view = patch_ok(
+        &chain,
+        &draft.id,
+        &view,
+        json!({ "entities": {
+            step.clone(): { "userEdited": { "title": "人工标题一", "orderedActions": ["人工操作"] } },
+            part.clone(): { "userEdited": { "name": "人工部件名", "description": "人工部件说明" } },
+            spec.clone(): { "userEdited": { "label": "人工规格名", "value": "人工规格值" } }
+        } }),
+    ).await;
+    // Exact inclusive boundaries are legal, including multi-byte Unicode.
+    view = patch_ok(
+        &chain,
+        &draft.id,
+        &view,
+        json!({ "entities": {
+        step.clone(): { "userEdited": { "safetyNotes": vec!["注".repeat(600); 12] } }
+    } }),
+    )
+    .await;
+    assert_eq!(draft_knowledge(&view), &source);
+    let corrected = json!(["电源指示灯变红之后，再等待至少四秒，然后才能重新开机。"]);
+    let correction = json!({ "entities": { step.clone(): {
+        "reviewStatus": "confirmed", "userEdited": { "safetyNotes": corrected.clone() }
+    } } });
+    view = patch_ok(&chain, &draft.id, &view, correction.clone()).await;
+    let entry = &view.json["data"]["review"]["entities"][&step];
+    assert_eq!(
+        entry["userEdited"],
+        json!({
+            "title": "人工标题一", "orderedActions": ["人工操作"], "safetyNotes": corrected
+        })
+    );
+    assert!(entry["editedAt"].as_i64().unwrap() > 0);
+    assert!(entry["editedBy"].as_str().is_some());
+    let replay = patch_ok(&chain, &draft.id, &view, correction).await;
+    assert_eq!(replay.etag, view.etag);
+    assert_eq!(replay.json, view.json);
+
+    // Conversely, updating only the title preserves safety and action edits.
+    // A partial replay must not restamp editedAt or increment the ETag.
+    let title_only = json!({ "entities": { step.clone(): {
+        "userEdited": { "title": "人工标题二" }
+    } } });
+    view = patch_ok(&chain, &draft.id, &view, title_only.clone()).await;
+    assert_eq!(
+        view.json["data"]["review"]["entities"][&step]["userEdited"],
+        json!({
+            "title": "人工标题二", "orderedActions": ["人工操作"], "safetyNotes": corrected
+        })
+    );
+    let replay = patch_ok(&chain, &draft.id, &view, title_only).await;
+    assert_eq!(replay.etag, view.etag);
+    assert_eq!(replay.json, view.json);
+    view = patch_ok(
+        &chain,
+        &draft.id,
+        &view,
+        json!({ "entities": { part.clone(): {
+        "userEdited": { "name": "人工部件名二" }
+    } } }),
+    )
+    .await;
+    assert_eq!(
+        view.json["data"]["review"]["entities"][&part]["userEdited"],
+        json!({
+            "name": "人工部件名二", "description": "人工部件说明"
+        })
+    );
+    view = patch_ok(
+        &chain,
+        &draft.id,
+        &view,
+        json!({ "entities": { spec.clone(): {
+        "userEdited": { "value": "人工规格值二" }
+    } } }),
+    )
+    .await;
+    assert_eq!(
+        view.json["data"]["review"]["entities"][&spec]["userEdited"],
+        json!({
+            "label": "人工规格名", "value": "人工规格值二"
+        })
+    );
+
+    view = patch_ok(&chain, &draft.id, &view, confirm_all(&source)).await;
+    let text_parts: serde_json::Map<String, Value> = entity_ids(&source, "parts")
+        .into_iter()
+        .map(|id| (id, json!({ "textOnly": true })))
+        .collect();
+    view = patch_ok(
+        &chain,
+        &draft.id,
+        &view,
+        json!({
+            "entities": text_parts, "modelReview": { "loaded": true, "userConfirmed": true }
+        }),
+    )
+    .await;
+    let published_a = publish(&chain, &draft.id, &view.etag, "safety-note-release-a").await;
+    assert_eq!(
+        published_a.status,
+        StatusCode::CREATED,
+        "{}",
+        published_a.text()
+    );
+    let id_a = published_a.json()["data"]["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let url_a = format!("/api/v1/items/{}/releases/{id_a}", chain.inputs.item);
+    let response_a = chain
+        .app
+        .call(Method::GET, &url_a)
+        .cookie(&chain.cookie)
+        .send()
+        .await;
+    assert_eq!(response_a.status, StatusCode::OK);
+    let a = response_a.json();
+    assert_eq!(a["data"]["manifest"]["knowledge"], source);
+    assert_eq!(
+        a["data"]["manifest"]["review"]["entities"][&step]["userEdited"],
+        json!({ "title": "人工标题二", "orderedActions": ["人工操作"], "safetyNotes": corrected })
+    );
+
+    // [] is an intentional deletion in the overlay; it is not an omitted field
+    // and must survive publishing, while release A retains its own correction.
+    view = get_draft(&chain, &draft.id).await;
+    let clear_safety = json!({ "entities": { step.clone(): {
+        "userEdited": { "safetyNotes": [] }
+    } } });
+    view = patch_ok(&chain, &draft.id, &view, clear_safety.clone()).await;
+    assert_eq!(
+        view.json["data"]["review"]["entities"][&step]["userEdited"],
+        json!({ "title": "人工标题二", "orderedActions": ["人工操作"], "safetyNotes": [] })
+    );
+    let replay = patch_ok(&chain, &draft.id, &view, clear_safety).await;
+    assert_eq!(replay.etag, view.etag);
+    assert_eq!(replay.json, view.json);
+    assert_eq!(draft_knowledge(&view), &source);
+    let published_b = publish(&chain, &draft.id, &view.etag, "safety-note-release-b").await;
+    assert_eq!(
+        published_b.status,
+        StatusCode::CREATED,
+        "{}",
+        published_b.text()
+    );
+    let id_b = published_b.json()["data"]["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    assert_ne!(id_a, id_b);
+    let b = chain
+        .app
+        .call(
+            Method::GET,
+            &format!("/api/v1/items/{}/releases/{id_b}", chain.inputs.item),
+        )
+        .cookie(&chain.cookie)
+        .send()
+        .await;
+    assert_eq!(b.status, StatusCode::OK);
+    let b = b.json();
+    assert_eq!(b["data"]["manifest"]["knowledge"], source);
+    assert_eq!(
+        b["data"]["manifest"]["review"]["entities"][&step]["userEdited"],
+        json!({ "title": "人工标题二", "orderedActions": ["人工操作"], "safetyNotes": [] })
+    );
+    assert_eq!(
+        b["data"]["manifest"]["assets"],
+        a["data"]["manifest"]["assets"]
+    );
+    let after_a = chain
+        .app
+        .call(Method::GET, &url_a)
+        .cookie(&chain.cookie)
+        .send()
+        .await;
+    assert_eq!(after_a.status, StatusCode::OK);
+    assert_eq!(
+        after_a.json(),
+        a,
+        "prior manifest including hash and original notes remains immutable"
+    );
+    assert_eq!(
+        tripo.request_total() + manual.request_total() + cdn.request_total(),
+        calls_before
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM cost_ledger")
+            .fetch_one(&pool(&chain))
+            .await
+            .unwrap(),
+        ledger_before
+    );
+    assert_eq!(
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM provider_attempts")
+            .fetch_one(&pool(&chain))
+            .await
+            .unwrap(),
+        attempts_before
+    );
+    cdn.shutdown();
+    tripo.shutdown();
+    manual.shutdown();
+}
+
 #[tokio::test]
 async fn review_layer_keeps_supplier_snapshot_and_model_review_is_declared_by_user() {
     let manual = manual_ai_server(vec![respond_file(&responses_path("success.json"))]);

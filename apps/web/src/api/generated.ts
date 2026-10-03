@@ -1989,6 +1989,13 @@ export interface components {
             label?: string | null;
             name?: string | null;
             orderedActions?: string[] | null;
+            /**
+             * @description Step-only local safety notes: at most 12 nonblank strings, each at most
+             *     600 characters. An explicit empty list removes the displayed notes;
+             *     omission preserves an existing override, or otherwise the supplier notes.
+             *     The original snapshot is retained.
+             */
+            safetyNotes?: string[] | null;
             title?: string | null;
             value?: string | null;
         };

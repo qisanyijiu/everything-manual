@@ -82,6 +82,8 @@ function ConfirmWorkspace({ id }: { id: string }) {
   const recoveryBlocked = recovery.phase !== "verified";
   const operationPending = recovery.operation !== null;
   const adoptQuote = recovery.adopt;
+  const hasPendingOperation = recovery.hasPendingOperation;
+  const consumeCompletedJobCheck = recovery.consumeCompletedJobCheck;
   const summary = useItemSummaries([id], search.get("documentId"));
   const documents = documentsQuery.data?.documents ?? [];
   const selectedDocument = documents.find((entry) => entry.id === (search.get("documentId") ?? summary.data?.[0]?.documentId)) ?? null;
@@ -104,6 +106,10 @@ function ConfirmWorkspace({ id }: { id: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<SubmissionError | null>(null);
   const [acceptedJob, setAcceptedJob] = useState<{ id: string } | null>(null);
+  const [checkingCompletedJob, setCheckingCompletedJob] = useState(false);
+  const [completedJobError, setCompletedJobError] = useState<string | null>(null);
+  const completedJobRequest = useRef(false);
+  const [previousJobId, setPreviousJobId] = useState<string | null>(null);
   /** 服务端已判定"该操作已存在任务"时锁住生成入口（UI-026：不新建第二份）。 */
   const [lockedJobId, setLockedJobId] = useState<string | null>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
@@ -165,10 +171,11 @@ function ConfirmWorkspace({ id }: { id: string }) {
     return () => window.clearInterval(timer);
   }, [quote]);
 
-  const requestQuote = useCallback(async (): Promise<void> => {
-    if (recoveryBlocked || operationPending || acceptedJob !== null || preparationPointer === null || quoteRequestRef.current || submissionRef.current) {
+  const requestQuote = useCallback(async (completedJobId?: string): Promise<void> => {
+    if (recoveryBlocked || operationPending || hasPendingOperation() || preparationPointer === null || quoteRequestRef.current || submissionRef.current) {
       return;
     }
+    if (acceptedJob !== null && (completedJobId !== acceptedJob.id || !consumeCompletedJobCheck(acceptedJob.id))) return;
     const inputAtRequest = currentInputRef.current;
     quoteRequestRef.current = true;
     // 换报价即使旧确认仍在途也立即失效；晚返回的响应不得确认新报价。
@@ -189,6 +196,9 @@ function ConfirmWorkspace({ id }: { id: string }) {
       });
       if (!mounted.current || currentInputRef.current !== inputAtRequest) return;
       adoptQuote(resource.data);
+      if (completedJobId) {
+        setPreviousJobId(completedJobId); setAcceptedJob(null); setLockedJobId(null);
+      }
       setQuote(resource.data);
       setSearch((previous) => { const next = new URLSearchParams(previous); next.set("quoteId", resource.data.id); return next; }, { replace: true });
       void queryClient.invalidateQueries({ queryKey: workflowKeys.root });
@@ -239,7 +249,22 @@ function ConfirmWorkspace({ id }: { id: string }) {
       quoteRequestRef.current = false;
       setQuoting(false);
     }
-  }, [id, photoIds, preparationPointer, recoveryBlocked, operationPending, acceptedJob, adoptQuote, setSearch, queryClient]);
+  }, [id, photoIds, preparationPointer, recoveryBlocked, operationPending, acceptedJob, adoptQuote, setSearch, queryClient, hasPendingOperation, consumeCompletedJobCheck]);
+
+  async function requoteCompletedJob() {
+    if (!acceptedJob || completedJobRequest.current || recoveryBlocked || operationPending || submitting || quoting || loading || blocked) return;
+    completedJobRequest.current = true; setCheckingCompletedJob(true); setCompletedJobError(null);
+    try {
+      // Keep the consumed quote/job locked until this fresh read permits one explicit estimate.
+      await recovery.verifyCompletedJob(acceptedJob.id);
+      if (mounted.current) await requestQuote(acceptedJob.id);
+    } catch (error) {
+      if (mounted.current) setCompletedJobError(describeError(error).message);
+    } finally {
+      completedJobRequest.current = false;
+      if (mounted.current) setCheckingCompletedJob(false);
+    }
+  }
 
   // 前置满足且尚无报价时自动获取一次（同一输入签名只请求一次，避免 StrictMode 双调用）。
   useEffect(() => {
@@ -609,9 +634,13 @@ function ConfirmWorkspace({ id }: { id: string }) {
             <p>
               <Link to={`/jobs/${acceptedJob.id}`}>查看任务详情</Link>
             </p>
+            <p>若旧任务已结束，可核对其状态后重新报价。旧任务记录保留，新报价仍需重新确认资料与预算。</p>
+            <button type="button" disabled={checkingCompletedJob || recoveryBlocked || operationPending || submitting || quoting || loading || blocked} aria-busy={checkingCompletedJob} onClick={() => void requoteCompletedJob()}>{checkingCompletedJob ? "正在核对旧任务…" : "为此物品重新报价"}</button>
+            {completedJobError && <p role="alert">{completedJobError}</p>}
           </div>
         ) : (
           <div className="confirm-actions">
+            {previousJobId && <p>已获取新报价，旧任务记录保留。<Link to={`/jobs/${previousJobId}`}>查看旧任务</Link></p>}
             <button
               type="button"
               className="button-primary"

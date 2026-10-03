@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { describeError } from "../../api/client";
-import { getEstimate, type JobCreateRequest, type QuoteDto } from "../../api/endpoints";
+import { describeError, requestData } from "../../api/client";
+import { API_PREFIX, getEstimate, type JobCreateRequest, type JobDetailDto, type QuoteDto } from "../../api/endpoints";
 import { useItemSummaries } from "../library/workflow";
 
 export interface SavedSubmission { quoteId: string; key: string; body: JobCreateRequest }
@@ -28,6 +28,34 @@ function writeHint(itemId: string, value: SavedSubmission | null) {
   try { if (value) localStorage.setItem(storageKey(itemId), JSON.stringify(value)); else localStorage.removeItem(storageKey(itemId)); } catch { /* Server discovery remains authoritative when browser storage is unavailable. */ }
 }
 
+/** A cancelled parent can still own a running remote purchase. Fail closed on incomplete facts. */
+export function completedJobRequoteProblem(job: JobDetailDto, jobId: string, itemId: string): string | null {
+  const terminal = (status: string) => ["succeeded", "failed", "cancelled"].includes(status);
+  const blocked = "旧任务仍有未完成或待核对的状态，请先到任务详情处理；尚未重新报价。";
+  if (job.id !== jobId || job.item?.id !== itemId || !terminal(job.status)
+    || !Array.isArray(job.stages) || job.stages.length === 0 || !job.stages.every((stage) => terminal(stage.status))
+    || !Array.isArray(job.attempts) || !Array.isArray(job.reservations) || job.reservations.length === 0
+    || !job.reservations.every((entry) => ["reserved", "settled", "released"].includes(entry.state))) return blocked;
+  for (const attempt of job.attempts) {
+    const stage = job.stages.find((entry) => entry.id === attempt.stageId);
+    if (!stage || !["failed", "accepted"].includes(attempt.submitState)) return blocked;
+    if (attempt.submitState === "accepted" || attempt.remoteTaskId) {
+      if (stage.stageKind === "tripo_submit") {
+        // Submit success only proves acceptance. Poll failure alone can mean a failed GET.
+        const completedRemote = attempt.remoteTaskId && job.stages.some((entry) => {
+          const usage = entry.usage;
+          return entry.stageKind === "tripo_poll" && record(usage)
+            && usage.remoteTaskId === attempt.remoteTaskId
+            && typeof usage.normalizedStatus === "string"
+            && ["success", "failed", "cancelled", "banned", "expired"].includes(usage.normalizedStatus);
+        });
+        if (!completedRemote) return blocked;
+      } else if (stage.stageKind !== "manual_extract" || !["succeeded", "failed"].includes(stage.status)) return blocked;
+    }
+  }
+  return null;
+}
+
 /** Only nonsecret operation identity/body is a hint. No POST, confirmation or new key here. */
 export function useQuoteRecovery(itemId: string, requestedQuoteId: string | null) {
   const summary = useItemSummaries([itemId]);
@@ -38,6 +66,7 @@ export function useQuoteRecovery(itemId: string, requestedQuoteId: string | null
   const operationRef = useRef(operation);
   const initialized = useRef(false);
   const generation = useRef(0);
+  const completedJobCheck = useRef<{ jobId: string; generation: number } | null>(null);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const remember = useCallback((value: SavedSubmission | null) => {
@@ -96,5 +125,21 @@ export function useQuoteRecovery(itemId: string, requestedQuoteId: string | null
     if (id) void read(id);
     else { initialized.current = false; setPhase("discovering"); void summary.refetch(); }
   }, [quote?.id, read, requestedQuoteId, summary]);
-  return { phase, quote, error, operation, remember, read, adopt, retry, summary };
+  const hasPendingOperation = useCallback(() => operationRef.current !== null || readHint(itemId) !== null, [itemId]);
+  const verifyCompletedJob = useCallback(async (jobId: string) => {
+    completedJobCheck.current = null;
+    if (hasPendingOperation()) throw new Error("仍有提交结果待核对，不能重新报价。");
+    const serial = generation.current;
+    const resource = await requestData<JobDetailDto>(`${API_PREFIX}/jobs/${encodeURIComponent(jobId)}`, { cache: "no-store" });
+    if (!mounted.current || generation.current !== serial || hasPendingOperation()) throw new Error("提交或报价状态已改变，请先核对原操作；尚未重新报价。");
+    const problem = completedJobRequoteProblem(resource.data, jobId, itemId);
+    if (problem) throw new Error(problem);
+    completedJobCheck.current = { jobId, generation: serial };
+  }, [hasPendingOperation, itemId]);
+  const consumeCompletedJobCheck = useCallback((jobId: string) => {
+    const checked = completedJobCheck.current;
+    completedJobCheck.current = null;
+    return !!checked && checked.jobId === jobId && checked.generation === generation.current && !hasPendingOperation();
+  }, [hasPendingOperation]);
+  return { phase, quote, error, operation, remember, read, adopt, retry, summary, hasPendingOperation, verifyCompletedJob, consumeCompletedJobCheck };
 }

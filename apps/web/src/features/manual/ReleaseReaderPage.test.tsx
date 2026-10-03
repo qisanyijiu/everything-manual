@@ -114,3 +114,31 @@ it("renders an older release without an overlay using original text and no revis
   expect(screen.getByTestId("reader-current-step")).toHaveTextContent("原步骤");
   expect(screen.queryByText("已修订（人工）")).not.toBeInTheDocument();
 });
+
+it("reads each release's safety correction or explicit removal while preserving original notes for comparison", async () => {
+  const frozenA = manifest(); const frozenB = manifest();
+  const releases = {
+    A: { ...frozenA, review: { entities: { s: { userEdited: { safetyNotes: ["红灯亮起之后等待至少四秒"] } } } } },
+    B: { ...frozenB, review: { entities: { s: { userEdited: { safetyNotes: [] } } } } },
+  };
+  const before = JSON.stringify(releases);
+  vi.mocked(getRelease).mockImplementation(async (_itemId, releaseId) => ({ data: {
+    id: releaseId, draftRevision: 2, modelRevisionId: "model", manifestSha256: "frozenhash", manifest: releases[releaseId as "A" | "B"],
+  } } as Awaited<ReturnType<typeof getRelease>>));
+  show();
+  expect(await screen.findByText("注意：红灯亮起之后等待至少四秒")).toBeVisible();
+  let revision = screen.getByTestId("reader-revision-s");
+  expect(within(revision).getByText("原注意事项：保留安全提示")).not.toBeVisible();
+  fireEvent.click(within(revision).getByText("查看原文本"));
+  expect(within(revision).getByText("原注意事项：保留安全提示")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "打开 B" }));
+  await screen.findByRole("button", { name: "原步骤" });
+  expect(screen.queryByText("注意：红灯亮起之后等待至少四秒")).not.toBeInTheDocument();
+  expect(screen.queryByText("注意：保留安全提示")).not.toBeInTheDocument();
+  revision = screen.getByTestId("reader-revision-s");
+  fireEvent.click(within(revision).getByText("查看原文本"));
+  expect(within(revision).getByText("原注意事项：保留安全提示")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "打开 A" }));
+  expect(await screen.findByText("注意：红灯亮起之后等待至少四秒")).toBeVisible();
+  expect(JSON.stringify(releases)).toBe(before);
+});

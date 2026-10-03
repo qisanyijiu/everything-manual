@@ -67,7 +67,7 @@ describe("frozen release text overlay", () => {
     const view = readReleaseKnowledge(knowledge, { entities: {
       missing: { userEdited: { name: "未知" } },
       p: { userEdited: { title: "错误类型", name: 7, id: "changed", evidence: [] } },
-      s: { userEdited: { name: "错误类型", title: null, orderedActions: "invalid", partIds: [], safetyNotes: [] } },
+      s: { userEdited: { name: "错误类型", title: null, orderedActions: "invalid", partIds: [], safetyNotes: [42] } },
       v: { userEdited: { description: "错误类型", label: false, value: null } },
     } });
     expect(view.parts).toHaveLength(1);
@@ -79,5 +79,20 @@ describe("frozen release text overlay", () => {
   it("keeps older releases without a review and absent knowledge readable", () => {
     expect(readReleaseKnowledge(knowledge, undefined).parts[0]).toMatchObject({ name: "原部件", hasUserEdit: false });
     expect(readReleaseKnowledge(undefined, undefined)).toEqual({ parts: [], steps: [], specs: [], review: { entities: {}, modelReview: null } });
+  });
+
+  it("applies a safety-only revision including explicit removal, retaining the original warnings and source", () => {
+    const before = JSON.stringify(knowledge);
+    for (const safetyNotes of [["红灯亮起之后等待至少四秒"], []]) {
+      const view = readReleaseKnowledge(knowledge, { entities: { s: { userEdited: { safetyNotes } } } });
+      expect(view.steps[0]).toMatchObject({ title: "原步骤", orderedActions: ["原操作"], safetyNotes, hasUserEdit: true, partIds: ["p"], evidence });
+      expect(view.steps[0]?.original.safetyNotes).toEqual(["原安全提示"]);
+    }
+    expect(JSON.stringify(knowledge)).toBe(before);
+  });
+
+  it.each([null, "wrong", ["valid", 42], [null]])("does not turn malformed safety notes into a warning deletion: %j", (safetyNotes) => {
+    const view = readReleaseKnowledge(knowledge, { entities: { s: { userEdited: { safetyNotes } } } });
+    expect(view.steps[0]).toMatchObject({ safetyNotes: ["原安全提示"], hasUserEdit: false });
   });
 });

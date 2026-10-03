@@ -63,6 +63,106 @@ function setup(handler: Handler = () => undefined, generation = true) {
 }
 
 const generate = () => screen.getByTestId("generate-button");
+const completedJob = () => ({ id: "saved-job", item: { id: ITEM.id }, status: "cancelled", stages: [
+  { id: "manual-stage", stageKind: "manual_extract", status: "failed" },
+  { id: "tripo-stage", stageKind: "tripo_upload", status: "cancelled" },
+], attempts: [{ id: "old-attempt", stageId: "manual-stage", submitState: "failed" }], reservations: [{ provider: "tripo", state: "reserved" }, { provider: "manual_ai", state: "released" }] });
+function recoverCompleted(handler: Handler) {
+  return setup((url, init) => {
+    const custom = handler(url, init); if (custom !== undefined) return custom;
+    if (url.includes("/items/summaries?")) return jsonResponse({ data: [{ itemId: ITEM.id, documentId: DOCUMENT.id, latestQuoteId: "old-consumed", steps: { basic: "complete", document: "complete", views: "complete", prepare: "complete", confirm: "complete" } }] });
+    if (url.endsWith("/estimates/old-consumed")) return jsonResponse({ data: { ...quote("old-consumed"), consumedJobId: "saved-job", confirmedAt: "2026-09-19T01:00:00Z" } });
+    return undefined;
+  });
+}
+
+async function clickCompletedRequote() {
+  const button = screen.getByRole("button", { name: "为此物品重新报价" });
+  await waitFor(() => expect(button).toBeEnabled());
+  fireEvent.click(button);
+}
+
+describe("已消费报价的显式重新报价", () => {
+  it("同页旧任务结束后，新报价重新确认与生成使用新的幂等键和报价ID", async () => {
+    let quotes = 0;
+    const submissions: RequestInit[] = [];
+    setup((url, init) => {
+      if (url.endsWith("/estimates")) return jsonResponse({ data: quote(`fresh-${++quotes}`) });
+      if (url.endsWith("/jobs/saved-job")) return jsonResponse({ data: completedJob() });
+      if (url.endsWith("/jobs")) { submissions.push(init); return jsonResponse({ data: { id: "saved-job" } }, { status: 202 }); }
+      return undefined;
+    });
+    await ready(); await confirm(); fireEvent.click(generate());
+    await screen.findByTestId("job-accepted"); await clickCompletedRequote();
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: LABEL })).toBeEnabled());
+    expect(generate()).toBeDisabled(); expect(submissions).toHaveLength(1);
+    await confirm(); fireEvent.click(generate());
+    await waitFor(() => expect(submissions).toHaveLength(2));
+    const firstKey = new Headers(submissions[0]?.headers).get("Idempotency-Key");
+    const secondKey = new Headers(submissions[1]?.headers).get("Idempotency-Key");
+    expect(firstKey).toBeTruthy(); expect(secondKey).toBeTruthy(); expect(secondKey).not.toBe(firstKey);
+    expect(JSON.parse(String(submissions[0]?.body)).quoteId).toBe("fresh-1");
+    expect(JSON.parse(String(submissions[1]?.body)).quoteId).toBe("fresh-2");
+  });
+  it("只在点击后核对终态，核对前零POST；成功仅获取一次新报价且要求重新确认", async () => {
+    const pending = deferred<Response>();
+    const calls = recoverCompleted((url) => url.endsWith("/jobs/saved-job") ? pending.promise : url.endsWith("/estimates") ? jsonResponse({ data: quote("fresh-quote") }) : undefined);
+    await screen.findByTestId("job-accepted");
+    expect(calls.mock.calls.filter(([url]) => String(url).endsWith("/jobs/saved-job"))).toHaveLength(0);
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    await clickCompletedRequote();
+    fireEvent.click(screen.getByRole("button", { name: "正在核对旧任务…" }));
+    const reads = calls.mock.calls.filter(([url]) => String(url).endsWith("/jobs/saved-job"));
+    expect(reads).toHaveLength(1); expect(reads[0]?.[1]?.cache).toBe("no-store");
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    await act(async () => pending.resolve(jsonResponse({ data: completedJob() })));
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: LABEL })).toBeEnabled());
+    expect(screen.getByRole("checkbox", { name: LABEL })).not.toBeChecked();
+    expect(generate()).toBeDisabled();
+    expect(screen.queryByTestId("confirmed-at")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "查看旧任务" })).toHaveAttribute("href", "/jobs/saved-job");
+    const posts = calls.mock.calls.filter(([, init]) => init?.method === "POST");
+    expect(posts).toHaveLength(1); expect(String(posts[0]?.[0])).toMatch(/\/estimates$/);
+    expect(localStorage.getItem(`manual:submission:${ITEM.id}`)).toBeNull();
+  });
+
+  it.each(["running", "submission_unknown"])("旧任务 %s 时不重新报价并保留历史入口", async (status) => {
+    const calls = recoverCompleted((url) => url.endsWith("/jobs/saved-job") ? jsonResponse({ data: { ...completedJob(), status } }) : undefined);
+    await screen.findByTestId("job-accepted"); await clickCompletedRequote();
+    expect(await screen.findByRole("alert")).toHaveTextContent("尚未重新报价");
+    expect(screen.getByRole("link", { name: "查看任务详情" })).toHaveAttribute("href", "/jobs/saved-job");
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+  });
+
+  it("核对失败保留锁，显式重试才重新GET；新报价失败也不解锁或自动重试", async () => {
+    let reads = 0;
+    const calls = recoverCompleted((url) => {
+      if (url.endsWith("/jobs/saved-job")) return ++reads === 1 ? errorResponse(500, "INTERNAL", "读取旧任务失败") : jsonResponse({ data: completedJob() });
+      if (url.endsWith("/estimates")) return errorResponse(503, "INTERNAL", "新报价失败");
+      return undefined;
+    });
+    await screen.findByTestId("job-accepted"); await clickCompletedRequote();
+    expect(await screen.findByRole("alert")).toHaveTextContent("读取旧任务失败");
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+    await clickCompletedRequote();
+    await screen.findByText("新报价失败");
+    expect(screen.getByTestId("job-accepted")).toHaveTextContent("saved-job");
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+    expect(reads).toBe(2);
+  });
+
+  it("GET在途出现另一页未决提交hint时不遗忘原操作且零新报价", async () => {
+    const pending = deferred<Response>();
+    const calls = recoverCompleted((url) => url.endsWith("/jobs/saved-job") ? pending.promise : undefined);
+    await screen.findByTestId("job-accepted"); await clickCompletedRequote();
+    const hint = JSON.stringify({ quoteId: "other-quote", key: "other-key", body: { quoteId: "other-quote", preparationId: "prep-1", photoIds: ["front", "left"], limits: { tripoCreditMinor: 9000, manualAiUsdMicros: 0 } } });
+    localStorage.setItem(`manual:submission:${ITEM.id}`, hint);
+    await act(async () => pending.resolve(jsonResponse({ data: completedJob() })));
+    expect(await screen.findByRole("alert")).toHaveTextContent("请先核对原操作");
+    expect(localStorage.getItem(`manual:submission:${ITEM.id}`)).toBe(hint);
+    expect(calls.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(0);
+  });
+});
 it("PC06 历史报价模型不可用时禁止确认/生成并保留设置纠正入口", async () => {
   const calls = setup((url) => url.endsWith("/estimates") ? jsonResponse({ data: { ...quote(), modelIssue: "suspectedCredential" } }) : undefined);
   await screen.findAllByText("此报价的模型信息不可用，请重新获取报价。");

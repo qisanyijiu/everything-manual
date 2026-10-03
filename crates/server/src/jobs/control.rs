@@ -91,7 +91,8 @@ impl RetryGate {
 /// 重试准入判定（按 [`retry_stage`] 的既有顺序与文案；判定为纯函数，便于单测与详情复用）。
 ///
 /// `ledger_holds` 表示该阶段所属付费分支的预留是否仍占用预算
-/// （`reserved`/`unknown` → true；`settled`/`released`/缺失 → false；本地阶段传 true）。
+/// （`reserved`/`unknown` → true；`settled`/`released`/缺失 → false）。只有可能
+/// 开始新购买的阶段需要该背书；查询、下载、校验和本地合并不重新购买。
 pub fn retry_gate(
     job_status: JobStatus,
     stages: &[JobStage],
@@ -141,6 +142,10 @@ pub fn retry_gate(
         );
     }
     if let Some(provider) = branch_provider(target.stage_kind)
+        && matches!(
+            target.stage_kind,
+            StageKind::ManualExtract | StageKind::TripoUpload | StageKind::TripoSubmit
+        )
         && !ledger_holds
     {
         return RetryGate::denied(
@@ -537,9 +542,9 @@ pub async fn retry_stage_with_config(
             })?;
         }
     }
-    // 3b) 付费分支的预算背书：重试会再次发起请求，对应预留必须仍占用预算
-    //     （reserved/unknown）。已被释放（明确未计费）或缺失的预留 = 这次重试没有
-    //     预算背书 → 拒绝，请重新报价（REQ-023：不自动降质量/不无预算花费）。
+    // 3b) 读取分支账务供 retry_gate 判断：新购买（以及 Tripo 上传这个购买前置）
+    //     仍需 reserved/unknown；已有任务的查询/下载与本地处理不受结算状态阻塞。
+    //     不改写账本，取消、同分支未决提交、配置与执行器依赖检查仍各自生效。
     let ledger_holds = match branch_provider(stage.stage_kind) {
         Some(provider) => {
             let entries = repo::ledger::list_for_snapshot(&mut conn, &job.snapshot_id).await?;
@@ -1431,6 +1436,100 @@ async fn require_job(conn: &mut SqliteConnection, job_id: &str) -> Result<Job, J
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn retry_stage_fixture(kind: StageKind, status: JobStatus) -> JobStage {
+        JobStage {
+            id: kind.as_str().to_owned(),
+            job_id: "job-retry".to_owned(),
+            stage_kind: kind,
+            batch_index: 0,
+            page_set: None,
+            input_hash: "input".to_owned(),
+            result_asset_id: None,
+            usage_json: None,
+            status,
+            lease_owner: None,
+            lease_epoch: 0,
+            lease_until: None,
+            next_run_at: None,
+            attempt_count: 0,
+            poll_count: 0,
+            last_error: None,
+            needs_input_json: None,
+            created_at: Timestamp::EPOCH,
+            updated_at: Timestamp::EPOCH,
+        }
+    }
+
+    #[test]
+    fn retry_budget_gate_only_blocks_new_purchase_stages() {
+        for kind in [
+            StageKind::ManualExtract,
+            StageKind::TripoUpload,
+            StageKind::TripoSubmit,
+        ] {
+            let stage = retry_stage_fixture(kind, JobStatus::NeedsInput);
+            let gate = retry_gate(JobStatus::NeedsInput, &[], &stage, false);
+            assert_eq!(gate.reason, Some("budgetNotHolding"), "{kind:?}");
+            assert!(retry_gate(JobStatus::NeedsInput, &[], &stage, true).allowed);
+        }
+        for kind in [
+            StageKind::TripoPoll,
+            StageKind::ModelDownload,
+            StageKind::ModelValidate,
+            StageKind::ManualMerge,
+            StageKind::FreezeInputs,
+            StageKind::AssembleDraft,
+        ] {
+            for status in [JobStatus::Failed, JobStatus::NeedsInput] {
+                let stage = retry_stage_fixture(kind, status);
+                for ledger_holds in [false, true] {
+                    assert!(
+                        retry_gate(JobStatus::NeedsInput, &[], &stage, ledger_holds).allowed,
+                        "{kind:?}/{status:?}/{ledger_holds}"
+                    );
+                }
+                assert_eq!(
+                    retry_gate(JobStatus::Cancelled, &[], &stage, false).reason,
+                    Some("jobCancelled")
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn download_retry_keeps_unknown_submission_and_stage_status_guards() {
+        let download = retry_stage_fixture(StageKind::ModelDownload, JobStatus::NeedsInput);
+        let unknown = retry_stage_fixture(StageKind::TripoSubmit, JobStatus::SubmissionUnknown);
+        assert_eq!(
+            retry_gate(JobStatus::SubmissionUnknown, &[unknown], &download, false).reason,
+            Some("branchSubmissionUnknown")
+        );
+        let other_branch =
+            retry_stage_fixture(StageKind::ManualExtract, JobStatus::SubmissionUnknown);
+        assert!(
+            retry_gate(
+                JobStatus::SubmissionUnknown,
+                &[other_branch],
+                &download,
+                false
+            )
+            .allowed
+        );
+        for status in [
+            JobStatus::Queued,
+            JobStatus::Running,
+            JobStatus::Succeeded,
+            JobStatus::Cancelled,
+            JobStatus::SubmissionUnknown,
+        ] {
+            let stage = retry_stage_fixture(StageKind::ModelDownload, status);
+            assert_eq!(
+                retry_gate(JobStatus::NeedsInput, &[], &stage, false).reason,
+                Some("stageNotRetryable")
+            );
+        }
+    }
 
     #[test]
     fn branches_are_isolated_for_pause_semantics() {

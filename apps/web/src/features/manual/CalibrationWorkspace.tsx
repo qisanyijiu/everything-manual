@@ -43,6 +43,7 @@ import {
 import type { ViewerStageApi, ViewerPickResult } from "../viewer/ViewerStage";
 import { ViewerPanel } from "../viewer/ViewerPanel";
 import { KnowledgeReviewPanel, type EditValues } from "./KnowledgeReviewPanel";
+import { readReleaseKnowledge } from "./release-view";
 import { reviewTasks, taskDestination, nextReviewTask, type ReviewTask } from "./review-tasks";
 import { PublishPanel } from "./PublishPanel";
 import { useDraftMutations } from "./useDraftMutations";
@@ -116,6 +117,10 @@ function CalibrationWorkspaceContent() {
   usePageWork({ active: dirty || mutations.pending, message: `${dirty ? "离开将丢弃本页未保存的知识修订。" : ""}已保存内容保留。${mutations.pending ? "正在提交的请求可能已经完成，请核对后再操作。" : ""}`, discard: () => { clearLocal(); memory.delete(`draft-write:${itemId}/${draftId}`); } });
   const parts = useMemo(() => readDraftParts(knowledge), [knowledge]);
   const steps = useMemo(() => readDraftSteps(knowledge), [knowledge]);
+  const previewSteps = useMemo(
+    () => readReleaseKnowledge(knowledge, draft?.review).steps,
+    [knowledge, draft?.review],
+  );
   const specs = useMemo(() => readDraftSpecs(knowledge), [knowledge]);
   const hotspots = useMemo(() => readDraftHotspots(knowledge), [knowledge]);
   const stepPoses = useMemo(() => readDraftStepPoses(knowledge), [knowledge]);
@@ -385,7 +390,7 @@ function CalibrationWorkspaceContent() {
             <div data-testid="steps-panel">
               {progressPanel("steps")}
               <StepsPanel
-                steps={steps}
+                steps={previewSteps}
                 documents={documents}
                 onEvidence={(stepId, evidence, focusId) => {
                   setActiveStepId(stepId);

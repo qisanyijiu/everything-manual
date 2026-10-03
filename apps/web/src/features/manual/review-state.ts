@@ -330,6 +330,7 @@ export function entityEditPatch(
     description?: string;
     title?: string;
     orderedActions?: string[];
+    safetyNotes?: string[];
     label?: string;
     value?: string;
   },

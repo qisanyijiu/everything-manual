@@ -51,6 +51,10 @@ pub const EDIT_MAX_ACTION_CHARS: usize = 600;
 pub const EDIT_MAX_LABEL_CHARS: usize = 120;
 pub const EDIT_MAX_VALUE_CHARS: usize = 600;
 pub const EDIT_MAX_ACTIONS_PER_STEP: usize = 24;
+pub const EDIT_MAX_SAFETY_NOTES_PER_STEP: usize =
+    manual_core::knowledge::KNOWLEDGE_MAX_SAFETY_NOTES_PER_STEP;
+// ToSchema requires a literal max_items; keep it aligned with runtime validation.
+const _: () = assert!(EDIT_MAX_SAFETY_NOTES_PER_STEP == 12);
 
 // ---------------------------------------------------------------------------
 // 锚点、热点、相机位姿（contracts §2「Hotspot / CameraPose」）
@@ -170,6 +174,13 @@ pub struct UserEdit {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = true)]
     pub ordered_actions: Option<Vec<String>>,
+    /// Step-only local safety notes: at most 12 nonblank strings, each at most
+    /// 600 characters. An explicit empty list removes the displayed notes;
+    /// omission preserves an existing override, or otherwise the supplier notes.
+    /// The original snapshot is retained.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = true, max_items = 12)]
+    pub safety_notes: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = true)]
     pub label: Option<String>,
@@ -735,7 +746,7 @@ fn validate_entity_patch(
         }
         let (allowed, allow_actions): (Vec<&str>, bool) = match kind {
             Kind::Part => (vec!["name", "description"], false),
-            Kind::Step => (vec!["title", "orderedActions"], true),
+            Kind::Step => (vec!["title", "orderedActions", "safetyNotes"], true),
             Kind::Spec => (vec!["label", "value"], false),
         };
         let provided: Vec<(&str, bool)> = vec![
@@ -743,6 +754,7 @@ fn validate_entity_patch(
             ("description", edit.description.is_some()),
             ("title", edit.title.is_some()),
             ("orderedActions", edit.ordered_actions.is_some()),
+            ("safetyNotes", edit.safety_notes.is_some()),
             ("label", edit.label.is_some()),
             ("value", edit.value.is_some()),
         ];
@@ -803,6 +815,26 @@ fn validate_entity_patch(
                     entity_id,
                     "orderedActions",
                     action,
+                    EDIT_MAX_ACTION_CHARS,
+                    issues,
+                );
+            }
+        }
+        if let Some(notes) = &edit.safety_notes {
+            if notes.len() > EDIT_MAX_SAFETY_NOTES_PER_STEP {
+                issues.push(FieldIssue::new(
+                    "entities",
+                    format!(
+                        "实体 {entity_id} 的 safetyNotes 条数 {} 超过上限 {EDIT_MAX_SAFETY_NOTES_PER_STEP}",
+                        notes.len()
+                    ),
+                ));
+            }
+            for note in notes {
+                check_edit_text(
+                    entity_id,
+                    "safetyNotes",
+                    note,
                     EDIT_MAX_ACTION_CHARS,
                     issues,
                 );
@@ -916,11 +948,24 @@ fn commit_entity_patch(
         entry.review_status = Some(status);
         touched = true;
     }
-    if let Some(edit) = &patch.user_edited
-        && entry.user_edited.as_ref() != Some(edit)
-    {
-        entry.user_edited = Some(edit.clone());
-        touched = true;
+    if let Some(edit) = &patch.user_edited {
+        // PATCH updates only supplied fields. In particular, a safety-only edit
+        // must retain earlier title/actions, and a title-only edit must not
+        // resurrect a corrected warning. Some([]) is an explicit empty override.
+        let existing = entry.user_edited.clone().unwrap_or_default();
+        let merged = UserEdit {
+            name: edit.name.clone().or(existing.name),
+            description: edit.description.clone().or(existing.description),
+            title: edit.title.clone().or(existing.title),
+            ordered_actions: edit.ordered_actions.clone().or(existing.ordered_actions),
+            safety_notes: edit.safety_notes.clone().or(existing.safety_notes),
+            label: edit.label.clone().or(existing.label),
+            value: edit.value.clone().or(existing.value),
+        };
+        if entry.user_edited.as_ref() != Some(&merged) {
+            entry.user_edited = Some(merged);
+            touched = true;
+        }
     }
     if let Some(text_only) = patch.text_only
         && entry.text_only != text_only
