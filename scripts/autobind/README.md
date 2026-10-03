@@ -12,6 +12,21 @@
 6. `autobind.py`：PATCH `hotspots`（candidate）+ `interactive.bindings/actions/poses`；`cdposes.py` 生成四足机器人姿势（先膝后髋、自动贴地）。
 7. `shade.py` / `posepreview.py`：离线渲染分件着色图与姿势预览，用于人工核对。
 
+## 一键运行
+
+```sh
+EM_PASSWORD=… EM_LLM_API_KEY=… TRIPO_API_KEY=… HTTPS_PROXY=… \
+  python run_manual.py <pentax|cyberdog> [--publish] [--resume]
+```
+
+`run_manual.py` 依次执行：上传说明书与视图 → 报价/确认/生成（自动对账超时批次）→ Tripo 分件并挂载 →
+图例读取（文字层优先，图片图例自动改用视觉模型）→ 视角拟合与投影 → LLM 编号↔部件 →
+`interactions.py` 按绑定结果自动推导动作与姿势（不手工指定节点）→ 写回候选 →（`--publish`）确认并发布。
+`--resume` 复用已生成的草稿与分件，只重做绑定与交互，不重复计费。
+
+`interactions.py`：相机类按图例名称推导动作（电池盖/手柄 → 取下，后盖 → 打开，按钮 → 按下，转盘 → 转动，杆 → 扳动）；
+四足机器人自动识别身体轴与头部朝向、四条腿（大腿/小腿/足垫），生成站立/趴下/坐下/握手/作揖与点头/摇头，并自动贴地。
+
 ## 环境变量
 
 - `EM_LLM_API_KEY`：Responses 兼容网关密钥；`TRIPO_API_KEY`：Tripo Open API 密钥（`tsk_…`）；`HTTPS_PROXY`：访问 Tripo 海外站时的代理（可选）。
