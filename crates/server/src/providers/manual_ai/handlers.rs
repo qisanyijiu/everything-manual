@@ -94,10 +94,11 @@ impl ManualAiHandlers {
         if provider.model.is_none() {
             return Err("providers.manual_ai.model 未配置（说明书 AI 不可用）".to_owned());
         }
-        let timeouts = ManualAiTimeouts {
-            request: std::time::Duration::from_secs(settings.jobs.manual_ai_request_seconds),
-            ..ManualAiTimeouts::default()
-        };
+        let mut timeouts = ManualAiTimeouts::from_environment()?;
+        // config.toml 的 jobs.manual_ai_request_seconds 优先于环境变量默认值。
+        if settings.jobs.manual_ai_request_seconds != crate::config::Jobs::DEFAULT_MANUAL_AI_REQUEST_SECONDS {
+            timeouts.request = std::time::Duration::from_secs(settings.jobs.manual_ai_request_seconds);
+        }
         let client = ManualAiClient::new(&provider.base_url, api_key, timeouts)?;
         Ok(Self {
             client: Arc::new(client),

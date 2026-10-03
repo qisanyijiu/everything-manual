@@ -41,6 +41,8 @@ api_key_env = "TRIPO_API_KEY"
 
 [providers.manual_ai]
 # base_url = "https://api.openai.com/v1"        # 默认值（OpenAI Responses 参考适配器）
+# 单次请求默认等待 600 秒（含响应体读取）。长推理网关可用环境变量
+# EM_MANUAL_AI_REQUEST_TIMEOUT_SECONDS 覆盖，范围 30..=3600；超时仍需人工对账，不自动重发。
 # model 无默认值：按供应商文档填写支持图像与结构化输出的型号；缺失时该 Provider
 # 视为“未配置”，生成能力返回未配置（不回落 mock）。
 # model = "<按供应商文档填写>"
@@ -60,6 +62,8 @@ api_key_env = "MANUAL_AI_API_KEY"
 [concurrency]
 # remote_generation = 2
 # manual_ai_batches = 2
+# 长推理网关若多批并发接近请求超时，可设 manual_ai_batches = 1；
+# 环境变量 EM_CONCURRENCY__MANUAL_AI_BATCHES 也可在启动时覆盖。
 
 # 模型产物下载的允许域（T13 / REQ-028；architecture §7 的 SSRF 防护）
 #

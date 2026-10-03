@@ -5,8 +5,8 @@
 //! 2. **受限文件**：`--password-file <path>`，文件权限必须为 0600（组/其他不可读），
 //!    供无人值守初始化使用。
 //!
-//! 密码一律以 [`SecretString`] 包装，T02 只做读取与校验；Argon2 哈希与入库（T04）
-//! 尚未实现，因此当前版本不会把密码写入磁盘（见 `commands.rs::run_init` 的输出说明）。
+//! 密码输入以 [`SecretString`] 包装；`init` 校验后由 `commands.rs::run_init`
+//! 计算 Argon2id 哈希并存入数据库，不持久化明文密码。
 
 use std::io::{IsTerminal, Write};
 use std::path::Path;

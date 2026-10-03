@@ -32,10 +32,21 @@ function writeHint(itemId: string, value: SavedSubmission | null) {
 export function completedJobRequoteProblem(job: JobDetailDto, jobId: string, itemId: string): string | null {
   const terminal = (status: string) => ["succeeded", "failed", "cancelled"].includes(status);
   const blocked = "旧任务仍有未完成或待核对的状态，请先到任务详情处理；尚未重新报价。";
+  // A finished draft can retain an unknown Manual AI ledger entry after an
+  // explicitly authorized replacement. Its usage is still unknown, but the
+  // frozen authorized upper bound is zero. This only permits a new quote; a
+  // new job still needs explicit confirmation.
+  const completedFreeManualAi = job.status === "succeeded" && !!job.draftId
+    && Array.isArray(job.stages) && job.stages.length > 0
+    && job.stages.every((stage) => stage.status === "succeeded");
+  const resolvedReservation = (entry: JobDetailDto["reservations"][number]) =>
+    ["reserved", "settled", "released"].includes(entry.state)
+    || (completedFreeManualAi && entry.state === "unknown" && entry.provider === "manual_ai"
+      && entry.currency === "usdMicros" && entry.reservedMinor === 0);
   if (job.id !== jobId || job.item?.id !== itemId || !terminal(job.status)
     || !Array.isArray(job.stages) || job.stages.length === 0 || !job.stages.every((stage) => terminal(stage.status))
     || !Array.isArray(job.attempts) || !Array.isArray(job.reservations) || job.reservations.length === 0
-    || !job.reservations.every((entry) => ["reserved", "settled", "released"].includes(entry.state))) return blocked;
+    || !job.reservations.every(resolvedReservation)) return blocked;
   for (const attempt of job.attempts) {
     const stage = job.stages.find((entry) => entry.id === attempt.stageId);
     if (!stage || !["failed", "accepted"].includes(attempt.submitState)) return blocked;
