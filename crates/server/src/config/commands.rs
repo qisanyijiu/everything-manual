@@ -315,7 +315,8 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
     // T15：组装草稿是本地阶段（零外呼、零新费用），不依赖任何 Provider 配置——
     // 无条件注册，否则"两条分支都跑完却永远组装不出草稿"（未注册阶段只会被延后）。
     let pipeline = crate::jobs::PipelineHandlers::from_settings(&settings);
-    let pipeline_stages = pipeline.register(&mut registry);
+    let pipeline_stages = pipeline.register(&mut registry, &settings);
+
     tracing::info!(
         event = "pipeline_handlers_registered",
         stages = %pipeline_stages

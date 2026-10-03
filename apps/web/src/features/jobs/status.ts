@@ -138,6 +138,8 @@ export const STAGE_KIND_LABELS: Record<string, string> = {
   tripo_submit: "模型生成提交（付费）",
   tripo_poll: "远端任务查询",
   model_download: "模型下载",
+  tripo_segment: "模型分件",
+  auto_bind: "自动绑定",
   model_validate: "模型校验",
   assemble_draft: "组装草稿",
 };

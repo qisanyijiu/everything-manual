@@ -237,7 +237,7 @@ pub async fn build(
         .await
         .map_err(|_| LiveError::new("storage"))?;
     let batches = plan_manual_ai(&input_pages).map_err(|_| LiveError::new("materialIdentity"))?;
-    let stages = jobs::build_stage_plan("", &batches, &quote, &photos);
+    let stages = jobs::build_stage_plan("", &batches, &quote, &photos, false);
     let pages = repo::preparations::list_pages(&mut tx, &prep.id)
         .await
         .map_err(|_| LiveError::new("storage"))?;

@@ -77,6 +77,8 @@ impl SecurityMode {
 /// 解析后的配置（密钥已按 `api_key_env`/`api_key_file` 注入；Debug 输出不含密钥明文）。
 #[derive(Debug, Clone)]
 pub struct Settings {
+    /// ADR-045：是否在建单时包含 tripo_segment + auto_bind 阶段。
+    pub auto_stages_enabled: bool,
     /// 实际读取的配置文件（None = 未找到，使用内置默认）。
     pub config_path: Option<PathBuf>,
     pub data_dir: PathBuf,
@@ -538,6 +540,7 @@ impl Settings {
         let providers = resolve_providers(&cwd, &config)?;
         let download = resolve_download(&config)?;
 
+        let auto_stages = providers.tripo.configured();
         Ok(Self {
             config_path,
             data_dir,
@@ -553,6 +556,7 @@ impl Settings {
             price_catalog_path,
             price_catalog,
             download,
+            auto_stages_enabled: auto_stages,
         })
     }
 
@@ -1163,6 +1167,7 @@ mod tests {
             price_catalog_path: None,
             price_catalog: None,
             download: DownloadSettings::default(),
+            auto_stages_enabled: false,
         };
         let debug = format!("{settings:?}");
         assert!(!debug.contains("sk-leak-canary"), "{debug}");

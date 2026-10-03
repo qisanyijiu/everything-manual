@@ -689,6 +689,7 @@ mod tests {
             price_catalog_path: None,
             price_catalog: None,
             download: crate::config::DownloadSettings::default(),
+            auto_stages_enabled: false,
         }
     }
 

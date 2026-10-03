@@ -1403,6 +1403,8 @@ pub const fn branch_of(kind: StageKind) -> Branch {
         | StageKind::TripoPoll
         | StageKind::ModelDownload
         | StageKind::ModelValidate => Branch::Model,
+        StageKind::TripoSegment => Branch::Model,
+        StageKind::AutoBind => Branch::Local,
         StageKind::FreezeInputs | StageKind::AssembleDraft => Branch::Local,
     }
 }

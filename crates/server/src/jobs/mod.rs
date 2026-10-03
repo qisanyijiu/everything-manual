@@ -227,3 +227,4 @@ mod tests {
         );
     }
 }
+pub mod auto_stages;

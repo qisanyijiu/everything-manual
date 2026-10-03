@@ -210,6 +210,10 @@ pub enum StageKind {
     ModelDownload,
     ModelValidate,
     AssembleDraft,
+    /// Tripo 语义分割（ADR-045）：生成后自动拆分模型为可交互的分件。
+    TripoSegment,
+    /// 自动热点绑定与交互生成（ADR-045）：从 PDF 标注图 + 分件模型自动定位热点并推导动作/姿势。
+    AutoBind,
 }
 
 impl StageKind {
@@ -224,6 +228,8 @@ impl StageKind {
             Self::ModelDownload => "model_download",
             Self::ModelValidate => "model_validate",
             Self::AssembleDraft => "assemble_draft",
+            Self::TripoSegment => "tripo_segment",
+            Self::AutoBind => "auto_bind",
         }
     }
 

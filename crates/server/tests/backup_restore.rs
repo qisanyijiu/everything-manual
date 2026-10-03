@@ -728,7 +728,7 @@ async fn chain(tag: &str, tripo: &FixtureServer, manual: &FixtureServer) -> Chai
     let settings = app.state().settings().clone();
     let mut registry = StageRegistry::new();
     register_provider_handlers(&mut registry, &settings).expect("已配置的 Provider 必须能注册");
-    PipelineHandlers::from_settings(&settings).register(&mut registry);
+    PipelineHandlers::from_settings(&settings).register(&mut registry, &settings);
     let clock = Arc::new(ManualClock::new(Timestamp::now()));
     let executor = fixed_jitter_executor(
         app.state().database().pool().clone(),

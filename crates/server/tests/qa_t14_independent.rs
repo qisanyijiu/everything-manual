@@ -1330,7 +1330,7 @@ async fn qa_t14_request_bytes_and_scan_page_image() {
         .as_i64()
         .expect("max_output_tokens");
     assert!(
-        (1..=4096).contains(&max_tokens),
+        (1..=16384).contains(&max_tokens),
         "max_output_tokens 必须受限（实际 {max_tokens}）"
     );
     assert_eq!(json["store"], json!(false));
@@ -2096,7 +2096,7 @@ async fn qa_t14_page_instructions_cannot_change_budget_or_reach_network() {
 
     // 2) 预算/模型/token 上限/工具都不可被页内容改变。
     assert_eq!(json["model"], json!(QA_MODEL), "模型只能来自冻结配置");
-    assert_eq!(json["max_output_tokens"], json!(4096));
+    assert_eq!(json["max_output_tokens"], json!(16384));
     assert!(json.get("tools").is_none() && json.get("functions").is_none());
     assert!(!request.body_text().contains("\"response_format\""));
     let budgets_after = snapshot_budgets(&db, &snapshot_id).await;

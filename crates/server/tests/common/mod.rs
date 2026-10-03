@@ -97,6 +97,7 @@ pub fn test_settings(data_dir: &Path) -> Settings {
         price_catalog: None,
         // 默认空名单：拒绝一切模型下载（用例按需显式配置允许域）。
         download: DownloadSettings::default(),
+        auto_stages_enabled: false,
     }
 }
 

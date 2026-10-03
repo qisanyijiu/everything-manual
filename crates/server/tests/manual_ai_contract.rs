@@ -764,7 +764,7 @@ async fn extract_request_uses_responses_text_format_with_strict_schema_and_image
 
     // model 来自冻结快照（配置的模型名）。
     assert_eq!(request["model"], json!(MANUAL_AI_MODEL));
-    assert_eq!(request["max_output_tokens"], json!(4096));
+    assert_eq!(request["max_output_tokens"], json!(16384));
     assert_eq!(request["store"], json!(false));
     assert!(
         request.get("response_format").is_none(),
@@ -1709,7 +1709,7 @@ async fn page_text_instructions_cannot_change_budget_or_trigger_actions() {
     assert!(request.get("tools").is_none() && request.get("url").is_none());
     assert_eq!(
         request["max_output_tokens"],
-        json!(4096),
+        json!(16384),
         "预算参数未被资料改变"
     );
     assert_eq!(request["model"], json!(MANUAL_AI_MODEL), "模型未被资料改变");
