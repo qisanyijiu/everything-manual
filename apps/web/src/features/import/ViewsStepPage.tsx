@@ -12,7 +12,7 @@ import { workflowKeys } from "../library/workflow";
  * - 完成度缺项（缺 front / 缺侧面）常驻显示，并链接到可修复的步骤。
  */
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router";
 
@@ -21,6 +21,7 @@ import { assetContentUrl, createPhoto, patchPhoto, type PhotoDto } from "../../a
 import { Skeleton } from "../../components/Skeleton";
 import { readReason } from "../../components/form";
 import { AssetUploadCard } from "./AssetUploadCard";
+import { ViewArrangement } from "./ViewArrangement";
 import { JobSnapshotNotice } from "../library/JobSnapshotNotice";
 import { MissingItemsList } from "./MissingItemsList";
 import { WizardNav, WizardSteps } from "./WizardSteps";
@@ -38,6 +39,9 @@ export function ViewsStepPage() {
   const queryClient = useQueryClient();
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [busySlot, setBusySlot] = useState<ViewSlot | null>(null);
+  const [draftViews, setDraftViews] = useState<ReadonlySet<string> | null>(null);
+  const arrangeSaveRef = useRef<(() => Promise<void>) | null>(null);
+  const handleSlotsChange = useCallback((views: ReadonlySet<string>) => setDraftViews(views), []);
 
   const photos = photosQuery.data?.photos ?? [];
   const slots = photosByView(photos);
@@ -96,11 +100,16 @@ export function ViewsStepPage() {
     }
   }
 
+  // 缺项用草稿槽位（含未保存的拖拽结果）计算，而不是已保存照片，否则拖进去后仍提示缺少。
+  const effectiveViews = draftViews ?? new Set(photos.map((p) => p.view));
+  const draftPhotos = [...effectiveViews].map((view) => ({
+    id: `draft-${view}`, itemId: id, assetId: "draft", view,
+    revision: 0, createdAt: "", updatedAt: "",
+  } as unknown as PhotoDto));
   const gaps = generationGaps({
     itemId: id,
-    // 本步不读取 preparation：准备相关的缺项在第 4/5 步呈现，这里只提示视图缺项。
     preparationState: "ready",
-    photos,
+    photos: draftViews !== null ? draftPhotos : photos,
     generationCapability: null,
   }).filter((gap) => gap.code === "missingFrontView" || gap.code === "missingSideView");
 
@@ -151,6 +160,17 @@ export function ViewsStepPage() {
       )}
 
       {photosQuery.data !== undefined && (
+        <ViewArrangement
+          itemId={id}
+          photos={photos}
+          onSlotsChange={handleSlotsChange}
+          saveRef={arrangeSaveRef}
+        />
+      )}
+
+      {photosQuery.data !== undefined && (
+        <details className="view-slots-manual">
+          <summary>逐个视图上传 / 替换照片</summary>
         <ul className="view-slots">
           {VIEW_ORDER.map((view) => {
             const photo = slots.get(view);
@@ -223,6 +243,7 @@ export function ViewsStepPage() {
             );
           })}
         </ul>
+        </details>
       )}
 
       <MissingItemsList

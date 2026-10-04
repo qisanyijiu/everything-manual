@@ -46,6 +46,133 @@ pub fn routes() -> Router<AppState> {
         )
 }
 
+/// 分件模型上传路由（multipart；体积上限 = 模型上限 + multipart 开销，独立于 JSON 上限）。
+pub fn parts_routes(limits: &crate::config::Limits) -> Router<AppState> {
+    let limit = limits
+        .max_glb_bytes
+        .saturating_add(crate::assets::validate::MULTIPART_OVERHEAD_BYTES);
+    Router::new()
+        .route(
+            "/items/{id}/drafts/{draft_id}/parts-model",
+            routing::post(attach_parts_model),
+        )
+        .layer(axum::extract::DefaultBodyLimit::max(usize::try_from(limit).unwrap_or(usize::MAX)))
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/items/{id}/drafts/{draftId}/parts-model",
+    tag = "drafts",
+    summary = "挂载分件模型（与草稿模型同一坐标系的多节点 GLB；If-Match）",
+    description = "multipart：`file`（GLB，必填）+ `source`（来源说明，可选）。服务端校验 GLB 预算、\
+                   节点名唯一且只含平移，并核对分件包围盒与草稿模型 `bounds` 一致（坐标系相同）；\
+                   通过后写入 `knowledge.interactive.partsModel`，旧绑定/动作中引用已不存在节点的条目被移除。\
+                   不改变模型版本与热点锚点身份；动作写入 audit_events。",
+    params(
+        ("id" = String, Path, description = "物品 ID（UUIDv7）"),
+        ("draftId" = String, Path, description = "草稿 ID（UUIDv7）"),
+    ),
+    security(("sessionCookie" = [])),
+    responses(
+        (status = 200, description = "已挂载（返回更新后的草稿）", body = DraftResponse),
+        (status = 401, description = "未登录", body = super::dto::ApiErrorResponse),
+        (status = 403, description = "CSRF/Origin 校验失败", body = super::dto::ApiErrorResponse),
+        (status = 404, description = "草稿不存在或不属于该物品", body = super::dto::ApiErrorResponse),
+        (status = 412, description = "revision 过期", body = super::dto::ApiErrorResponse),
+        (status = 413, description = "文件超过模型体积上限", body = super::dto::ApiErrorResponse),
+        (status = 422, description = "不是合法分件 GLB 或坐标系不一致（details.fields）", body = super::dto::ApiErrorResponse),
+        (status = 428, description = "缺少 If-Match", body = super::dto::ApiErrorResponse),
+    )
+)]
+/// `POST /api/v1/items/{id}/drafts/{draftId}/parts-model`（ADR-042；multipart：`file` + 可选 `source`）。
+///
+/// 挂载与草稿模型**同一坐标系**的分件 GLB（例如 Tripo `mesh/segment` 的输出）。必须携带 If-Match；
+/// 坐标系不一致、不是合法 GLB、超出模型预算 → 422；成功返回更新后的草稿（`knowledge.interactive`）。
+pub async fn attach_parts_model(
+    State(state): State<AppState>,
+    request_id: RequestId,
+    axum::Extension(session): axum::Extension<SessionContext>,
+    Path((item_id, draft_id)): Path<(String, String)>,
+    headers: HeaderMap,
+    mut multipart: super::assets::MultipartBody,
+) -> Response {
+    let expected_revision = match parse_if_match(&headers) {
+        Ok(revision) => revision,
+        Err(error) => return error.render(&request_id),
+    };
+    let store = state.assets().clone();
+    let limit = state.settings().limits.max_glb_bytes;
+    let mut staged: Option<crate::assets::blob_store::Staged> = None;
+    let mut source = String::from("upload");
+    loop {
+        let field = match multipart.0.next_field().await {
+            Ok(Some(field)) => field,
+            Ok(None) => break,
+            Err(error) => {
+                return ApiError::field_validation(vec![FieldIssue::new("file", format!("multipart 读取失败：{}", error.body_text()))])
+                    .render(&request_id);
+            }
+        };
+        let mut field = field;
+        match field.name().unwrap_or_default() {
+            "file" => {
+                let mut writer = match crate::assets::blob_store::StagedWriter::create(&store.tmp_dir(), limit, "model_parts").await {
+                    Ok(writer) => writer,
+                    Err(error) => return error.into_api_error().render(&request_id),
+                };
+                loop {
+                    match field.chunk().await {
+                        Ok(Some(chunk)) => {
+                            if let Err(error) = writer.write(&chunk).await {
+                                return error.into_api_error().render(&request_id);
+                            }
+                        }
+                        Ok(None) => break,
+                        Err(error) => {
+                            return ApiError::field_validation(vec![FieldIssue::new("file", format!("上传中断：{}", error.body_text()))])
+                                .render(&request_id);
+                        }
+                    }
+                }
+                match writer.finish().await {
+                    Ok(done) => staged = Some(done),
+                    Err(error) => return error.into_api_error().render(&request_id),
+                }
+            }
+            "source" => {
+                if let Ok(text) = field.text().await {
+                    source = text.chars().filter(|c| !c.is_control()).take(120).collect();
+                }
+            }
+            _ => {}
+        }
+    }
+    let Some(staged) = staged else {
+        return ApiError::field_validation(vec![FieldIssue::new("file", "缺少 file 字段（分件 GLB）")]).render(&request_id);
+    };
+    match crate::drafts::parts_model::attach_parts_model(
+        state.database().pool(),
+        store.data_dir(),
+        crate::drafts::parts_model::AttachInput {
+            item_id: &item_id,
+            draft_id: &draft_id,
+            expected_revision,
+            staged,
+            source,
+            actor: &session.admin_id,
+        },
+        Timestamp::now(),
+    )
+    .await
+    {
+        Ok(draft) => {
+            tracing::info!(requestId = %request_id, draftId = %draft.id, revision = draft.revision, "分件模型已挂载到草稿");
+            draft_response(draft, StatusCode::OK)
+        }
+        Err(error) => ApiError::from(error).render(&request_id),
+    }
+}
+
 /// `GET /api/v1/items/{id}/drafts/{draftId}`。
 #[utoipa::path(
     get,

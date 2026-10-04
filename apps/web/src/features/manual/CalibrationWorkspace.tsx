@@ -47,6 +47,9 @@ import { readReleaseKnowledge } from "./release-view";
 import { reviewTasks, taskDestination, nextReviewTask, type ReviewTask } from "./review-tasks";
 import { PublishPanel } from "./PublishPanel";
 import { useDraftMutations } from "./useDraftMutations";
+import { InteractionPanel } from "../viewer/InteractionPanel";
+import { readInteractive } from "../viewer/interactive";
+import { useInteractive } from "../viewer/useInteractive";
 import {
   hotspotPickUpsert,
   hotspotRebindUpsert,
@@ -128,6 +131,27 @@ function CalibrationWorkspaceContent() {
   const missing = useMemo(() => readDraftMissing(knowledge), [knowledge]);
   const views = useMemo(() => hotspotViews(hotspots, model), [hotspots, model]);
   const displayHotspots = useMemo(() => usableHotspots(views), [views]);
+  const candidates = useMemo(() => views.filter((view) => view.status === "candidate" && view.usable), [views]);
+  const interaction = useInteractive(useMemo(() => readInteractive(knowledge, model), [knowledge, model]), selectedPartId);
+  const confirmCandidates = (): void => {
+    if (etag === null || candidates.length === 0) {
+      return;
+    }
+    mutations.rebindHotspot(etag, {
+      hotspots: {
+        upsert: candidates.map((view) => ({
+          id: view.id,
+          partId: view.partId,
+          status: "confirmed" as const,
+          anchor:
+            view.anchor === null
+              ? null
+              : { ...view.anchor, positionLocal: [...view.anchor.positionLocal] },
+        })),
+      },
+    });
+    setNotice(`已确认 ${candidates.length} 个自动绑定的候选热点（逐个核对位置后再发布）`);
+  };
   const checklist = useMemo(
     () =>
       publishChecklist({
@@ -453,6 +477,11 @@ function CalibrationWorkspaceContent() {
                     entities: { [entityId]: { reviewStatus: decision } },
                   }), decision === "confirmed" ? "已确认事实（文字确认，与几何校准分开）" : "已取消确认", [`fact-${entityId}`]);
                 }}
+                onConfirmAllEntities={(entityIds) => {
+                  if (etag !== null) void perform(() => mutations.updateEntities(etag, {
+                    entities: Object.fromEntries(entityIds.map((id) => [id, { reviewStatus: "confirmed" as const }])),
+                  }), `已确认 ${entityIds.length} 条文字事实（可逐条取消或修订）`, entityIds.map((id) => `fact-${id}`));
+                }}
                 onSaveEntityEdit={(entityId, fields) => etag === null ? Promise.resolve(false) : perform(() => mutations.updateEntities(etag, {
                   entities: { [entityId]: { reviewStatus: "confirmed", userEdited: fields } },
                 }), "已保存人工修订（原文本与出处保留）", [`fact-${entityId}`])}
@@ -471,7 +500,19 @@ function CalibrationWorkspaceContent() {
           onUseTextPath={focusParts}
           onModelReady={() => mutations.setModelReady(true)}
           apiRef={stageApi}
+          interactive={interaction?.viewerProp}
         />
+        {candidates.length > 0 && (
+          <div className="candidate-bar" role="group" aria-label="自动绑定候选" data-testid="candidate-bar">
+            <p>
+              自动绑定生成了 {candidates.length} 个候选热点（橙色标记）：先点开部件核对位置，再批量确认；位置不对的可用「重新绑定」修正。
+            </p>
+            <button type="button" className="button" onClick={confirmCandidates} disabled={etag === null} data-testid="confirm-candidates">
+              确认全部候选热点
+            </button>
+          </div>
+        )}
+        {interaction !== null && <InteractionPanel {...interaction.panel} selectedPartId={selectedPartId} />}
         <PickToolbar
           pickMode={pickMode}
           narrow={narrow}

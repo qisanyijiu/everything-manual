@@ -635,7 +635,7 @@ fn pipeline_executor_with_settings(
     let mut registry = StageRegistry::new();
     register_provider_handlers(&mut registry, settings).expect("已配置的 Provider 必须能注册");
     let pipeline = PipelineHandlers::from_settings(settings);
-    let registered = pipeline.register(&mut registry);
+    let registered = pipeline.register(&mut registry, &settings);
     assert!(
         registered.contains(&StageKind::AssembleDraft),
         "组装阶段必须注册（本地阶段，不依赖 Provider）"
@@ -2322,7 +2322,7 @@ async fn pc06_bad_model_preserves_remote_reconciliation_and_accepted_resume_with
     let registered = register_provider_handlers(&mut registry, &bad_settings).unwrap();
     assert!(registered.contains(&StageKind::TripoSubmit));
     assert!(!registered.contains(&StageKind::TripoUpload));
-    PipelineHandlers::from_settings(&bad_settings).register(&mut registry);
+    PipelineHandlers::from_settings(&bad_settings).register(&mut registry, &bad_settings);
     let resumed = fixed_jitter_executor(
         pool.clone(),
         ExecutorConfig::default(),

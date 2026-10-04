@@ -2926,7 +2926,7 @@ fn qa27_pipeline_executor(app: &common::TestApp, clock: Arc<ManualClock>) -> Arc
     everything_manual::providers::register_provider_handlers(&mut registry, &settings)
         .expect("两个 Provider 都已配置");
     let pipeline = everything_manual::jobs::PipelineHandlers::from_settings(&settings);
-    pipeline.register(&mut registry);
+    pipeline.register(&mut registry, &settings);
     fixed_jitter_executor(
         app.state().database().pool().clone(),
         ExecutorConfig {

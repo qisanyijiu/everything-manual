@@ -281,6 +281,26 @@ export interface paths {
         patch: operations["patch_draft"];
         trace?: never;
     };
+    "/api/v1/items/{id}/drafts/{draftId}/parts-model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 挂载分件模型（与草稿模型同一坐标系的多节点 GLB；If-Match）
+         * @description multipart：`file`（GLB，必填）+ `source`（来源说明，可选）。服务端校验 GLB 预算、节点名唯一且只含平移，并核对分件包围盒与草稿模型 `bounds` 一致（坐标系相同）；通过后写入 `knowledge.interactive.partsModel`，旧绑定/动作中引用已不存在节点的条目被移除。不改变模型版本与热点锚点身份；动作写入 audit_events。
+         */
+        post: operations["attach_parts_model"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/items/{id}/drafts/{draftId}/publish": {
         parameters: {
             query?: never;
@@ -405,6 +425,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/items/{id}/photos/arrangement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 一次性确定全部视图照片（拖拽排列的保存）
+         * @description slots 给出 front/left/back/right/detail 各自的照片资产（省略/null = 空）。资产须为本物品照片且不重复。在一个写事务内替换本物品的全部照片行（同资产保留原照片 id），因此互换两个视图不会撞唯一索引。已开始任务使用冻结快照，不受影响；已有报价会因输入变化失效。
+         */
+        put: operations["arrange_photos"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/items/{id}/photos/{photoId}": {
         parameters: {
             query?: never;
@@ -463,6 +503,61 @@ export interface paths {
         get: operations["get_release"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{id}/view-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 视图候选图（从说明书 PDF 拆出的待选图） */
+        get: operations["list_candidates"];
+        put?: never;
+        /**
+         * 登记一张视图候选图（可选由说明书 AI 判断建议视图）
+         * @description 资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。classify 默认 true：调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），不阻塞用户手动排列。候选不进入报价/生成快照。
+         */
+        post: operations["create_candidate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{id}/view-candidates/{candidateId}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 删除一张候选（软删除，可撤销；不影响已排列的照片） */
+        post: operations["dismiss_candidate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{id}/view-candidates/{candidateId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 撤销删除候选 */
+        post: operations["restore_candidate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -729,6 +824,8 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @enum {string} */
+        ActionMode: "toggle" | "pulse";
         /** @description 管理员摘要（只暴露公开 ID；口令哈希永不出现在任何响应）。 */
         AdminSummary: {
             /** @example 01993000-0000-7000-8000-000000000001 */
@@ -830,6 +927,8 @@ export interface components {
              */
             purpose: string;
         };
+        /** @enum {string} */
+        BindingStatus: "auto" | "confirmed";
         /** @description 用户授权的分列预算上限。 */
         BudgetLimitsDto: {
             /** Format: int64 */
@@ -968,6 +1067,7 @@ export interface components {
                 [key: string]: components["schemas"]["EntityReviewPatchDto"];
             } | null;
             hotspots?: null | components["schemas"]["HotspotPatch"];
+            interactive?: null | components["schemas"]["InteractivePatch"];
             modelReview?: null | components["schemas"]["ModelReviewPatch"];
             status?: null | components["schemas"]["DraftStatusDto"];
             /** @description 步骤视角写入：`{ "<stepId>": CameraPose }`（保存/覆盖；「保存当前视角」动作）。 */
@@ -1028,6 +1128,12 @@ export interface components {
             id?: string | null;
             partId: string;
             status: components["schemas"]["HotspotStatus"];
+        };
+        /** @description PATCH 写入：整体替换绑定/动作/姿势（分件附件由专门接口挂载，PATCH 不可改）。 */
+        InteractivePatch: {
+            actions?: components["schemas"]["ModelAction"][] | null;
+            bindings?: components["schemas"]["PartBinding"][] | null;
+            poses?: components["schemas"]["ModelPose"][] | null;
         };
         /**
          * @description `POST /api/v1/items` 请求体：创建物品（服务器生成 UUIDv7 与 revision=1）。
@@ -1395,8 +1501,31 @@ export interface components {
             /** @description 发送页文字的页（1-based）。 */
             textPages: number[];
         };
+        /** @description 用户可触发的动作（例如"取下电池盖"）：`toggle` 在初始/目标之间切换，`pulse` 做一次往返。 */
+        ModelAction: {
+            description?: string | null;
+            /** Format: int32 */
+            durationMs: number;
+            id: string;
+            label: string;
+            mode: components["schemas"]["ActionMode"];
+            /** @description 关联的说明书步骤（阅读时切到该步骤会提示此动作）。 */
+            stepIds?: string[];
+            steps: components["schemas"]["TransformStep"][];
+            /** @description 触发该动作的部件（点击部件/热点时提供该动作）。 */
+            triggerPartIds?: string[];
+        };
         /** @enum {string} */
         ModelIssue: "suspectedCredential";
+        /** @description 整体姿势（例如机器人"趴下/坐下"）：一组变换步，切换姿势时从初始位姿重新叠加。 */
+        ModelPose: {
+            description?: string | null;
+            /** Format: int32 */
+            durationMs: number;
+            id: string;
+            label: string;
+            steps: components["schemas"]["TransformStep"][];
+        };
         /** @description modelReview 的两个用户声明（服务器补 `checkedAt` 与模型身份）。 */
         ModelReviewPatch: {
             loaded: boolean;
@@ -1434,6 +1563,19 @@ export interface components {
         /** @description 单页响应（`PUT .../pages/{n}` 返回写入后的页状态）。 */
         PageResponse: {
             data: components["schemas"]["PageDto"];
+        };
+        /** @description 部件 → 分件节点的绑定（一个部件可对应多个节点）。 */
+        PartBinding: {
+            nodes: string[];
+            partId: string;
+            /** @description `auto`（自动绑定产出，待复核）/ `confirmed`（人工确认）。 */
+            status: components["schemas"]["BindingStatus"];
+        };
+        PhotoArrangementRequest: {
+            /** @description 每个视图要放的照片资产；省略或 null = 该视图为空。资产须为本物品 `photo`，且同一资产不能放两个视图。 */
+            slots?: {
+                [key: string]: string | null;
+            };
         };
         /** @description `POST /api/v1/items/{id}/photos` 请求体。 */
         PhotoCreateRequest: {
@@ -1955,6 +2097,19 @@ export interface components {
         SettingsStatusResponse: {
             data: components["schemas"]["SettingsStatusData"];
         };
+        /** @enum {string} */
+        TransformKind: "translate" | "rotate";
+        /** @description 一个刚体变换步（相对节点**初始**位姿；按顺序叠加）。 */
+        TransformStep: {
+            /** Format: double */
+            angleDeg?: number | null;
+            axis?: number[] | null;
+            /** @description `translate`：`vector` 为位移；`rotate`：绕 `pivot` 沿 `axis` 旋转 `angleDeg`。 */
+            kind: components["schemas"]["TransformKind"];
+            nodes: string[];
+            pivot?: number[] | null;
+            vector?: number[] | null;
+        };
         /** @description Tripo 生成参数（`preset` 为价格目录里的预设名）。 */
         TripoParametersDto: {
             /** Format: int64 */
@@ -1998,6 +2153,43 @@ export interface components {
             safetyNotes?: string[] | null;
             title?: string | null;
             value?: string | null;
+        };
+        ViewCandidateCreateRequest: {
+            /** @description 候选图资产（本物品、`purpose=photo`、JPEG/PNG）。 */
+            assetId: string;
+            /** @description 是否请说明书 AI 判断建议视图（默认 true）。 */
+            classify?: boolean | null;
+            documentId?: string | null;
+            /** Format: int64 */
+            pageNumber?: number | null;
+            /** @description `embedded` / `region` / `upload`。 */
+            source: string;
+        };
+        ViewCandidateDto: {
+            assetId: string;
+            /** Format: double */
+            confidence?: number | null;
+            createdAt: string;
+            documentId?: string | null;
+            id: string;
+            itemId: string;
+            /** @description 判断理由（简短，供用户核对）。 */
+            note?: string | null;
+            /**
+             * Format: int64
+             * @description 来源页（1-based）；手动上传的候选为 null。
+             */
+            pageNumber?: number | null;
+            /** @description `embedded`（PDF 内嵌位图）/ `region`（渲染页的图形区域裁剪）/ `upload`（用户上传）。 */
+            source: string;
+            /** @description 建议视图（front/left/back/right/detail）；null = 未判断或不像产品视图。 */
+            suggestedView?: string | null;
+        };
+        ViewCandidateListResponse: {
+            data: components["schemas"]["ViewCandidateDto"][];
+        };
+        ViewCandidateResponse: {
+            data: components["schemas"]["ViewCandidateDto"];
         };
         /** @description 页图 viewport（旋转后的页图尺寸与旋转角）。 */
         ViewportDto: {
@@ -2990,6 +3182,94 @@ export interface operations {
             };
         };
     };
+    attach_parts_model: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID（UUIDv7） */
+                id: string;
+                /** @description 草稿 ID（UUIDv7） */
+                draftId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 已挂载（返回更新后的草稿） */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftResponse"];
+                };
+            };
+            /** @description 未登录 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description CSRF/Origin 校验失败 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 草稿不存在或不属于该物品 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description revision 过期 */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 文件超过模型体积上限 */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 不是合法分件 GLB 或坐标系不一致（details.fields） */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 缺少 If-Match */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     publish_draft: {
         parameters: {
             query?: never;
@@ -3439,6 +3719,48 @@ export interface operations {
             };
         };
     };
+    arrange_photos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhotoArrangementRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoListResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
     get_photo: {
         parameters: {
             query?: never;
@@ -3630,6 +3952,148 @@ export interface operations {
                 };
             };
             /** @description 发布版本不存在或不属于该物品 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    list_candidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewCandidateListResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    create_candidate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ViewCandidateCreateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewCandidateResponse"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewCandidateResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    dismiss_candidate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+                /** @description 候选 ID */
+                candidateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 已删除 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    restore_candidate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID */
+                id: string;
+                /** @description 候选 ID */
+                candidateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 已恢复 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             404: {
                 headers: {
                     [name: string]: unknown;

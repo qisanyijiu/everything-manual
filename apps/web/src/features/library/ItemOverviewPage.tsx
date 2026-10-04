@@ -123,6 +123,7 @@ export function ItemOverviewPage() {
         <div className="page__actions">
           <WorkflowActions itemId={id} summary={summaries.data?.[0]} unavailable={summaries.isError} loading={summaries.isPending} />
           {summaries.isError && <button type="button" onClick={() => void summaries.refetch()}>重新读取处理状态</button>}
+          <Link className="button" to={`/items/${item.id}/generations`}>生成历史</Link>
           <Link className="button" to={`/items/${item.id}/edit`}>
             编辑
           </Link>

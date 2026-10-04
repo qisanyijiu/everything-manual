@@ -38,13 +38,16 @@ impl PipelineHandlers {
         }
     }
 
-    /// 注册 `assemble_draft`（本卡唯一的流水线本地阶段）。
-    pub fn register(&self, registry: &mut StageRegistry) -> Vec<StageKind> {
+    /// 注册流水线本地阶段：assemble_draft + 自动分件/绑定（ADR-045）。
+    pub fn register(&self, registry: &mut StageRegistry, settings: &crate::config::Settings) -> Vec<StageKind> {
         registry.register(
             StageKind::AssembleDraft,
             AssembleDraftHandler::new(self.data_dir.clone()),
         );
-        vec![StageKind::AssembleDraft]
+        let mut kinds = vec![StageKind::AssembleDraft];
+        let auto = super::auto_stages::register(registry, settings);
+        kinds.extend(auto);
+        kinds
     }
 }
 

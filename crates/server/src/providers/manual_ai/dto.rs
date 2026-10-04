@@ -235,8 +235,12 @@ impl ParsedResponse {
 
 /// JPEG data URL（`input_image` 的 `image_url`）。
 pub fn jpeg_data_url(bytes: &[u8]) -> String {
-    use base64_encode::encode;
-    format!("data:image/jpeg;base64,{}", encode(bytes))
+    image_data_url("image/jpeg", bytes)
+}
+
+/// 任意图片 MIME 的 data URL（视图候选分类用：候选可能是 PNG）。
+pub fn image_data_url(mime: &str, bytes: &[u8]) -> String {
+    format!("data:{mime};base64,{}", base64_encode::encode(bytes))
 }
 
 /// 最小 base64 编码（只在本项目内部使用；避免为一次编码引入新依赖）。
@@ -300,7 +304,7 @@ mod tests {
             vec![InputContent::InputText {
                 text: "你好".to_owned(),
             }],
-            4096,
+            16384,
         );
         let value: serde_json::Value = serde_json::from_slice(&request.to_bytes()).unwrap();
         assert_eq!(value["model"], json!("gpt-test"));
@@ -309,7 +313,7 @@ mod tests {
         assert_eq!(value["text"]["format"]["type"], json!("json_schema"));
         assert_eq!(value["text"]["format"]["name"], json!("manual_extract_v1"));
         assert_eq!(value["text"]["format"]["strict"], json!(true));
-        assert_eq!(value["max_output_tokens"], json!(4096));
+        assert_eq!(value["max_output_tokens"], json!(16384));
         assert_eq!(value["store"], json!(false));
         assert!(
             value.get("response_format").is_none(),

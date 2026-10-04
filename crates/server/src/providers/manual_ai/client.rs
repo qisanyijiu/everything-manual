@@ -366,11 +366,9 @@ async fn read_body_capped(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::BTreeMap;
-    use test_support::FixtureServer;
-    use test_support::scenario::{
-        BodySpec, PathMatchSpec, ResponseSpec, RouteScript, Scenario, Step,
-    };
+
+    // 「超时 → 结果未知、不重试」需要本机 fixture 服务，测试在
+    // tests/manual_ai_contract.rs（生产源码不依赖 fixture crate）。
 
     #[test]
     fn request_timeout_default_and_override_are_bounded() {
@@ -392,39 +390,6 @@ mod tests {
                 "{invalid}"
             );
         }
-    }
-
-    #[tokio::test]
-    async fn request_timeout_remains_unknown_and_does_not_retry() {
-        let server = FixtureServer::start(Scenario::new(vec![RouteScript {
-            method: "POST".to_owned(),
-            path: "/v1/responses".to_owned(),
-            path_match: PathMatchSpec::Exact,
-            repeat_last: false,
-            steps: vec![Step::Delay {
-                delay_ms: 1_000,
-                response: ResponseSpec {
-                    status: 200,
-                    headers: BTreeMap::new(),
-                    body: BodySpec::Text {
-                        text: "{}".to_owned(),
-                    },
-                },
-            }],
-        }]));
-        let client = ManualAiClient::new(
-            &format!("{}/v1", server.base_url()),
-            SecretString::new("canary-key"),
-            ManualAiTimeouts {
-                connect: Duration::from_secs(1),
-                request: Duration::from_millis(200),
-            },
-        )
-        .unwrap();
-        let error = client.extract_batch(b"{}").await.unwrap_err();
-        assert!(matches!(error, ManualAiError::Transport { .. }), "{error}");
-        assert!(!error.is_definitively_refused());
-        assert_eq!(server.call_count("POST", "/v1/responses"), 1);
     }
 
     #[test]

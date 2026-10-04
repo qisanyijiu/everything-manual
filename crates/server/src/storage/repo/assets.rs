@@ -170,6 +170,7 @@ pub fn parse_purpose(value: &str) -> Result<AssetPurpose, StorageError> {
         "page_text" => Ok(AssetPurpose::PageText),
         "model" => Ok(AssetPurpose::Model),
         "release_manifest" => Ok(AssetPurpose::ReleaseManifest),
+        "model_parts" => Ok(AssetPurpose::ModelParts),
         other => Err(StorageError::ConstraintViolation {
             detail: format!("assets.purpose 出现未知值：{other}"),
         }),

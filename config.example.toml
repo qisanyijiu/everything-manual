@@ -83,6 +83,9 @@ api_key_env = "MANUAL_AI_API_KEY"
 [jobs]
 # lease_seconds = 120
 # renew_seconds = 20
+# 说明书 AI 单次提取请求超时（秒，30..=900；默认 180）。长批次经网关可能更慢，
+# 超时会让该批进入 submission_unknown（需人工对账），可按部署调大。
+# manual_ai_request_seconds = 180
 
 # 会话与登录限速（T04；默认即 PRD A-05：7 天绝对有效期、5 次/分钟）
 [session]

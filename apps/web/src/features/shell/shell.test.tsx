@@ -569,10 +569,12 @@ describe("路由骨架与文案边界", () => {
     expect(await screen.findByText(/还没有发布版本/)).toBeTruthy();
     expect(screen.queryByText("该页面尚未实现。")).toBeNull();
     // 页面只请求自己需要的数据；`/api/v1/items/item-1` 是 AppShell 顶栏的物品上下文
-    // （§6.1.1 的既有行为，T08 起如此）。
+    // （§6.1.1 的既有行为，T08 起如此）；`/api/v1/jobs?limit=20` 是 AppShell 的全局
+    // 「生成完成」提示（JobCompletionWatcher，ADR-041）。
+    const shellRequests = new Set(["/api/v1/items/item-1", "/api/v1/jobs?limit=20"]);
     const urls = fetchMock.mock.calls.map(([url]) => String(url));
     // PC05C adds exactly one bounded global count; no per-job detail request.
-    expect(urls.filter((url) => url !== "/api/v1/items/item-1")).toEqual([
+    expect(urls.filter((url) => !shellRequests.has(url))).toEqual([
       "/api/v1/auth/session",
       "/api/v1/jobs/activity",
       "/api/v1/items/item-1/releases",

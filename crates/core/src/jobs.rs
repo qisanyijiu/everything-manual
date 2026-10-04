@@ -58,11 +58,14 @@ pub const fn stage_dependency(kind: StageKind) -> StageDependency {
         ModelDownload => StageDependency::Fixed(&[TripoPoll]),
         ModelValidate => StageDependency::Fixed(&[ModelDownload]),
         AssembleDraft => StageDependency::Fixed(&[ManualMerge, ModelValidate]),
+        TripoSegment => StageDependency::Fixed(&[AssembleDraft]),
+        AutoBind => StageDependency::Fixed(&[TripoSegment]),
     }
 }
 
 /// DAG 中"远端生成链"的阶段（并发分组用）。
 pub const REMOTE_GENERATION_STAGES: &[StageKind] = &[
+    StageKind::TripoSegment,
     StageKind::TripoUpload,
     StageKind::TripoSubmit,
     StageKind::TripoPoll,
@@ -88,7 +91,8 @@ pub const fn concurrency_group(kind: StageKind) -> Option<ConcurrencyGroup> {
         | StageKind::TripoPoll
         | StageKind::ModelDownload
         | StageKind::ModelValidate => Some(ConcurrencyGroup::RemoteGeneration),
-        StageKind::FreezeInputs | StageKind::ManualMerge | StageKind::AssembleDraft => None,
+        StageKind::TripoSegment => Some(ConcurrencyGroup::RemoteGeneration),
+        StageKind::FreezeInputs | StageKind::ManualMerge | StageKind::AssembleDraft | StageKind::AutoBind => None,
     }
 }
 
@@ -194,7 +198,8 @@ pub const fn remote_wait_anchor_kind(kind: StageKind) -> Option<StageKind> {
     use StageKind::*;
     match kind {
         TripoSubmit | TripoPoll | ModelDownload | ModelValidate => Some(TripoSubmit),
-        FreezeInputs | ManualExtract | ManualMerge | TripoUpload | AssembleDraft => None,
+        TripoSegment => Some(TripoSegment),
+        FreezeInputs | ManualExtract | ManualMerge | TripoUpload | AssembleDraft | AutoBind => None,
     }
 }
 

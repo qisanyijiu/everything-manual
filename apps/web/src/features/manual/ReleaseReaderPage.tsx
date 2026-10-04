@@ -21,6 +21,7 @@ import { assetContentUrl, getRelease } from "../../api/endpoints";
 import { EmptyNote } from "../../components/EmptyState";
 import { Skeleton } from "../../components/Skeleton";
 import { PageLayout } from "../shell/PageLayout";
+import { StandaloneExportButton } from "../standalone/StandaloneExportButton";
 import { checkAnchor } from "../viewer/coordinates";
 import {
   readDraftHotspots,
@@ -28,6 +29,9 @@ import {
   readDraftModel,
   readDraftStepPoses,
 } from "../viewer/draft-view";
+import { InteractionPanel } from "../viewer/InteractionPanel";
+import { readInteractive } from "../viewer/interactive";
+import { useInteractive } from "../viewer/useInteractive";
 import { ViewerPanel } from "../viewer/ViewerPanel";
 import { ReleaseDownload, RELEASE_DOWNLOAD_DESCRIPTION } from "./ReleaseDownload";
 import { readReleaseKnowledge } from "./release-view";
@@ -76,6 +80,8 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
   const hotspots = useMemo(() => readDraftHotspots(knowledge), [knowledge]);
   const stepPoses = useMemo(() => readDraftStepPoses(knowledge), [knowledge]);
   const missing = useMemo(() => readDraftMissing(knowledge), [knowledge]);
+  const interactiveView = useMemo(() => readInteractive(knowledge, model), [knowledge, model]);
+  const interaction = useInteractive(interactiveView, selectedPartId);
 
   // 只把"锚点仍属于发布模型版本"的热点交给 3D（stale 不显示；发布不变量已保证
   // 不存在冒充 confirmed 的绑定，这里再挡一次读取侧防线）。
@@ -138,7 +144,13 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
 
   return (
     <div className="page reader-page">
-      <header className="page__header"><div><p className="eyebrow">THE INTERACTIVE MANUAL</p><h1>已发布说明书</h1></div><Link className="button" to={`/items/${itemId}/releases`}>返回版本列表</Link></header>
+      <header className="page__header">
+        <div><p className="eyebrow">THE INTERACTIVE MANUAL</p><h1>已发布说明书</h1></div>
+        <div className="page__header-actions">
+          <StandaloneExportButton itemId={itemId} releaseId={releaseId} manifest={manifest} />
+          <Link className="button" to={`/items/${itemId}/releases`}>返回版本列表</Link>
+        </div>
+      </header>
       <p><LibraryBackLink itemId={itemId} /></p>
       <p className="page-subtitle">旋转模型探索部件，跟随步骤查看说明，随时对照原文。</p>
       {release !== undefined && (
@@ -372,7 +384,11 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
             }
           }}
           onUseTextPath={focusParts}
+          interactive={interaction?.viewerProp}
         />
+        {interaction !== null && (
+          <InteractionPanel {...interaction.panel} selectedPartId={selectedPartId} />
+        )}
         {currentStep !== undefined && (
           <p className="page-note" data-testid="reader-current-step">
             当前步骤：{currentStep.title}（第 {safeStepIndex + 1} / {steps.length} 步）

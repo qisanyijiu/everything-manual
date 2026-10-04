@@ -33,7 +33,7 @@ import {
 } from "./webgl";
 import type { CameraPose } from "./coordinates";
 import type { ViewerModelInfo } from "./bridge";
-import type { ViewerHotspotView, ViewerPickResult, ViewerStageApi } from "./ViewerStage";
+import type { ViewerHotspotView, ViewerPickResult, ViewerStageApi, ViewerStageProps } from "./ViewerStage";
 
 /** three 所在 chunk：只在真正要渲染模型时下载（资料库首屏不含它）。 */
 const ViewerStage = lazy(() =>
@@ -71,6 +71,15 @@ export interface ViewerPanelProps {
    * 传入时由调用方持有生命周期；不传则面板内部自持（只读用法）。
    */
   readonly apiRef?: { current: ViewerStageApi | null };
+  /**
+   * 交互层（ADR-042）：给出时加载**分件 GLB**（与模型同一坐标系；按分件自身哈希核对），
+   * 并把姿势/动作/高亮交给舞台。热点坐标不变（仍是模型 revision 的 asset-root 局部坐标）。
+   */
+  readonly interactive?: {
+    readonly partsAssetId: string;
+    readonly partsSha256: string;
+    readonly stage: NonNullable<ViewerStageProps["interactive"]>;
+  };
 }
 
 type LoadState =
@@ -91,6 +100,7 @@ export function ViewerPanel({
   onPick,
   onHotspotSelect,
   apiRef,
+  interactive,
 }: ViewerPanelProps) {
   const [state, setState] = useState<LoadState>({ phase: "noModel" });
   const [attempt, setAttempt] = useState(0);
@@ -142,8 +152,9 @@ export function ViewerPanel({
   // 依赖**模型身份**（assetId/revisionId/sha256）而不是对象引用：草稿的其它字段
   // （热点、复核、视角）更新时模型对象会被重新构造，若按对象引用重取字节，3D 场景
   // 会在每次校准写入后整体重挂载（丢失选中/拾取状态）。身份相同 = 同一份字节。
-  const modelAssetId = model?.assetId ?? null;
-  const modelSha256 = model?.sha256 ?? null;
+  // 有交互层时取分件 GLB（身份 = 分件资产 + 分件哈希）；否则取模型本身。
+  const modelAssetId = model === null ? null : (interactive?.partsAssetId ?? model.assetId);
+  const modelSha256 = model === null ? null : (interactive?.partsSha256 ?? model.sha256);
   useEffect(() => {
     if (modelAssetId === null || modelSha256 === null) {
       setState({ phase: "noModel" });
@@ -253,7 +264,7 @@ export function ViewerPanel({
   const lost = contextState === "lost";
   /** 「立即重建」已发起、新舞台尚未上报 ok：交互同样禁用（UI-044「重建中禁用交互」）。 */
   const restoring = contextState === "restoring";
-  const interactive = ready && stageReady && !lost && !restoring;
+  const controlsEnabled = ready && stageReady && !lost && !restoring;
   const status = statusText({
     state,
     contextState,
@@ -266,10 +277,10 @@ export function ViewerPanel({
   return (
     <section className="viewer-panel" aria-label="3D 模型阅读器">
       <div className="viewer-panel__toolbar" role="group" aria-label="模型视角操作">
-        <button type="button" disabled={!interactive} onClick={() => stageApi.current?.reset()}>
+        <button type="button" disabled={!controlsEnabled} onClick={() => stageApi.current?.reset()}>
           复位视角
         </button>
-        <button type="button" disabled={!interactive} onClick={() => stageApi.current?.fit()}>
+        <button type="button" disabled={!controlsEnabled} onClick={() => stageApi.current?.fit()}>
           适配模型
         </button>
         {(lost || contextUnusable) && (
@@ -339,7 +350,12 @@ export function ViewerPanel({
           >
             <ViewerStage
               buffer={state.buffer}
-              model={model as ViewerPanelModel}
+              model={
+                interactive !== undefined && model !== null
+                  ? { ...model, assetId: interactive.partsAssetId, sha256: interactive.partsSha256 }
+                  : (model as ViewerPanelModel)
+              }
+              interactive={interactive?.stage}
               hotspots={hotspots}
               apiRef={stageApi}
               restorePoseRef={restorePoseRef}

@@ -499,12 +499,12 @@ async fn qa_ac028_quote_math_expiry_and_no_cost_records() {
     // 4 个 Token 口径：输入上界 = 批开销 1200 + 页 1 文字 3000 + 页 2 页图 3000 + 页 3 文字 1500。
     let input_tokens_upper = 1200 + 3000 + 3000 + 1500; // = 8700
     let input_upper_micros = (input_tokens_upper as f64 * 0.25).ceil() as i64; // 2175
-    let output_tokens_upper = 4096;
-    let output_upper_micros = (output_tokens_upper as f64 * 2.00).ceil() as i64; // 8192
+    let output_tokens_upper = 16384;
+    let output_upper_micros = (output_tokens_upper as f64 * 2.00).ceil() as i64; // 32768
     let image_upper_micros = 10_000; // 1 张页图 × 0.01 USD
     let expected_manual_upper = input_upper_micros + output_upper_micros + image_upper_micros;
     assert_eq!(input_upper_micros, 2_175);
-    assert_eq!(expected_manual_upper, 20_367);
+    assert_eq!(expected_manual_upper, 44_943);
 
     // Tripo：30 credits = 3000 creditMinor；预计 == 上界（固定价）。
     assert_eq!(data["amounts"]["tripo"]["currency"], "creditMinor");
@@ -523,7 +523,7 @@ async fn qa_ac028_quote_math_expiry_and_no_cost_records() {
     );
     assert_eq!(
         data["amounts"]["manualAi"]["upperBoundDisplay"],
-        "0.020367 USD"
+        "0.044943 USD"
     );
     // 上界分项之和 == 上界（无隐藏加价/少算）。
     let lines = data["amounts"]["manualAi"]["upperBoundLines"]
@@ -544,7 +544,7 @@ async fn qa_ac028_quote_math_expiry_and_no_cost_records() {
         .iter()
         .find(|line| line["code"] == "outputTokens")
         .unwrap();
-    assert_eq!(output_line["amountMinor"].as_i64().unwrap(), 8_192);
+    assert_eq!(output_line["amountMinor"].as_i64().unwrap(), 32_768);
     let image_line = lines
         .iter()
         .find(|line| line["code"] == "pageImages")
@@ -918,7 +918,7 @@ async fn qa_ac030_unconfirmed_rejected_and_confirmation_audited_once() {
         &quote_id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
     let denied = submit(&app, &cookie, &csrf, &inputs.item, "qa-ac030-key", &body).await;
     assert_eq!(denied.status, StatusCode::UNPROCESSABLE_ENTITY);
@@ -1069,7 +1069,7 @@ async fn qa_defect_get_estimate_reflects_confirmation_and_consumption() {
             &quote_id,
             &inputs.preparation,
             &inputs.photo_ids(),
-            (3_000, 20_367),
+            (3_000, 44_943),
         ),
     )
     .await;
@@ -1130,7 +1130,7 @@ async fn qa_ac031_twenty_replays_conflict_and_key_scope() {
         &quote_id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
 
     // 同一 Idempotency-Key 连续提交 20 次（QA 现场执行）。
@@ -1234,7 +1234,7 @@ async fn qa_ac031_twenty_replays_conflict_and_key_scope() {
     assert_eq!(
         reservations,
         vec![
-            ("manual_ai".to_owned(), 20_367, "reserved".to_owned()),
+            ("manual_ai".to_owned(), 44_943, "reserved".to_owned()),
             ("tripo".to_owned(), 3_000, "reserved".to_owned()),
         ]
     );
@@ -1336,7 +1336,7 @@ async fn qa_ac031_twenty_replays_conflict_and_key_scope() {
         &quote2_id,
         &inputs2.preparation,
         &inputs2.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
     let cross = submit(
         &app,
@@ -1392,7 +1392,7 @@ async fn qa_ac031_concurrent_same_key_and_same_quote_race() {
         &quote_id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
 
     // (1) 10 路并发、同一 key + 同一 body：全部应回同一 job，库里只有 1 个 job。
@@ -1456,7 +1456,7 @@ async fn qa_ac031_concurrent_same_key_and_same_quote_race() {
         &quote2_id,
         &inputs2.preparation,
         &inputs2.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
     let mut handles2 = Vec::new();
     for index in 0..6 {
@@ -1522,7 +1522,7 @@ async fn qa_ac031_interrupted_transaction_leaves_no_partial_state() {
         &quote_id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
 
     let key = "qa-ac031-tx-key";
@@ -1605,7 +1605,7 @@ async fn qa_ac032_expired_quote_and_input_change_are_rejected_without_jobs() {
         &expired.id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
     let denied = submit(
         &app,
@@ -1667,7 +1667,7 @@ async fn qa_ac032_expired_quote_and_input_change_are_rejected_without_jobs() {
         &quote_id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
     let changed = submit(
         &app,
@@ -1707,7 +1707,7 @@ async fn qa_ac032_price_version_budget_and_frontend_fees() {
         &quote_id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
 
     // (1) 允许上限低于服务端上界 → 422 budgetBelowPlannedUpperBound（给两侧数值），不创建 job。
@@ -1715,7 +1715,7 @@ async fn qa_ac032_price_version_budget_and_frontend_fees() {
         &quote_id,
         &inputs.preparation,
         &inputs.photo_ids(),
-        (2_999, 20_367),
+        (2_999, 44_943),
     );
     let denied = submit(&app, &cookie, &csrf, &inputs.item, "qa-ac032-low", &low).await;
     assert_eq!(denied.status, StatusCode::UNPROCESSABLE_ENTITY);
@@ -1729,7 +1729,7 @@ async fn qa_ac032_price_version_budget_and_frontend_fees() {
     );
     assert_eq!(
         denied.json()["error"]["details"]["manualAiUpperBoundUsdMicros"],
-        20_367
+        44_943
     );
     assert_eq!(count(&app, "SELECT COUNT(*) FROM jobs").await, 0);
 
@@ -1768,7 +1768,7 @@ async fn qa_ac032_price_version_budget_and_frontend_fees() {
             photo_ids: Some(inputs.photo_ids()),
             limits: Some(BudgetLimitsDto {
                 tripo_credit_minor: Some(3_000),
-                manual_ai_usd_micros: Some(20_367),
+                manual_ai_usd_micros: Some(44_943),
             }),
         },
         "qa-ac032-version",
@@ -1813,7 +1813,7 @@ async fn qa_ac032_price_version_budget_and_frontend_fees() {
     assert_eq!(tripo["reservedMinor"], 3_000);
     assert_eq!(tripo["state"], "reserved");
     assert_eq!(manual["currency"], "usdMicros");
-    assert_eq!(manual["reservedMinor"], 20_367);
+    assert_eq!(manual["reservedMinor"], 44_943);
     assert!(
         accepted.json()["data"]["budgetNotice"]
             .as_str()
@@ -1859,7 +1859,7 @@ async fn qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split() {
             &quote_id,
             &inputs.preparation,
             &inputs.photo_ids(),
-            (3_000, 20_367),
+            (3_000, 44_943),
         ),
     )
     .await;
@@ -2018,7 +2018,7 @@ async fn qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split() {
         &quote2_id,
         &inputs2.preparation,
         &inputs2.photo_ids(),
-        (3_000, 20_367),
+        (3_000, 44_943),
     );
     quality_body["textureQuality"] = json!("low");
     let rejected_quality = submit(
@@ -2050,7 +2050,7 @@ async fn qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split() {
             &quote2_id,
             &inputs2.preparation,
             &inputs2.photo_ids(),
-            (3_000, 20_367),
+            (3_000, 44_943),
         ),
     )
     .await;
@@ -2065,7 +2065,7 @@ async fn qa_ac033_034_unknown_keeps_reservation_and_release_paths_are_split() {
             &quote2_id,
             &inputs2.preparation,
             &inputs2.photo_ids(),
-            (3_000, 20_367),
+            (3_000, 44_943),
         ),
     )
     .await;
@@ -2107,7 +2107,7 @@ async fn qa_card_snapshot_frozen_hashes_match_content_and_no_secrets() {
             &quote_id,
             &inputs.preparation,
             &inputs.photo_ids(),
-            (3_000, 20_367),
+            (3_000, 44_943),
         ),
     )
     .await;
@@ -2174,9 +2174,9 @@ async fn qa_card_snapshot_frozen_hashes_match_content_and_no_secrets() {
     // budgets：授权 = 用户输入的 limits；上界 = 服务端计算值（两者分开记录）。
     let budgets: Value = serde_json::from_str(&budgets).unwrap();
     assert_eq!(budgets["authorized"]["tripoCreditMinor"], 3_000);
-    assert_eq!(budgets["authorized"]["manualAiUsdMicros"], 20_367);
+    assert_eq!(budgets["authorized"]["manualAiUsdMicros"], 44_943);
     assert_eq!(budgets["upperBound"]["tripoCreditMinor"], 3_000);
-    assert_eq!(budgets["upperBound"]["manualAiUsdMicros"], 20_367);
+    assert_eq!(budgets["upperBound"]["manualAiUsdMicros"], 44_943);
     assert_eq!(budgets["quoteId"], quote_id);
 
     // 快照不可变：UPDATE 被触发器拒绝。
@@ -2278,7 +2278,7 @@ async fn qa_card_cross_item_references_and_auth_boundaries() {
             &quote_id,
             &inputs.preparation,
             &inputs.photo_ids(),
-            (3_000, 20_367),
+            (3_000, 44_943),
         ),
     )
     .await;

@@ -1048,11 +1048,11 @@ async fn estimate_returns_itemized_amounts_and_writes_no_cost_or_attempt_records
     let manual = &data["amounts"]["manualAi"];
     assert_eq!(manual["currency"], "usdMicros");
     // 1 批：输入上界 = 1200（批次开销）+ 3000 + 120（两页文字 1 token/字节）
-    //       + 3000（一张扫描页图）；输出上界 = 1 × 4096。
+    //       + 3000（一张扫描页图）；输出上界 = 1 × 16384。
     assert_eq!(manual["upperBoundLines"][0]["quantity"], 7320);
     assert_eq!(manual["upperBoundLines"][0]["amountMinor"], 1830);
-    assert_eq!(manual["upperBoundLines"][1]["quantity"], 4096);
-    assert_eq!(manual["upperBoundLines"][1]["amountMinor"], 8192);
+    assert_eq!(manual["upperBoundLines"][1]["quantity"], 16384);
+    assert_eq!(manual["upperBoundLines"][1]["amountMinor"], 32768);
     assert_eq!(manual["upperBoundLines"][2]["quantity"], 1);
     assert_eq!(manual["upperBoundLines"][2]["amountMinor"], 10_000);
     assert_eq!(
@@ -1076,7 +1076,7 @@ async fn estimate_returns_itemized_amounts_and_writes_no_cost_or_attempt_records
     assert_eq!(data["pageCount"], 3);
     assert_eq!(data["pageRange"]["from"], 1);
     assert_eq!(data["pageRange"]["to"], 3);
-    assert_eq!(data["maxOutputTokens"], 4096);
+    assert_eq!(data["maxOutputTokens"], 16384);
 
     // expiresAt 默认 10 分钟（A-02）。
     let expires =
@@ -3012,8 +3012,8 @@ async fn multi_batch_estimate_and_stage_dependencies_cover_all_batches() {
     assert_eq!(response.status, StatusCode::CREATED, "{}", response.text());
     let data = response.json();
     let data = &data["data"];
-    // 2 批：输出上界 = 2 × 4096；页图页 = 扫描页（2/4/7）。
-    assert_eq!(data["maxOutputTokens"], 8192);
+    // 2 批：输出上界 = 2 × 16384；页图页 = 扫描页（2/4/7）。
+    assert_eq!(data["maxOutputTokens"], 32768);
     assert_eq!(
         data["sendScope"]["manualAi"]["textPages"],
         json!([1, 3, 5, 6])

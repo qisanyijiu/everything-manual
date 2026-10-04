@@ -583,6 +583,36 @@ async fn build_manifest(
         "source": if model_revision.provider_attempt_id.is_some() { "tripo" } else { "unspecified" },
     }));
 
+    // 分件模型附件（ADR-042）：只在附件仍属于发布模型版本时登记（否则交互层不随发布冻结）。
+    if let Some(interactive) = knowledge.interactive.as_ref()
+        && crate::drafts::interactive::parts_model_matches(knowledge, &interactive.parts_model)
+    {
+        let (parts_asset, parts_blob) =
+            repo::assets::get_with_blob(&mut *conn, &interactive.parts_model.asset_id)
+                .await?
+                .ok_or_else(|| {
+                    PublishError::integrity(
+                        "release_parts_model_missing",
+                        "分件模型资产不存在：请重新挂载分件模型",
+                    )
+                })?;
+        if parts_asset.item_id != draft.item_id
+            || parts_blob.sha256 != interactive.parts_model.sha256
+        {
+            return Err(PublishError::integrity(
+                "release_parts_model_mismatch",
+                "分件模型资产的归属或内容哈希与草稿记录不符",
+            ));
+        }
+        assets.push(json!({
+            "role": "model_parts",
+            "assetId": parts_asset.id,
+            "sha256": parts_blob.sha256,
+            "size": parts_blob.size,
+            "source": "tripo_segment",
+        }));
+    }
+
     // 说明书原件（PDF）：sha256 与来源（本地上传）。
     let document = repo::documents::get(&mut *conn, &frozen.document_id)
         .await?

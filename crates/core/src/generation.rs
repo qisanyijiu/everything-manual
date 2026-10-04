@@ -28,7 +28,7 @@ pub const QUOTE_TTL_SECONDS: u64 = 600;
 /// 说明书 AI 每批最多页数（架构 §5.2：按最多 5 页/批处理）。
 pub const MANUAL_PAGES_PER_BATCH: i64 = 5;
 /// 每批 `max_output_tokens` 上限（报价按此保守预留；T14 的实际请求不得超过快照值）。
-pub const MANUAL_AI_MAX_OUTPUT_TOKENS_PER_BATCH: i64 = 4096;
+pub const MANUAL_AI_MAX_OUTPUT_TOKENS_PER_BATCH: i64 = 16384;
 /// 每批提示词/schema 固定开销的**保守上界**（输入 token）。
 pub const MANUAL_AI_PROMPT_OVERHEAD_TOKENS_UPPER: i64 = 1200;
 /// 每页文字的输入 token 保守上界：1 token/字节（UTF-8 最坏情形，宁可高估）。
@@ -524,7 +524,7 @@ mod tests {
             + (3000 + 120 + 10 + 5)
             + 3 * MANUAL_AI_TOKENS_PER_PAGE_IMAGE_UPPER;
         assert_eq!(plan.input_tokens_upper_bound, expected_upper);
-        assert_eq!(plan.output_tokens_upper_bound, 2 * 4096);
+        assert_eq!(plan.output_tokens_upper_bound, 2 * 16384);
         assert!(plan.input_tokens_expected < plan.input_tokens_upper_bound);
         assert!(plan.output_tokens_expected < plan.output_tokens_upper_bound);
     }
@@ -567,8 +567,8 @@ mod tests {
             mul_div_ceil(input_line.quantity, 250_000, 1_000_000).unwrap()
         );
         let output_line = &amount.upper_bound_lines[1];
-        assert_eq!(output_line.quantity, 4096);
-        assert_eq!(output_line.amount_minor, 8192);
+        assert_eq!(output_line.quantity, 16384);
+        assert_eq!(output_line.amount_minor, 32768);
         let image_line = &amount.upper_bound_lines[2];
         assert_eq!(image_line.quantity, 1);
         assert_eq!(image_line.amount_minor, 10_000);

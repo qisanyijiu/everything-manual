@@ -213,6 +213,7 @@ pub async fn create_job_with_config(
         &key,
         admin_id,
         now,
+        settings.auto_stages_enabled,
     )
     .await;
 
@@ -305,6 +306,7 @@ async fn create_in_transaction(
     key: &str,
     admin_id: &str,
     now: Timestamp,
+    auto_stages: bool,
 ) -> Result<JobCreation, CreateTransactionError> {
     let mut tx = tx;
 
@@ -390,7 +392,7 @@ async fn create_in_transaction(
     }
 
     // 5) 阶段 DAG（freeze_inputs 直接 succeeded；manual_merge 必须在批次之后插入）。
-    for stage in build_stage_plan(&job.id, plan, quote, photos) {
+    for stage in build_stage_plan(&job.id, plan, quote, photos, auto_stages) {
         job_stages::insert(&mut tx, stage, now).await?;
     }
 
@@ -469,6 +471,7 @@ pub(crate) fn build_stage_plan(
     plan: &ManualAiPlan,
     quote: &QuoteRecord,
     photos: &[PhotoWithHash],
+    include_auto_stages: bool,
 ) -> Vec<NewStage> {
     let mut stages: Vec<NewStage> = Vec::new();
     // freeze_inputs：入队事务里直接 succeeded（输入已在上面冻结）。
@@ -581,20 +584,41 @@ pub(crate) fn build_stage_plan(
     }
 
     // assemble_draft：两条分支都完成后组装（依赖边由 DAG 规则物化）。
+    let assemble_hash = stage_input_hash(
+        StageKind::AssembleDraft,
+        &[
+            ("mergeHash", serde_json::json!(merge_hash)),
+            ("validateHash", serde_json::json!(validate_hash)),
+        ],
+    );
     stages.push(NewStage {
         job_id: job_id.to_owned(),
         stage_kind: StageKind::AssembleDraft,
         batch_index: 0,
         page_set_json: None,
-        input_hash: stage_input_hash(
-            StageKind::AssembleDraft,
-            &[
-                ("mergeHash", serde_json::json!(merge_hash)),
-                ("validateHash", serde_json::json!(validate_hash)),
-            ],
-        ),
+        input_hash: assemble_hash.clone(),
         status: manual_core::domain::JobStatus::Queued,
     });
+    // ADR-045：自动分件 + 绑定（assemble_draft 完成后；仅当 tripo_segment + auto_bind 已注册时才创建）。
+    if include_auto_stages {
+    let segment_hash = stage_input_hash(StageKind::TripoSegment, &[("assembleHash", serde_json::json!(assemble_hash))]);
+    stages.push(NewStage {
+        job_id: job_id.to_owned(),
+        stage_kind: StageKind::TripoSegment,
+        batch_index: 0,
+        page_set_json: None,
+        input_hash: segment_hash.clone(),
+        status: manual_core::domain::JobStatus::Queued,
+    });
+    stages.push(NewStage {
+        job_id: job_id.to_owned(),
+        stage_kind: StageKind::AutoBind,
+        batch_index: 0,
+        page_set_json: None,
+        input_hash: stage_input_hash(StageKind::AutoBind, &[("segmentHash", serde_json::json!(segment_hash))]),
+        status: manual_core::domain::JobStatus::Queued,
+    });
+    }
 
     stages
 }

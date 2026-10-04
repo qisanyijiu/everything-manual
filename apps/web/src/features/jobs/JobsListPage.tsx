@@ -184,6 +184,9 @@ export function JobsListPage() {
                   <div className="jobs-list__actions">
                     <Link to={`/jobs/${job.id}`}>查看阶段与恢复入口</Link>
                     {job.draftId !== null && job.draftId !== undefined && (
+                      <Link to={`/jobs/${job.id}/result`}>查看生成结果</Link>
+                    )}
+                    {job.draftId !== null && job.draftId !== undefined && (
                       <Link to={`/items/${job.itemId}/drafts/${job.draftId}/review`}>
                         打开草稿（待复核）
                       </Link>

@@ -312,7 +312,8 @@ fn init_creates_structure_and_never_leaks_password() {
         "init 必须创建并迁移数据库（T03）：{out:?}"
     );
     // PC-03A adds migration 0008; the CLI must report the embedded current schema.
-    assert!(out.stdout.contains("schema v8"), "{out:?}");
+    // ADR-044 appends 0010_view_candidates (0009 = model_parts, ADR-042).
+    assert!(out.stdout.contains("schema v11"), "{out:?}");
 
     // 敏感值不得出现在 stdout/stderr 与日志文件中。
     assert!(!out.stdout.contains(CANARY) && !out.stderr.contains(CANARY));

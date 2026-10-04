@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 import { pdfjsVendor } from "./vite.pdfjs-vendor.ts";
+import { standaloneViewer } from "./vite.standalone-viewer.ts";
 
 // 开发：Vite 127.0.0.1:5173 代理 /api 到 Rust 127.0.0.1:8080；
 // 后端不开放宽泛 CORS（architecture.md §2）。
@@ -13,7 +14,7 @@ const apiTarget = process.env.EM_API_PROXY_TARGET ?? "http://127.0.0.1:8080";
 const previewProxyOrigin = process.env.EM_PREVIEW_PROXY_ORIGIN;
 
 export default defineConfig({
-  plugins: [react(), pdfjsVendor()],
+  plugins: [react(), pdfjsVendor(), standaloneViewer()],
   server: {
     host: "127.0.0.1",
     port: webPort,

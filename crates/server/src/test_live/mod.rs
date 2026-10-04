@@ -499,7 +499,7 @@ async fn run_inner(
     gate.check().await.map_err(LiveError::new)?;
     crate::providers::register_provider_handlers(&mut registry, &settings)
         .map_err(|_| LiveError::new("configuration"))?;
-    PipelineHandlers::from_settings(&settings).register(&mut registry);
+    PipelineHandlers::from_settings(&settings).register(&mut registry, &settings);
     let limits: BTreeMap<_, _> = budget
         .retry_scopes
         .iter()

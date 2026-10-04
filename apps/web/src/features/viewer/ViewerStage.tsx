@@ -39,6 +39,7 @@ import {
   type Vec3,
 } from "./coordinates";
 import { ViewerError, loadGlbModel, summarizeScene, type LoadedModel } from "./glb";
+import { PartAnimator, type ModelActionView, type ModelPoseView } from "./interactive";
 import { viewerResourceStats } from "./resources";
 import type { WebglContextState } from "./webgl";
 
@@ -95,6 +96,19 @@ export interface ViewerStageProps {
   readonly onPick?: (pick: ViewerPickResult) => void;
   /** 点选 3D 热点标记（选中对应部件；只读模式也可用）。 */
   readonly onHotspotSelect?: (hotspotId: string) => void;
+  /**
+   * 交互层（ADR-042；可选）：`buffer` 为分件 GLB 时传入。`highlightNodes` 高亮选中部件的几何；
+   * `poseId` 切换整体姿势；`actionRequest` 每次 `nonce` 变化触发一次动作（toggle/pulse）。
+   */
+  readonly interactive?: {
+    readonly poses: readonly ModelPoseView[];
+    readonly poseId: string | null;
+    readonly actionRequest: { readonly action: ModelActionView; readonly nonce: number } | null;
+    readonly highlightNodes: readonly string[];
+    readonly resetNonce?: number;
+    /** 部件 → 跟随的分件节点（热点标记随部件一起移动）。 */
+    readonly partNodes?: ReadonlyMap<string, string>;
+  };
   readonly apiRef: { current: ViewerStageApi | null };
   /** 观察方向（世界坐标；默认正面）。reset 会回到同一方向。 */
   readonly initialDirection?: Vec3;
@@ -169,6 +183,7 @@ function StageScene({
   rebuild,
   initialDirection,
   restorePoseRef,
+  interactive,
 }: StageSceneProps) {
   const gl = useThree((state) => state.gl);
   // Canvas 的 `camera` prop 固定了透视相机（fov/near/far），这里显式收窄类型：
@@ -193,6 +208,60 @@ function StageScene({
   const pickModeRef = useRef(pickMode === true);
   pickModeRef.current = pickMode === true;
   const lastPickRef = useRef<ViewerPickResult | null>(null);
+  const animatorRef = useRef<PartAnimator | null>(null);
+
+  // --- 交互层：分件节点动画器（模型换版本时随场景重建） ---------------------------
+  useEffect(() => {
+    if (loaded === null || interactive === undefined) {
+      animatorRef.current = null;
+      return;
+    }
+    const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+    const animator = new PartAnimator(loaded.scene, reduced);
+    animatorRef.current = animator;
+    return () => {
+      animator.dispose();
+      animatorRef.current = null;
+    };
+    // 只在场景对象变化时重建；姿势/动作/高亮由下面的 effect 驱动。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, interactive !== undefined]);
+
+  const poseId = interactive?.poseId ?? null;
+  const poses = interactive?.poses;
+  useEffect(() => {
+    const animator = animatorRef.current;
+    if (animator === null || poses === undefined) {
+      return;
+    }
+    animator.setPose(poses.find((pose) => pose.id === poseId) ?? null, performance.now());
+  }, [poseId, poses, loaded]);
+
+  const actionRequest = interactive?.actionRequest ?? null;
+  useEffect(() => {
+    if (actionRequest !== null) {
+      animatorRef.current?.trigger(actionRequest.action, performance.now());
+    }
+  }, [actionRequest]);
+
+  const resetNonce = interactive?.resetNonce ?? 0;
+  useEffect(() => {
+    if (resetNonce > 0) {
+      animatorRef.current?.resetActions(performance.now());
+    }
+  }, [resetNonce]);
+
+  const partNodes = interactive?.partNodes;
+  useEffect(() => {
+    if (loaded !== null && partNodes !== undefined) {
+      animatorRef.current?.attachMarkers(loaded.scene, partNodes);
+    }
+  }, [loaded, partNodes, hotspots]);
+
+  const highlightKey = (interactive?.highlightNodes ?? []).join("|");
+  useEffect(() => {
+    animatorRef.current?.highlight(highlightKey === "" ? [] : highlightKey.split("|"));
+  }, [highlightKey, loaded]);
 
   const reportPose = useCallback(() => {
     const root = assetRootRef.current;
@@ -661,6 +730,7 @@ function StageScene({
         contextLostRef={contextLostRef}
         onFrame={() => {
           framesRef.current += 1;
+          animatorRef.current?.update(performance.now());
         }}
       />
       <ambientLight intensity={1.4} />

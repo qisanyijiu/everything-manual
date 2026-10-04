@@ -676,6 +676,62 @@ pub async fn reset_for_retry(
     Ok(changed > 0)
 }
 
+/// 说明书 AI 批次因同分支 `submission_unknown` 被暂停（从未发出新请求）。
+///
+/// 判定：`needs_input` 且缺项码为 `manual_branch_paused_by_unknown`。这些批次
+/// **没有**新的付费提交，未知批次对账完成后应自动拉回队列，无需再点一次「重试」。
+pub fn is_branch_paused_without_purchase(stage: &JobStage) -> bool {
+    if stage.stage_kind != StageKind::ManualExtract || stage.status != JobStatus::NeedsInput {
+        return false;
+    }
+    let Some(items) = stage.needs_input_json.as_ref().and_then(serde_json::Value::as_array) else {
+        return false;
+    };
+    items.iter().any(|item| {
+        item.get("code").and_then(serde_json::Value::as_str)
+            == Some("manual_branch_paused_by_unknown")
+    })
+}
+
+/// 同 job 已无 `submission_unknown` 时，把被分支暂停、从未发出请求的说明书批次拉回队列。
+///
+/// 不碰真正缺项/失败的阶段，也不在仍有未知提交时放行（付费安全：未知未对账不得继续购买）。
+pub async fn requeue_paused_manual_batches(
+    conn: &mut SqliteConnection,
+    job_id: &str,
+    now: Timestamp,
+) -> Result<u64, StorageError> {
+    let unknown: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM job_stages WHERE job_id = ? AND status = 'submission_unknown'",
+    )
+    .bind(job_id)
+    .fetch_one(&mut *conn)
+    .await?;
+    if unknown > 0 {
+        return Ok(0);
+    }
+    let note = redact_text_urls(
+        "同分支未知提交已对账：该批此前因分支暂停从未发出请求，自动恢复排队（不重复购买）",
+    );
+    let changed = sqlx::query(
+        "UPDATE job_stages \
+            SET status = 'queued', next_run_at = NULL, \
+                lease_owner = NULL, lease_until = NULL, needs_input_json = NULL, \
+                last_error = ?, updated_at = ? \
+          WHERE job_id = ? \
+            AND stage_kind = 'manual_extract' \
+            AND status = 'needs_input' \
+            AND needs_input_json LIKE '%manual_branch_paused_by_unknown%'",
+    )
+    .bind(&note)
+    .bind(now.as_millis())
+    .bind(job_id)
+    .execute(&mut *conn)
+    .await?
+    .rows_affected();
+    Ok(changed)
+}
+
 /// 重新排队**已成功但依赖本次重试阶段产物**的下游阶段（传递闭包）。
 ///
 /// 场景（T15）：知识分支的批次/合并被重试后，先前为"部分草稿"组装过的

@@ -950,7 +950,7 @@ fn qa_executor(app: &TestApp, clock: Arc<ManualClock>) -> Arc<JobExecutor> {
     let settings = app.state().settings().clone();
     let mut registry = StageRegistry::new();
     register_provider_handlers(&mut registry, &settings).expect("Provider 处理器注册");
-    let registered = PipelineHandlers::from_settings(&settings).register(&mut registry);
+    let registered = PipelineHandlers::from_settings(&settings).register(&mut registry, &settings);
     assert!(
         registered.contains(&StageKind::AssembleDraft),
         "组装阶段必须注册（本地阶段，不依赖 Provider 配置）"
@@ -2688,7 +2688,7 @@ async fn qa_t15_cancel_keeps_submitted_state_and_adds_no_paid_steps() {
             | StageKind::ManualMerge
             | StageKind::TripoUpload
             | StageKind::TripoSubmit => JobStatus::Succeeded,
-            StageKind::ModelDownload | StageKind::ModelValidate | StageKind::AssembleDraft => {
+            StageKind::ModelDownload | StageKind::ModelValidate | StageKind::AssembleDraft | StageKind::TripoSegment | StageKind::AutoBind => {
                 JobStatus::Cancelled
             }
         };

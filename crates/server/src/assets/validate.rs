@@ -42,7 +42,7 @@ pub fn purpose_limit(limits: &Limits, purpose: AssetPurpose) -> u64 {
         AssetPurpose::Document => limits.max_pdf_bytes,
         AssetPurpose::Photo | AssetPurpose::PageImage => limits.max_photo_bytes,
         AssetPurpose::PageText => PAGE_TEXT_MAX_BYTES,
-        AssetPurpose::Model | AssetPurpose::ReleaseManifest => 0,
+        AssetPurpose::Model | AssetPurpose::ReleaseManifest | AssetPurpose::ModelParts => 0,
     }
 }
 
@@ -93,7 +93,7 @@ pub fn validate(
             })
         }
         // handler 在进入本函数前已拒绝 model 与 release_manifest（本路由不接受这些 purpose）。
-        AssetPurpose::Model | AssetPurpose::ReleaseManifest => Err(AssetError::invalid_content(
+        AssetPurpose::Model | AssetPurpose::ReleaseManifest | AssetPurpose::ModelParts => Err(AssetError::invalid_content(
             "purpose 非法：本接口只接受 document / photo / pageImage / pageText",
         )),
     }

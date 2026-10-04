@@ -798,7 +798,7 @@ async fn qa21_draft_committed_before_response_is_never_duplicated_on_restart() {
     // 3) 重启：新执行器（注册真实 pipeline 处理器）+ 恢复扫描 + 重跑。
     let mut registry = StageRegistry::new();
     let pipeline = PipelineHandlers::from_settings(&settings);
-    pipeline.register(&mut registry);
+    pipeline.register(&mut registry, &settings);
     let executor: Arc<JobExecutor> =
         fixed_jitter_executor(pool.clone(), executor_config(), registry, clock.clone());
     let report = executor.recover_expired_leases().await.expect("恢复扫描");

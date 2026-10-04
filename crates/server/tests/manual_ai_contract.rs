@@ -764,7 +764,7 @@ async fn extract_request_uses_responses_text_format_with_strict_schema_and_image
 
     // model 来自冻结快照（配置的模型名）。
     assert_eq!(request["model"], json!(MANUAL_AI_MODEL));
-    assert_eq!(request["max_output_tokens"], json!(4096));
+    assert_eq!(request["max_output_tokens"], json!(16384));
     assert_eq!(request["store"], json!(false));
     assert!(
         request.get("response_format").is_none(),
@@ -1709,7 +1709,7 @@ async fn page_text_instructions_cannot_change_budget_or_trigger_actions() {
     assert!(request.get("tools").is_none() && request.get("url").is_none());
     assert_eq!(
         request["max_output_tokens"],
-        json!(4096),
+        json!(16384),
         "预算参数未被资料改变"
     );
     assert_eq!(request["model"], json!(MANUAL_AI_MODEL), "模型未被资料改变");
@@ -2421,4 +2421,39 @@ async fn begin_intent_survives_active_writer_contention() {
         failures.is_empty(),
         "intent 事务在持锁写者下不得失败（BEGIN IMMEDIATE）：{failures:?}"
     );
+}
+
+/// 请求超时 → `Transport`（结果未知，不能证明未被接受），且客户端只发一次、不自动重试。
+#[tokio::test]
+async fn request_timeout_remains_unknown_and_does_not_retry() {
+    use everything_manual::providers::manual_ai::{ManualAiClient, ManualAiError, ManualAiTimeouts};
+    let server = FixtureServer::start(Scenario::new(vec![RouteScript {
+        method: "POST".to_owned(),
+        path: "/v1/responses".to_owned(),
+        path_match: PathMatchSpec::Exact,
+        repeat_last: false,
+        steps: vec![Step::Delay {
+            delay_ms: 1_000,
+            response: ResponseSpec {
+                status: 200,
+                headers: BTreeMap::new(),
+                body: BodySpec::Text {
+                    text: "{}".to_owned(),
+                },
+            },
+        }],
+    }]));
+    let client = ManualAiClient::new(
+        &format!("{}/v1", server.base_url()),
+        SecretString::new("canary-key"),
+        ManualAiTimeouts {
+            connect: Duration::from_secs(1),
+            request: Duration::from_millis(200),
+        },
+    )
+    .unwrap();
+    let error = client.extract_batch(b"{}").await.unwrap_err();
+    assert!(matches!(error, ManualAiError::Transport { .. }), "{error}");
+    assert!(!error.is_definitively_refused());
+    assert_eq!(server.call_count("POST", "/v1/responses"), 1);
 }

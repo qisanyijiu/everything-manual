@@ -56,6 +56,11 @@ cargo run -p everything-manual -- serve --data-dir ./var/dev   # 一个终端
 npm --prefix apps/web run dev                                   # 另一个终端
 ```
 
+要打开本机已有的 Wii U 样本预览，可在项目根目录运行
+`bash scripts/start-wiiu-preview.sh`。脚本使用现有的 `var/chrome-live-wiiu-20261003`
+数据与预览二进制，前端地址为 `http://127.0.0.1:5173/`；按 Ctrl+C 会停止本次启动的服务。
+这些 `var/` 文件是本机数据，新的仓库克隆不会自动带上。
+
 ## 工程命令
 
 根 `.cargo/config.toml` 定义了 `cargo xtask` 别名：

@@ -96,6 +96,10 @@ pub struct DraftKnowledge {
     /// 步骤视角（T19；`{ "<stepId>": CameraPose }`，相对同一 asset-root）。
     #[serde(default)]
     pub step_poses: std::collections::BTreeMap<String, super::aggregate::CameraPose>,
+    /// 交互层（ADR-042；分件 GLB + 部件绑定 + 动作 + 姿势）。旧草稿没有该字段 → `None`；
+    /// 序列化时 `None` 不输出，旧读者看到的形状不变。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interactive: Option<super::interactive::Interactive>,
     /// 缺项清单（`complete` 时为空）。
     pub missing: Vec<DraftMissingItem>,
 }
@@ -120,6 +124,7 @@ impl DraftKnowledge {
             knowledge,
             hotspots: Vec::new(),
             step_poses: std::collections::BTreeMap::new(),
+            interactive: None,
             missing,
         }
     }

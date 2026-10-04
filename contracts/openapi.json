@@ -1,6 +1,13 @@
 {
   "components": {
     "schemas": {
+      "ActionMode": {
+        "enum": [
+          "toggle",
+          "pulse"
+        ],
+        "type": "string"
+      },
       "AdminSummary": {
         "description": "管理员摘要（只暴露公开 ID；口令哈希永不出现在任何响应）。",
         "properties": {
@@ -217,6 +224,13 @@
           "purpose"
         ],
         "type": "object"
+      },
+      "BindingStatus": {
+        "enum": [
+          "auto",
+          "confirmed"
+        ],
+        "type": "string"
       },
       "BudgetLimitsDto": {
         "additionalProperties": false,
@@ -626,6 +640,17 @@
               }
             ]
           },
+          "interactive": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InteractivePatch",
+                "description": "交互层（ADR-042）：部件→分件节点绑定、动作、姿势（整体替换给出的集合）。"
+              }
+            ]
+          },
           "modelReview": {
             "oneOf": [
               {
@@ -834,6 +859,40 @@
           "partId",
           "status"
         ],
+        "type": "object"
+      },
+      "InteractivePatch": {
+        "additionalProperties": false,
+        "description": "PATCH 写入：整体替换绑定/动作/姿势（分件附件由专门接口挂载，PATCH 不可改）。",
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/ModelAction"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "bindings": {
+            "items": {
+              "$ref": "#/components/schemas/PartBinding"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "poses": {
+            "items": {
+              "$ref": "#/components/schemas/ModelPose"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
         "type": "object"
       },
       "ItemCreateRequest": {
@@ -1868,11 +1927,101 @@
         ],
         "type": "object"
       },
+      "ModelAction": {
+        "additionalProperties": false,
+        "description": "用户可触发的动作（例如\"取下电池盖\"）：`toggle` 在初始/目标之间切换，`pulse` 做一次往返。",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "durationMs": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ActionMode"
+          },
+          "stepIds": {
+            "description": "关联的说明书步骤（阅读时切到该步骤会提示此动作）。",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/TransformStep"
+            },
+            "type": "array"
+          },
+          "triggerPartIds": {
+            "description": "触发该动作的部件（点击部件/热点时提供该动作）。",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "mode",
+          "durationMs",
+          "steps"
+        ],
+        "type": "object"
+      },
       "ModelIssue": {
         "enum": [
           "suspectedCredential"
         ],
         "type": "string"
+      },
+      "ModelPose": {
+        "additionalProperties": false,
+        "description": "整体姿势（例如机器人\"趴下/坐下\"）：一组变换步，切换姿势时从初始位姿重新叠加。",
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "durationMs": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/TransformStep"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "durationMs",
+          "steps"
+        ],
+        "type": "object"
       },
       "ModelReviewPatch": {
         "additionalProperties": false,
@@ -1994,6 +2143,50 @@
         "required": [
           "data"
         ],
+        "type": "object"
+      },
+      "PartBinding": {
+        "additionalProperties": false,
+        "description": "部件 → 分件节点的绑定（一个部件可对应多个节点）。",
+        "properties": {
+          "nodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "partId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BindingStatus",
+            "description": "`auto`（自动绑定产出，待复核）/ `confirmed`（人工确认）。"
+          }
+        },
+        "required": [
+          "partId",
+          "nodes",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PhotoArrangementRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "slots": {
+            "additionalProperties": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": "每个视图要放的照片资产；省略或 null = 该视图为空。资产须为本物品 `photo`，且同一资产不能放两个视图。",
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
         "type": "object"
       },
       "PhotoCreateRequest": {
@@ -3483,6 +3676,71 @@
         ],
         "type": "object"
       },
+      "TransformKind": {
+        "enum": [
+          "translate",
+          "rotate"
+        ],
+        "type": "string"
+      },
+      "TransformStep": {
+        "additionalProperties": false,
+        "description": "一个刚体变换步（相对节点**初始**位姿；按顺序叠加）。",
+        "properties": {
+          "angleDeg": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "axis": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TransformKind",
+            "description": "`translate`：`vector` 为位移；`rotate`：绕 `pivot` 沿 `axis` 旋转 `angleDeg`。"
+          },
+          "nodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "pivot": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "vector": {
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nodes",
+          "kind"
+        ],
+        "type": "object"
+      },
       "TripoParametersDto": {
         "description": "Tripo 生成参数（`preset` 为价格目录里的预设名）。",
         "properties": {
@@ -3613,6 +3871,132 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "ViewCandidateCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "assetId": {
+            "description": "候选图资产（本物品、`purpose=photo`、JPEG/PNG）。",
+            "type": "string"
+          },
+          "classify": {
+            "description": "是否请说明书 AI 判断建议视图（默认 true）。",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "documentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pageNumber": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "source": {
+            "description": "`embedded` / `region` / `upload`。",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "source"
+        ],
+        "type": "object"
+      },
+      "ViewCandidateDto": {
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "confidence": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "note": {
+            "description": "判断理由（简短，供用户核对）。",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pageNumber": {
+            "description": "来源页（1-based）；手动上传的候选为 null。",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "source": {
+            "description": "`embedded`（PDF 内嵌位图）/ `region`（渲染页的图形区域裁剪）/ `upload`（用户上传）。",
+            "type": "string"
+          },
+          "suggestedView": {
+            "description": "建议视图（front/left/back/right/detail）；null = 未判断或不像产品视图。",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "assetId",
+          "source",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ViewCandidateListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ViewCandidateDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ViewCandidateResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ViewCandidateDto"
+          }
+        },
+        "required": [
+          "data"
+        ],
         "type": "object"
       },
       "ViewportDto": {
@@ -5017,6 +5401,123 @@
         ]
       }
     },
+    "/api/v1/items/{id}/drafts/{draftId}/parts-model": {
+      "post": {
+        "description": "multipart：`file`（GLB，必填）+ `source`（来源说明，可选）。服务端校验 GLB 预算、节点名唯一且只含平移，并核对分件包围盒与草稿模型 `bounds` 一致（坐标系相同）；通过后写入 `knowledge.interactive.partsModel`，旧绑定/动作中引用已不存在节点的条目被移除。不改变模型版本与热点锚点身份；动作写入 audit_events。",
+        "operationId": "attach_parts_model",
+        "parameters": [
+          {
+            "description": "物品 ID（UUIDv7）",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "草稿 ID（UUIDv7）",
+            "in": "path",
+            "name": "draftId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftResponse"
+                }
+              }
+            },
+            "description": "已挂载（返回更新后的草稿）"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "未登录"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "CSRF/Origin 校验失败"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "草稿不存在或不属于该物品"
+          },
+          "412": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "revision 过期"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "文件超过模型体积上限"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "不是合法分件 GLB 或坐标系不一致（details.fields）"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "缺少 If-Match"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "挂载分件模型（与草稿模型同一坐标系的多节点 GLB；If-Match）",
+        "tags": [
+          "drafts"
+        ]
+      }
+    },
     "/api/v1/items/{id}/drafts/{draftId}/publish": {
       "post": {
         "description": "发布事务在**显式请求**中执行（不存在自动发布路径）。必须携带 If-Match （缺失 428、过期 412）与 `Idempotency-Key`（缺失 422；同 key 同 body 重放返回同一 release 并标记 `x-idempotent-replay: true`；同 key 不同 body 409）。发布不变量全部满足才返回 201：必需知识已确认或有明确人工修订记录、引用页存在、选中模型 validated 且 modelReview.loaded/userConfirmed 均 true 且 revision/hash 匹配、每个要发布的交互部件至少一个 confirmed 热点且 hash 匹配、步骤引用全部存在、无 stale/candidate 热点冒充 confirmed。不满足返回 422 且 `details.issues[]` 逐条列出；「仅文本条目」部件保留并明显标识，不为发布自动隐藏。release 与 manifest 不可变（数据库触发器拒绝修改），发布只写本地数据——不产生费用、不调用任何外部服务。",
@@ -5638,6 +6139,74 @@
         ]
       }
     },
+    "/api/v1/items/{id}/photos/arrangement": {
+      "put": {
+        "description": "slots 给出 front/left/back/right/detail 各自的照片资产（省略/null = 空）。资产须为本物品照片且不重复。在一个写事务内替换本物品的全部照片行（同资产保留原照片 id），因此互换两个视图不会撞唯一索引。已开始任务使用冻结快照，不受影响；已有报价会因输入变化失效。",
+        "operationId": "arrange_photos",
+        "parameters": [
+          {
+            "description": "物品 ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoArrangementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoListResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "一次性确定全部视图照片（拖拽排列的保存）",
+        "tags": [
+          "photos"
+        ]
+      }
+    },
     "/api/v1/items/{id}/photos/{photoId}": {
       "get": {
         "description": "返回照片并带 ETag: \"r<revision>\"；跨物品/不存在 → 404。",
@@ -5932,6 +6501,227 @@
         "summary": "读取发布版本与完整 manifest（不可变）",
         "tags": [
           "releases"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/view-candidates": {
+      "get": {
+        "operationId": "list_candidates",
+        "parameters": [
+          {
+            "description": "物品 ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewCandidateListResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "视图候选图（从说明书 PDF 拆出的待选图）",
+        "tags": [
+          "photos"
+        ]
+      },
+      "post": {
+        "description": "资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。classify 默认 true：调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），不阻塞用户手动排列。候选不进入报价/生成快照。",
+        "operationId": "create_candidate",
+        "parameters": [
+          {
+            "description": "物品 ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewCandidateCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewCandidateResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewCandidateResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "登记一张视图候选图（可选由说明书 AI 判断建议视图）",
+        "tags": [
+          "photos"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/view-candidates/{candidateId}/dismiss": {
+      "post": {
+        "operationId": "dismiss_candidate",
+        "parameters": [
+          {
+            "description": "物品 ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "候选 ID",
+            "in": "path",
+            "name": "candidateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "已删除"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "删除一张候选（软删除，可撤销；不影响已排列的照片）",
+        "tags": [
+          "photos"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/view-candidates/{candidateId}/restore": {
+      "post": {
+        "operationId": "restore_candidate",
+        "parameters": [
+          {
+            "description": "物品 ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "候选 ID",
+            "in": "path",
+            "name": "candidateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "已恢复"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "撤销删除候选",
+        "tags": [
+          "photos"
         ]
       }
     },

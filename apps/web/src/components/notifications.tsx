@@ -15,19 +15,31 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Link } from "react-router";
 
 export type NoticeKind = "status" | "alert";
+
+/** 通知里的跳转动作（站内路由；例如"生成完成 → 查看结果"）。 */
+export interface NoticeAction {
+  readonly label: string;
+  readonly to: string;
+}
 
 export interface Notice {
   readonly id: number;
   readonly kind: NoticeKind;
   readonly message: string;
   readonly requestId: string | null;
+  readonly action: NoticeAction | null;
+  /** true = 不自动消失（需要用户处理的结果提示，例如生成完成）。 */
+  readonly sticky: boolean;
 }
 
 export interface NotifyOptions {
   kind?: NoticeKind;
   requestId?: string | null;
+  action?: NoticeAction | null;
+  sticky?: boolean;
 }
 
 interface NotificationContextValue {
@@ -53,7 +65,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     nextId.current += 1;
     setNotices((list) => [
       ...list,
-      { id, kind: options.kind ?? "status", message, requestId: options.requestId ?? null },
+      {
+        id,
+        kind: options.kind ?? "status",
+        message,
+        requestId: options.requestId ?? null,
+        action: options.action ?? null,
+        sticky: options.sticky ?? false,
+      },
     ]);
   }, []);
 
@@ -123,12 +142,12 @@ function NoticeItem({
   onDismiss: (id: number) => void;
 }) {
   useEffect(() => {
-    if (notice.kind !== "status") {
+    if (notice.kind !== "status" || notice.sticky) {
       return;
     }
     const timer = setTimeout(() => onDismiss(notice.id), AUTO_DISMISS_MS);
     return () => clearTimeout(timer);
-  }, [notice.id, notice.kind, onDismiss]);
+  }, [notice.id, notice.kind, notice.sticky, onDismiss]);
 
   return (
     <div className={`notice notice--${notice.kind}`}>
@@ -142,6 +161,11 @@ function NoticeItem({
           </>
         )}
       </p>
+      {notice.action !== null && (
+        <Link className="notice__action" to={notice.action.to} onClick={() => onDismiss(notice.id)}>
+          {notice.action.label}
+        </Link>
+      )}
       <button
         type="button"
         className="notice__dismiss"

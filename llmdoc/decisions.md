@@ -2462,3 +2462,45 @@ ADR-xxx — 简短结论
 - 写入预检与提交分界遵循 PRD §3.4：发布前错误不改变状态，原子 rename/link 后是已提交状态，目录同步失败只安全告警并维持内存/磁盘一致。此边界不承诺异常存储设备或掉电后的持久性。不会为恢复操作重新产生明文临时文件。
 - 在 provider client 边界处理已知 key 的原文和 JSON 解码反射；外层 JSON 不可解析时同样整体丢弃，避免可恢复的 Unicode 转义绕过检查（BUG-ES-001）。成功数据含 key 宁可按既有未知提交/异常协议语义停止，也不污染业务 ID、日志、诊断和备份。保持 429、5xx、4xx、Tripo 非零业务 code 的分类。不承诺任意编码检测、历史数据清理、全部资产加密或完整内存消除。
 - 实现和实际测试见 [ES-01 implementation](requirements/encrypted-secrets/implementation.md)。真实 Keychain / 浏览器与重启消费由独立 QA 验证，不以内存 fake 代替平台结论。
+
+## ADR-040 — 发布版离线 3D 页面：浏览器端组装单文件 HTML
+
+- 日期：2026-10-02；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求"通过类似 three.js 的形式直接展示在网页上"。
+- 结论：阅读页提供「下载离线 3D 页面」，在浏览器内把 release manifest 知识 + GLB（base64）+ three.js 阅读器（rolldown 打成的 IIFE）拼成一个 HTML，双击即可打开。不改服务端合同、不新增端点、不放宽鉴权。
+- 原因：Tripo 产物是标准 glTF 2.0 + 核心 PBR，`GLTFLoader` 可直接加载；单文件内联可绕开 `file://` 下的 fetch 限制。免登录分享链接需要新的权限面，另行决策。
+- 约束：CSP `default-src 'none'`（零网络）；文字只走 textContent；内嵌 JSON 转义 `<`/U+2028/U+2029；热点只保留锚点属于发布模型版本的条目（与在线阅读器同一读取防线）。
+- 证据与格式调研：[standalone-3d-viewer/research.md](requirements/standalone-3d-viewer/research.md)。
+
+## ADR-041 — 生成完成全局提示、生成结果页与生成历史（纯前端，复用永久保留的产物）
+
+- 日期：2026-10-02；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求"更好的交互：自动展示或弹出提示；能保存历史生成物"。
+- 事实（代码核查）：每个任务一份不可变 `generation_snapshots` + 一份草稿 + 自己的 model_revision/GLB；新任务不覆盖旧草稿，发布版本不可变，资产维护只隔离"无引用 blob"。因此历史保存**无需后端改动**，`GET /jobs?itemId=` 的 `draftId` 即可枚举。
+- 做法：AppShell 挂 `JobCompletionWatcher`（轮询 `/jobs?limit=20`，无进行中任务即停）；只对本会话见过的非终态任务弹提示，成功提示常驻并链接 `/jobs/:id/result`，失败用 alert；后台标签页改标题。新增 `/jobs/:id/result`（该任务草稿的只读 3D + 部件/步骤/规格 + 费用）与 `/items/:id/generations`（按时间倒序，关联由该草稿发布的版本）。确认页、任务详情、任务列表、物品概览增加入口。
+- 影响：每个已登录页面多一次 `/jobs?limit=20` 请求（shell.test 已记录）；通知组件新增 `action` 与 `sticky`，`NotificationProvider` 移到 Router 内。
+- 未做：生成历史缩略图、浏览器系统通知（Notification API 需权限）。
+
+## ADR-042 — 分件模型 + 自动热点绑定 + 交互层（动作 / 姿势）
+
+- 日期：2026-10-03；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求以 PENTAX 17 与 CyberDog 2 说明书为例，自动绑定热点，并支持"电池仓打开、机器人多种姿势"等由多个模块组成的交互。
+- **分件来源**：Tripo `POST /mesh/segment`（v2.0-20260430，40 credits）输出与原模型**同一坐标系**的多节点 GLB（只含平移）。它是模型 revision 的**附件**（新资产用途 `model_parts`，迁移 0009；上游 PC-03A 已占用 0008），不是新模型版本：热点锚点身份（revisionId + sha256）不变。挂载接口核对分件包围盒与草稿模型 `bounds` 偏差 ≤ 0.02，否则 422（实测对另一次生成的模型偏差 0.165，被拒）。
+- **交互层**：`knowledge.interactive = { partsModel, bindings[], actions[], poses[] }`；动作/姿势只描述刚体变换（translate / 绕 pivot+axis rotate），节点按分件 GLB 节点名引用并在写入时校验；附件不属于当前模型版本时交互层不可编辑、不显示、不随发布冻结。发布 manifest 增加 `model_parts` 资产，导出 ZIP 一并带上。
+- **自动绑定**（`scripts/autobind/`，原型，不进生产依赖）：视觉模型定位标注端点 → 轮廓 IoU 搜索视角（PENTAX 前 0.956 / 后 0.967，CyberDog 0.859 / 0.711）→ z-buffer 投影到模型表面 → LLM 图例编号↔部件条目。产物一律 `candidate`，复核页提供「确认全部候选热点」；不自动发布（ADR-005 不变）。
+- **否决**：Tripo 自动绑骨骼（`rig-check` 对 CyberDog 返回 `riggable:false`；四足预设只有 walk）→ 姿势改为分件 + 关节枢轴的程序化变换；`generate_parts`（与纹理/PBR 不兼容）。
+- **说明书 AI 超时**：新增 `jobs.manual_ai_request_seconds`（30..=900，默认 180）。CyberDog 长批次在 180s 内多次超时 → `submission_unknown`；设为 600s 后同一批次约 3 分钟完成。
+- 证据：[interactive-parts.md](requirements/standalone-3d-viewer/interactive-parts.md)。
+
+## ADR-043 — 主密钥默认改为本地私有文件（取代 macOS 钥匙串）
+
+- 日期：2026-10-03；状态：implemented（分支 `feat/standalone-3d-viewer`），部分取代 ADR-039 的"macOS 默认钥匙串"。依据：用户要求"不要使用 mac 系统的密码串，直接保存到本地文件"。
+- 原因：开发期每次重新编译二进制，macOS 都会把它当作新程序重新弹出钥匙串授权，服务在启动时阻塞直到人工点击（实测阻塞约 40 分钟）。
+- 结论：`EM_SECRETS_MASTER_KEY` 仍最优先；未注入时使用 `EM_SECRETS_MASTER_KEY_FILE` 或默认 `~/.config/everything-manual/master.key`。读取只读、不创建；创建只新建（并发首次创建读既有赢家）；文件必须是 0600 普通文件，否则拒绝。默认路径在 data-dir 之外，备份/导出不包含它（与 ADR-039"主钥与密文分离"一致）。
+- 影响：旧的钥匙串加密覆盖文件无法用新主钥解密；本地开发环境已重置（`var/dev-old-20261003/provider-overrides.keychain-encrypted.json` 保留原文件），密钥经网页配置重新保存。钥匙串实现（`Secrets::native`）保留供显式使用，不再是默认。
+- 验证：新增 2 项单测（0600/0700、只读不创建、权限放宽拒绝、内容非法拒绝、重启复用）；Rust 全量 591 项通过；真实服务重启 2 秒就绪、两家供应商密钥可解密，无钥匙串弹窗。
+
+## ADR-044 — 从说明书 PDF 拆出视图候选图，用户拖拽确定视图排列
+
+- 日期：2026-10-03；状态：implemented（分支 `feat/standalone-3d-viewer`），未经独立 QA。依据：用户要求"PDF 解析时拆分出可能为正面/左/背/右/特写的图片作为待选项，支持前端拖拽、删除确定最终排列"。
+- 结论：拆图在浏览器内用 PDF.js 完成（内嵌位图框 + 矢量线稿区域，生产不依赖 PDF 可执行程序）；候选上传为普通 `photo` 资产，`view_candidates` 记录来源页与说明书 AI 的**建议**视图（只是建议，不自动排列）；排列以 `PUT /photos/arrangement` 一次性提交。
+- 原因：说明书多为矢量线稿（PENTAX）或网页截图（CyberDog），只取内嵌位图会漏掉大半；建议视图会偏差（三分之四视角常判为正面），因此最终排列必须由用户决定。
+- 约束：候选不进报价/生成快照；删除为软删除可撤销；排列在单写事务内替换照片行（照片不被任何外键引用，已开始任务用冻结的 photo_ids + hashes 不受影响；已有报价因输入变化失效）；视图判断与提取同一服务端密钥，失败时候选记为未判断。
+- 证据：[view-candidates/notes.md](requirements/view-candidates/notes.md)。

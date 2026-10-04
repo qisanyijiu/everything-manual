@@ -393,7 +393,7 @@ fn validate_photo_patch(
 }
 
 /// 物品必须存在（404，不泄露归属）。
-async fn ensure_item(
+pub(super) async fn ensure_item(
     connection: &mut sqlx::SqliteConnection,
     item_id: &str,
 ) -> Result<(), ApiError> {
@@ -405,7 +405,7 @@ async fn ensure_item(
 }
 
 /// 校验照片资产：归属同一物品（否则 404）、`purpose=photo`、JPEG/PNG、内容可用。
-async fn check_photo_asset(
+pub(super) async fn check_photo_asset(
     connection: &mut sqlx::SqliteConnection,
     item_id: &str,
     asset_id: &str,
@@ -479,7 +479,9 @@ fn photo_response(photo: Photo, status: StatusCode) -> Response {
 }
 
 /// 获取数据库连接；失败时返回 [`ApiError`]（调用方渲染，减少 Result 体积）。
-async fn acquire(state: &AppState) -> Result<sqlx::pool::PoolConnection<sqlx::Sqlite>, ApiError> {
+pub(super) async fn acquire(
+    state: &AppState,
+) -> Result<sqlx::pool::PoolConnection<sqlx::Sqlite>, ApiError> {
     state.database().pool().acquire().await.map_err(|error| {
         tracing::error!(error = %error, "获取数据库连接失败");
         ApiError::internal("服务器内部错误：数据库暂不可用")

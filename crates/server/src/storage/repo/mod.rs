@@ -33,6 +33,7 @@ pub mod quotes;
 pub mod releases;
 pub mod sessions;
 pub mod snapshots;
+pub mod view_candidates;
 
 use manual_core::domain::{JobStatus, StageKind};
 

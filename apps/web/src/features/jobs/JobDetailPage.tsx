@@ -103,6 +103,9 @@ export function JobDetailPage() {
       )}
       {detail.draftId !== null && detail.draftId !== undefined && (
         <p className="field__hint">
+          <Link className="button-primary" to={`/jobs/${detail.id}/result`}>
+            查看生成结果（3D 预览）
+          </Link>{" "}
           <Link to={`/items/${detail.item.id}/drafts/${detail.draftId}/review`}>
             打开草稿（待复核）
           </Link>
