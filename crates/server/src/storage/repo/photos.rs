@@ -319,19 +319,6 @@ pub fn parse_view(value: &str) -> Result<PhotoView, StorageError> {
     })
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn view_parsing_rejects_unknown_values() {
-        assert_eq!(parse_view("front").unwrap(), PhotoView::Front);
-        assert_eq!(parse_view("detail").unwrap(), PhotoView::Detail);
-        assert!(parse_view("top").is_err());
-        assert!(parse_view("Front").is_err());
-    }
-}
-
 /// 一次性确定全部视图槽位（ADR-044；视图排列页的拖拽/删除/交换在客户端完成后整体提交）。
 ///
 /// `slots`：每个视图要放的照片资产（`None` = 清空该视图）。在调用方的写事务内执行：
@@ -380,4 +367,17 @@ pub async fn arrange(
         out.push(photo);
     }
     Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn view_parsing_rejects_unknown_values() {
+        assert_eq!(parse_view("front").unwrap(), PhotoView::Front);
+        assert_eq!(parse_view("detail").unwrap(), PhotoView::Detail);
+        assert!(parse_view("top").is_err());
+        assert!(parse_view("Front").is_err());
+    }
 }

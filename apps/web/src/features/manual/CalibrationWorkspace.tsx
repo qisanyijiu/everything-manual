@@ -48,7 +48,7 @@ import { reviewTasks, taskDestination, nextReviewTask, type ReviewTask } from ".
 import { PublishPanel } from "./PublishPanel";
 import { useDraftMutations } from "./useDraftMutations";
 import { InteractionPanel } from "../viewer/InteractionPanel";
-import { readInteractive } from "../viewer/interactive";
+import { readInteractive } from "../viewer/interactive-view";
 import { useInteractive } from "../viewer/useInteractive";
 import {
   hotspotPickUpsert,

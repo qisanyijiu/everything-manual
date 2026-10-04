@@ -86,6 +86,7 @@ export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: View
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastDismissed, setLastDismissed] = useState<ViewCandidateDto | null>(null);
+  const [suggestViews, setSuggestViews] = useState(false);
 
   // 服务端照片变化（保存成功/其它页面修改）时同步；本地有未保存修改时不覆盖。
   const [dirty, setDirty] = useState(false);
@@ -206,15 +207,15 @@ export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: View
           for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
             const { figure, index } = next;
             const asset = await uploadAsset(itemId, "photo", figure.blob, `page-${figure.pageNumber}-${index + 1}.jpg`);
-            await createViewCandidate(itemId, { assetId: asset.id, documentId: document.id, pageNumber: figure.pageNumber, source: figure.source, classify: true });
+            await createViewCandidate(itemId, { assetId: asset.id, documentId: document.id, pageNumber: figure.pageNumber, source: figure.source, classify: suggestViews });
             done += 1;
-            setBusy(`正在判断视图（${done} / ${figures.length}）…`);
+            setBusy(`${suggestViews ? "正在判断视图" : "正在保存候选图"}（${done} / ${figures.length}）…`);
             if (done % 4 === 0) {
               void queryClient.invalidateQueries({ queryKey: ["view-candidates", itemId] });
             }
           }
         };
-        setBusy(`正在判断视图（0 / ${figures.length}）…`);
+        setBusy(`${suggestViews ? "正在判断视图" : "正在保存候选图"}（0 / ${figures.length}）…`);
         await Promise.all(Array.from({ length: Math.min(4, figures.length) }, () => worker()));
         notify(`已从说明书拆出 ${figures.length} 张候选图：拖到下方槽位确定视图，或点「按建议填入空槽」。`);
       } finally {
@@ -339,6 +340,16 @@ export function ViewArrangement({ itemId, photos, onSlotsChange, saveRef }: View
           </button>
         </div>
       </div>
+      <label className="field__hint">
+        <input
+          type="checkbox"
+          checked={suggestViews}
+          disabled={busy !== null}
+          onChange={(event) => setSuggestViews(event.target.checked)}
+          data-testid="classify-view-candidates"
+        />{" "}
+        使用说明书 AI 建议视图（会发送候选图片，可能产生费用）
+      </label>
       {dirty && <p className="status-note" data-testid="arrangement-unsaved" role="status">排列有修改，将在操作停止后自动保存…</p>}
       <p className="field__hint">
         拖动图片到下方槽位；拖到已占用的槽会互换；拖回候选区即移出。也可以用每张图下方的下拉框完成同样的操作。建议视图来自说明书 AI，只作参考。

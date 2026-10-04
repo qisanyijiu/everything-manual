@@ -12,14 +12,9 @@
  * e2e 也用自己的实例，避免互相污染。
  */
 
-import path from "node:path";
-
 import { defineConfig, devices } from "@playwright/test";
 
-import { E2E_API_PORT, E2E_WEB_PORT, E2E_WORK_DIR } from "./tests/e2e/runtime";
-
-const REPO_ROOT = path.resolve(import.meta.dirname, "../..");
-const EVIDENCE_DIR = path.join(REPO_ROOT, "artifacts", "web-mvp", "t09-rd");
+import { E2E_API_PORT, E2E_WEB_PORT, E2E_WORK_DIR, EVIDENCE_DIR } from "./tests/e2e/runtime";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -33,7 +28,7 @@ export default defineConfig({
   retries: 0,
   timeout: 120_000,
   expect: { timeout: 15_000 },
-  outputDir: path.join(EVIDENCE_DIR, "playwright-output"),
+  outputDir: `${EVIDENCE_DIR}/playwright-output`,
   reporter: [["list"]],
   globalSetup: "./tests/e2e/global-setup.ts",
   globalTeardown: "./tests/e2e/global-teardown.ts",
@@ -47,7 +42,11 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        channel: "chrome",
+        launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] },
+      },
     },
   ],
   webServer: {

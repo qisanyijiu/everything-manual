@@ -16,6 +16,8 @@ use zeroize::Zeroizing;
 pub const MASTER_ENV: &str = "EM_SECRETS_MASTER_KEY";
 /// Overrides the default key file path (`~/.config/everything-manual/master.key`).
 pub const MASTER_FILE_ENV: &str = "EM_SECRETS_MASTER_KEY_FILE";
+/// Explicit compatibility source for existing macOS Keychain-encrypted configurations.
+pub const BACKEND_ENV: &str = "EM_SECRETS_BACKEND";
 pub const KEYCHAIN_SERVICE: &str = "org.everything-manual.secrets.v1";
 pub const KEYCHAIN_ACCOUNT: &str = "master";
 const MAX_FILE: u64 = 262144;
@@ -32,7 +34,7 @@ pub enum SecretError {
 impl std::fmt::Display for SecretError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Self::MasterUnavailable | Self::InvalidMaster => "密钥未能加密保存，本次配置未保存。请检查服务端的系统凭据库访问权限或主密钥环境注入；当前编辑仍保留，可在恢复后重试保存。",
+            Self::MasterUnavailable | Self::InvalidMaster => "密钥未能加密保存，本次配置未保存。请检查服务端的原主密钥文件、环境注入或显式钥匙串来源；当前编辑仍保留，可在恢复后重试保存。",
             Self::InvalidEnvelope => "加密配置无法读取，请检查原主密钥与配置文件。不要删除密文或改回明文来绕过此错误。",
             Self::UnsafeFile => "密钥配置文件不可读、不是受限普通文件或超出大小限制；未读取内容。",
             Self::WriteFailed => "无法写入加密配置，请检查服务端目录权限和可用空间；本次配置未保存，当前编辑仍保留。",
@@ -107,13 +109,36 @@ impl Secrets {
                 Ok(Self::fixed(key))
             }
             Err(std::env::VarError::NotUnicode(_)) => Err(SecretError::InvalidMaster),
-            Err(std::env::VarError::NotPresent) => match default_key_file() {
-                Some(path) => Ok(Self::key_file(path)),
-                None => Ok(Self::unavailable()),
-            },
+            Err(std::env::VarError::NotPresent) => {
+                let backend =
+                    std::env::var(BACKEND_ENV)
+                        .map(Some)
+                        .or_else(|error| match error {
+                            std::env::VarError::NotPresent => Ok(None),
+                            std::env::VarError::NotUnicode(_) => Err(SecretError::InvalidMaster),
+                        })?;
+                if backend.as_deref() == Some("keychain")
+                    && std::env::var_os(MASTER_FILE_ENV).is_some()
+                {
+                    return Err(SecretError::InvalidMaster);
+                }
+                Self::select_backend(backend.as_deref(), default_key_file())
+            }
         }
     }
-    #[cfg(target_os = "macos")]
+    fn select_backend(
+        backend: Option<&str>,
+        path: Option<std::path::PathBuf>,
+    ) -> Result<Self, SecretError> {
+        match backend {
+            None | Some("file") => Ok(path.map(Self::key_file).unwrap_or_else(Self::unavailable)),
+            #[cfg(target_os = "macos")]
+            Some("keychain") => Ok(Self::native(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT)),
+            #[cfg(not(target_os = "macos"))]
+            Some("keychain") => Err(SecretError::MasterUnavailable),
+            Some(_) => Err(SecretError::InvalidMaster),
+        }
+    }
     /// Local private key file (hex, 0600). Load is read-only; create is create-only.
     pub fn key_file(path: std::path::PathBuf) -> Self {
         Self::with_source(Arc::new(KeyFile { path }))
@@ -285,8 +310,12 @@ struct KeyFile {
 impl KeyFile {
     fn parse(bytes: &[u8]) -> Result<Zeroizing<[u8; 32]>, SecretError> {
         let text = std::str::from_utf8(bytes).map_err(|_| SecretError::InvalidMaster)?;
-        let decoded = Zeroizing::new(decode_hex(text.trim()).map_err(|_| SecretError::InvalidMaster)?);
-        let key: [u8; 32] = decoded.as_slice().try_into().map_err(|_| SecretError::InvalidMaster)?;
+        let decoded =
+            Zeroizing::new(decode_hex(text.trim()).map_err(|_| SecretError::InvalidMaster)?);
+        let key: [u8; 32] = decoded
+            .as_slice()
+            .try_into()
+            .map_err(|_| SecretError::InvalidMaster)?;
         Ok(Zeroizing::new(key))
     }
 }
@@ -309,7 +338,9 @@ impl MasterKeySource for KeyFile {
                 use std::os::unix::fs::DirBuilderExt;
                 builder.mode(0o700);
             }
-            builder.create(parent).map_err(|_| SecretError::WriteFailed)?;
+            builder
+                .create(parent)
+                .map_err(|_| SecretError::WriteFailed)?;
         }
         let encoded = Zeroizing::new(format!("{}\n", encode_hex(generated.as_ref())));
         match write_private_file(&self.path, encoded.as_bytes(), false) {
@@ -509,8 +540,29 @@ impl MasterKeySource for NativeKeychain {
 mod key_file_tests {
     use super::*;
 
+    #[test]
+    fn backend_selection_is_explicit_and_does_not_access_keychain() {
+        assert!(Secrets::select_backend(None, None).is_ok());
+        assert!(Secrets::select_backend(Some("file"), None).is_ok());
+        assert_eq!(
+            Secrets::select_backend(Some("automatic"), None).err(),
+            Some(SecretError::InvalidMaster)
+        );
+        #[cfg(target_os = "macos")]
+        assert!(Secrets::select_backend(Some("keychain"), None).is_ok());
+        #[cfg(not(target_os = "macos"))]
+        assert_eq!(
+            Secrets::select_backend(Some("keychain"), None).err(),
+            Some(SecretError::MasterUnavailable)
+        );
+    }
+
     fn temp_path(tag: &str) -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("em-keyfile-{tag}-{}-{}", std::process::id(), encode_hex(&getrandom::u64().unwrap_or(0).to_le_bytes())))
+        std::env::temp_dir().join(format!(
+            "em-keyfile-{tag}-{}-{}",
+            std::process::id(),
+            encode_hex(&getrandom::u64().unwrap_or(0).to_le_bytes())
+        ))
     }
 
     #[test]
@@ -518,16 +570,31 @@ mod key_file_tests {
         let dir = temp_path("create");
         let path = dir.join("nested/master.key");
         let secrets = Secrets::key_file(path.clone());
-        let envelope = secrets.encrypt(&SecretString::new("sk-test-value".to_owned()), "tripo").unwrap();
+        let envelope = secrets
+            .encrypt(&SecretString::new("sk-test-value".to_owned()), "tripo")
+            .unwrap();
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
-            assert_eq!(fs::metadata(path.parent().unwrap()).unwrap().permissions().mode() & 0o777, 0o700);
+            assert_eq!(
+                fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+            assert_eq!(
+                fs::metadata(path.parent().unwrap())
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o700
+            );
         }
         // 新实例（模拟重启）读取同一文件即可解密；不会重新生成主钥。
         let again = Secrets::key_file(path.clone());
-        assert_eq!(again.decrypt(&envelope, "tripo").unwrap().expose(), "sk-test-value");
+        assert_eq!(
+            again.decrypt(&envelope, "tripo").unwrap().expose(),
+            "sk-test-value"
+        );
         fs::remove_dir_all(&dir).ok();
     }
 
@@ -543,12 +610,25 @@ mod key_file_tests {
         {
             use std::os::unix::fs::PermissionsExt;
             fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).unwrap();
-            assert_eq!(KeyFile { path: path.clone() }.load().err(), Some(SecretError::UnsafeFile));
+            assert_eq!(
+                KeyFile { path: path.clone() }.load().err(),
+                Some(SecretError::UnsafeFile)
+            );
             fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
         }
-        assert_eq!(KeyFile { path: path.clone() }.load().unwrap().unwrap().as_ref(), &[0x11u8; 32]);
+        assert_eq!(
+            KeyFile { path: path.clone() }
+                .load()
+                .unwrap()
+                .unwrap()
+                .as_ref(),
+            &[0x11u8; 32]
+        );
         fs::write(&path, "not-hex").unwrap();
-        assert_eq!(KeyFile { path: path.clone() }.load().err(), Some(SecretError::InvalidMaster));
+        assert_eq!(
+            KeyFile { path: path.clone() }.load().err(),
+            Some(SecretError::InvalidMaster)
+        );
         fs::remove_dir_all(&dir).ok();
     }
 }

@@ -358,12 +358,12 @@ test("重复操作不多收费：重复点击与重放不产生新的付费提�
   expect(fixture.paidSubmissions() - paidBefore, "取消不得产生新的付费提交").toBe(1);
 });
 
-test("needs_input：缺项与真实恢复动作一致（P3① 不再承诺可重试）；断网不误报业务失败", async ({
+test("needs_input：本地校验重试不重复下载或购买；断网不误报业务失败", async ({
   page,
   request,
 }) => {
-  // 模型分支：远端成功但 GLB 截断 → model_validate needs_input（tripo 已结算 → 重试被
-  // budgetNotHolding 拒绝 = T15 P3①）；知识分支：拒答 → needs_input（预留仍占用 → 可重试）。
+  // 本地校验重试只读取已下载的 GLB；截断文件仍缺项，不再次下载或购买。
+  // 知识分支拒答后仍有预留，因此可显式重试说明书 AI。
   fixture.state.manualMode = "refuse";
   fixture.state.submitMode = "success";
   fixture.state.modelMode = "truncated";
@@ -378,8 +378,8 @@ test("needs_input：缺项与真实恢复动作一致（P3① 不再承诺可重
       stageOf(current, "manual_extract").status === "needs_input",
     "两条分支各自阻塞",
   );
-  expect(stageOf(detail, "model_validate").retry.allowed).toBe(false);
-  expect(stageOf(detail, "model_validate").retry.reason).toBe("budgetNotHolding");
+  expect(stageOf(detail, "model_validate").retry.allowed).toBe(true);
+  expect(stageOf(detail, "model_validate").retry.reason).toBeNull();
   expect(stageOf(detail, "manual_extract").retry.allowed).toBe(true);
 
   const bridge = await openApp(page, `/jobs/${jobId}`);
@@ -387,9 +387,20 @@ test("needs_input：缺项与真实恢复动作一致（P3① 不再承诺可重
 
   const validate = page.locator('[data-stage-kind="model_validate"]');
   await expect(validate.locator('[data-testid="job-stage-missing"]')).toBeVisible();
-  await expect(validate.locator('[data-testid="stage-retry-denied"]')).toBeVisible();
-  await expect(validate.locator('[data-testid="stage-retry-reason"]')).toContainText("重新获取报价");
-  await expect(validate.locator('[data-testid="stage-retry-button"]')).toHaveCount(0);
+  await expect(validate.locator('[data-testid="stage-retry-denied"]')).toHaveCount(0);
+  const localRetry = validate.getByTestId("stage-retry-button");
+  await expect(localRetry).toBeVisible();
+  const providerCalls = { ...fixture.counts };
+  const retryResponse = page.waitForResponse((response) =>
+    response.request().method() === "POST" && response.url().endsWith(`/jobs/${jobId}/retry`));
+  await localRetry.click();
+  expect((await retryResponse).status()).toBe(200);
+  const revalidated = await waitForJob(request, backend.base, jobId, (current) =>
+    stageOf(current, "model_validate").updatedAt !== stageOf(detail, "model_validate").updatedAt
+      && stageOf(current, "model_validate").status === "needs_input",
+  "本地重试后截断模型仍缺项");
+  expect(stageOf(revalidated, "model_validate").lastError).toBe(stageOf(detail, "model_validate").lastError);
+  expect(fixture.counts, "本地重试不得再调用供应商或下载模型").toEqual(providerCalls);
 
   const batch = page.locator('[data-stage-kind="manual_extract"]');
   await expect(batch.locator('[data-testid="job-stage-missing"]')).toContainText("拒答");

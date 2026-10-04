@@ -5,6 +5,8 @@ import { chromium } from "playwright";
 import fs from "node:fs";
 
 const [tag, PDF, NAME, MODEL] = process.argv.slice(2);
+const PASSWORD = process.env.EM_E2E_PASSWORD;
+if (!PASSWORD) throw new Error("请通过 EM_E2E_PASSWORD 提供本次隔离实例的登录密码。");
 const OUT = `/tmp/em5/${tag}`;
 fs.mkdirSync(OUT, { recursive: true });
 const WEB = "http://127.0.0.1:5173";
@@ -49,7 +51,7 @@ async function step(label, fn) {
 try {
   await step("login", async () => {
     await p.goto(`${WEB}/login`);
-    await p.fill('input[type="password"]', "KRLBEQX9DsiV", { timeout: 60000 });
+    await p.fill('input[type="password"]', PASSWORD, { timeout: 60000 });
     await p.keyboard.press("Enter");
     await p.waitForURL((u) => !u.pathname.startsWith("/login"));
   });

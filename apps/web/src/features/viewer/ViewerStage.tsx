@@ -39,7 +39,8 @@ import {
   type Vec3,
 } from "./coordinates";
 import { ViewerError, loadGlbModel, summarizeScene, type LoadedModel } from "./glb";
-import { PartAnimator, type ModelActionView, type ModelPoseView } from "./interactive";
+import { PartAnimator } from "./interactive";
+import type { ModelActionView, ModelPoseView } from "./interactive-view";
 import { viewerResourceStats } from "./resources";
 import type { WebglContextState } from "./webgl";
 

@@ -39,7 +39,11 @@ impl PipelineHandlers {
     }
 
     /// 注册流水线本地阶段：assemble_draft + 自动分件/绑定（ADR-045）。
-    pub fn register(&self, registry: &mut StageRegistry, settings: &crate::config::Settings) -> Vec<StageKind> {
+    pub fn register(
+        &self,
+        registry: &mut StageRegistry,
+        settings: &crate::config::Settings,
+    ) -> Vec<StageKind> {
         registry.register(
             StageKind::AssembleDraft,
             AssembleDraftHandler::new(self.data_dir.clone()),

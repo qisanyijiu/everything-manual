@@ -93,9 +93,11 @@ pub fn validate(
             })
         }
         // handler 在进入本函数前已拒绝 model 与 release_manifest（本路由不接受这些 purpose）。
-        AssetPurpose::Model | AssetPurpose::ReleaseManifest | AssetPurpose::ModelParts => Err(AssetError::invalid_content(
-            "purpose 非法：本接口只接受 document / photo / pageImage / pageText",
-        )),
+        AssetPurpose::Model | AssetPurpose::ReleaseManifest | AssetPurpose::ModelParts => {
+            Err(AssetError::invalid_content(
+                "purpose 非法：本接口只接受 document / photo / pageImage / pageText",
+            ))
+        }
     }
 }
 

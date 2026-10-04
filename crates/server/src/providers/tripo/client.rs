@@ -27,6 +27,7 @@ use super::dto::{
 pub const TRIPO_UPLOAD_PATH: &str = "/files";
 /// `POST /generation/multiview-to-model`（**付费**提交；body 见 [`super::dto::SubmitRequest`]）。
 pub const TRIPO_SUBMIT_PATH: &str = "/generation/multiview-to-model";
+pub const TRIPO_SEGMENT_PATH: &str = "/mesh/segment";
 /// `GET /tasks/{task_id}` 的路径前缀。
 pub const TRIPO_TASKS_PATH_PREFIX: &str = "/tasks/";
 /// multipart 上传的字段名（contracts.md §6：`file`）。
@@ -275,6 +276,16 @@ impl TripoClient {
     pub async fn submit_multiview(&self, body: &[u8]) -> Result<SubmitData, TripoError> {
         let request = self
             .request(reqwest::Method::POST, TRIPO_SUBMIT_PATH)
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .body(body.to_vec());
+        let envelope = self.execute(request).await?;
+        submit_data(envelope.data.as_ref()).map_err(|detail| TripoError::Unexpected { detail })
+    }
+
+    /// Separately priced paid submission; uses the same no-retry/error classification policy.
+    pub async fn submit_segment(&self, body: &[u8]) -> Result<SubmitData, TripoError> {
+        let request = self
+            .request(reqwest::Method::POST, TRIPO_SEGMENT_PATH)
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(body.to_vec());
         let envelope = self.execute(request).await?;

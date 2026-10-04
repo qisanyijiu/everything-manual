@@ -105,7 +105,7 @@ llmdoc/              为什么这样做：架构、合同、决策、任务卡�
 - 示例：`config.example.toml`（服务/限制/并发/供应商）、`price-catalog.example.toml`（价格快照）。
 - 供应商地址、模型和密钥可在「设置 → API 配置」中保存，**重启服务后生效**；操作说明见 [网页 API 配置](docs/api-settings.md)。
 - 供应商字段优先级：网页覆盖 > 环境变量（`EM_*` 白名单）> TOML > 默认。其它字段仍遵循 CLI > 环境变量 > TOML > 默认；**未知配置键报错**而不是忽略。
-- 网页密钥与部署 `api_key_file` 使用 AES-256-GCM 加密存储，密文文件权限为 0600；macOS 主密钥默认放在系统钥匙串，其它系统通过 `EM_SECRETS_MASTER_KEY` 独立注入。环境变量 API key 只在内存中使用。旧文件迁移、主密钥保管与验收状态见 [加密存储说明](docs/api-settings.md#密钥加密存储)。
+- 网页密钥与部署 `api_key_file` 使用 AES-256-GCM 加密存储，密文文件权限为 0600；主密钥默认保存在仓库与数据目录外的私有文件，也可通过 `EM_SECRETS_MASTER_KEY` 独立注入。旧 macOS 钥匙串密文需显式设置 `EM_SECRETS_BACKEND=keychain` 读取。环境变量 API key 只在内存中使用。旧文件迁移、主密钥保管与验收状态见 [加密存储说明](docs/api-settings.md#密钥加密存储)。
 - 已保存密钥不回传前端，私有密钥配置与主密钥不进入导出包和备份；应用在持久化供应商回复前处理已知密钥的直接及 JSON 转义回显。
 - **未配置 Provider 时**：站点可正常浏览已有资料，生成/报价返回 409「供应商未配置」，不会回退 mock。
 

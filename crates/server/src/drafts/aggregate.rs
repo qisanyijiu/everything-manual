@@ -357,7 +357,10 @@ impl DraftPatch {
             && self.clear_step_poses.is_none()
             && self.entities.is_none()
             && self.model_review.is_none()
-            && self.interactive.as_ref().is_none_or(super::interactive::InteractivePatch::is_empty)
+            && self
+                .interactive
+                .as_ref()
+                .is_none_or(super::interactive::InteractivePatch::is_empty)
     }
 }
 

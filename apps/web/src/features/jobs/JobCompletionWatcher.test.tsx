@@ -3,10 +3,15 @@
  * 成功提示常驻并直达结果页，失败提示用 alert。
  */
 
-import { screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { jsonResponse, renderApp } from "../../test/render";
+import { createAppQueryClient } from "../../App";
+import { NotificationProvider, NotificationRegion } from "../../components/notifications";
+import { JobCompletionWatcher } from "./JobCompletionWatcher";
 
 const SESSION = {
   data: {
@@ -39,6 +44,10 @@ function stubJobFrames(frames: Record<string, unknown>[][]) {
     const url = String(input);
     if (url === "/api/v1/auth/session") {
       return jsonResponse(SESSION);
+    }
+    if (url === "/api/v1/jobs/activity") {
+      const active = frames.some(frame => frame.some(job => !["succeeded", "failed", "cancelled"].includes(String(job.status))));
+      return jsonResponse({ data: { active: active ? 1 : 0 } });
     }
     if (url === "/api/v1/jobs?limit=20") {
       const frame = frames[Math.min(index, frames.length - 1)] ?? [];
@@ -82,12 +91,12 @@ describe("JobCompletionWatcher", () => {
     renderApp({ route: "/" });
 
     await vi.waitFor(() =>
-      expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/v1/jobs?limit=20")).toBe(true),
+      expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/v1/jobs/activity")).toBe(true),
     );
     await vi.advanceTimersByTimeAsync(5000);
     expect(screen.queryByText(/生成完成/)).toBeNull();
-    // 全部终态 → 停止轮询（只请求了一次）。
-    expect(fetchMock.mock.calls.filter(([url]) => String(url) === "/api/v1/jobs?limit=20")).toHaveLength(1);
+    // 无进行中任务：只读共享汇总，不读取历史列表。
+    expect(fetchMock.mock.calls.filter(([url]) => String(url) === "/api/v1/jobs?limit=20")).toHaveLength(0);
   });
 
   it("进行中 → 失败：用 alert 提示并链接到任务详情", async () => {
@@ -111,5 +120,23 @@ describe("JobCompletionWatcher", () => {
     expect(alert.textContent).toContain("付费提交结果未知");
     expect(screen.getByRole("link", { name: "去对账" })).toHaveAttribute("href", "/jobs/job-3");
     expect(screen.queryByText(/生成失败/)).toBeNull();
+  });
+
+  it("当前任务详情已有对账入口，不重复弹出同任务的全局提醒", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = stubJobFrames([[summary("job-3", "running")], [summary("job-3", "submission_unknown")]]);
+    render(
+      <QueryClientProvider client={createAppQueryClient()}>
+        <MemoryRouter initialEntries={["/jobs/job-3"]}>
+          <NotificationProvider>
+            <JobCompletionWatcher />
+            <NotificationRegion />
+          </NotificationProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await vi.advanceTimersByTimeAsync(2500);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url) === "/api/v1/jobs?limit=20").length).toBeGreaterThan(1);
+    expect(screen.queryByRole("link", { name: "去对账" })).toBeNull();
   });
 });

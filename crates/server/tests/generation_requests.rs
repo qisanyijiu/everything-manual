@@ -45,30 +45,36 @@ async fn pc06_seed_legacy_field(
     value: &str,
     id: &str,
 ) {
+    // Keep the legacy-fixture rewrite on one schema view and atomically restore
+    // every invariant before other pooled connections exercise production APIs.
+    let mut tx = everything_manual::storage::begin_write_pool(pool(app))
+        .await
+        .unwrap();
     let triggers: Vec<(String, String)> =
         sqlx::query_as("SELECT name,sql FROM sqlite_master WHERE type='trigger' AND tbl_name=?")
             .bind(table)
-            .fetch_all(pool(app))
+            .fetch_all(&mut *tx)
             .await
             .unwrap();
     for (name, _) in &triggers {
         sqlx::query(sqlx::AssertSqlSafe(format!("DROP TRIGGER \"{name}\"")))
-            .execute(pool(app))
+            .execute(&mut *tx)
             .await
             .unwrap();
     }
     sqlx::query(sql)
         .bind(value)
         .bind(id)
-        .execute(pool(app))
+        .execute(&mut *tx)
         .await
         .unwrap();
     for (_, definition) in &triggers {
         sqlx::query(sqlx::AssertSqlSafe(definition.as_str()))
-            .execute(pool(app))
+            .execute(&mut *tx)
             .await
             .unwrap();
     }
+    tx.commit().await.unwrap();
 }
 
 #[tokio::test]

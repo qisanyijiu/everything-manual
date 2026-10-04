@@ -460,7 +460,7 @@ test("QA-T17-4 unknown：无重试按钮、对账入口、未决预留=服务端
   await captureTo("t17-qa", page, "07-unknown-reconcile");
 });
 
-test("QA-T17-5 T15 P3①：详情拒绝态与端点 422 同源；允许的重试真的生效；草稿文案不承诺重试", async ({
+test("QA-T17-5 本地校验零外呼重试，说明书重试真实生效，草稿缺项仍如实", async ({
   page,
   request,
 }) => {
@@ -478,36 +478,39 @@ test("QA-T17-5 T15 P3①：详情拒绝态与端点 422 同源；允许的重试
       stageOf(current, "manual_extract").status === "needs_input",
     "两条分支各自阻塞",
   );
-  // 付费提交基线：建单本身会产生一次提交；此后的动作（被拒重试/被接受重试）都不得再增加。
+  // 建单本身产生一次 Tripo 提交；本地校验与说明书分支重试均不得再次购买模型。
   const paidAfterSeed = fixture.paidSubmissions();
 
-  // (a) 详情判定：模型分支被预算拒绝、知识分支可重试。
-  const blockedStage = stageOf(detail, "model_validate");
-  expect(blockedStage.retry.allowed).toBe(false);
-  expect(blockedStage.retry.reason).toBe("budgetNotHolding");
+  // (a) 本地校验没有付费请求，无需已结算分支继续持有预留。
+  const localStage = stageOf(detail, "model_validate");
+  expect(localStage.retry.allowed).toBe(true);
+  expect(localStage.retry.reason).toBeNull();
   const retryableStage = stageOf(detail, "manual_extract");
   expect(retryableStage.retry.allowed).toBe(true);
 
-  // (b) 端点同源：真的 POST 一次被拒，reason/message 必须与详情逐字一致，且无副作用。
-  const denied = await apiRetry(request, detail, blockedStage.id, `qa21-denied-${Date.now()}`);
-  expect(denied.status, JSON.stringify(denied.body)).toBe(422);
-  expect(denied.body.error?.details?.reason).toBe(blockedStage.retry.reason);
-  expect(denied.body.error?.message).toBe(blockedStage.retry.message);
-  expect(fixture.paidSubmissions(), "被拒的重试不得产生付费提交").toBe(paidAfterSeed);
+  // (b) 真正重新校验已保存的截断文件：相同错误仍阻塞，无任何供应商或 CDN 请求。
+  const providerCalls = { ...fixture.counts };
+  const accepted = await apiRetry(request, detail, localStage.id, `qa21-local-${Date.now()}`);
+  expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
+  const revalidated = await waitForJob(request, backend.base, jobId, (current) =>
+    stageOf(current, "model_validate").updatedAt !== localStage.updatedAt
+      && stageOf(current, "model_validate").status === "needs_input",
+  "本地重试仍如实保留截断错误");
+  expect(stageOf(revalidated, "model_validate").lastError).toBe(localStage.lastError);
+  expect(fixture.counts, "本地校验重试不得外呼").toEqual(providerCalls);
 
-  // (d) 界面：模型分支不渲染重试按钮、原因可读；知识分支渲染按钮。
+  // (d) 界面与真实重试判定一致；允许重试不等于已经修复截断文件。
   await openApp(page, `/jobs/${jobId}`);
   await login(page);
   const validate = page.locator('[data-stage-kind="model_validate"]');
-  await expect(validate.getByTestId("stage-retry-denied")).toBeVisible();
-  await expect(validate.getByTestId("stage-retry-reason")).toContainText("重新获取报价");
-  await expect(validate.locator('[data-testid="stage-retry-button"]')).toHaveCount(0);
+  await expect(validate.getByTestId("stage-retry-denied")).toHaveCount(0);
+  await expect(validate.getByTestId("stage-retry-button")).toBeVisible();
   const batch = page.locator('[data-stage-kind="manual_extract"]');
   await expect(batch.getByTestId("job-stage-missing")).toContainText("拒答");
   const pageText = await bodyText(page);
   expect(pageText).not.toContain("可对该阶段重试");
   expect(pageText).not.toContain("可对失败阶段重试");
-  await captureTo("t17-qa", page, "08-p3-1-denied-retry");
+  await captureTo("t17-qa", page, "08-local-validation-retry");
 
   // (e) 允许的重试必须真的生效：换成成功脚本后点按钮 → 该批真的重新请求并完成。
   //     注意顺序：拒答脚本下重试会立刻回到 needs_input（fixture 零延迟），
@@ -548,10 +551,10 @@ test("QA-T17-5 T15 P3①：详情拒绝态与端点 422 同源；允许的重试
   const draftText = await draftResponse.text();
   expect(draftText, "草稿缺项不得承诺可重试").not.toContain("可对该阶段重试");
   expect(draftText, "草稿缺项必须指向任务中心的恢复动作").toContain("恢复动作");
-  // UI 侧：模型分支仍不渲染必然被拒的重试入口（预算未背书）。
+  // UI 仍提供本地重试，模型缺项不会假装已经完成。
   await page.goto(`${WEB_BASE}/jobs/${jobId}`);
   await expect(
-    page.locator('[data-stage-kind="model_validate"] [data-testid="stage-retry-denied"]'),
+    page.locator('[data-stage-kind="model_validate"] [data-testid="stage-retry-button"]'),
   ).toBeVisible();
   await captureTo("t17-qa", page, "11-partial-draft-no-retry");
 });
@@ -718,6 +721,13 @@ test("QA-T17-8 失败状态：与 unknown 明确分开、错误摘要可读、�
     "任务因业务错误失败",
   );
   expect(stageOf(detail, "tripo_submit").retry.allowed).toBe(false);
+  const blockedStage = stageOf(detail, "tripo_submit");
+  const paidBeforeRetry = fixture.paidSubmissions();
+  const denied = await apiRetry(request, detail, blockedStage.id, `qa21-denied-${Date.now()}`);
+  expect(denied.status, JSON.stringify(denied.body)).toBe(422);
+  expect(denied.body.error?.details?.reason).toBe(blockedStage.retry.reason);
+  expect(denied.body.error?.message).toBe(blockedStage.retry.message);
+  expect(fixture.paidSubmissions(), "预算不再持有的付费重试必须拒绝且无新购买").toBe(paidBeforeRetry);
 
   await openApp(page, `/jobs/${jobId}`);
   await login(page);

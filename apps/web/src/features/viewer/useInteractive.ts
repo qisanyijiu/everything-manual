@@ -7,7 +7,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import type { InteractiveView, ModelActionView } from "./interactive";
+import type { InteractiveView, ModelActionView } from "./interactive-view";
 
 export interface InteractiveController {
   readonly view: InteractiveView;

@@ -157,7 +157,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
 .empty-state { padding: 48px 24px; border-style: solid; background: #fffefa; }
 .empty-state h2 { color: var(--text); }
 .empty-state p { font-size: 12px; margin-bottom: 22px; }
-.notices { left: var(--sidebar-width); padding: 12px 24px; }
+.notices { padding: 12px 24px 0; }
 .notice { max-width: 720px; margin: 0 auto 8px; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 30px #21372c12; }
 .notice--alert { border-left: 4px solid var(--danger); }
 .notice--status { border-left: 4px solid var(--ok); }

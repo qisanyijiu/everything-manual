@@ -635,7 +635,7 @@ fn pipeline_executor_with_settings(
     let mut registry = StageRegistry::new();
     register_provider_handlers(&mut registry, settings).expect("已配置的 Provider 必须能注册");
     let pipeline = PipelineHandlers::from_settings(settings);
-    let registered = pipeline.register(&mut registry, &settings);
+    let registered = pipeline.register(&mut registry, settings);
     assert!(
         registered.contains(&StageKind::AssembleDraft),
         "组装阶段必须注册（本地阶段，不依赖 Provider）"

@@ -18,8 +18,8 @@
 
 pub mod aggregate;
 pub mod interactive;
-pub mod parts_model;
 pub mod knowledge;
+pub mod parts_model;
 pub mod service;
 
 pub use aggregate::{

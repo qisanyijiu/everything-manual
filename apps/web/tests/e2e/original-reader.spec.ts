@@ -5,7 +5,7 @@ import path from "node:path";
 import { expect, request, test, type APIRequestContext, type Page } from "@playwright/test";
 import { apiLogin, loginViaUi } from "./helpers";
 import { BACKEND_PASSWORD, LocalFixture, TestBackend } from "./job-recovery-harness";
-import { E2E_WEB_PORT, REPO_ROOT } from "./runtime";
+import { E2E_WEB_PORT, REPO_ROOT, serverBinary } from "./runtime";
 import { installRealBackendRouting } from "./viewer-harness";
 
 test.describe.configure({ mode: "serial", timeout: 120_000 });
@@ -41,7 +41,7 @@ function counts() {
 test.beforeAll(async () => {
   fs.mkdirSync(evidenceDir, { recursive: true });
   fixture = new LocalFixture(); await fixture.start();
-  backend = new TestBackend("pc02a-original", process.env.EM_PC02A_BINARY ?? path.join(REPO_ROOT, "var/pc06-qa-round2/everything-manual-fixture"));
+  backend = new TestBackend("pc02a-original", process.env.EM_PC02A_BINARY ?? serverBinary());
   await backend.start(fixture);
   await backend.stop();
   // Unconfigured providers are an explicit condition of AC-PC2-001.

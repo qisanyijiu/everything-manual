@@ -56,7 +56,9 @@ pub fn parts_routes(limits: &crate::config::Limits) -> Router<AppState> {
             "/items/{id}/drafts/{draft_id}/parts-model",
             routing::post(attach_parts_model),
         )
-        .layer(axum::extract::DefaultBodyLimit::max(usize::try_from(limit).unwrap_or(usize::MAX)))
+        .layer(axum::extract::DefaultBodyLimit::max(
+            usize::try_from(limit).unwrap_or(usize::MAX),
+        ))
 }
 
 #[utoipa::path(
@@ -109,14 +111,23 @@ pub async fn attach_parts_model(
             Ok(Some(field)) => field,
             Ok(None) => break,
             Err(error) => {
-                return ApiError::field_validation(vec![FieldIssue::new("file", format!("multipart 读取失败：{}", error.body_text()))])
-                    .render(&request_id);
+                return ApiError::field_validation(vec![FieldIssue::new(
+                    "file",
+                    format!("multipart 读取失败：{}", error.body_text()),
+                )])
+                .render(&request_id);
             }
         };
         let mut field = field;
         match field.name().unwrap_or_default() {
             "file" => {
-                let mut writer = match crate::assets::blob_store::StagedWriter::create(&store.tmp_dir(), limit, "model_parts").await {
+                let mut writer = match crate::assets::blob_store::StagedWriter::create(
+                    &store.tmp_dir(),
+                    limit,
+                    "model_parts",
+                )
+                .await
+                {
                     Ok(writer) => writer,
                     Err(error) => return error.into_api_error().render(&request_id),
                 };
@@ -129,8 +140,11 @@ pub async fn attach_parts_model(
                         }
                         Ok(None) => break,
                         Err(error) => {
-                            return ApiError::field_validation(vec![FieldIssue::new("file", format!("上传中断：{}", error.body_text()))])
-                                .render(&request_id);
+                            return ApiError::field_validation(vec![FieldIssue::new(
+                                "file",
+                                format!("上传中断：{}", error.body_text()),
+                            )])
+                            .render(&request_id);
                         }
                     }
                 }
@@ -148,7 +162,11 @@ pub async fn attach_parts_model(
         }
     }
     let Some(staged) = staged else {
-        return ApiError::field_validation(vec![FieldIssue::new("file", "缺少 file 字段（分件 GLB）")]).render(&request_id);
+        return ApiError::field_validation(vec![FieldIssue::new(
+            "file",
+            "缺少 file 字段（分件 GLB）",
+        )])
+        .render(&request_id);
     };
     match crate::drafts::parts_model::attach_parts_model(
         state.database().pool(),

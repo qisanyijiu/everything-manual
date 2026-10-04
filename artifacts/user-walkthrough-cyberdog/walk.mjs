@@ -4,6 +4,8 @@ import { chromium } from "playwright";
 import fs from "node:fs";
 
 const OUT = process.argv[2] ?? "/tmp/emwalk/shots";
+const PASSWORD = process.env.EM_E2E_PASSWORD;
+if (!PASSWORD) throw new Error("请通过 EM_E2E_PASSWORD 提供本次隔离实例的登录密码。");
 const RESUME_JOB = process.argv[3] ?? null;
 let shotStart = Number(process.argv[4] ?? 0);
 fs.mkdirSync(OUT, { recursive: true });
@@ -32,7 +34,7 @@ try {
   // 1 登录
   await p.goto(`${WEB}/login`);
   await p.locator('input[type="password"]').waitFor();
-  await p.fill('input[type="password"]', "KRLBEQX9DsiV");
+  await p.fill('input[type="password"]', PASSWORD);
   if (RESUME_JOB === null) await snap("login", "输入管理员密码并登录");
   await p.keyboard.press("Enter");
   await p.waitForURL((u) => !u.pathname.startsWith("/login"));

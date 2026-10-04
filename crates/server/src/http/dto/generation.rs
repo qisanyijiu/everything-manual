@@ -121,6 +121,18 @@ pub struct ProviderConfigDto {
     pub config_revision: Option<String>,
     pub tripo: TripoParametersDto,
     pub manual_ai: ManualAiConfigDto,
+    /// Separately priced enhancement, explicitly included in the confirmed quote.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tripo_segmentation: Option<TripoSegmentationDto>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TripoSegmentationDto {
+    pub model: String,
+    pub credit_minor: i64,
+    pub segmentation_granularity: String,
+    pub split_by_connectivity: bool,
 }
 
 /// Tripo 生成参数（`preset` 为价格目录里的预设名）。
@@ -290,6 +302,8 @@ pub struct TripoSendScopeDto {
     pub preset: String,
     /// 生成参数（质量/face_limit/quad/分件等；确认页必须展示"模型名与参数"）。
     pub parameters: TripoParametersDto,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub segmentation: Option<TripoSegmentationDto>,
 }
 
 /// 单张发送照片（视图 + 图片 id + 内容哈希）。

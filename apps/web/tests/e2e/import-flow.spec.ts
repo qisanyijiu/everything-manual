@@ -117,10 +117,11 @@ test.describe("资料库与新建向导（T16）", () => {
     // --- 第 3 步：视图排列（front + left） -------------------------------------
     await page.getByRole("link", { name: /下一步：视图排列/ }).click();
     await expect(page.getByRole("heading", { name: "视图排列" })).toBeVisible();
+    await page.getByText("逐个视图上传 / 替换照片", { exact: true }).click();
     await page.getByLabel("上传正面视图照片").setInputFiles(fixturePath("sample-photo-front.jpg"));
-    await expect(page.getByTestId("view-slot-front").getByRole("img", { name: "正面视图照片" })).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
     await page.getByLabel("上传左侧视图照片").setInputFiles(fixturePath("sample-photo-left.png"));
-    await expect(page.getByTestId("view-slot-left").getByRole("img", { name: "左侧视图照片" })).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-left").getByRole("img")).toBeVisible();
     const photos = await fetchPhotos(request, apiBase(), itemId);
     expect(photos.map((photo) => photo.view).sort()).toEqual(["front", "left"]);
     await captureTo("t16-rd", page, "03-views-arranged");
@@ -238,6 +239,7 @@ test.describe("资料库与新建向导（T16）", () => {
     const itemId = await seedItem(request, apiBase(), password(), "T16 上传失败重试");
     await loginViaUi(page, "", password());
     await openStep(page, itemId, "views", "视图排列");
+    await page.getByText("逐个视图上传 / 替换照片", { exact: true }).click();
     // 空态证据：五个空槽位，front 标「必需」、detail 注明不发送给 Tripo。
     await expect(page.getByTestId("view-slot-front")).toContainText("必需");
     await expect(page.getByTestId("view-slot-detail")).toContainText("不发送给 Tripo");
@@ -367,8 +369,8 @@ test.describe("资料库与新建向导（T16）", () => {
 
     await loginViaUi(page, "", password());
     await openStep(page, seed.itemId, "views", "视图排列");
-    await expect(page.getByTestId("view-slot-front").getByRole("img", { name: "正面视图照片" })).toBeVisible();
-    await expect(page.getByTestId("view-slot-left").getByRole("img", { name: "左侧视图照片" })).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-left").getByRole("img")).toBeVisible();
 
     const assetPosts = recordRequests(page, isAssetsPost);
     const photoPosts = recordRequests(page, isPhotosPost);
@@ -381,14 +383,14 @@ test.describe("资料库与新建向导（T16）", () => {
     // 下一步回到视图排列：照片仍在（服务端事实），且没有重复上传/登记。
     await page.getByRole("link", { name: /下一步：视图排列/ }).click();
     await expect(page).toHaveURL(new RegExp(`/items/${seed.itemId}/import/views$`));
-    await expect(page.getByTestId("view-slot-front").getByRole("img", { name: "正面视图照片" })).toBeVisible();
-    await expect(page.getByTestId("view-slot-left").getByRole("img", { name: "左侧视图照片" })).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-left").getByRole("img")).toBeVisible();
     expect(assetPosts.length, "返回/前进不应重新上传资产").toBe(0);
     expect(photoPosts.length, "返回/前进不应重新登记照片").toBe(0);
 
     // 刷新：仍从服务端恢复（URL 即步骤，不用内存状态代替）。
     await page.reload();
-    await expect(page.getByTestId("view-slot-front").getByRole("img", { name: "正面视图照片" })).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
     const photos = await fetchPhotos(request, apiBase(), seed.itemId);
     expect(photos.map((photo) => photo.view).sort()).toEqual(["front", "left"]);
     await captureTo("t16-rd", page, "13-back-forward-refresh");

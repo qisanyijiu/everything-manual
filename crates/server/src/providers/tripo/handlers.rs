@@ -1802,6 +1802,26 @@ async fn settle_tripo_reservation(
     billing: Option<&BillingFact>,
     now: &Timestamp,
 ) -> String {
+    // The confirmed plan reserves generation plus segmentation together. The
+    // segment handler settles the combined actual only after both billing facts
+    // exist; settling the model alone would prematurely release its budget.
+    let mut conn = match pool.acquire().await {
+        Ok(conn) => conn,
+        Err(_) => return "快照读取失败：保留预留，未结算".to_owned(),
+    };
+    match repo::snapshots::get(&mut conn, snapshot_id).await {
+        Ok(Some(snapshot))
+            if snapshot
+                .provider_config
+                .get("tripoSegmentation")
+                .is_some_and(|v| !v.is_null()) =>
+        {
+            return "报价含自动分件：保留总预留，等待两项实际计费后统一结算".to_owned();
+        }
+        Ok(Some(_)) => {}
+        _ => return "快照读取失败：保留预留，未结算".to_owned(),
+    }
+    drop(conn);
     let Some(billing) = billing else {
         return "远端未提供计费字段：保留预留（不用猜测金额结算）".to_owned();
     };

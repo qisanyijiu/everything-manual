@@ -1,20 +1,18 @@
 /**
  * 组装离线 3D 阅读器单文件 HTML（release manifest + GLB 字节 → 可双击打开的 .html）。
  *
- * - 知识读取复用 `draft-view` 的同一套函数（与在线阅读器同源，不另写一份解析）；
+ * - 知识读取复用在线阅读器的发布版本修订层，保留已冻结的人工更正；
  * - 只放**锚点仍属于发布模型版本**的热点（与 `ReleaseReaderPage` 的读取侧防线一致）；
  * - 所有内嵌文本都经过转义：JSON 里的 `<` 改写为 `<`，防止 `</script>` 截断；
  *   标题等进 HTML 的文字用 `escapeHtml`。离线脚本写 DOM 时只用 textContent。
  */
 
 import { checkAnchor } from "../viewer/coordinates";
-import { readInteractive } from "../viewer/interactive";
+import { readInteractive } from "../viewer/interactive-view";
+import { readReleaseKnowledge } from "../manual/release-view";
 import {
   readDraftHotspots,
   readDraftModel,
-  readDraftParts,
-  readDraftSpecs,
-  readDraftSteps,
   type DraftEvidence,
 } from "../viewer/draft-view";
 import {
@@ -48,8 +46,9 @@ export function buildStandalonePayload(
   item: StandaloneItemInfo,
   release: StandaloneReleaseInfo,
 ): StandalonePayload {
-  const manifest = (release.manifest ?? {}) as { knowledge?: unknown; publishedAt?: unknown };
+  const manifest = (release.manifest ?? {}) as { knowledge?: unknown; review?: unknown; publishedAt?: unknown };
   const knowledge = manifest.knowledge;
+  const reviewed = readReleaseKnowledge(knowledge, manifest.review);
   const model = readDraftModel(knowledge);
   if (model === null) {
     throw new StandaloneExportError("该发布版本没有可用的 3D 模型，无法生成离线 3D 页面。");
@@ -67,13 +66,13 @@ export function buildStandalonePayload(
     releaseId: release.id,
     publishedAt: typeof manifest.publishedAt === "string" ? manifest.publishedAt : null,
     model: { sha256: model.sha256 },
-    parts: readDraftParts(knowledge).map((part) => ({
+    parts: reviewed.parts.map((part) => ({
       id: part.id,
       name: part.name,
       description: part.description,
       evidence: toEvidence(part.evidence),
     })),
-    steps: readDraftSteps(knowledge).map((step) => ({
+    steps: reviewed.steps.map((step) => ({
       id: step.id,
       title: step.title,
       orderedActions: step.orderedActions,
@@ -81,7 +80,7 @@ export function buildStandalonePayload(
       partIds: step.partIds,
       evidence: toEvidence(step.evidence),
     })),
-    specs: readDraftSpecs(knowledge).map((spec) => ({
+    specs: reviewed.specs.map((spec) => ({
       id: spec.id,
       label: spec.label,
       value: spec.value,

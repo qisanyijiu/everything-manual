@@ -521,7 +521,7 @@ export interface paths {
         put?: never;
         /**
          * 登记一张视图候选图（可选由说明书 AI 判断建议视图）
-         * @description 资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。classify 默认 true：调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），不阻塞用户手动排列。候选不进入报价/生成快照。
+         * @description 资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。classify 默认 false：仅显式 true 时调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），不阻塞用户手动排列。候选不进入报价/生成快照。
          */
         post: operations["create_candidate"];
         delete?: never;
@@ -1786,6 +1786,7 @@ export interface components {
             configRevision?: string | null;
             manualAi: components["schemas"]["ManualAiConfigDto"];
             tripo: components["schemas"]["TripoParametersDto"];
+            tripoSegmentation?: null | components["schemas"]["TripoSegmentationDto"];
         };
         ProviderEdit: {
             action: components["schemas"]["ProviderEditAction"];
@@ -2124,12 +2125,20 @@ export interface components {
             texture: boolean;
             textureQuality: string;
         };
+        TripoSegmentationDto: {
+            /** Format: int64 */
+            creditMinor: number;
+            model: string;
+            segmentationGranularity: string;
+            splitByConnectivity: boolean;
+        };
         /** @description 发送给 Tripo 的内容。 */
         TripoSendScopeDto: {
             model: string;
             /** @description 生成参数（质量/face_limit/quad/分件等；确认页必须展示"模型名与参数"）。 */
             parameters: components["schemas"]["TripoParametersDto"];
             preset: string;
+            segmentation?: null | components["schemas"]["TripoSegmentationDto"];
             /** @description 多视图照片（槽位顺序；detail 不在其中）。 */
             views: components["schemas"]["PhotoScopeDto"][];
         };
@@ -2157,7 +2166,7 @@ export interface components {
         ViewCandidateCreateRequest: {
             /** @description 候选图资产（本物品、`purpose=photo`、JPEG/PNG）。 */
             assetId: string;
-            /** @description 是否请说明书 AI 判断建议视图（默认 true）。 */
+            /** @description 是否请说明书 AI 判断建议视图（默认 false，须显式确认图片发送与可能费用）。 */
             classify?: boolean | null;
             documentId?: string | null;
             /** Format: int64 */

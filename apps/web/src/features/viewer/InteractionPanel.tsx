@@ -8,7 +8,7 @@
 
 import { useMemo } from "react";
 
-import type { ModelActionView, ModelPoseView } from "./interactive";
+import type { ModelActionView, ModelPoseView } from "./interactive-view";
 
 export interface InteractionPanelProps {
   readonly actions: readonly ModelActionView[];

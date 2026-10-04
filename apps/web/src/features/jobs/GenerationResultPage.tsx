@@ -20,7 +20,7 @@ import { PageLayout } from "../shell/PageLayout";
 import { checkAnchor } from "../viewer/coordinates";
 import { readDraftHotspots, readDraftModel, readDraftParts, readDraftSpecs, readDraftSteps } from "../viewer/draft-view";
 import { InteractionPanel } from "../viewer/InteractionPanel";
-import { readInteractive } from "../viewer/interactive";
+import { readInteractive } from "../viewer/interactive-view";
 import { useInteractive } from "../viewer/useInteractive";
 import { ViewerPanel } from "../viewer/ViewerPanel";
 import { CostBreakdown } from "./CostBreakdown";

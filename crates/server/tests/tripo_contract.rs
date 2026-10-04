@@ -32,7 +32,7 @@ use everything_manual::config::{ProviderSettings, SecretString};
 use everything_manual::generation::catalog;
 use everything_manual::jobs::executor::fixed_jitter_executor;
 use everything_manual::jobs::{
-    ExecutorConfig, JobExecutor, ManualClock, StageRegistry, TickOutcome,
+    Clock, ExecutorConfig, JobExecutor, ManualClock, StageRegistry, TickOutcome,
 };
 use everything_manual::providers::tripo::{
     TRIPO_SUBMIT_PATH, TRIPO_TASKS_PATH_PREFIX, TRIPO_UPLOAD_PATH, TripoClient, TripoError,
@@ -171,6 +171,566 @@ fn tripo_client(server: &FixtureServer) -> TripoClient {
         TripoTimeouts::default(),
     )
     .expect("构造 Tripo 客户端")
+}
+
+fn segment_catalog() -> String {
+    format!("{TEST_CATALOG}\n[tripo.segmentation]\nmodel = \"v2.0-20260430\"\ncredits = \"40\"\n")
+}
+
+fn segment_executor(app: &TestApp, clock: Arc<ManualClock>) -> Arc<JobExecutor> {
+    let settings = app.state().settings().clone();
+    let mut registry = StageRegistry::new();
+    registry.register(
+        StageKind::TripoSegment,
+        everything_manual::jobs::auto_stages::TripoSegmentHandler::new(
+            &settings.providers.tripo.base_url,
+            settings.providers.tripo.api_key.clone().unwrap(),
+            Arc::new(settings.clone()),
+        ),
+    );
+    fixed_jitter_executor(pool(app), ExecutorConfig::default(), registry, clock)
+}
+
+async fn ready_segment_job(app: &TestApp, cookie: &str, csrf: &str) -> String {
+    let job = create_ready_job(app, cookie, csrf).await;
+    let db = pool(app);
+    sqlx::query("UPDATE job_stages SET status='succeeded' WHERE job_id=? AND stage_kind NOT IN ('tripo_segment','auto_bind')")
+        .bind(&job).execute(&db).await.unwrap();
+    let submit = stage_of(&db, &job, StageKind::TripoSubmit).await;
+    let poll_stage = stage_of(&db, &job, StageKind::TripoPoll).await;
+    let mut conn = db.acquire().await.unwrap();
+    let attempt = everything_manual::storage::repo::attempts::create_intent(
+        &mut conn,
+        everything_manual::storage::repo::attempts::NewAttempt {
+            job_id: job.clone(),
+            stage_id: submit.id,
+            request_hash: "fixture-original-model".to_owned(),
+        },
+        Timestamp::now(),
+    )
+    .await
+    .unwrap();
+    everything_manual::storage::repo::attempts::mark_submitting(
+        &mut conn,
+        &attempt.id,
+        Timestamp::now(),
+    )
+    .await
+    .unwrap();
+    everything_manual::storage::repo::attempts::record_remote_task_id(
+        &mut conn,
+        &attempt.id,
+        "original-model",
+        Timestamp::now(),
+    )
+    .await
+    .unwrap();
+    stages_repo::set_result_fact(
+        &mut conn,
+        &poll_stage.id,
+        None,
+        Some(&json!({"billing": {"creditMinor": 3000}}).to_string()),
+        Timestamp::now(),
+    )
+    .await
+    .unwrap();
+    everything_manual::storage::repo::jobs::recompute_status(&mut conn, &job, Timestamp::now())
+        .await
+        .unwrap();
+    drop(conn);
+    seed_segment_model(app, &job).await;
+    job
+}
+
+async fn seed_segment_model(app: &TestApp, job_id: &str) {
+    use everything_manual::storage::repo;
+
+    let db = pool(app);
+    let bytes = fixture_bytes("sample-model.glb");
+    let sha = sha256_hex(&bytes);
+    let blob_path = everything_manual::assets::blob_store::blob_path(app.dir(), &sha);
+    std::fs::create_dir_all(blob_path.parent().unwrap()).unwrap();
+    std::fs::write(&blob_path, &bytes).unwrap();
+    let mut conn = db.acquire().await.unwrap();
+    let job = repo::jobs::get(&mut conn, job_id).await.unwrap().unwrap();
+    repo::blobs::insert_if_absent(&mut conn, &sha, bytes.len() as u64, "model/gltf-binary")
+        .await
+        .unwrap();
+    let asset = repo::assets::insert(
+        &mut conn,
+        repo::assets::NewAsset {
+            blob_id: sha.clone(),
+            item_id: job.item_id.clone(),
+            purpose: manual_core::domain::AssetPurpose::Model,
+            original_name: None,
+        },
+    )
+    .await
+    .unwrap();
+    let bounds = json!({"min": [-1.0,-1.0,-1.0], "max": [1.0,1.0,1.0]});
+    let model = repo::model_revisions::get_or_create(
+        &mut conn,
+        repo::model_revisions::NewModelRevision {
+            item_id: job.item_id.clone(),
+            asset_id: asset.id.clone(),
+            sha256: sha.clone(),
+            provider_attempt_id: None,
+            bounds: Some(bounds.clone()),
+            validation_state: manual_core::domain::ModelValidationState::Validated,
+        },
+    )
+    .await
+    .unwrap();
+    let knowledge = everything_manual::drafts::knowledge::DraftKnowledge::build(
+        job_id,
+        Some(everything_manual::drafts::knowledge::DraftModelInfo {
+            revision_id: model.id.clone(),
+            sha256: sha,
+            validation_state: model.validation_state,
+            asset_id: asset.id,
+            bounds: Some(bounds),
+        }),
+        None,
+        Vec::new(),
+    );
+    repo::drafts::upsert_assembled(
+        &mut conn,
+        repo::drafts::NewAssembledDraft {
+            item_id: job.item_id.clone(),
+            snapshot_id: job.snapshot_id.clone(),
+            model_revision_id: Some(model.id),
+            knowledge_json: serde_json::to_string(&knowledge).unwrap(),
+        },
+        Timestamp::now(),
+    )
+    .await
+    .unwrap();
+    drop(conn);
+}
+
+#[tokio::test]
+async fn segmentation_partial_model_stops_before_a_paid_submission() {
+    for failed_validation in [true, false] {
+        let server = FixtureServer::start(scenario(vec![]));
+        let (app, cookie, csrf) = tripo_app_with_catalog(
+            "segment-partial-model",
+            &server.base_url(),
+            &segment_catalog(),
+            true,
+        )
+        .await;
+        let job = ready_segment_job(&app, &cookie, &csrf).await;
+        let db = pool(&app);
+        if failed_validation {
+            sqlx::query("UPDATE job_stages SET status='failed' WHERE job_id=? AND stage_kind='model_validate'")
+                .bind(&job).execute(&db).await.unwrap();
+        } else {
+            sqlx::query("UPDATE manual_drafts SET model_revision_id=NULL WHERE snapshot_id=(SELECT snapshot_id FROM jobs WHERE id=?)")
+                .bind(&job).execute(&db).await.unwrap();
+        }
+        let clock = Arc::new(ManualClock::new(Timestamp::now()));
+        let executor = segment_executor(&app, clock.clone());
+        run_ticks(&executor, &clock, 1, 20_000).await;
+        let stage = stage_of(&db, &job, StageKind::TripoSegment).await;
+        assert_eq!(stage.status, JobStatus::NeedsInput);
+        assert!(stage.last_error.unwrap().contains("原模型"));
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM provider_attempts WHERE stage_id=?")
+                .bind(&stage.id)
+                .fetch_one(&db)
+                .await
+                .unwrap();
+        assert_eq!(count, 0);
+        assert!(server.requests().is_empty());
+        server.assert_no_script_problems();
+    }
+}
+
+#[tokio::test]
+async fn segmentation_is_explicitly_quoted_reserved_and_frozen() {
+    let server = FixtureServer::start(scenario(vec![]));
+    let (legacy, cookie, csrf) = tripo_app_with_catalog(
+        "segment-unpriced",
+        &tripo_base_url(&server),
+        TEST_CATALOG,
+        true,
+    )
+    .await;
+    let legacy_job = create_ready_job(&legacy, &cookie, &csrf).await;
+    let mut conn = pool(&legacy).acquire().await.unwrap();
+    assert!(
+        !stages_repo::list_for_job(&mut conn, &legacy_job)
+            .await
+            .unwrap()
+            .iter()
+            .any(|s| s.stage_kind == StageKind::TripoSegment)
+    );
+    drop(conn);
+    let (app, cookie, csrf) = tripo_app_with_catalog(
+        "segment-quoted",
+        &tripo_base_url(&server),
+        &segment_catalog(),
+        true,
+    )
+    .await;
+    let job = create_ready_job(&app, &cookie, &csrf).await;
+    let db = pool(&app);
+    let mut conn = db.acquire().await.unwrap();
+    let job = everything_manual::storage::repo::jobs::get(&mut conn, &job)
+        .await
+        .unwrap()
+        .unwrap();
+    let snapshot = everything_manual::storage::repo::snapshots::get(&mut conn, &job.snapshot_id)
+        .await
+        .unwrap()
+        .unwrap();
+    let quote = everything_manual::storage::repo::quotes::get(
+        &mut conn,
+        snapshot.budgets["quoteId"].as_str().unwrap(),
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    let payload = everything_manual::generation::estimate::quote_payload(&quote)
+        .await
+        .unwrap();
+    assert_eq!(payload.amounts.tripo.upper_bound_minor, 7000);
+    assert_eq!(
+        payload
+            .amounts
+            .tripo
+            .upper_bound_lines
+            .iter()
+            .map(|l| l.amount_minor)
+            .sum::<i64>(),
+        7000
+    );
+    assert_eq!(
+        payload
+            .send_scope
+            .tripo
+            .segmentation
+            .as_ref()
+            .unwrap()
+            .credit_minor,
+        4000
+    );
+    assert_eq!(
+        snapshot.provider_config["tripoSegmentation"]["creditMinor"],
+        4000
+    );
+    assert_eq!(snapshot.budgets["authorized"]["tripoCreditMinor"], 7000);
+    assert!(
+        stages_repo::list_for_job(&mut conn, &job.id)
+            .await
+            .unwrap()
+            .iter()
+            .any(|s| s.stage_kind == StageKind::TripoSegment)
+    );
+    assert_eq!(
+        ledger_repo::list_for_snapshot(&mut conn, &snapshot.id)
+            .await
+            .unwrap()
+            .iter()
+            .find(|e| e.provider == ProviderKey::Tripo)
+            .unwrap()
+            .reserved,
+        7000
+    );
+    assert_eq!(
+        server.request_total(),
+        0,
+        "quote and job creation never call paid providers"
+    );
+}
+
+#[tokio::test]
+async fn segmentation_disconnect_stays_unknown_and_restart_never_repurchases() {
+    let server = FixtureServer::start(scenario(vec![exact_route(
+        "POST",
+        "/v3/mesh/segment",
+        vec![Step::Disconnect],
+    )]));
+    let (app, cookie, csrf) = tripo_app_with_catalog(
+        "segment-disconnect",
+        &tripo_base_url(&server),
+        &segment_catalog(),
+        true,
+    )
+    .await;
+    let job = ready_segment_job(&app, &cookie, &csrf).await;
+    let clock = Arc::new(ManualClock::new(Timestamp::now()));
+    let first = segment_executor(&app, clock.clone());
+    run_ticks(&first, &clock, 1, 100).await;
+    let stage = stage_of(&pool(&app), &job, StageKind::TripoSegment).await;
+    assert_eq!(stage.status, JobStatus::SubmissionUnknown);
+    assert!(
+        !everything_manual::jobs::control::retry_gate(
+            JobStatus::SubmissionUnknown,
+            &[],
+            &stage,
+            true
+        )
+        .allowed
+    );
+    let restarted = segment_executor(&app, clock.clone());
+    run_ticks(&restarted, &clock, 4, 60_000).await;
+    server.assert_called_once("POST", "/v3/mesh/segment");
+    let mut conn = pool(&app).acquire().await.unwrap();
+    let attempt =
+        everything_manual::storage::repo::attempts::latest_for_stage(&mut conn, &stage.id)
+            .await
+            .unwrap()
+            .unwrap();
+    assert_eq!(attempt.submit_state.as_str(), "unknown");
+    let job = everything_manual::storage::repo::jobs::get(&mut conn, &job)
+        .await
+        .unwrap()
+        .unwrap();
+    let entries = ledger_repo::list_for_snapshot(&mut conn, &job.snapshot_id)
+        .await
+        .unwrap();
+    let entry = entries
+        .iter()
+        .find(|e| e.provider == ProviderKey::Tripo)
+        .unwrap();
+    assert_eq!(entry.state.as_str(), "unknown");
+    assert_eq!(entry.actual, None);
+    assert_eq!(entry.reserved, 7000);
+    server.assert_no_script_problems();
+}
+
+#[tokio::test]
+async fn segmentation_receipt_crash_resumes_polling_and_wait_timeout_is_not_success() {
+    use everything_manual::jobs::failpoints::{
+        self, FailpointAction, PAID_AFTER_RECEIPT_BEFORE_ADVANCE,
+    };
+    let server = FixtureServer::start(scenario(vec![
+        exact_route(
+            "POST",
+            "/v3/mesh/segment",
+            vec![respond_json(
+                json!({"code": 0, "data": {"task_id": "segment-task"}}),
+            )],
+        ),
+        prefix_route(
+            "GET",
+            "/v3/tasks/",
+            true,
+            vec![respond_json(
+                json!({"code": 0, "data": {"status": "running", "progress": 42}}),
+            )],
+        ),
+    ]));
+    let (app, cookie, csrf) = tripo_app_with_catalog(
+        "segment-crash",
+        &tripo_base_url(&server),
+        &segment_catalog(),
+        true,
+    )
+    .await;
+    let job = ready_segment_job(&app, &cookie, &csrf).await;
+    let clock = Arc::new(ManualClock::new(Timestamp::now()));
+    let first = segment_executor(&app, clock.clone());
+    failpoints::set(
+        first.owner(),
+        PAID_AFTER_RECEIPT_BEFORE_ADVANCE,
+        FailpointAction::Panic,
+    );
+    let crashed = first.clone();
+    assert!(
+        tokio::spawn(async move { crashed.tick().await })
+            .await
+            .is_err()
+    );
+    failpoints::clear_owner(first.owner());
+    let stage = stage_of(&pool(&app), &job, StageKind::TripoSegment).await;
+    sqlx::query("UPDATE job_stages SET lease_until=? WHERE id=?")
+        .bind(clock.now().as_millis() - 1)
+        .bind(&stage.id)
+        .execute(&pool(&app))
+        .await
+        .unwrap();
+    let restarted = segment_executor(&app, clock.clone());
+    run_ticks(&restarted, &clock, 1, 1000).await;
+    assert_eq!(
+        stage_status(&pool(&app), &job, StageKind::TripoSegment).await,
+        JobStatus::WaitingProvider,
+        "receipt alone must not unlock auto_bind"
+    );
+    assert_eq!(
+        stage_status(&pool(&app), &job, StageKind::AutoBind).await,
+        JobStatus::Queued
+    );
+    run_ticks(&restarted, &clock, 1, 1_800_000).await;
+    assert_eq!(
+        stage_status(&pool(&app), &job, StageKind::TripoSegment).await,
+        JobStatus::NeedsInput
+    );
+    server.assert_called_once("POST", "/v3/mesh/segment");
+    assert_eq!(server.call_count("GET", "/v3/tasks/segment-task"), 2);
+    let posted = server.requests_matching("POST", "/v3/mesh/segment");
+    let body: Value = serde_json::from_slice(&posted[0].body).unwrap();
+    assert_eq!(body["input"], "original-model");
+    assert_eq!(body["model"], "v2.0-20260430");
+    server.assert_no_script_problems();
+}
+
+#[tokio::test]
+async fn segmentation_response_before_receipt_crash_never_blindly_retries() {
+    use everything_manual::jobs::failpoints::{
+        self, FailpointAction, PAID_AFTER_RESPONSE_BEFORE_RECEIPT,
+    };
+    let server = FixtureServer::start(scenario(vec![exact_route(
+        "POST",
+        "/v3/mesh/segment",
+        vec![respond_json(
+            json!({"code": 0, "data": {"task_id": "lost-receipt"}}),
+        )],
+    )]));
+    let (app, cookie, csrf) = tripo_app_with_catalog(
+        "segment-lost-receipt",
+        &tripo_base_url(&server),
+        &segment_catalog(),
+        true,
+    )
+    .await;
+    let job = ready_segment_job(&app, &cookie, &csrf).await;
+    let clock = Arc::new(ManualClock::new(Timestamp::now()));
+    let first = segment_executor(&app, clock.clone());
+    failpoints::set(
+        first.owner(),
+        PAID_AFTER_RESPONSE_BEFORE_RECEIPT,
+        FailpointAction::Panic,
+    );
+    let crashed = first.clone();
+    assert!(
+        tokio::spawn(async move { crashed.tick().await })
+            .await
+            .is_err()
+    );
+    failpoints::clear_owner(first.owner());
+    let stage = stage_of(&pool(&app), &job, StageKind::TripoSegment).await;
+    sqlx::query("UPDATE job_stages SET lease_until=? WHERE id=?")
+        .bind(clock.now().as_millis() - 1)
+        .bind(&stage.id)
+        .execute(&pool(&app))
+        .await
+        .unwrap();
+    let restarted = segment_executor(&app, clock.clone());
+    run_ticks(&restarted, &clock, 3, 60_000).await;
+    assert_eq!(
+        stage_status(&pool(&app), &job, StageKind::TripoSegment).await,
+        JobStatus::SubmissionUnknown
+    );
+    server.assert_called_once("POST", "/v3/mesh/segment");
+    assert_eq!(server.request_total(), 1);
+    server.assert_no_script_problems();
+}
+
+#[tokio::test]
+async fn segmentation_success_attaches_parts_settles_combined_actual_and_restart_is_idempotent() {
+    use everything_manual::storage::repo;
+    // Distinct fixture hosts verify download uses its independent no-bearer client.
+    let download = FixtureServer::start(scenario(vec![exact_route(
+        "GET",
+        "/parts.glb",
+        vec![respond_file("assets/sample-model.glb")],
+    )]));
+    let server = FixtureServer::start(scenario(vec![
+        exact_route(
+            "POST",
+            "/v3/mesh/segment",
+            vec![respond_json(
+                json!({"code": 0, "data": {"task_id": "parts-success"}}),
+            )],
+        ),
+        prefix_route(
+            "GET",
+            "/v3/tasks/",
+            true,
+            vec![respond_json(
+                json!({"code": 0, "data": {"status": "success", "credits_consumed": "40",
+            "output": {"model_url": format!("{}/parts.glb?signature=fixture-private", download.base_url())}}}),
+            )],
+        ),
+    ]));
+    let (app, cookie, csrf) = tripo_app_with_catalog(
+        "segment-success",
+        &tripo_base_url(&server),
+        &segment_catalog(),
+        true,
+    )
+    .await;
+    let job_id = ready_segment_job(&app, &cookie, &csrf).await;
+    let db = pool(&app);
+    let job = {
+        let mut conn = db.acquire().await.unwrap();
+        repo::jobs::get(&mut conn, &job_id).await.unwrap().unwrap()
+    };
+    let clock = Arc::new(ManualClock::new(Timestamp::now()));
+    let executor = segment_executor(&app, clock.clone());
+    run_ticks(&executor, &clock, 2, 20_000).await;
+    let stage = stage_of(&db, &job_id, StageKind::TripoSegment).await;
+    assert_eq!(stage.status, JobStatus::Succeeded, "{:?}", stage.last_error);
+    assert!(stage.result_asset_id.is_some());
+    assert!(
+        !stage
+            .usage_json
+            .as_ref()
+            .unwrap()
+            .to_string()
+            .contains("fixture-private")
+    );
+    let mut conn = db.acquire().await.unwrap();
+    let attached = repo::drafts::get_by_snapshot(&mut conn, &job.snapshot_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        attached.knowledge_json["interactive"]["partsModel"]["nodeNames"],
+        json!(["unit-cube"])
+    );
+    let entry = ledger_repo::list_for_snapshot(&mut conn, &job.snapshot_id)
+        .await
+        .unwrap()
+        .into_iter()
+        .find(|e| e.provider == ProviderKey::Tripo)
+        .unwrap();
+    assert_eq!(entry.state.as_str(), "settled");
+    assert_eq!(entry.actual, Some(7000));
+    drop(conn);
+    // Simulate attachment committed before a lost stage checkpoint, so the new
+    // process must reuse its task and attachment rather than buy or attach twice.
+    sqlx::query("UPDATE job_stages SET status='queued', result_asset_id=NULL WHERE id=?")
+        .bind(&stage.id)
+        .execute(&db)
+        .await
+        .unwrap();
+    let restarted = segment_executor(&app, clock.clone());
+    run_ticks(&restarted, &clock, 1, 20_000).await;
+    assert_eq!(
+        stage_status(&db, &job_id, StageKind::TripoSegment).await,
+        JobStatus::Succeeded
+    );
+    let mut conn = db.acquire().await.unwrap();
+    let reread = repo::drafts::get_by_snapshot(&mut conn, &job.snapshot_id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(reread.revision, attached.revision);
+    assert_eq!(
+        reread.knowledge_json["interactive"]["partsModel"]["assetId"],
+        attached.knowledge_json["interactive"]["partsModel"]["assetId"]
+    );
+    server.assert_called_once("POST", "/v3/mesh/segment");
+    download.assert_called_once("GET", "/parts.glb");
+    assert!(
+        download.requests()[0].header("authorization").is_none(),
+        "download must not forward provider credentials"
+    );
+    server.assert_no_script_problems();
+    download.assert_no_script_problems();
 }
 
 // ---------------------------------------------------------------------------
@@ -566,6 +1126,15 @@ async fn credits_are_parsed_exactly_and_raw_literal_is_kept() {
 
 /// 带 Tripo fixture 配置的应用（含价格目录与登录）；`TestApp` 持有临时目录并在 Drop 时清理。
 async fn tripo_app(tag: &str, base_url: &str) -> (TestApp, String, String) {
+    tripo_app_with_catalog(tag, base_url, TEST_CATALOG, false).await
+}
+
+async fn tripo_app_with_catalog(
+    tag: &str,
+    base_url: &str,
+    catalog_text: &str,
+    auto_stages: bool,
+) -> (TestApp, String, String) {
     let dir = TestDir::new(tag);
     let mut settings = common::test_settings(dir.path());
     let mut tripo = common::configured_tripo(CANARY_KEY);
@@ -579,8 +1148,13 @@ async fn tripo_app(tag: &str, base_url: &str) -> (TestApp, String, String) {
         key_source: Some("测试注入".to_owned()),
     };
     settings.price_catalog_path = Some(dir.join("price-catalog.toml"));
-    std::fs::write(dir.join("price-catalog.toml"), TEST_CATALOG).expect("写入价格目录");
-    settings.price_catalog = Some(catalog::parse(TEST_CATALOG).expect("价格目录可解析"));
+    std::fs::write(dir.join("price-catalog.toml"), catalog_text).expect("写入价格目录");
+    settings.price_catalog = Some(catalog::parse(catalog_text).expect("价格目录可解析"));
+    settings.auto_stages_enabled = auto_stages;
+    if auto_stages {
+        settings.download.allow_local_fixture = true;
+        settings.download.allowed_hosts = vec!["127.0.0.1".to_owned()];
+    }
     let app = TestApp::with_settings(dir, settings).await;
     app.set_admin_password(PASSWORD).await;
     let login = app
@@ -856,7 +1430,7 @@ async fn create_ready_job(app: &TestApp, cookie: &str, csrf: &str) -> String {
             "quoteId": quote_id,
             "preparationId": preparation,
             "photoIds": photo_ids,
-            "limits": { "tripoCreditMinor": 3000, "manualAiUsdMicros": 100_000 },
+            "limits": { "tripoCreditMinor": estimate.json()["data"]["amounts"]["tripo"]["upperBoundMinor"], "manualAiUsdMicros": 100_000 },
         }))
         .send()
         .await;

@@ -44,6 +44,9 @@ export interface NotifyOptions {
 
 interface NotificationContextValue {
   notify: (message: string, options?: NotifyOptions) => void;
+  notices: Notice[];
+  dismiss: (id: number) => void;
+  dismissAll: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
@@ -54,11 +57,11 @@ const AUTO_DISMISS_MS = 6000;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notices, setNotices] = useState<Notice[]>([]);
   const nextId = useRef(1);
-  useNoticesBelowTopBar(notices.length > 0);
 
   const dismiss = useCallback((id: number) => {
     setNotices((list) => list.filter((notice) => notice.id !== id));
   }, []);
+  const dismissAll = useCallback(() => setNotices([]), []);
 
   const notify = useCallback((message: string, options: NotifyOptions = {}) => {
     const id = nextId.current;
@@ -76,54 +79,34 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     ]);
   }, []);
 
-  const value = useMemo(() => ({ notify }), [notify]);
+  const value = useMemo(() => ({ notify, notices, dismiss, dismissAll }), [notify, notices, dismiss, dismissAll]);
 
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      <div className="notices" aria-label="全局通知">
-        {notices.map((notice) => (
-          <NoticeItem key={notice.id} notice={notice} onDismiss={dismiss} />
-        ))}
-      </div>
     </NotificationContext.Provider>
   );
 }
 
-/**
- * 让通知条固定出现在**顶栏之下**（BUG-001-r8）：
- * 通知条曾盖住顶栏，在其 6 秒可见期内吞掉对主导航的指针点击（键盘路径不受影响）。
- * 修复由两部分组成：
- * 1. CSS（`styles.css`）：`.notices` 容器 `pointer-events: none` + `.notice`
- *    `pointer-events: auto`，通知内容之外的区域不再拦截指针；
- * 2. 本 hook：通知出现时测量**真实**顶栏高度并写入 `--notices-top`
- *    （顶栏会随物品上下文与窄屏换行变化，固定像素值会漂移）。
- * 不做任何布局反馈（该变量只用于通知条定位），因此不会引发 resize 循环。
- */
-function useNoticesBelowTopBar(active: boolean): void {
-  useEffect(() => {
-    if (!active) {
-      return;
-    }
-    const update = (): void => {
-      const topBar = document.querySelector(".top-bar");
-      if (topBar === null) {
-        return;
-      }
-      const height = Math.ceil(topBar.getBoundingClientRect().height);
-      document.documentElement.style.setProperty("--notices-top", `${height}px`);
-    };
-    update();
-    window.addEventListener("resize", update);
-    // 顶栏高度还会因路由切换而变化（物品上下文出现/消失、窄屏换行、导航换行），
-    // 而这些变化不一定触发 window resize：通知可见期间按固定间隔重新测量。
-    // 只写定位变量（无布局反馈），可见期最长 6 秒、间隔 100ms，开销可忽略。
-    const timer = window.setInterval(update, 100);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.clearInterval(timer);
-    };
-  }, [active]);
+/** Render below the shell header in normal flow, so notices never cover page controls or dialogs. */
+export function NotificationRegion() {
+  const context = useContext(NotificationContext);
+  if (context === null || context.notices.length === 0) return null;
+  return (
+    <section className="notices" aria-label="全局通知">
+      {context.notices.length > 1 && (
+        <div className="notices__toolbar">
+          <span>{context.notices.length} 条通知</span>
+          <button type="button" onClick={context.dismissAll}>关闭全部通知</button>
+        </div>
+      )}
+      <div className="notices__list">
+        {context.notices.map((notice) => (
+          <NoticeItem key={notice.id} notice={notice} onDismiss={context.dismiss} />
+        ))}
+      </div>
+    </section>
+  );
 }
 
 export function useNotify(): (message: string, options?: NotifyOptions) => void {

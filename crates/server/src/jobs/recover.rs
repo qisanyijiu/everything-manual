@@ -111,6 +111,14 @@ pub fn plan(
         // 但"结果已持久化"不等于"产出了知识"（T14 P3-1）：按结果事实判定，见 [`plan_succeed`]。
         return plan_succeed(stage);
     }
+    // Segmentation combines submission, polling and attachment. A remote receipt is
+    // enough to resume querying, but cannot prove that the parts model was attached.
+    if stage.stage_kind == manual_core::domain::StageKind::TripoSegment
+        && attempt
+            .is_some_and(|a| a.submit_state == SubmitState::Accepted && a.remote_task_id.is_some())
+    {
+        return Requeue;
+    }
     let style = submission_style(stage.stage_kind);
     let Some(attempt) = attempt else {
         return Requeue;

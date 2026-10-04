@@ -170,7 +170,7 @@ pub(crate) fn retry_configuration_missing(
 ) -> Vec<String> {
     let provider = match kind {
         StageKind::ManualExtract => manual_core::domain::ProviderKey::ManualAi,
-        StageKind::TripoSubmit
+        StageKind::TripoSubmit | StageKind::TripoSegment
             if !latest_attempt
                 .is_some_and(|attempt| attempt.submit_state == SubmitState::Accepted) =>
         {

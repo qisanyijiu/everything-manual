@@ -781,6 +781,14 @@ function SendScopePanel({ quote }: { quote: QuoteDto | null }) {
         detail（特写）照片不发送。
       </p>
 
+      {scope.tripo.segmentation && (
+        <p className="field__hint" data-testid="send-scope-segmentation">
+          自动分件：生成后的模型将继续交给 Tripo，使用 {scope.tripo.segmentation.model} 分件。
+          费用 {quote.amounts.tripo.upperBoundLines.find((line) => line.code === "meshSegmentation")?.amountDisplay}
+          已包含在本次 Tripo 上界中；结果未知时需要先对账。
+        </p>
+      )}
+
       <h3>发送给说明书 AI</h3>
       <ul className="scope-list">
         <li>

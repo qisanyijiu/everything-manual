@@ -15,8 +15,8 @@ use std::collections::BTreeSet;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use manual_core::validation::FieldIssue;
 use super::knowledge::DraftKnowledge;
+use manual_core::validation::FieldIssue;
 
 /// 单个草稿允许的上限（防止把知识外壳当大文件存储）。
 pub const MAX_BINDINGS: usize = 400;
@@ -169,10 +169,9 @@ impl InteractivePatch {
 
 /// 分件附件是否仍属于草稿当前模型（模型重生成后旧附件失效，交互层不可用）。
 pub fn parts_model_matches(knowledge: &DraftKnowledge, parts: &PartsModel) -> bool {
-    knowledge
-        .model
-        .as_ref()
-        .is_some_and(|model| model.revision_id == parts.model_revision_id && model.sha256 == parts.model_sha256)
+    knowledge.model.as_ref().is_some_and(|model| {
+        model.revision_id == parts.model_revision_id && model.sha256 == parts.model_sha256
+    })
 }
 
 fn finite3(value: &[f64; 3]) -> bool {
@@ -191,28 +190,39 @@ fn validate_steps(
     issues: &mut Vec<FieldIssue>,
 ) {
     if steps.is_empty() || steps.len() > MAX_STEPS_PER_ACTION {
-        issues.push(FieldIssue::new(field, format!("{owner}：变换步数须在 1..={MAX_STEPS_PER_ACTION}")));
+        issues.push(FieldIssue::new(
+            field,
+            format!("{owner}：变换步数须在 1..={MAX_STEPS_PER_ACTION}"),
+        ));
     }
     for step in steps {
         if step.nodes.is_empty() || step.nodes.len() > MAX_NODES_PER_REF {
-            issues.push(FieldIssue::new(field, format!("{owner}：每步须引用 1..={MAX_NODES_PER_REF} 个节点")));
+            issues.push(FieldIssue::new(
+                field,
+                format!("{owner}：每步须引用 1..={MAX_NODES_PER_REF} 个节点"),
+            ));
         }
         for node in &step.nodes {
             if !nodes.contains(node.as_str()) {
-                issues.push(FieldIssue::new(field, format!("{owner}：分件模型中没有节点 {node}")));
+                issues.push(FieldIssue::new(
+                    field,
+                    format!("{owner}：分件模型中没有节点 {node}"),
+                ));
             }
         }
         match step.kind {
             TransformKind::Translate => {
                 if !step.vector.as_ref().is_some_and(finite3) {
-                    issues.push(FieldIssue::new(field, format!("{owner}：translate 需要有限的 vector")));
+                    issues.push(FieldIssue::new(
+                        field,
+                        format!("{owner}：translate 需要有限的 vector"),
+                    ));
                 }
             }
             TransformKind::Rotate => {
-                let axis_ok = step
-                    .axis
-                    .as_ref()
-                    .is_some_and(|axis| finite3(axis) && axis.iter().map(|v| v * v).sum::<f64>() > 1e-12);
+                let axis_ok = step.axis.as_ref().is_some_and(|axis| {
+                    finite3(axis) && axis.iter().map(|v| v * v).sum::<f64>() > 1e-12
+                });
                 let pivot_ok = step.pivot.as_ref().is_some_and(finite3);
                 let angle_ok = step
                     .angle_deg
@@ -248,7 +258,12 @@ pub fn validate_interactive_patch(
         ));
         return;
     }
-    let nodes: BTreeSet<&str> = interactive.parts_model.node_names.iter().map(String::as_str).collect();
+    let nodes: BTreeSet<&str> = interactive
+        .parts_model
+        .node_names
+        .iter()
+        .map(String::as_str)
+        .collect();
     let part_ids: BTreeSet<&str> = knowledge
         .knowledge
         .as_ref()
@@ -262,53 +277,86 @@ pub fn validate_interactive_patch(
 
     if let Some(bindings) = &patch.bindings {
         if bindings.len() > MAX_BINDINGS {
-            issues.push(FieldIssue::new("interactive.bindings", format!("绑定数不得超过 {MAX_BINDINGS}")));
+            issues.push(FieldIssue::new(
+                "interactive.bindings",
+                format!("绑定数不得超过 {MAX_BINDINGS}"),
+            ));
         }
         let mut seen = BTreeSet::new();
         for binding in bindings {
             if !part_ids.contains(binding.part_id.as_str()) {
-                issues.push(FieldIssue::new("interactive.bindings", format!("部件不存在：{}", binding.part_id)));
+                issues.push(FieldIssue::new(
+                    "interactive.bindings",
+                    format!("部件不存在：{}", binding.part_id),
+                ));
             }
             if !seen.insert(binding.part_id.as_str()) {
-                issues.push(FieldIssue::new("interactive.bindings", format!("部件重复绑定：{}", binding.part_id)));
+                issues.push(FieldIssue::new(
+                    "interactive.bindings",
+                    format!("部件重复绑定：{}", binding.part_id),
+                ));
             }
             if binding.nodes.is_empty() || binding.nodes.len() > MAX_NODES_PER_REF {
                 issues.push(FieldIssue::new(
                     "interactive.bindings",
-                    format!("部件 {} 须绑定 1..={MAX_NODES_PER_REF} 个节点", binding.part_id),
+                    format!(
+                        "部件 {} 须绑定 1..={MAX_NODES_PER_REF} 个节点",
+                        binding.part_id
+                    ),
                 ));
             }
             for node in &binding.nodes {
                 if !nodes.contains(node.as_str()) {
-                    issues.push(FieldIssue::new("interactive.bindings", format!("分件模型中没有节点 {node}")));
+                    issues.push(FieldIssue::new(
+                        "interactive.bindings",
+                        format!("分件模型中没有节点 {node}"),
+                    ));
                 }
             }
         }
     }
     if let Some(actions) = &patch.actions {
         if actions.len() > MAX_ACTIONS {
-            issues.push(FieldIssue::new("interactive.actions", format!("动作数不得超过 {MAX_ACTIONS}")));
+            issues.push(FieldIssue::new(
+                "interactive.actions",
+                format!("动作数不得超过 {MAX_ACTIONS}"),
+            ));
         }
         let mut seen = BTreeSet::new();
         for action in actions {
             let owner = format!("动作 {}", action.id);
             if !short_text(&action.id, MAX_ID_CHARS) || !seen.insert(action.id.as_str()) {
-                issues.push(FieldIssue::new("interactive.actions", format!("{owner}：id 为空、过长或重复")));
+                issues.push(FieldIssue::new(
+                    "interactive.actions",
+                    format!("{owner}：id 为空、过长或重复"),
+                ));
             }
             if !short_text(&action.label, MAX_LABEL_CHARS) {
-                issues.push(FieldIssue::new("interactive.actions", format!("{owner}：label 须为 1..={MAX_LABEL_CHARS} 字")));
+                issues.push(FieldIssue::new(
+                    "interactive.actions",
+                    format!("{owner}：label 须为 1..={MAX_LABEL_CHARS} 字"),
+                ));
             }
             if !(MIN_DURATION_MS..=MAX_DURATION_MS).contains(&action.duration_ms) {
-                issues.push(FieldIssue::new("interactive.actions", format!("{owner}：durationMs 须 ≤ {MAX_DURATION_MS}")));
+                issues.push(FieldIssue::new(
+                    "interactive.actions",
+                    format!("{owner}：durationMs 须 ≤ {MAX_DURATION_MS}"),
+                ));
             }
             for part_id in &action.trigger_part_ids {
                 if !part_ids.contains(part_id.as_str()) {
-                    issues.push(FieldIssue::new("interactive.actions", format!("{owner}：触发部件不存在 {part_id}")));
+                    issues.push(FieldIssue::new(
+                        "interactive.actions",
+                        format!("{owner}：触发部件不存在 {part_id}"),
+                    ));
                 }
             }
             for step_id in &action.step_ids {
                 if !step_ids.contains(step_id.as_str()) {
-                    issues.push(FieldIssue::new("interactive.actions", format!("{owner}：步骤不存在 {step_id}")));
+                    issues.push(FieldIssue::new(
+                        "interactive.actions",
+                        format!("{owner}：步骤不存在 {step_id}"),
+                    ));
                 }
             }
             validate_steps("interactive.actions", &owner, &action.steps, &nodes, issues);
@@ -316,19 +364,31 @@ pub fn validate_interactive_patch(
     }
     if let Some(poses) = &patch.poses {
         if poses.len() > MAX_POSES {
-            issues.push(FieldIssue::new("interactive.poses", format!("姿势数不得超过 {MAX_POSES}")));
+            issues.push(FieldIssue::new(
+                "interactive.poses",
+                format!("姿势数不得超过 {MAX_POSES}"),
+            ));
         }
         let mut seen = BTreeSet::new();
         for pose in poses {
             let owner = format!("姿势 {}", pose.id);
             if !short_text(&pose.id, MAX_ID_CHARS) || !seen.insert(pose.id.as_str()) {
-                issues.push(FieldIssue::new("interactive.poses", format!("{owner}：id 为空、过长或重复")));
+                issues.push(FieldIssue::new(
+                    "interactive.poses",
+                    format!("{owner}：id 为空、过长或重复"),
+                ));
             }
             if !short_text(&pose.label, MAX_LABEL_CHARS) {
-                issues.push(FieldIssue::new("interactive.poses", format!("{owner}：label 须为 1..={MAX_LABEL_CHARS} 字")));
+                issues.push(FieldIssue::new(
+                    "interactive.poses",
+                    format!("{owner}：label 须为 1..={MAX_LABEL_CHARS} 字"),
+                ));
             }
             if pose.duration_ms > MAX_DURATION_MS {
-                issues.push(FieldIssue::new("interactive.poses", format!("{owner}：durationMs 须 ≤ {MAX_DURATION_MS}")));
+                issues.push(FieldIssue::new(
+                    "interactive.poses",
+                    format!("{owner}：durationMs 须 ≤ {MAX_DURATION_MS}"),
+                ));
             }
             validate_steps("interactive.poses", &owner, &pose.steps, &nodes, issues);
         }
@@ -353,7 +413,9 @@ pub fn apply_interactive_patch(knowledge: &mut DraftKnowledge, patch: &Interacti
 
 /// 节点名合法性（附加分件模型时检查）。
 pub fn valid_node_name(name: &str) -> bool {
-    !name.is_empty() && name.chars().count() <= MAX_NODE_NAME_CHARS && !name.chars().any(char::is_control)
+    !name.is_empty()
+        && name.chars().count() <= MAX_NODE_NAME_CHARS
+        && !name.chars().any(char::is_control)
 }
 
 #[cfg(test)]
@@ -427,7 +489,11 @@ mod tests {
     fn valid_patch_is_accepted_and_applied() {
         let mut knowledge = knowledge_with("rev-1");
         let patch = InteractivePatch {
-            bindings: Some(vec![PartBinding { part_id: "part-a".into(), nodes: vec!["cover".into()], status: BindingStatus::Auto }]),
+            bindings: Some(vec![PartBinding {
+                part_id: "part-a".into(),
+                nodes: vec!["cover".into()],
+                status: BindingStatus::Auto,
+            }]),
             actions: Some(vec![action(&["cover"])]),
             poses: None,
         };
@@ -446,7 +512,11 @@ mod tests {
         let mut bad_rotate = action(&["cover"]);
         bad_rotate.steps[0].axis = Some([0.0, 0.0, 0.0]);
         let patch = InteractivePatch {
-            bindings: Some(vec![PartBinding { part_id: "part-x".into(), nodes: vec!["ghost".into()], status: BindingStatus::Auto }]),
+            bindings: Some(vec![PartBinding {
+                part_id: "part-x".into(),
+                nodes: vec!["ghost".into()],
+                status: BindingStatus::Auto,
+            }]),
             actions: Some(vec![action(&["ghost"]), bad_rotate]),
             poses: None,
         };
@@ -462,7 +532,11 @@ mod tests {
     #[test]
     fn parts_model_from_old_revision_blocks_editing() {
         let knowledge = knowledge_with("rev-old");
-        let patch = InteractivePatch { bindings: Some(Vec::new()), actions: None, poses: None };
+        let patch = InteractivePatch {
+            bindings: Some(Vec::new()),
+            actions: None,
+            poses: None,
+        };
         let mut issues = Vec::new();
         validate_interactive_patch(&knowledge, &patch, &mut issues);
         assert!(format!("{issues:?}").contains("旧的模型版本"), "{issues:?}");

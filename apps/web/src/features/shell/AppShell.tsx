@@ -14,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { describeError } from "../../api/client";
 import { RouteErrorBoundary } from "../../components/ErrorBoundary";
-import { useNotify } from "../../components/notifications";
+import { NotificationRegion, useNotify } from "../../components/notifications";
 import { getItem } from "../../api/endpoints";
 import { itemKeys } from "../library/items";
 import { useLogout } from "../auth/session";
@@ -85,6 +85,7 @@ export function AppShell() {
         </div>
         <div className="top-bar__utilities"><JobActivityLink /><button className="mobile-logout" type="button" aria-label="退出登录" onClick={() => request(() => { void handleLogout(); })} disabled={logoutMutation.isPending}><Icon name="logout" size={17} /></button></div>
       </header>
+      <NotificationRegion />
       {/* tabIndex=-1：作为程序化焦点目标（会话恢复后焦点落回页面主体），不进入 Tab 顺序。 */}
       <main className="app-shell__content" id="main" tabIndex={-1}>
         <RouteErrorBoundary key={location.pathname}>

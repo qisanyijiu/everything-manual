@@ -684,7 +684,11 @@ pub fn is_branch_paused_without_purchase(stage: &JobStage) -> bool {
     if stage.stage_kind != StageKind::ManualExtract || stage.status != JobStatus::NeedsInput {
         return false;
     }
-    let Some(items) = stage.needs_input_json.as_ref().and_then(serde_json::Value::as_array) else {
+    let Some(items) = stage
+        .needs_input_json
+        .as_ref()
+        .and_then(serde_json::Value::as_array)
+    else {
         return false;
     };
     items.iter().any(|item| {

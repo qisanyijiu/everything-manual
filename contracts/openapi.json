@@ -2720,6 +2720,17 @@
           },
           "tripo": {
             "$ref": "#/components/schemas/TripoParametersDto"
+          },
+          "tripoSegmentation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TripoSegmentationDto",
+                "description": "Separately priced enhancement, explicitly included in the confirmed quote."
+              }
+            ]
           }
         },
         "required": [
@@ -3787,6 +3798,31 @@
         ],
         "type": "object"
       },
+      "TripoSegmentationDto": {
+        "additionalProperties": false,
+        "properties": {
+          "creditMinor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "model": {
+            "type": "string"
+          },
+          "segmentationGranularity": {
+            "type": "string"
+          },
+          "splitByConnectivity": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "model",
+          "creditMinor",
+          "segmentationGranularity",
+          "splitByConnectivity"
+        ],
+        "type": "object"
+      },
       "TripoSendScopeDto": {
         "description": "发送给 Tripo 的内容。",
         "properties": {
@@ -3799,6 +3835,16 @@
           },
           "preset": {
             "type": "string"
+          },
+          "segmentation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TripoSegmentationDto"
+              }
+            ]
           },
           "views": {
             "description": "多视图照片（槽位顺序；detail 不在其中）。",
@@ -3881,7 +3927,7 @@
             "type": "string"
           },
           "classify": {
-            "description": "是否请说明书 AI 判断建议视图（默认 true）。",
+            "description": "是否请说明书 AI 判断建议视图（默认 false，须显式确认图片发送与可能费用）。",
             "type": [
               "boolean",
               "null"
@@ -6551,7 +6597,7 @@
         ]
       },
       "post": {
-        "description": "资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。classify 默认 true：调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），不阻塞用户手动排列。候选不进入报价/生成快照。",
+        "description": "资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。classify 默认 false：仅显式 true 时调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），不阻塞用户手动排列。候选不进入报价/生成快照。",
         "operationId": "create_candidate",
         "parameters": [
           {

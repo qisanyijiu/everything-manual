@@ -354,10 +354,10 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
 
     // 第 3 步：刷新前后照片仍在（服务端事实）。
     await page.goto(`/items/${seed.itemId}/import/views`);
-    await expect(page.getByTestId("view-slot-front").getByRole("img")).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
     await page.reload();
-    await expect(page.getByTestId("view-slot-front").getByRole("img")).toBeVisible();
-    await expect(page.getByTestId("view-slot-left").getByRole("img")).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-left").getByRole("img")).toBeVisible();
     await expect(page.locator('.wizard-steps [aria-current="step"]')).toHaveText("视图排列");
     await captureTo("t16-qa", page, "06-views-after-reload");
 
@@ -642,8 +642,13 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await expect(page.getByRole("heading", { name: "已绑定的说明书" })).toBeVisible();
 
     await page.getByRole("link", { name: /下一步：视图排列/ }).click();
+    await page.getByText("逐个视图上传 / 替换照片", { exact: true }).click();
     await page.getByLabel("上传正面视图照片").setInputFiles(fixturePath("sample-photo-front.jpg"));
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
+    await expect(page.getByLabel("替换正面视图照片")).toBeEnabled();
     await page.getByLabel("上传左侧视图照片").setInputFiles(fixturePath("sample-photo-left.png"));
+    await expect(page.getByTestId("arrange-slot-left").getByRole("img")).toBeVisible();
+    await expect(page.getByLabel("替换左侧视图照片")).toBeEnabled();
     await expect(page.getByTestId("view-slot-detail")).toContainText("不发送给 Tripo");
 
     // 第 4 步：进度必须是"第 n / N 页"（无线性百分比、无预计剩余）。
@@ -702,6 +707,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await loginViaUi(page, "", password());
     await page.goto(`/items/${itemId}/import/views`);
     await expect(page.getByRole("heading", { name: "视图排列" })).toBeVisible();
+    await page.getByText("逐个视图上传 / 替换照片", { exact: true }).click();
 
     // 空槽位与说明（UI-012）。
     await expect(page.getByTestId("view-slot-front")).toContainText("必需");
@@ -724,7 +730,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
 
     // 刷新后按服务端事实渲染：front 槽位显示照片与缺项更新。
     await page.reload();
-    await expect(page.getByTestId("view-slot-front").getByRole("img")).toBeVisible();
+    await expect(page.getByTestId("arrange-slot-front").getByRole("img")).toBeVisible();
     await expect(page.getByTestId("generation-gaps")).toContainText("缺少侧面视图");
     await expect(page.getByTestId("generation-gaps")).not.toContainText("缺少 front");
   });
@@ -937,6 +943,7 @@ test.describe("T16 独立验收（QA 回合 18）", () => {
     await loginViaUi(page, "", password());
     await page.goto(`/items/${itemId}/import/views`);
     await expect(page.getByRole("heading", { name: "视图排列" })).toBeVisible();
+    await page.getByText("逐个视图上传 / 替换照片", { exact: true }).click();
 
     // 注入服务端形状的 413（字段与文案逐字取自 crates/server/src/assets/error.rs 与
     // blob_store.rs 的 insufficient_space_message；本机无法真的写满磁盘，故注入响应）。

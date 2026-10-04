@@ -70,7 +70,7 @@ export interface StandalonePayload {
   /** 交互层（ADR-042）：有值时内嵌的 GLB 是分件模型（与热点同一坐标系）。 */
   readonly interactive: {
     readonly bindings: readonly { readonly partId: string; readonly nodes: readonly string[] }[];
-    readonly actions: readonly import("../viewer/interactive").ModelActionView[];
-    readonly poses: readonly import("../viewer/interactive").ModelPoseView[];
+    readonly actions: readonly import("../viewer/interactive-view").ModelActionView[];
+    readonly poses: readonly import("../viewer/interactive-view").ModelPoseView[];
   } | null;
 }

@@ -22,7 +22,8 @@ export const E2E_WORK_DIR =
   process.env.EM_E2E_WORK_DIR ?? path.join(os.tmpdir(), "em-web-mvp-e2e");
 
 /** 失败证据与后端日志目录（仓库内，随 artifacts 留存）。 */
-export const EVIDENCE_DIR = path.join(REPO_ROOT, "artifacts", "web-mvp", "t09-rd");
+export const EVIDENCE_DIR = process.env.EM_E2E_EVIDENCE_DIR
+  ?? path.join(REPO_ROOT, "artifacts", "web-mvp", "t09-rd");
 
 /** globalSetup 写入、用例读取的运行时信息。 */
 export interface E2eRuntime {
@@ -37,7 +38,7 @@ export const RUNTIME_FILE = path.join(E2E_WORK_DIR, "runtime.json");
 
 export function writeRuntime(runtime: E2eRuntime): void {
   fs.mkdirSync(E2E_WORK_DIR, { recursive: true });
-  fs.writeFileSync(RUNTIME_FILE, JSON.stringify(runtime, null, 2));
+  fs.writeFileSync(RUNTIME_FILE, JSON.stringify(runtime, null, 2), { mode: 0o600 });
 }
 
 export function readRuntime(): E2eRuntime {
@@ -46,7 +47,8 @@ export function readRuntime(): E2eRuntime {
 
 /** 后端二进制路径（debug 构建；由 globalSetup 负责先构建）。 */
 export function serverBinary(): string {
-  return path.join(REPO_ROOT, "target", "debug", "everything-manual");
+  return process.env.EM_E2E_SERVER_BINARY
+    ?? path.join(REPO_ROOT, "target", "debug", "everything-manual");
 }
 
 /** 仓库样例资产路径（T05 原创 fixture）。 */

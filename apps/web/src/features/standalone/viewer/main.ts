@@ -41,7 +41,8 @@ import {
   type StandaloneHotspot,
   type StandalonePayload,
 } from "../payload";
-import { PartAnimator, type ModelActionView } from "../../viewer/interactive";
+import { PartAnimator } from "../../viewer/interactive";
+import type { ModelActionView } from "../../viewer/interactive-view";
 
 const HOTSPOT_COLOR = 0xc8643c;
 const HOTSPOT_SELECTED_COLOR = 0x1f4d3a;

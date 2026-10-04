@@ -19,9 +19,7 @@
   --ok: #16603a;
   --radius: 6px;
   --space: 12px;
-  /* 顶栏高度（通知条定位基准，BUG-001-r8）：
-   * 通知条固定出现在**顶栏之下**，不遮挡主导航的指针操作；
-   * `.top-bar` 用同一变量保证最小高度，两者不会互相漂移。 */
+  /* 顶栏的最小高度随断点变化。通知在顶栏下方的正常文档流中。 */
   --top-bar-height: 56px;
   font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
   line-height: 1.6;
@@ -188,7 +186,7 @@ a {
     align-items: flex-start;
   }
 
-  /* 窄屏顶栏可能换行（品牌/上下文一行、导航一行），抬高通知条基准。 */
+  /* 窄屏顶栏可能换行（品牌/上下文一行、导航一行）。 */
   :root {
     --top-bar-height: 104px;
   }
@@ -583,29 +581,41 @@ button:disabled {
   align-items: center;
 }
 
-/* 通知条（BUG-001-r8 修复）：
- * 容器只负责定位，**不拦截指针事件**——否则固定定位的容器会盖住顶栏，
- * 在 6 秒（成功提示自动消失窗口）内吞掉对顶栏的指针点击。
- * 通知体本身恢复 `pointer-events: auto`，所以「关闭」按钮与文本仍可点击/选中；
- * 键盘路径本来就不受影响（通知不夺焦点），不因此降低可访问性。
- * 规则：通知不得遮挡主入口（顶栏、主导航）的指针操作。 */
+/* Notifications occupy their own row below the header, including sticky alerts.
+ * No fixed overlay or z-index: page actions and modal drawers remain unobstructed. */
 .notices {
-  position: fixed;
-  /* 顶栏之下：通知条不覆盖主导航（BUG-001-r8 的规则："通知不得遮挡主入口"）。
-   * `--notices-top` 由 `components/notifications.tsx` 在通知出现时用**实测**顶栏高度
-   * 写入（顶栏会因物品上下文/窄屏换行而变化）；未测量时退回设计值 `--top-bar-height`。 */
-  top: var(--notices-top, var(--top-bar-height));
-  left: 0;
-  right: 0;
-  z-index: 30;
+  flex: 0 0 auto;
+  min-width: 0;
   pointer-events: none;
 }
 
-.notice {
+.notices__toolbar {
   display: flex;
-  gap: var(--space);
   align-items: center;
   justify-content: space-between;
+  gap: var(--space);
+  max-width: 720px;
+  margin: 0 auto 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.notices__toolbar button {
+  pointer-events: auto;
+}
+
+.notices__list {
+  max-height: min(32vh, 320px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+
+.notice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: start;
   padding: 8px var(--space);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -622,6 +632,17 @@ button:disabled {
 
 .notice__message {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.notice__dismiss {
+  white-space: nowrap;
+}
+
+@media (max-width: 479px) {
+  .notice { grid-template-columns: minmax(0, 1fr) auto; }
+  .notice__message { grid-column: 1 / -1; }
 }
 
 /* --- 向导第 4 步：PDF 逐页准备（T09 / UI-014–UI-018） --- */
@@ -1514,7 +1535,7 @@ button:disabled {
 .standalone-export .field__hint:empty { display: none; }
 
 /* 通知里的跳转动作（生成完成 → 查看结果）。 */
-.notice__action { margin-left: 12px; font-weight: 600; white-space: nowrap; }
+.notice__action { align-self: center; font-weight: 600; white-space: nowrap; }
 .accepted-panel__actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 
 /* 生成结果预览与生成历史。 */

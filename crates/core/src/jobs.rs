@@ -92,7 +92,10 @@ pub const fn concurrency_group(kind: StageKind) -> Option<ConcurrencyGroup> {
         | StageKind::ModelDownload
         | StageKind::ModelValidate => Some(ConcurrencyGroup::RemoteGeneration),
         StageKind::TripoSegment => Some(ConcurrencyGroup::RemoteGeneration),
-        StageKind::FreezeInputs | StageKind::ManualMerge | StageKind::AssembleDraft | StageKind::AutoBind => None,
+        StageKind::FreezeInputs
+        | StageKind::ManualMerge
+        | StageKind::AssembleDraft
+        | StageKind::AutoBind => None,
     }
 }
 
@@ -120,7 +123,7 @@ impl SubmissionStyle {
 /// 阶段是否需要"提交窗口"（先 intent、再 submitting、再事实观察）。
 pub const fn submission_style(kind: StageKind) -> Option<SubmissionStyle> {
     match kind {
-        StageKind::TripoSubmit => Some(SubmissionStyle::AsyncRemoteTask),
+        StageKind::TripoSubmit | StageKind::TripoSegment => Some(SubmissionStyle::AsyncRemoteTask),
         StageKind::ManualExtract => Some(SubmissionStyle::SyncResponse),
         _ => None,
     }

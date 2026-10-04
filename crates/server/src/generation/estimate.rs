@@ -105,8 +105,28 @@ pub async fn create_estimate_with_revision(
             serde_json::json!({ "preparationId": preparation.id }),
         )
     })?;
+    let mut tripo = tripo_amount(&pricing.preset.pricing()).map_err(money_error)?;
+    if let Some(segment) = &provider_config.tripo_segmentation {
+        tripo.estimated_minor =
+            manual_core::cost::add_minor(tripo.estimated_minor, segment.credit_minor)
+                .map_err(money_error)?;
+        tripo.upper_bound_minor =
+            manual_core::cost::add_minor(tripo.upper_bound_minor, segment.credit_minor)
+                .map_err(money_error)?;
+        tripo
+            .upper_bound_lines
+            .push(manual_core::generation::AmountLine {
+                code: "meshSegmentation".to_owned(),
+                description: format!("Tripo 自动分件（{}）", segment.model),
+                quantity: 1,
+                unit: "segmentation".to_owned(),
+                unit_price_decimal: manual_core::cost::format_credits(segment.credit_minor),
+                unit_price_per_units: 1,
+                amount_minor: segment.credit_minor,
+            });
+    }
     let amounts = QuoteAmounts {
-        tripo: tripo_amount(&pricing.preset.pricing()).map_err(money_error)?,
+        tripo,
         manual_ai: manual_ai_amount(&plan, &pricing.manual_ai).map_err(money_error)?,
     };
 
@@ -140,6 +160,7 @@ pub async fn create_estimate_with_revision(
             model: provider_config.tripo.model.clone(),
             preset: provider_config.tripo.preset.clone(),
             parameters: provider_config.tripo.clone(),
+            segmentation: provider_config.tripo_segmentation.clone(),
         },
         manual_ai: ManualAiSendScopeDto::from_plan(
             &item,
@@ -463,6 +484,19 @@ pub fn conceal_quote_models(payload: &mut QuoteDto, issue: bool) {
             *model = "（模型信息已隐藏）".to_owned();
         }
     }
+    for segmentation in [
+        &mut payload.provider_config.tripo_segmentation,
+        &mut payload.send_scope.tripo.segmentation,
+    ]
+    .into_iter()
+    .flatten()
+    {
+        if crate::config::model_guard::suspected_credential(&segmentation.model) {
+            use zeroize::Zeroize;
+            segmentation.model.zeroize();
+            segmentation.model = "（模型信息已隐藏）".to_owned();
+        }
+    }
 }
 
 /// 重新计算输入指纹（报价校验与建单校验共用；照片集合由调用方给出）。
@@ -677,6 +711,10 @@ fn resolve_pricing(
             model: manual_ai_model.to_owned(),
             prompt_version: MANUAL_EXTRACT_PROMPT_VERSION.to_owned(),
         },
+        tripo_segmentation: settings
+            .auto_stages_enabled
+            .then(|| catalog.tripo_segmentation.clone())
+            .flatten(),
     };
     Ok(PricingContext {
         preset: preset.clone(),

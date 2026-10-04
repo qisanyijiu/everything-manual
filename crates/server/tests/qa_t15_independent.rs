@@ -2688,9 +2688,11 @@ async fn qa_t15_cancel_keeps_submitted_state_and_adds_no_paid_steps() {
             | StageKind::ManualMerge
             | StageKind::TripoUpload
             | StageKind::TripoSubmit => JobStatus::Succeeded,
-            StageKind::ModelDownload | StageKind::ModelValidate | StageKind::AssembleDraft | StageKind::TripoSegment | StageKind::AutoBind => {
-                JobStatus::Cancelled
-            }
+            StageKind::ModelDownload
+            | StageKind::ModelValidate
+            | StageKind::AssembleDraft
+            | StageKind::TripoSegment
+            | StageKind::AutoBind => JobStatus::Cancelled,
         };
         assert_eq!(
             stage.status,

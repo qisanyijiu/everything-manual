@@ -1,6 +1,7 @@
 import { Group, Mesh, MeshStandardMaterial, BoxGeometry, Vector3 } from "three";
 
-import { PartAnimator, readInteractive, stepMatrices, type ModelActionView } from "./interactive";
+import { PartAnimator, stepMatrices } from "./interactive";
+import { readInteractive, type ModelActionView } from "./interactive-view";
 
 const MODEL = { revisionId: "rev-1", sha256: "a".repeat(64) };
 

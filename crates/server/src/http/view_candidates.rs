@@ -108,7 +108,7 @@ pub struct ViewCandidateCreateRequest {
     pub page_number: Option<i64>,
     /// `embedded` / `region` / `upload`。
     pub source: String,
-    /// 是否请说明书 AI 判断建议视图（默认 true）。
+    /// 是否请说明书 AI 判断建议视图（默认 false，须显式确认图片发送与可能费用）。
     #[serde(default)]
     #[schema(nullable = true)]
     pub classify: Option<bool>,
@@ -151,7 +151,7 @@ pub async fn list_candidates(
 #[utoipa::path(post, path = "/api/v1/items/{id}/view-candidates", tag = "photos",
     summary = "登记一张视图候选图（可选由说明书 AI 判断建议视图）",
     description = "资产须属于本物品且为照片（JPEG/PNG）。同一资产重复登记返回已有候选（200，不重复判断）。\
-                   classify 默认 true：调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），\
+                   classify 默认 false：仅显式 true 时调用已配置的说明书 AI（与提取同一服务端密钥），失败时候选记为未判断（仍 201），\
                    不阻塞用户手动排列。候选不进入报价/生成快照。",
     params(("id" = String, Path, description = "物品 ID")),
     request_body = ViewCandidateCreateRequest,
@@ -199,7 +199,7 @@ pub async fn create_candidate(
     }
 
     let (mut suggested, mut confidence, mut note) = (None, None, None);
-    if body.classify.unwrap_or(true) {
+    if body.classify.unwrap_or(false) {
         let provider = {
             state
                 .provider_config()

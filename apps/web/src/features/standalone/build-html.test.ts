@@ -73,6 +73,37 @@ describe("buildStandalonePayload", () => {
     const bad = manifest({ model: { ...MODEL, validationState: "rejected" } });
     expect(() => buildStandalonePayload(ITEM, { id: "rel-1", manifest: bad })).toThrow(StandaloneExportError);
   });
+
+  it("离线版保留发布时冻结的人工更正，包括操作与安全说明，并保留原出处", () => {
+    const frozen = {
+      ...manifest(),
+      review: {
+        entities: {
+          "part-a": { userEdited: { name: "校正后的后盖", description: "先关闭电源" } },
+          "step-1": {
+            userEdited: {
+              title: "安全打开后盖",
+              orderedActions: ["关闭电源后再松开螺钉。"],
+              safetyNotes: ["不要触碰内部触点。"],
+            },
+          },
+          "spec-1": { userEdited: { label: "额定输入", value: "DC 5 V" } },
+        },
+      },
+    };
+    const payload = buildStandalonePayload(ITEM, { id: "rel-1", manifest: frozen });
+    expect(payload.parts[0]).toMatchObject({
+      id: "part-a", name: "校正后的后盖", description: "先关闭电源",
+      evidence: [{ pageNumber: 1, quote: "q" }],
+    });
+    expect(payload.steps[0]).toMatchObject({
+      title: "安全打开后盖", orderedActions: ["关闭电源后再松开螺钉。"],
+      safetyNotes: ["不要触碰内部触点。"], partIds: ["part-a"],
+      evidence: [{ pageNumber: 1, quote: null }],
+    });
+    expect(payload.specs[0]).toMatchObject({ label: "额定输入", value: "DC 5 V" });
+    expect(frozen.knowledge.knowledge.parts[0]?.name).toBe("Rear cover");
+  });
 });
 
 describe("buildStandaloneHtml", () => {

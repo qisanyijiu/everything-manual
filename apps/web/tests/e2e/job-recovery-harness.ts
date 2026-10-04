@@ -401,6 +401,8 @@ async function waitForReady(url: string, logPath: string): Promise<void> {
 
 /** 构建测试构建的后端二进制（仅测试构建放行本机 fixture 的模型下载）。 */
 export function buildTestServerBinary(): void {
+  // Delivery and independent QA may supply an immutable, already built fixture.
+  if (process.env.EM_E2E_SERVER_BINARY) return;
   execFileSync("cargo", ["build", "-p", "everything-manual", "--features", "job-failpoints"], {
     cwd: REPO_ROOT,
     stdio: "inherit",
@@ -513,6 +515,7 @@ export interface JobStageView {
   id: string;
   stageKind: string;
   status: string;
+  updatedAt: string;
   needsInput: { code: string; message: string }[];
   retry: { allowed: boolean; reason: string | null; message: string | null };
   submissionStyle: string | null;

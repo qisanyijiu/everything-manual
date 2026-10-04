@@ -2426,7 +2426,9 @@ async fn begin_intent_survives_active_writer_contention() {
 /// 请求超时 → `Transport`（结果未知，不能证明未被接受），且客户端只发一次、不自动重试。
 #[tokio::test]
 async fn request_timeout_remains_unknown_and_does_not_retry() {
-    use everything_manual::providers::manual_ai::{ManualAiClient, ManualAiError, ManualAiTimeouts};
+    use everything_manual::providers::manual_ai::{
+        ManualAiClient, ManualAiError, ManualAiTimeouts,
+    };
     let server = FixtureServer::start(Scenario::new(vec![RouteScript {
         method: "POST".to_owned(),
         path: "/v1/responses".to_owned(),

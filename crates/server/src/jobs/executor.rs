@@ -400,6 +400,7 @@ impl JobExecutor {
                 if let Some(attempt_id) = attempt_id {
                     repo::attempts::mark_unknown(&mut tx, attempt_id, reason, now).await?;
                 }
+                mark_segment_ledger_unknown(&mut tx, stage, now).await?;
                 (
                     StageAdvance::SubmissionUnknown {
                         last_error: reason.clone(),
@@ -745,6 +746,9 @@ impl JobExecutor {
         // 3) 业务推进 + 父 job 聚合（同一短事务）。
         // 写事务统一 `BEGIN IMMEDIATE`（`storage::tx`，BUG-006）。
         let mut tx = crate::storage::begin_write_pool(&self.pool).await?;
+        if matches!(outcome, StageOutcome::SubmissionUnknown { .. }) {
+            mark_segment_ledger_unknown(&mut tx, stage, now).await?;
+        }
         let advanced = job_stages::advance(&mut tx, guard, now, &advance).await?;
         if advanced {
             repo::jobs::recompute_status(&mut tx, &stage.job_id, now).await?;
@@ -993,6 +997,36 @@ fn resume_hint(attempt: Option<&ProviderAttempt>) -> ResumeHint {
             },
         },
     }
+}
+
+/// An interrupted segment POST has the same financial uncertainty as a
+/// transport failure handled inside the adapter; retain its combined reserve.
+async fn mark_segment_ledger_unknown(
+    conn: &mut sqlx::SqliteConnection,
+    stage: &JobStage,
+    now: Timestamp,
+) -> Result<(), JobError> {
+    if stage.stage_kind != StageKind::TripoSegment {
+        return Ok(());
+    }
+    let Some(job) = repo::jobs::get(conn, &stage.job_id).await? else {
+        return Ok(());
+    };
+    let attempt = repo::attempts::latest_for_stage(conn, &stage.id).await?;
+    for entry in repo::ledger::list_for_snapshot(conn, &job.snapshot_id).await? {
+        if entry.provider == manual_core::domain::ProviderKey::Tripo
+            && manual_core::cost::ledger_state_holds_budget(entry.state)
+        {
+            crate::generation::ledger::mark_submission_unknown(
+                conn,
+                &entry.id,
+                attempt.as_ref().map(|a| a.id.as_str()),
+                now,
+            )
+            .await?;
+        }
+    }
+    Ok(())
 }
 
 /// 结果 → 状态推进载荷（退避、轮询节奏、总等待预算在此归一化）。

@@ -18,10 +18,10 @@ use manual_core::domain::{AssetPurpose, BlobStorageState};
 use manual_core::timestamps::Timestamp;
 use manual_core::validation::FieldIssue;
 
-use super::interactive::{valid_node_name, Interactive, PartsModel};
+use super::interactive::{Interactive, PartsModel, valid_node_name};
 use super::knowledge::DraftKnowledge;
-use super::service::{read_draft, DraftServiceError};
-use crate::assets::glb::{inspect_glb_file, GlbBudget};
+use super::service::{DraftServiceError, read_draft};
+use crate::assets::glb::{GlbBudget, inspect_glb_file};
 use crate::storage::repo;
 use crate::storage::repo::drafts as drafts_repo;
 
@@ -29,28 +29,49 @@ use crate::storage::repo::drafts as drafts_repo;
 const BOUNDS_TOLERANCE: f64 = 0.02;
 pub const AUDIT_PARTS_MODEL_ATTACHED: &str = "draft_parts_model_attached";
 
+type Bounds = ([f64; 3], [f64; 3]);
+type NodeLayout = (Vec<String>, Vec<[f64; 3]>, Vec<Option<usize>>);
+
 /// 读取 GLB 节点（名字 + 平移）；只接受无层级、无旋转/缩放的扁平节点（Tripo 分件形态）。
-fn read_nodes(path: &Path) -> Result<(Vec<String>, Vec<[f64; 3]>, Vec<Option<usize>>), String> {
+fn read_nodes(path: &Path) -> Result<NodeLayout, String> {
     let mut file = std::fs::File::open(path).map_err(|error| format!("读取文件失败：{error}"))?;
     let mut header = [0u8; 20];
-    file.read_exact(&mut header).map_err(|_| "文件过短：不是 GLB".to_owned())?;
+    file.read_exact(&mut header)
+        .map_err(|_| "文件过短：不是 GLB".to_owned())?;
     let json_len = u32::from_le_bytes([header[12], header[13], header[14], header[15]]) as usize;
     if &header[0..4] != b"glTF" || &header[16..20] != b"JSON" || json_len > 64 * 1024 * 1024 {
         return Err("不是合法的 GLB 容器".to_owned());
     }
-    file.seek(SeekFrom::Start(20)).map_err(|error| error.to_string())?;
+    file.seek(SeekFrom::Start(20))
+        .map_err(|error| error.to_string())?;
     let mut json = vec![0u8; json_len];
-    file.read_exact(&mut json).map_err(|_| "GLB JSON chunk 截断".to_owned())?;
-    let doc: Value = serde_json::from_slice(&json).map_err(|error| format!("GLB JSON 不可解析：{error}"))?;
-    let nodes = doc.get("nodes").and_then(Value::as_array).cloned().unwrap_or_default();
+    file.read_exact(&mut json)
+        .map_err(|_| "GLB JSON chunk 截断".to_owned())?;
+    let doc: Value =
+        serde_json::from_slice(&json).map_err(|error| format!("GLB JSON 不可解析：{error}"))?;
+    let nodes = doc
+        .get("nodes")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
     let mut names = Vec::new();
     let mut translations = Vec::new();
     let mut meshes = Vec::new();
     for (index, node) in nodes.iter().enumerate() {
-        if node.get("children").is_some() || node.get("rotation").is_some() || node.get("scale").is_some() || node.get("matrix").is_some() {
-            return Err(format!("节点 {index} 含层级或旋转/缩放：分件模型只接受扁平、仅平移的节点"));
+        if node.get("children").is_some()
+            || node.get("rotation").is_some()
+            || node.get("scale").is_some()
+            || node.get("matrix").is_some()
+        {
+            return Err(format!(
+                "节点 {index} 含层级或旋转/缩放：分件模型只接受扁平、仅平移的节点"
+            ));
         }
-        let name = node.get("name").and_then(Value::as_str).unwrap_or_default().to_owned();
+        let name = node
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_owned();
         let t = node.get("translation").and_then(Value::as_array);
         let translation = match t {
             None => [0.0; 3],
@@ -71,30 +92,59 @@ fn read_nodes(path: &Path) -> Result<(Vec<String>, Vec<[f64; 3]>, Vec<Option<usi
 }
 
 /// 每个 mesh 的局部包围盒（读 POSITION accessor 的 min/max；glTF 规范要求 POSITION 带 min/max）。
-fn mesh_bounds(path: &Path) -> Result<Vec<Option<([f64; 3], [f64; 3])>>, String> {
+fn mesh_bounds(path: &Path) -> Result<Vec<Option<Bounds>>, String> {
     let mut file = std::fs::File::open(path).map_err(|error| error.to_string())?;
     let mut header = [0u8; 20];
-    file.read_exact(&mut header).map_err(|error| error.to_string())?;
+    file.read_exact(&mut header)
+        .map_err(|error| error.to_string())?;
     let json_len = u32::from_le_bytes([header[12], header[13], header[14], header[15]]) as usize;
     let mut json = vec![0u8; json_len];
-    file.read_exact(&mut json).map_err(|error| error.to_string())?;
+    file.read_exact(&mut json)
+        .map_err(|error| error.to_string())?;
     let doc: Value = serde_json::from_slice(&json).map_err(|error| error.to_string())?;
-    let accessors = doc.get("accessors").and_then(Value::as_array).cloned().unwrap_or_default();
+    let accessors = doc
+        .get("accessors")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
     let read3 = |value: Option<&Value>| -> Option<[f64; 3]> {
         let a = value?.as_array()?;
-        if a.len() != 3 { return None; }
+        if a.len() != 3 {
+            return None;
+        }
         Some([a[0].as_f64()?, a[1].as_f64()?, a[2].as_f64()?])
     };
     let mut out = Vec::new();
-    for mesh in doc.get("meshes").and_then(Value::as_array).cloned().unwrap_or_default() {
+    for mesh in doc
+        .get("meshes")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default()
+    {
         let mut lo = [f64::INFINITY; 3];
         let mut hi = [f64::NEG_INFINITY; 3];
         let mut any = false;
-        for primitive in mesh.get("primitives").and_then(Value::as_array).cloned().unwrap_or_default() {
-            let Some(index) = primitive.pointer("/attributes/POSITION").and_then(Value::as_u64) else { continue };
-            let Some(accessor) = accessors.get(index as usize) else { continue };
-            if let (Some(min), Some(max)) = (read3(accessor.get("min")), read3(accessor.get("max"))) {
-                for k in 0..3 { lo[k] = lo[k].min(min[k]); hi[k] = hi[k].max(max[k]); }
+        for primitive in mesh
+            .get("primitives")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+        {
+            let Some(index) = primitive
+                .pointer("/attributes/POSITION")
+                .and_then(Value::as_u64)
+            else {
+                continue;
+            };
+            let Some(accessor) = accessors.get(index as usize) else {
+                continue;
+            };
+            if let (Some(min), Some(max)) = (read3(accessor.get("min")), read3(accessor.get("max")))
+            {
+                for k in 0..3 {
+                    lo[k] = lo[k].min(min[k]);
+                    hi[k] = hi[k].max(max[k]);
+                }
                 any = true;
             }
         }
@@ -107,7 +157,11 @@ fn model_bounds(knowledge: &DraftKnowledge) -> Option<([f64; 3], [f64; 3])> {
     let bounds = knowledge.model.as_ref()?.bounds.as_ref()?;
     let read = |key: &str| -> Option<[f64; 3]> {
         let a = bounds.get(key)?.as_array()?;
-        Some([a.first()?.as_f64()?, a.get(1)?.as_f64()?, a.get(2)?.as_f64()?])
+        Some([
+            a.first()?.as_f64()?,
+            a.get(1)?.as_f64()?,
+            a.get(2)?.as_f64()?,
+        ])
     };
     Some((read("min")?, read("max")?))
 }
@@ -129,9 +183,11 @@ pub async fn attach_parts_model(
     now: Timestamp,
 ) -> Result<manual_core::domain::ManualDraft, DraftServiceError> {
     let staged = input.staged;
-    let fail = |message: String| DraftServiceError::FieldIssues(vec![FieldIssue::new("file", message)]);
-    let validation = (|| -> Result<(Vec<String>, ([f64; 3], [f64; 3])), String> {
-        inspect_glb_file(&staged.path, &GlbBudget::default()).map_err(|error| format!("分件模型未通过 GLB 校验：{error}"))?;
+    let fail =
+        |message: String| DraftServiceError::FieldIssues(vec![FieldIssue::new("file", message)]);
+    let validation = (|| -> Result<(Vec<String>, Bounds), String> {
+        inspect_glb_file(&staged.path, &GlbBudget::default())
+            .map_err(|error| format!("分件模型未通过 GLB 校验：{error}"))?;
         let (names, translations, meshes) = read_nodes(&staged.path)?;
         if names.is_empty() {
             return Err("分件模型没有任何节点".to_owned());
@@ -169,7 +225,10 @@ pub async fn attach_parts_model(
     let mut conn = pool.acquire().await?;
     let current = read_draft(&mut conn, input.item_id, input.draft_id).await?;
     let mut knowledge: DraftKnowledge = serde_json::from_value(current.knowledge_json.clone())
-        .map_err(|error| DraftServiceError::Integrity { code: "draft_knowledge_unreadable", message: error.to_string() })?;
+        .map_err(|error| DraftServiceError::Integrity {
+            code: "draft_knowledge_unreadable",
+            message: error.to_string(),
+        })?;
     let Some(model) = knowledge.model.clone() else {
         crate::assets::blob_store::discard_staged(staged).await;
         return Err(fail("草稿没有可用的模型版本：无法挂载分件模型".to_owned()));
@@ -179,7 +238,11 @@ pub async fn attach_parts_model(
         return Err(fail("草稿模型缺少包围盒摘要：无法核对坐标系".to_owned()));
     };
     let mismatch = (0..3)
-        .map(|k| (parts_bounds.0[k] - model_lo[k]).abs().max((parts_bounds.1[k] - model_hi[k]).abs()))
+        .map(|k| {
+            (parts_bounds.0[k] - model_lo[k])
+                .abs()
+                .max((parts_bounds.1[k] - model_hi[k]).abs())
+        })
         .fold(0.0_f64, f64::max);
     if mismatch > BOUNDS_TOLERANCE {
         crate::assets::blob_store::discard_staged(staged).await;
@@ -191,28 +254,37 @@ pub async fn attach_parts_model(
 
     crate::assets::blob_store::promote(&staged, data_dir)
         .await
-        .map_err(|error| DraftServiceError::Integrity { code: "parts_model_write_failed", message: format!("{error:?}") })?;
+        .map_err(|error| DraftServiceError::Integrity {
+            code: "parts_model_write_failed",
+            message: format!("{error:?}"),
+        })?;
 
     let mut tx = crate::storage::begin_write(&mut conn).await?;
     let fresh = read_draft(&mut tx, input.item_id, input.draft_id).await?;
     if fresh.revision != input.expected_revision {
         tx.rollback().await?;
-        return Err(DraftServiceError::Storage(crate::storage::StorageError::RevisionConflict {
-            entity: "manual_draft",
-            id: input.draft_id.to_owned(),
-            current_revision: fresh.revision,
-        }));
+        return Err(DraftServiceError::Storage(
+            crate::storage::StorageError::RevisionConflict {
+                entity: "manual_draft",
+                id: input.draft_id.to_owned(),
+                current_revision: fresh.revision,
+            },
+        ));
     }
-    repo::blobs::insert_if_absent(&mut tx, &staged.sha256, staged.size, "model/gltf-binary").await?;
+    repo::blobs::insert_if_absent(&mut tx, &staged.sha256, staged.size, "model/gltf-binary")
+        .await?;
     if let Some(blob) = repo::blobs::get(&mut tx, &staged.sha256).await? {
         match blob.storage_state {
             BlobStorageState::Stored => {}
             BlobStorageState::Missing => {
-                repo::blobs::set_storage_state(&mut tx, &staged.sha256, BlobStorageState::Stored).await?;
+                repo::blobs::set_storage_state(&mut tx, &staged.sha256, BlobStorageState::Stored)
+                    .await?;
             }
             BlobStorageState::Quarantined => {
                 tx.rollback().await?;
-                return Err(fail("该文件内容与已隔离的 blob 相同：请管理员先处理隔离记录".to_owned()));
+                return Err(fail(
+                    "该文件内容与已隔离的 blob 相同：请管理员先处理隔离记录".to_owned(),
+                ));
             }
         }
     }
@@ -237,16 +309,44 @@ pub async fn attach_parts_model(
     };
     let names: std::collections::BTreeSet<&str> = node_names.iter().map(String::as_str).collect();
     let previous = knowledge.interactive.take();
-    let mut interactive = Interactive { parts_model, bindings: Vec::new(), actions: Vec::new(), poses: Vec::new() };
+    let mut interactive = Interactive {
+        parts_model,
+        bindings: Vec::new(),
+        actions: Vec::new(),
+        poses: Vec::new(),
+    };
     if let Some(previous) = previous {
         // 只保留仍然全部可解析的条目（不静默留下悬空节点引用）。
-        interactive.bindings = previous.bindings.into_iter().filter(|b| b.nodes.iter().all(|n| names.contains(n.as_str()))).collect();
-        interactive.actions = previous.actions.into_iter().filter(|a| a.steps.iter().all(|s| s.nodes.iter().all(|n| names.contains(n.as_str())))).collect();
-        interactive.poses = previous.poses.into_iter().filter(|p| p.steps.iter().all(|s| s.nodes.iter().all(|n| names.contains(n.as_str())))).collect();
+        interactive.bindings = previous
+            .bindings
+            .into_iter()
+            .filter(|b| b.nodes.iter().all(|n| names.contains(n.as_str())))
+            .collect();
+        interactive.actions = previous
+            .actions
+            .into_iter()
+            .filter(|a| {
+                a.steps
+                    .iter()
+                    .all(|s| s.nodes.iter().all(|n| names.contains(n.as_str())))
+            })
+            .collect();
+        interactive.poses = previous
+            .poses
+            .into_iter()
+            .filter(|p| {
+                p.steps
+                    .iter()
+                    .all(|s| s.nodes.iter().all(|n| names.contains(n.as_str())))
+            })
+            .collect();
     }
     knowledge.interactive = Some(interactive);
-    let knowledge_json = serde_json::to_string(&knowledge)
-        .map_err(|error| DraftServiceError::Integrity { code: "draft_serialization_failed", message: error.to_string() })?;
+    let knowledge_json =
+        serde_json::to_string(&knowledge).map_err(|error| DraftServiceError::Integrity {
+            code: "draft_serialization_failed",
+            message: error.to_string(),
+        })?;
     let updated = drafts_repo::update_content(
         &mut tx,
         input.draft_id,

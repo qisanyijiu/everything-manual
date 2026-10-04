@@ -29,6 +29,13 @@ face_limit = 100000
 quad = false
 generate_parts = false
 
+# Optional paid enhancement. Leave absent to generate without automatic segmentation.
+# Enabling it adds this price to the displayed quote and confirmed Tripo budget.
+# Verify the current provider price before enabling; this is a historical example.
+# [tripo.segmentation]
+# model = "v2.0-20260430"
+# credits = "40"
+
 # 键 = providers.manual_ai.model（配置里的模型名必须能在本目录找到单价，
 # 否则 estimate 返回 409 PRICE_CATALOG_MISSING 并说明缺哪一项）。
 [manual_ai.models.gpt-5-mini]

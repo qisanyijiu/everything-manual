@@ -17,6 +17,7 @@ pub fn submission_stage(kind: manual_core::domain::StageKind) -> bool {
             | StageKind::ManualMerge
             | StageKind::TripoUpload
             | StageKind::TripoSubmit
+            | StageKind::TripoSegment
     )
 }
 
@@ -39,7 +40,13 @@ pub fn suspected_credential(value: &str) -> bool {
 }
 
 pub fn provider_config_has_issue(value: &Value) -> bool {
-    ["/tripo/model", "/manualAi/model"].iter().any(|path| {
+    [
+        "/tripo/model",
+        "/manualAi/model",
+        "/tripoSegmentation/model",
+    ]
+    .iter()
+    .any(|path| {
         value
             .pointer(path)
             .and_then(Value::as_str)
@@ -52,9 +59,11 @@ pub fn quote_json_has_issue(value: &Value) -> bool {
     [
         "/providerConfig/tripo/model",
         "/providerConfig/manualAi/model",
+        "/providerConfig/tripoSegmentation/model",
         "/sendScope/tripo/model",
         "/sendScope/tripo/parameters/model",
         "/sendScope/manualAi/model",
+        "/sendScope/tripo/segmentation/model",
     ]
     .iter()
     .any(|path| {

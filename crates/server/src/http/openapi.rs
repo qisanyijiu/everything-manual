@@ -177,6 +177,7 @@ use super::{
         AmountLineDto,
         SendScopeDto,
         TripoSendScopeDto,
+        crate::http::dto::TripoSegmentationDto,
         PhotoScopeDto,
         ManualAiSendScopeDto,
         ConfirmationResponse,

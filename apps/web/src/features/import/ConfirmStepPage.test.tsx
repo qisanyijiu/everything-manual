@@ -171,13 +171,36 @@ it("PC06 历史报价模型不可用时禁止确认/生成并保留设置纠正�
   expect(screen.getByRole("link", { name: "前往设置" })).toHaveAttribute("href", "/settings");
   expect(calls.mock.calls.filter(([, init]) => init?.method === "POST" && String(init.body ?? "").includes("quoteId"))).toHaveLength(0);
 });
-async function ready() { await screen.findByTestId("quote-panel"); }
+async function ready() {
+  await screen.findByTestId("quote-panel");
+  await waitFor(() => expect(screen.getByRole("checkbox", { name: LABEL })).toBeEnabled());
+}
 async function confirm() {
   const checkbox = screen.getByRole("checkbox", { name: LABEL });
   await waitFor(() => expect(checkbox).toBeEnabled());
   fireEvent.click(checkbox);
   await waitFor(() => expect(generate()).toBeEnabled());
 }
+
+it("额外分件费用与冻结发送范围一并展示，并仍要求显式确认", async () => {
+  const original = quote();
+  setup((url) => url.endsWith("/estimates") ? jsonResponse({ data: {
+    ...original,
+    amounts: { ...original.amounts, tripo: {
+      ...original.amounts.tripo,
+      upperBoundDisplay: "70.00 credits",
+      upperBoundLines: [{ code: "meshSegmentation", amountDisplay: "40.00 credits" }],
+    } },
+    sendScope: { ...original.sendScope, tripo: { ...original.sendScope.tripo,
+      segmentation: { model: "v2.0-20260430" },
+    } },
+  } }) : undefined);
+  await ready();
+  expect(screen.getByTestId("send-scope-segmentation")).toHaveTextContent("v2.0-20260430");
+  expect(screen.getByTestId("send-scope-segmentation")).toHaveTextContent("40.00 credits");
+  expect(screen.getByRole("checkbox", { name: LABEL })).not.toBeChecked();
+  expect(generate()).toBeDisabled();
+});
 
 beforeEach(() => { setViewportWidth(1440); rememberPreparationId(ITEM.id, "prep-1"); });
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); sessionStorage.clear(); localStorage.clear(); });

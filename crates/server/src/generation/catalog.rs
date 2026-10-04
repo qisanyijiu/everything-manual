@@ -70,6 +70,7 @@ pub struct PriceCatalog {
     pub tripo_presets: Vec<TripoPreset>,
     /// 说明书 AI 模型定价（键 = `providers.manual_ai.model`）。
     pub manual_ai_models: Vec<ManualAiPricing>,
+    pub tripo_segmentation: Option<crate::http::dto::generation::TripoSegmentationDto>,
 }
 
 /// 一个受支持的 Tripo 多视图预设。
@@ -138,6 +139,15 @@ struct CatalogFile {
 #[serde(deny_unknown_fields)]
 struct TripoSection {
     presets: Vec<TripoPresetSection>,
+    #[serde(default)]
+    segmentation: Option<SegmentationSection>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SegmentationSection {
+    model: String,
+    credits: String,
 }
 
 /// Tripo 预设；省略的参数取架构 §5.3 的标准默认值（不静默改质量：默认值就是标准质量）。
@@ -220,6 +230,28 @@ pub fn parse(text: &str) -> Result<PriceCatalog, CatalogError> {
         return Err(error("价格目录至少需要一个 [[tripo.presets]] 条目"));
     }
 
+    let tripo_segmentation = file
+        .tripo
+        .segmentation
+        .map(|section| {
+            if section.model != "v2.0-20260430" {
+                return Err(error(
+                    "tripo.segmentation.model 不受支持（仅 v2.0-20260430）",
+                ));
+            }
+            let credit_minor = price_to_minor(&section.credits, CREDIT_MINOR_SCALE)
+                .map_err(|e| error(format!("tripo.segmentation.credits 无法精确换算：{e}")))?;
+            if credit_minor <= 0 {
+                return Err(error("tripo.segmentation.credits 必须为正"));
+            }
+            Ok(crate::http::dto::generation::TripoSegmentationDto {
+                model: section.model,
+                credit_minor,
+                segmentation_granularity: "detailed".to_owned(),
+                split_by_connectivity: true,
+            })
+        })
+        .transpose()?;
     let mut presets: Vec<TripoPreset> = Vec::new();
     for section in file.tripo.presets {
         let key = section.preset.trim().to_owned();
@@ -299,6 +331,7 @@ pub fn parse(text: &str) -> Result<PriceCatalog, CatalogError> {
         snapshot_date: file.snapshot_date.trim().to_owned(),
         tripo_presets: presets,
         manual_ai_models,
+        tripo_segmentation,
     })
 }
 

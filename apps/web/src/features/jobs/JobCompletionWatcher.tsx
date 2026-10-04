@@ -8,13 +8,14 @@
  * - 同时更新页签标题（后台标签页也能看到），回到前台后恢复。
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "react-router";
 
 import { listJobs, type JobSummaryDto } from "../../api/endpoints";
 import { useNotify } from "../../components/notifications";
 import { isTerminalJobStatus } from "./status";
-import { jobKeys, usePollingInterval } from "./jobs";
+import { jobKeys, useJobActivity, usePollingInterval } from "./jobs";
 
 const WATCH_PAGE_SIZE = 20;
 
@@ -24,9 +25,12 @@ function itemLabel(job: JobSummaryDto): string {
 
 export function JobCompletionWatcher() {
   const notify = useNotify();
+  const { pathname } = useLocation();
   const interval = usePollingInterval();
+  const activity = useJobActivity();
   /** 本会话见过的非终态任务（只对它们的结束弹提示）。 */
   const pending = useRef(new Set<string>());
+  const [pendingCount, setPendingCount] = useState(0);
   /** 已提示过「等待对账」的任务：每个任务只弹一次，对账完成后仍可走终态提示。 */
   const unknownNotified = useRef(new Set<string>());
   const baseTitle = useRef<string | null>(null);
@@ -34,6 +38,7 @@ export function JobCompletionWatcher() {
   const query = useQuery({
     queryKey: [...jobKeys.root, "watch"],
     queryFn: () => listJobs({ limit: WATCH_PAGE_SIZE }),
+    enabled: (activity.data?.data.active ?? 0) > 0 || pendingCount > 0,
     retry: false,
     refetchIntervalInBackground: true,
     refetchInterval: (state) => {
@@ -57,11 +62,14 @@ export function JobCompletionWatcher() {
         pending.current.add(job.id);
         if (job.status === "submission_unknown" && !unknownNotified.current.has(job.id)) {
           unknownNotified.current.add(job.id);
-          notify(`「${itemLabel(job)}」有付费提交结果未知：请先对账后再继续（不会自动重试，以免重复收费）。`, {
-            kind: "alert",
-            sticky: true,
-            action: { label: "去对账", to: `/jobs/${job.id}` },
-          });
+          // This detail page already contains the persistent explanation and recovery action.
+          if (pathname !== `/jobs/${job.id}`) {
+            notify(`「${itemLabel(job)}」有付费提交结果未知：请先对账后再继续（不会自动重试，以免重复收费）。`, {
+              kind: "alert",
+              sticky: true,
+              action: { label: "去对账", to: `/jobs/${job.id}` },
+            });
+          }
         }
         continue;
       }
@@ -84,7 +92,8 @@ export function JobCompletionWatcher() {
         });
       }
     }
-  }, [query.data, notify]);
+    setPendingCount(pending.current.size);
+  }, [query.data, notify, pathname]);
 
   useEffect(() => {
     const restore = (): void => {

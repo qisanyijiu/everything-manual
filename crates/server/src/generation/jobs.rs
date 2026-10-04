@@ -600,24 +600,35 @@ pub(crate) fn build_stage_plan(
         status: manual_core::domain::JobStatus::Queued,
     });
     // ADR-045：自动分件 + 绑定（assemble_draft 完成后；仅当 tripo_segment + auto_bind 已注册时才创建）。
-    if include_auto_stages {
-    let segment_hash = stage_input_hash(StageKind::TripoSegment, &[("assembleHash", serde_json::json!(assemble_hash))]);
-    stages.push(NewStage {
-        job_id: job_id.to_owned(),
-        stage_kind: StageKind::TripoSegment,
-        batch_index: 0,
-        page_set_json: None,
-        input_hash: segment_hash.clone(),
-        status: manual_core::domain::JobStatus::Queued,
-    });
-    stages.push(NewStage {
-        job_id: job_id.to_owned(),
-        stage_kind: StageKind::AutoBind,
-        batch_index: 0,
-        page_set_json: None,
-        input_hash: stage_input_hash(StageKind::AutoBind, &[("segmentHash", serde_json::json!(segment_hash))]),
-        status: manual_core::domain::JobStatus::Queued,
-    });
+    if include_auto_stages
+        && quote
+            .provider_config
+            .get("tripoSegmentation")
+            .is_some_and(|v| !v.is_null())
+    {
+        let segment_hash = stage_input_hash(
+            StageKind::TripoSegment,
+            &[("assembleHash", serde_json::json!(assemble_hash))],
+        );
+        stages.push(NewStage {
+            job_id: job_id.to_owned(),
+            stage_kind: StageKind::TripoSegment,
+            batch_index: 0,
+            page_set_json: None,
+            input_hash: segment_hash.clone(),
+            status: manual_core::domain::JobStatus::Queued,
+        });
+        stages.push(NewStage {
+            job_id: job_id.to_owned(),
+            stage_kind: StageKind::AutoBind,
+            batch_index: 0,
+            page_set_json: None,
+            input_hash: stage_input_hash(
+                StageKind::AutoBind,
+                &[("segmentHash", serde_json::json!(segment_hash))],
+            ),
+            status: manual_core::domain::JobStatus::Queued,
+        });
     }
 
     stages

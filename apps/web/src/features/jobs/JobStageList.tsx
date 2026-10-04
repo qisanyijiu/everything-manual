@@ -266,7 +266,7 @@ function RetryEntry({
         {retrying ? "正在重新排队…" : "重试该阶段"}
       </button>
       <p className="field__hint">
-        只重跑该阶段：已完成的其他阶段成果保留，不改变模型/质量预设；重试需要该分支仍有预算背书。
+        只重跑该阶段，保留其他已完成成果；本地校验使用已保存资料，付费阶段重试仍需预算背书。
       </p>
       {error !== null && (
         <p className="field__error" role="alert">
