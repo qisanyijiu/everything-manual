@@ -61,6 +61,8 @@ export interface KnowledgeReviewPanelProps {
   readonly onDeclareModelReady: () => void;
   readonly onDeclareModelConfirmed: () => void;
   readonly onSetEntityReview: (entityId: string, decision: "confirmed" | "needs_review") => void;
+  /** 一次确认全部尚未复核的文字事实（用户已通读后使用；仍可逐条取消或修订）。 */
+  readonly onConfirmAllEntities?: (entityIds: readonly string[]) => void;
   readonly onSaveEntityEdit: (
     entityId: string,
     fields: {
@@ -89,6 +91,7 @@ export function KnowledgeReviewPanel({
   onDeclareModelReady,
   onDeclareModelConfirmed,
   onSetEntityReview,
+  onConfirmAllEntities,
   onSaveEntityEdit, editing, buffers, busy, saveStatus, onEditing, onBuffer,
 }: KnowledgeReviewPanelProps) {
   const entries: { kind: Kind; entity: PartLike | StepLike | SpecLike }[] = [
@@ -96,6 +99,12 @@ export function KnowledgeReviewPanel({
     ...steps.map((step) => ({ kind: "step" as const, entity: step })),
     ...specs.map((spec) => ({ kind: "spec" as const, entity: spec })),
   ];
+  const unreviewedIds = entries
+    .filter(({ entity }) => {
+      const review = entityReviews[entity.id];
+      return review === undefined || (review.reviewStatus !== "confirmed" && review.userEdited === null);
+    })
+    .map(({ entity }) => entity.id);
   const loadedDeclared = modelReview !== null && matchesModel(modelReview, model) && modelReview.loaded === true;
   const confirmedDeclared = modelReview !== null && matchesModel(modelReview, model) && modelReview.userConfirmed === true;
 
@@ -144,6 +153,23 @@ export function KnowledgeReviewPanel({
           )}
         </ul>
       </section>
+
+      {onConfirmAllEntities !== undefined && unreviewedIds.length > 1 && (
+        <div className="candidate-bar" role="group" aria-label="批量确认文字事实" data-testid="confirm-all-entities-bar">
+          <p>
+            还有 {unreviewedIds.length} 条待复核的文字事实。通读无误后可一次确认；有误的条目仍可在下方逐条修订或取消确认。
+          </p>
+          <button
+            type="button"
+            className="button"
+            disabled={busy}
+            onClick={() => onConfirmAllEntities(unreviewedIds)}
+            data-testid="confirm-all-entities"
+          >
+            确认全部 {unreviewedIds.length} 条文字事实
+          </button>
+        </div>
+      )}
 
       <ul className="entity-list" data-testid="knowledge-entities">
         {entries.map(({ kind, entity }) => {

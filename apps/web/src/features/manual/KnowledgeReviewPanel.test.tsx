@@ -74,3 +74,17 @@ it("cancelling a warning revision performs no save", () => {
   expect(save).not.toHaveBeenCalled();
   expect(screen.queryByRole("textbox", { name: "注意事项（每行一条）" })).not.toBeInTheDocument();
 });
+
+it("bulk-confirms only unreviewed facts in one action", () => {
+  const confirmAll = vi.fn();
+  const step = (id: string) => ({ ...original, id });
+  const none = { userEdited: null, textOnly: false, editedAt: null, editedBy: null };
+  render(<KnowledgeReviewPanel parts={[]} steps={[step("a"), step("b"), step("c")]} specs={[]}
+    editing={null} onEditing={vi.fn()} buffers={{}} onBuffer={vi.fn()}
+    entityReviews={{ a: { reviewStatus: "confirmed", ...none }, b: { reviewStatus: null, ...none } }}
+    busy={false} modelReview={null} model={null} modelLoaded={false} narrow={false}
+    onDeclareModelReady={vi.fn()} onDeclareModelConfirmed={vi.fn()} onSetEntityReview={vi.fn()}
+    onConfirmAllEntities={confirmAll} onSaveEntityEdit={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "确认全部 2 条文字事实" }));
+  expect(confirmAll).toHaveBeenCalledExactlyOnceWith(["b", "c"]);
+});

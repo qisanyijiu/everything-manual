@@ -513,6 +513,34 @@ fn vertical_axis(span: [f64; 3]) -> usize {
     if span[2] > span[1] * 1.15 { 2 } else { 1 }
 }
 
+/// 四个身体象限里各取最高的贴地细长节点作为小腿（固定贴地阈值会漏掉离地几毫米的腿）。
+fn find_legs<'a>(
+    bounds: &'a std::collections::BTreeMap<String, ([f64; 3], [f64; 3])>,
+    lo: [f64; 3],
+    hi: [f64; 3],
+    span: [f64; 3],
+    up: usize,
+    body_axis: usize,
+    side_axis: usize,
+) -> Vec<&'a str> {
+    let center = |b: &([f64; 3], [f64; 3])| [(b.0[0] + b.1[0]) / 2.0, (b.0[1] + b.1[1]) / 2.0, (b.0[2] + b.1[2]) / 2.0];
+    let mid_body = (lo[body_axis] + hi[body_axis]) / 2.0;
+    let mid_side = (lo[side_axis] + hi[side_axis]) / 2.0;
+    let mut best: std::collections::BTreeMap<(bool, bool), (&str, f64)> = std::collections::BTreeMap::new();
+    for (n, b) in bounds {
+        let height = b.1[up] - b.0[up];
+        if b.0[up] > lo[up] + 0.3 * span[up] || height < 0.15 * span[up] || (b.1[body_axis] - b.0[body_axis]) > 0.4 * span[body_axis] {
+            continue;
+        }
+        let c = center(b);
+        let key = (c[body_axis] > mid_body, c[side_axis] < mid_side);
+        if best.get(&key).is_none_or(|(_, h)| height > *h) {
+            best.insert(key, (n.as_str(), height));
+        }
+    }
+    best.values().map(|(n, _)| *n).collect()
+}
+
 /// 从分件节点包围盒推导四足机器人姿势。
 /// 找身体轴和头部方向，识别四条腿（大腿/小腿/足垫），生成站立/趴下/坐下/握手/作揖。
 fn derive_poses(
@@ -530,28 +558,20 @@ fn derive_poses(
               all.iter().map(|b| b[1]).fold(f64::NEG_INFINITY, f64::max),
               all.iter().map(|b| b[2]).fold(f64::NEG_INFINITY, f64::max)];
     let span = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
-    let up = vertical_axis(span);
-    // Horizontal body axis = remaining axis with the largest span (not `up`).
-    let body_axis = [0, 1, 2].into_iter().filter(|&a| a != up).max_by(|&a, &b| span[a].partial_cmp(&span[b]).unwrap_or(std::cmp::Ordering::Equal)).unwrap_or(0);
-    let side_axis = [0, 1, 2].into_iter().find(|&a| a != up && a != body_axis).unwrap_or(2);
-    // Find legs: per body quadrant, the tallest elongated node near the floor
-    // (fixed floor cutoffs miss legs that end a few millimetres higher).
-    let quad_mid_body = (lo[body_axis] + hi[body_axis]) / 2.0;
-    let quad_mid_side = (lo[side_axis] + hi[side_axis]) / 2.0;
-    let mut best: std::collections::BTreeMap<(bool, bool), (&str, f64)> = std::collections::BTreeMap::new();
-    for (n, b) in bounds {
-        let height = b.1[up] - b.0[up];
-        if b.0[up] > lo[up] + 0.3 * span[up] || height < 0.15 * span[up] || (b.1[body_axis] - b.0[body_axis]) > 0.4 * span[body_axis] {
-            continue;
-        }
-        let c = center(b);
-        let key = (c[body_axis] > quad_mid_body, c[side_axis] < quad_mid_side);
-        if best.get(&key).is_none_or(|(_, h)| height > *h) {
-            best.insert(key, (n.as_str(), height));
+    // 垂直轴不可靠地由包围盒比例决定（站立的机器狗在 Y、Z 方向尺寸接近）：
+    // 优先试比例推断的轴，再试另一个候选轴，取能在四个象限各找到一条腿的那个。
+    let preferred = vertical_axis(span);
+    let mut found = None;
+    for up in [preferred, if preferred == 1 { 2 } else { 1 }] {
+        let body_axis = [0, 1, 2].into_iter().filter(|&a| a != up).max_by(|&a, &b| span[a].partial_cmp(&span[b]).unwrap_or(std::cmp::Ordering::Equal)).unwrap_or(0);
+        let side_axis = [0, 1, 2].into_iter().find(|&a| a != up && a != body_axis).unwrap_or(2);
+        let shins = find_legs(bounds, lo, hi, span, up, body_axis, side_axis);
+        if shins.len() == 4 {
+            found = Some((up, body_axis, side_axis, shins));
+            break;
         }
     }
-    let shins: Vec<&str> = best.values().map(|(n, _)| *n).collect();
-    if shins.len() != 4 { return Vec::new(); }
+    let Some((up, body_axis, side_axis, shins)) = found else { return Vec::new() };
     // Head direction: tallest parts on one end
     let tall: Vec<(&str, f64)> = bounds.iter()
         .filter(|(_, b)| b.1[up] > lo[up] + 0.7 * span[up])
@@ -744,6 +764,22 @@ mod tests {
         let poses = derive_poses(&bounds, &[part("仿生四足机器人"), part("电源键")]);
         let ids: Vec<_> = poses.iter().filter_map(|p| p.get("id").and_then(|v| v.as_str())).collect();
         assert_eq!(ids, ["stand", "lie-down", "sit", "shake-hand", "bow"], "{poses:?}");
+    }
+
+    #[test]
+    fn standing_dog_whose_box_looks_z_up_still_gets_poses() {
+        // 站立机器狗：Y 是真实高度，但 Z 跨度略大，比例推断会误选 Z 为垂直轴。
+        let mut bounds = std::collections::BTreeMap::new();
+        bounds.insert("body".into(), box_at(0.0, 0.1, 0.0, 0.7, 0.2, 0.9));
+        bounds.insert("head".into(), box_at(0.0, 0.25, 0.4, 0.2, 0.2, 0.15));
+        for (name, x, z) in [("fl", 0.2, 0.3), ("fr", -0.2, 0.3), ("rl", 0.2, -0.3), ("rr", -0.2, -0.3)] {
+            bounds.insert(format!("shin_{name}"), box_at(x, -0.25, z, 0.06, 0.3, 0.06));
+        }
+        for i in 0..4 {
+            bounds.insert(format!("bit_{i}"), box_at(0.0, 0.15, (i as f64) * 0.1 - 0.2, 0.05, 0.05, 0.05));
+        }
+        let poses = derive_poses(&bounds, &[part("仿生四足机器人")]);
+        assert_eq!(poses.len(), 5, "{poses:?}");
     }
 
     #[test]

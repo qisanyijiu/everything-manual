@@ -477,6 +477,11 @@ function CalibrationWorkspaceContent() {
                     entities: { [entityId]: { reviewStatus: decision } },
                   }), decision === "confirmed" ? "已确认事实（文字确认，与几何校准分开）" : "已取消确认", [`fact-${entityId}`]);
                 }}
+                onConfirmAllEntities={(entityIds) => {
+                  if (etag !== null) void perform(() => mutations.updateEntities(etag, {
+                    entities: Object.fromEntries(entityIds.map((id) => [id, { reviewStatus: "confirmed" as const }])),
+                  }), `已确认 ${entityIds.length} 条文字事实（可逐条取消或修订）`, entityIds.map((id) => `fact-${id}`));
+                }}
                 onSaveEntityEdit={(entityId, fields) => etag === null ? Promise.resolve(false) : perform(() => mutations.updateEntities(etag, {
                   entities: { [entityId]: { reviewStatus: "confirmed", userEdited: fields } },
                 }), "已保存人工修订（原文本与出处保留）", [`fact-${entityId}`])}

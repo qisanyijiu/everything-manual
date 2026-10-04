@@ -29,6 +29,8 @@ pub struct ViewGuess {
 const PROMPT: &str = "You are sorting candidate images cut out of a product user manual. \
 Decide whether this image shows the PRODUCT ITSELF from the outside (a photo or a line drawing of the whole product or a large part of it). \
 Tables, text, QR codes, icons, packaging, accessories alone, hands-only, and screenshots are NOT product views. \
+An image that shows the product MORE THAN ONCE (several poses, before/after, step sequences or side-by-side comparisons) is NOT a product view either: \
+it would be reconstructed as several products. \
 If it is a product view, pick the camera direction relative to the product's own front (the side with the lens, screen, face or main controls): \
 front (front or front three-quarter), left, back (rear or rear three-quarter), right, or detail (a close-up of one part / a cropped area). \
 Give confidence 0..1 and a very short reason in Chinese (<=30 characters).";
