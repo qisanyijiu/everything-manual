@@ -2422,3 +2422,38 @@ async fn begin_intent_survives_active_writer_contention() {
         "intent 事务在持锁写者下不得失败（BEGIN IMMEDIATE）：{failures:?}"
     );
 }
+
+/// 请求超时 → `Transport`（结果未知，不能证明未被接受），且客户端只发一次、不自动重试。
+#[tokio::test]
+async fn request_timeout_remains_unknown_and_does_not_retry() {
+    use everything_manual::providers::manual_ai::{ManualAiClient, ManualAiError, ManualAiTimeouts};
+    let server = FixtureServer::start(Scenario::new(vec![RouteScript {
+        method: "POST".to_owned(),
+        path: "/v1/responses".to_owned(),
+        path_match: PathMatchSpec::Exact,
+        repeat_last: false,
+        steps: vec![Step::Delay {
+            delay_ms: 1_000,
+            response: ResponseSpec {
+                status: 200,
+                headers: BTreeMap::new(),
+                body: BodySpec::Text {
+                    text: "{}".to_owned(),
+                },
+            },
+        }],
+    }]));
+    let client = ManualAiClient::new(
+        &format!("{}/v1", server.base_url()),
+        SecretString::new("canary-key"),
+        ManualAiTimeouts {
+            connect: Duration::from_secs(1),
+            request: Duration::from_millis(200),
+        },
+    )
+    .unwrap();
+    let error = client.extract_batch(b"{}").await.unwrap_err();
+    assert!(matches!(error, ManualAiError::Transport { .. }), "{error}");
+    assert!(!error.is_definitively_refused());
+    assert_eq!(server.call_count("POST", "/v1/responses"), 1);
+}

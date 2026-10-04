@@ -215,6 +215,9 @@ pub async fn create_candidate(
                     .await
                     .ok()
                     .flatten();
+                // 分类是一次可能持续数十秒的外部调用：先归还连接（池只有 4 个），
+                // 否则并发导入会占满连接池，让其它请求 30 秒后以「数据库暂不可用」失败。
+                drop(conn);
                 let bytes = blob.as_ref().and_then(|b| {
                     std::fs::read(crate::assets::blob_store::blob_path(
                         state.assets().data_dir(),
@@ -251,6 +254,10 @@ pub async fn create_candidate(
                         }
                     }
                 }
+                conn = match super::photos::acquire(&state).await {
+                    Ok(c) => c,
+                    Err(e) => return e.render(&request_id),
+                };
             }
             _ => note = Some("说明书 AI 未配置，未自动判断".to_owned()),
         }

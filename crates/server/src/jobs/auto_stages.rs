@@ -395,8 +395,16 @@ fn derive_actions(
     let steps_for = |keywords: &[&str]| -> Vec<String> {
         steps.iter().filter(|s| keywords.iter().any(|k| s.title.contains(k))).take(6).map(|s| s.id.clone()).collect()
     };
+    let mut labels: std::collections::HashSet<String> = std::collections::HashSet::new();
     for (pid, nodes, c) in bindings {
-        let name = part_name.get(pid.as_str()).copied().unwrap_or("");
+        let raw_name = part_name.get(pid.as_str()).copied().unwrap_or("");
+        // 同一部件名在说明书里常出现多次（不同页的同名部件）：同名只生成一个动作。
+        // 去重键忽略空白（「跟焦 / 变焦切换键」与「跟焦/变焦切换键」是同一个部件）。
+        let dedupe_key: String = raw_name.chars().filter(|c| !c.is_whitespace()).collect();
+        if !labels.insert(dedupe_key) { continue; }
+        // 规则按简体关键字匹配；繁体说明书先做常用字折叠。
+        let folded = fold_traditional(raw_name);
+        let name = folded.as_str();
         let ns: Vec<String> = nodes.iter().filter(|n| bounds.contains_key(n.as_str()) && !used.contains(n.as_str())).cloned().collect();
         if ns.is_empty() { continue; }
         let b = (ns.iter().map(|n| bounds[n].0).fold([f64::INFINITY; 3], |a, b| [a[0].min(b[0]), a[1].min(b[1]), a[2].min(b[2])]),
@@ -405,7 +413,9 @@ fn derive_actions(
         if node_vol > 0.25 * volume { continue; } // skip body-sized nodes
         let r = |n: &[String], pivot: [f64; 3], axis: [f64; 3], deg: f64| json!({"nodes": n, "kind": "rotate", "pivot": pivot, "axis": axis, "angleDeg": deg});
         let t = |n: &[String], v: [f64; 3]| json!({"nodes": n, "kind": "translate", "vector": v});
-        if name.contains("电池盖") || name.contains("手柄") {
+        // 「手柄」只有在是电池盖一类可拆件时才做拆卸动作（云台/咖啡机的手柄是主体或另有语义）。
+        let is_cover_grip = name.contains("手柄") && (name.contains("电池") || name.contains("盖"));
+        if name.contains("电池盖") || is_cover_grip {
             let side = if c[0] < 0.0 { -1.0 } else { 1.0 };
             let hinge = [if side < 0.0 { b.1[0] } else { b.0[0] }, b.0[1], b.1[2]];
             actions.push(json!({"id": format!("open-{}", actions.len()), "label": format!("取下{name}"), "description": "露出电池仓（外观示意）。",
@@ -417,17 +427,54 @@ fn derive_actions(
             actions.push(json!({"id": format!("open-{}", actions.len()), "label": format!("打开{name}"), "description": "装入胶片时打开（外观示意）。",
                 "triggerPartIds": [pid], "mode": "toggle", "durationMs": 1000,
                 "steps": [r(&ns, hinge, [0.0, 1.0, 0.0], -70.0)], "stepIds": steps_for(&["胶片"])}));
-        } else if name.contains("按钮") || name.contains("快门") {
-            actions.push(json!({"id": format!("press-{}", actions.len()), "label": format!("按下{name}"), "description": null,
+        } else if !name.contains("膝盖") && (name.contains("翻盖") || name.contains("掀盖") || name.ends_with("盖") || name.ends_with("盖板")) {
+            // 通用翻盖：沿顶部后缘为铰链向上掀开。
+            let up = if (b.1[1] - b.0[1]) <= (b.1[2] - b.0[2]) { 1 } else { 2 };
+            let mut hinge = *c;
+            hinge[up] = b.1[up];
+            hinge[0] = b.0[0];
+            actions.push(json!({"id": format!("open-{}", actions.len()), "label": format!("打开{raw_name}"), "description": "掀开盖子（外观示意）。",
+                "triggerPartIds": [pid], "mode": "toggle", "durationMs": 900,
+                "steps": [r(&ns, hinge, [0.0, 0.0, 1.0], 60.0)], "stepIds": steps_for(&[&raw_name[..raw_name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
+        } else if ["尘盒", "水箱", "滤网", "抽屉", "滴水盘"].iter().any(|k| name.ends_with(k)) {
+            // 只匹配以模块名结尾的部件（「集尘盒卡扣」「集尘盒盖」是子部件，不整体抽出）。
+            // 可抽出的模块：沿离物体中心最近的外侧方向平移拉出。
+            let mid = [(lo[0] + hi[0]) / 2.0, (lo[1] + hi[1]) / 2.0, (lo[2] + hi[2]) / 2.0];
+            let d = [c[0] - mid[0], c[1] - mid[1], c[2] - mid[2]];
+            let axis = if d[0].abs() >= d[2].abs() { 0 } else { 2 };
+            let mut v = [0.0; 3];
+            v[axis] = if d[axis] >= 0.0 { 0.15 } else { -0.15 };
+            actions.push(json!({"id": format!("pull-{}", actions.len()), "label": format!("取出{raw_name}"), "description": "抽出模块（外观示意）。",
+                "triggerPartIds": [pid], "mode": "toggle", "durationMs": 800,
+                "steps": [t(&ns, v)], "stepIds": steps_for(&[&raw_name[..raw_name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
+        } else if name.contains("滤碗手柄") || name.contains("冲泡头手柄") {
+            // 咖啡机滤碗手柄：先逆时针旋出，再向下取出。
+            let mut down = [0.0; 3];
+            down[1] = -0.1;
+            actions.push(json!({"id": format!("pull-{}", actions.len()), "label": format!("取下{raw_name}"), "description": "旋出并取下（外观示意）。",
+                "triggerPartIds": [pid], "mode": "toggle", "durationMs": 1000,
+                "steps": [r(&ns, *c, [0.0, 1.0, 0.0], -40.0), t(&ns, down)], "stepIds": steps_for(&["滤碗", "手柄"])}));
+        } else if name.contains("扳机") {
+            let pivot = [c[0], b.1[1], c[2]];
+            actions.push(json!({"id": format!("press-{}", actions.len()), "label": format!("扣动{raw_name}"), "description": null,
+                "triggerPartIds": [pid], "mode": "pulse", "durationMs": 400,
+                "steps": [r(&ns, pivot, [0.0, 0.0, 1.0], 15.0)], "stepIds": steps_for(&["扳机"])}));
+        } else if name.contains("摇杆") {
+            let pivot = [c[0], b.0[1], c[2]];
+            actions.push(json!({"id": format!("lever-{}", actions.len()), "label": format!("推动{raw_name}"), "description": null,
+                "triggerPartIds": [pid], "mode": "pulse", "durationMs": 600,
+                "steps": [r(&ns, pivot, [0.0, 0.0, 1.0], 20.0)], "stepIds": steps_for(&["摇杆"])}));
+        } else if name.contains("按钮") || name.contains("快门") || name.ends_with("键") || name.contains("开关") {
+            actions.push(json!({"id": format!("press-{}", actions.len()), "label": format!("按下{raw_name}"), "description": null,
                 "triggerPartIds": [pid], "mode": "pulse", "durationMs": 300,
                 "steps": [t(&ns, [0.0, -0.012, 0.0])], "stepIds": steps_for(&[&name[..name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
-        } else if name.contains("转盘") || name.contains("拨盘") {
-            actions.push(json!({"id": format!("turn-{}", actions.len()), "label": format!("转动{name}"), "description": null,
+        } else if name.contains("转盘") || name.contains("拨盘") || name.contains("旋钮") || name.contains("拨轮") {
+            actions.push(json!({"id": format!("turn-{}", actions.len()), "label": format!("转动{raw_name}"), "description": null,
                 "triggerPartIds": [pid], "mode": "pulse", "durationMs": 900,
                 "steps": [r(&ns, *c, [0.0, 1.0, 0.0], 60.0)], "stepIds": steps_for(&[&name[..name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
-        } else if name.contains("杆") {
+        } else if name.contains("杆") && !name.contains("摇杆") {
             let pivot = [b.0[0] + 0.03, c[1], c[2]];
-            actions.push(json!({"id": format!("lever-{}", actions.len()), "label": format!("扳动{name}"), "description": null,
+            actions.push(json!({"id": format!("lever-{}", actions.len()), "label": format!("扳动{raw_name}"), "description": null,
                 "triggerPartIds": [pid], "mode": "pulse", "durationMs": 700,
                 "steps": [r(&ns, pivot, [0.0, 1.0, 0.0], -35.0)], "stepIds": steps_for(&[&name[..name.chars().take(2).map(|c| c.len_utf8()).sum::<usize>()]])}));
         } else {
@@ -436,6 +483,18 @@ fn derive_actions(
         for n in &ns { used.insert(n.clone()); }
     }
     actions.into_iter().take(12).collect()
+}
+
+/// 动作规则用到的繁体字 → 简体（只覆盖规则关键字，不做通用转换）。
+fn fold_traditional(name: &str) -> String {
+    name.chars()
+        .map(|ch| match ch {
+            '鍵' => '键', '蓋' => '盖', '塵' => '尘', '濾' => '滤', '網' => '网', '開' => '开',
+            '關' => '关', '鈕' => '钮', '轉' => '转', '撥' => '拨', '輪' => '轮', '電' => '电',
+            '門' => '门', '桿' => '杆', '後' => '后', '機' => '机', '盤' => '盘', '屜' => '屉',
+            other => other,
+        })
+        .collect()
 }
 
 /// 说明书文本是否表明这是四足/机器狗一类可摆姿势的产品。
@@ -625,6 +684,36 @@ mod tests {
             [cx - sx / 2.0, cy - sy / 2.0, cz - sz / 2.0],
             [cx + sx / 2.0, cy + sy / 2.0, cz + sz / 2.0],
         )
+    }
+
+    #[test]
+    fn actions_cover_traditional_names_and_dedupe_labels() {
+        let mut bounds = std::collections::BTreeMap::new();
+        bounds.insert("body".into(), box_at(0.0, 0.0, 0.0, 1.0, 0.3, 1.0));
+        bounds.insert("lid".into(), box_at(0.1, 0.14, 0.0, 0.2, 0.02, 0.2));
+        bounds.insert("bin".into(), box_at(0.35, 0.05, 0.0, 0.15, 0.1, 0.2));
+        bounds.insert("key".into(), box_at(-0.1, 0.15, 0.0, 0.03, 0.01, 0.03));
+        bounds.insert("key2".into(), box_at(-0.2, 0.15, 0.0, 0.03, 0.01, 0.03));
+        let mut dup = part("回充鍵");
+        dup.id = "part-dup".into();
+        let mut spaced = part("回 充 鍵");
+        spaced.id = "part-spaced".into();
+        let parts = vec![part("掀蓋口"), part("集塵盒"), part("回充鍵"), dup, part("集塵盒卡扣"), spaced, part("四肢/膝蓋")];
+        let bindings = vec![
+            ("part-掀蓋口".to_owned(), vec!["lid".to_owned()], [0.1, 0.14, 0.0]),
+            ("part-集塵盒".to_owned(), vec!["bin".to_owned()], [0.35, 0.05, 0.0]),
+            ("part-回充鍵".to_owned(), vec!["key".to_owned()], [-0.1, 0.15, 0.0]),
+            ("part-dup".to_owned(), vec!["key2".to_owned()], [-0.2, 0.15, 0.0]),
+            ("part-集塵盒卡扣".to_owned(), vec!["clip".to_owned()], [0.3, 0.1, 0.0]),
+            ("part-spaced".to_owned(), vec!["key3".to_owned()], [-0.3, 0.15, 0.0]),
+            ("part-四肢/膝蓋".to_owned(), vec!["knee".to_owned()], [0.2, -0.1, 0.2]),
+        ];
+        bounds.insert("clip".into(), box_at(0.3, 0.1, 0.0, 0.02, 0.02, 0.02));
+        bounds.insert("key3".into(), box_at(-0.3, 0.15, 0.0, 0.03, 0.01, 0.03));
+        bounds.insert("knee".into(), box_at(0.2, -0.1, 0.2, 0.04, 0.04, 0.04));
+        let actions = derive_actions(&parts, &bindings, &bounds, &[]);
+        let labels: Vec<_> = actions.iter().map(|a| a["label"].as_str().unwrap().to_owned()).collect();
+        assert_eq!(labels, ["打开掀蓋口", "取出集塵盒", "按下回充鍵"], "{actions:?}");
     }
 
     #[test]

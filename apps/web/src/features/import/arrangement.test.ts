@@ -47,6 +47,20 @@ describe("autoFill / removeCard / payload", () => {
     expect(kept.front?.assetId).toBe("x");
   });
 
+  it("候选全是正面时，用另一页的产品图补一个侧面槽（生成至少需要一张侧面）", () => {
+    const allFront = [
+      { id: "p1", assetId: "f1", suggestedView: "front", confidence: 0.99, pageNumber: 3 },
+      { id: "p2", assetId: "f2", suggestedView: "front", confidence: 0.98, pageNumber: 3 },
+      { id: "p3", assetId: "f3", suggestedView: "front", confidence: 0.9, pageNumber: 5 },
+      { id: "p4", assetId: "t1", suggestedView: null, confidence: 0.99, pageNumber: 7 },
+    ];
+    const filled = autoFill(EMPTY_SLOTS, allFront);
+    expect(filled.front?.assetId).toBe("f1");
+    expect(filled.right?.assetId).toBe("f3");
+    // 已有侧面时不补
+    expect(autoFill(EMPTY_SLOTS, candidates).right).toBeNull();
+  });
+
   it("removeCard 清空所在槽位；payload 只含资产 id", () => {
     const s: Slots = { ...EMPTY_SLOTS, front: a, detail: c };
     const next = removeCard(s, "a");

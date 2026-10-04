@@ -64,7 +64,7 @@ export function removeCard(slots: Slots, assetId: string): Slots {
  */
 export function autoFill(
   slots: Slots,
-  candidates: readonly { id: string; assetId: string; suggestedView?: string | null; confidence?: number | null }[],
+  candidates: readonly { id: string; assetId: string; suggestedView?: string | null; confidence?: number | null; pageNumber?: number | null }[],
   minConfidence = 0.5,
 ): Slots {
   const next: Record<ViewSlot, CardRef | null> = { ...slots };
@@ -77,6 +77,18 @@ export function autoFill(
       .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0];
     if (best !== undefined) {
       next[view] = { assetId: best.assetId, candidateId: best.id };
+    }
+  }
+  // 生成要求至少一张侧面视图（left/back/right）。说明书常把所有产品图都画成正面/三分之四视角，
+  // 分类结果全是 front：此时用其余置信度最高的产品图补一个侧面槽（优先不同页），用户可再拖拽修正。
+  const sides: readonly ViewSlot[] = ["left", "right", "back"];
+  if (sides.every((view) => next[view] === null)) {
+    const frontPage = candidates.find((c) => c.assetId === next.front?.assetId)?.pageNumber ?? null;
+    const spare = candidates
+      .filter((c) => c.suggestedView != null && c.suggestedView !== "detail" && (c.confidence ?? 0) >= minConfidence && slotOf(next, c.assetId) === null)
+      .sort((a, b) => Number(a.pageNumber === frontPage) - Number(b.pageNumber === frontPage) || (b.confidence ?? 0) - (a.confidence ?? 0))[0];
+    if (spare !== undefined) {
+      next.right = { assetId: spare.assetId, candidateId: spare.id };
     }
   }
   return next;
