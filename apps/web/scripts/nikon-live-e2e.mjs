@@ -146,11 +146,13 @@ async function inspect() {
   await page.goto(`${base}/jobs/${state.jobId}${state.job.status === "succeeded" ? "/result" : ""}`);
   if (state.job.status === "succeeded") {
     await expect(page.getByTestId("viewer-status")).toContainText("模型已加载", { timeout: 180_000 });
+    await page.getByTestId("viewer-canvas").screenshot({ path: path.join(out, "model-preview.png") });
     const d = await api("GET", `/items/${state.itemId}/drafts/${state.job.draftId}`);
     state.draftId = state.job.draftId; save();
     fs.writeFileSync(path.join(out, "draft.json"), JSON.stringify(d.body.data, null, 2), { mode: 0o600 });
   }
   await page.screenshot({ path: path.join(out, "latest-result.png"), fullPage: true });
+  await page.screenshot({ path: path.join(out, "result-viewport.png") });
 }
 try {
   await login();
