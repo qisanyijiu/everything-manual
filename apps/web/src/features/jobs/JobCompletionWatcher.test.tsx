@@ -100,4 +100,16 @@ describe("JobCompletionWatcher", () => {
     expect(alert.textContent).toContain("生成失败");
     expect(screen.getByRole("link", { name: "查看任务" })).toHaveAttribute("href", "/jobs/job-2");
   });
+
+  it("进行中 → 付费结果未知：弹出对账入口，不把任务当成失败", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    stubJobFrames([[summary("job-3", "running")], [summary("job-3", "submission_unknown")]]);
+    renderApp({ route: "/" });
+
+    await vi.advanceTimersByTimeAsync(2500);
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("付费提交结果未知");
+    expect(screen.getByRole("link", { name: "去对账" })).toHaveAttribute("href", "/jobs/job-3");
+    expect(screen.queryByText(/生成失败/)).toBeNull();
+  });
 });

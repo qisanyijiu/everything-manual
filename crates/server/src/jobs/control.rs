@@ -1002,12 +1002,14 @@ async fn attach_remote_task(
         now,
     )
     .await?;
+    let resumed = stages_repo::requeue_paused_manual_batches(&mut tx, &job.id, now).await?;
     let job = repo::jobs::recompute_status(&mut tx, &job.id, now)
         .await?
         .unwrap_or_else(|| job.clone());
     tx.commit().await?;
     tracing::info!(
         event = "reconcile_attached_remote_task",
+        resumedPausedBatches = resumed,
         jobId = %job.id,
         stageId = %stage.id,
         attemptId = %attempt.id,
@@ -1099,12 +1101,14 @@ async fn record_no_task(
         now,
     )
     .await?;
+    let resumed = stages_repo::requeue_paused_manual_batches(&mut tx, &job.id, now).await?;
     let job = repo::jobs::recompute_status(&mut tx, &job.id, now)
         .await?
         .unwrap_or_else(|| job.clone());
     tx.commit().await?;
     tracing::warn!(
         event = "reconcile_recorded_no_task",
+        resumedPausedBatches = resumed,
         jobId = %job.id,
         stageId = %stage.id,
         attemptId = %attempt.id,
@@ -1271,12 +1275,14 @@ async fn authorize_replacement(
         now,
     )
     .await?;
+    let resumed = stages_repo::requeue_paused_manual_batches(&mut tx, &job.id, now).await?;
     let job = repo::jobs::recompute_status_after_retry(&mut tx, &job.id, now)
         .await?
         .unwrap_or_else(|| job.clone());
     tx.commit().await?;
     tracing::warn!(
         event = "reconcile_authorized_replacement",
+        resumedPausedBatches = resumed,
         jobId = %job.id,
         stageId = %stage.id,
         previousAttemptId = %attempt.id,
@@ -1288,9 +1294,17 @@ async fn authorize_replacement(
         stage_id: stage.id.clone(),
         stage_status: JobStatus::Queued,
         attempt_id: Some(attempt.id.clone()),
-        notice: "已授权替代提交：本次将产生新的付费请求，可能重复收费；\
+        notice: if resumed > 0 {
+            format!(
+                "已授权替代提交：本次将产生新的付费请求，可能重复收费；\
+                 旧 attempt 的未决账务与预留保留，不自动释放。\
+                 另有 {resumed} 个因该未知提交而暂停、从未发出请求的说明书批次已自动恢复排队"
+            )
+        } else {
+            "已授权替代提交：本次将产生新的付费请求，可能重复收费；\
                  旧 attempt 的未决账务与预留保留，不自动释放"
-            .to_owned(),
+                .to_owned()
+        },
     })
 }
 
@@ -1556,5 +1570,25 @@ mod tests {
             StageKind::AssembleDraft,
             StageKind::AssembleDraft
         ));
+    }
+
+    #[test]
+    fn paused_manual_batches_are_identified_without_purchase() {
+        let mut paused = retry_stage_fixture(StageKind::ManualExtract, JobStatus::NeedsInput);
+        paused.needs_input_json = Some(json!([{
+            "code": "manual_branch_paused_by_unknown",
+            "message": "同分支批次 0 结果未知"
+        }]));
+        assert!(stages_repo::is_branch_paused_without_purchase(&paused));
+
+        let mut other = retry_stage_fixture(StageKind::ManualExtract, JobStatus::NeedsInput);
+        other.needs_input_json = Some(json!([{
+            "code": "manual_request_rejected",
+            "message": "供应商明确拒绝"
+        }]));
+        assert!(!stages_repo::is_branch_paused_without_purchase(&other));
+
+        let unknown = retry_stage_fixture(StageKind::ManualExtract, JobStatus::SubmissionUnknown);
+        assert!(!stages_repo::is_branch_paused_without_purchase(&unknown));
     }
 }

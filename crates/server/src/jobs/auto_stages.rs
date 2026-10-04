@@ -258,7 +258,7 @@ impl StageHandler for AutoBindHandler {
             // 推导动作和姿势
             let steps_list = knowledge.knowledge.as_ref().map(|k| k.steps.clone()).unwrap_or_default();
             let actions = derive_actions(&parts, &bindings, &node_bounds, &steps_list);
-            let poses = derive_poses(&node_bounds, &glb_path);
+            let poses = derive_poses(&node_bounds, &parts);
             let hotspot_count = hotspots.len();
             let action_count = actions.len();
             let pose_count = poses.len();
@@ -438,14 +438,31 @@ fn derive_actions(
     actions.into_iter().take(12).collect()
 }
 
+/// 说明书文本是否表明这是四足/机器狗一类可摆姿势的产品。
+fn looks_like_quadruped(parts: &[manual_core::knowledge::Part]) -> bool {
+    const KEYWORDS: &[&str] = &[
+        "机器狗", "四足", "仿生四足", "cyberdog", "quadruped", "spot",
+    ];
+    parts.iter().any(|part| {
+        let name = part.name.to_ascii_lowercase();
+        KEYWORDS.iter().any(|kw| name.contains(kw) || part.name.contains(kw))
+    })
+}
+
+/// 垂直轴：Y 或 Z 中跨度更大、且底部有若干细长件的那根。Tripo 分件朝向不稳定。
+fn vertical_axis(span: [f64; 3]) -> usize {
+    if span[2] > span[1] * 1.15 { 2 } else { 1 }
+}
+
 /// 从分件节点包围盒推导四足机器人姿势。
 /// 找身体轴和头部方向，识别四条腿（大腿/小腿/足垫），生成站立/趴下/坐下/握手/作揖。
 fn derive_poses(
     bounds: &std::collections::BTreeMap<String, ([f64; 3], [f64; 3])>,
-    _glb_path: &std::path::Path,
+    parts: &[manual_core::knowledge::Part],
 ) -> Vec<serde_json::Value> {
     use serde_json::json;
     if bounds.len() < 8 { return Vec::new(); } // too few parts for a robot
+    if !looks_like_quadruped(parts) { return Vec::new(); }
     let all: Vec<[f64; 3]> = bounds.values().flat_map(|b| vec![b.0, b.1]).collect();
     let lo = [all.iter().map(|b| b[0]).fold(f64::INFINITY, f64::min),
               all.iter().map(|b| b[1]).fold(f64::INFINITY, f64::min),
@@ -454,22 +471,36 @@ fn derive_poses(
               all.iter().map(|b| b[1]).fold(f64::NEG_INFINITY, f64::max),
               all.iter().map(|b| b[2]).fold(f64::NEG_INFINITY, f64::max)];
     let span = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
-    // Find legs: nodes with large y-span touching the bottom
-    let shins: Vec<&str> = bounds.iter()
-        .filter(|(_, b)| (b.1[1] - b.0[1]) > 0.3 * span[1] && b.0[1] < lo[1] + 0.1 * span[1])
-        .map(|(n, _)| n.as_str()).collect();
-    if shins.len() < 3 || shins.len() > 8 { return Vec::new(); } // 3-8 tall parts = quadruped; too many = not a robot
-    // Determine body axis (horizontal axis with largest span)
-    let body_axis = if span[0] >= span[2] { 0 } else { 2 };
-    let side_axis = if body_axis == 0 { 2 } else { 0 };
+    let up = vertical_axis(span);
+    // Horizontal body axis = remaining axis with the largest span (not `up`).
+    let body_axis = [0, 1, 2].into_iter().filter(|&a| a != up).max_by(|&a, &b| span[a].partial_cmp(&span[b]).unwrap_or(std::cmp::Ordering::Equal)).unwrap_or(0);
+    let side_axis = [0, 1, 2].into_iter().find(|&a| a != up && a != body_axis).unwrap_or(2);
+    // Find legs: per body quadrant, the tallest elongated node near the floor
+    // (fixed floor cutoffs miss legs that end a few millimetres higher).
+    let quad_mid_body = (lo[body_axis] + hi[body_axis]) / 2.0;
+    let quad_mid_side = (lo[side_axis] + hi[side_axis]) / 2.0;
+    let mut best: std::collections::BTreeMap<(bool, bool), (&str, f64)> = std::collections::BTreeMap::new();
+    for (n, b) in bounds {
+        let height = b.1[up] - b.0[up];
+        if b.0[up] > lo[up] + 0.3 * span[up] || height < 0.15 * span[up] || (b.1[body_axis] - b.0[body_axis]) > 0.4 * span[body_axis] {
+            continue;
+        }
+        let c = center(b);
+        let key = (c[body_axis] > quad_mid_body, c[side_axis] < quad_mid_side);
+        if best.get(&key).is_none_or(|(_, h)| height > *h) {
+            best.insert(key, (n.as_str(), height));
+        }
+    }
+    let shins: Vec<&str> = best.values().map(|(n, _)| *n).collect();
+    if shins.len() != 4 { return Vec::new(); }
     // Head direction: tallest parts on one end
     let tall: Vec<(&str, f64)> = bounds.iter()
-        .filter(|(_, b)| b.1[1] > lo[1] + 0.7 * span[1])
+        .filter(|(_, b)| b.1[up] > lo[up] + 0.7 * span[up])
         .map(|(n, b)| (n.as_str(), (b.0[body_axis] + b.1[body_axis]) / 2.0)).collect();
     let head_mean = if tall.is_empty() { (lo[body_axis] + hi[body_axis]) / 2.0 } else { tall.iter().map(|(_, c)| c).sum::<f64>() / tall.len() as f64 };
     let head_sign = if head_mean >= (lo[body_axis] + hi[body_axis]) / 2.0 { 1.0 } else { -1.0 };
-    let mut swing = [0.0; 3]; // axis perpendicular to body and up
-    swing[side_axis] = if body_axis == 0 { 1.0 } else { -1.0 };
+    let mut swing = [0.0; 3]; // rotation axis perpendicular to body and up
+    swing[side_axis] = 1.0;
     // Classify legs into corners
     let mid_body = (lo[body_axis] + hi[body_axis]) / 2.0;
     let mid_side = (lo[side_axis] + hi[side_axis]) / 2.0;
@@ -481,8 +512,11 @@ fn derive_poses(
         let left = c[side_axis] < mid_side;
         let corner = format!("{}{}", if front { "F" } else { "R" }, if left { "L" } else { "R" });
         let thighs: Vec<&str> = bounds.iter()
-            .filter(|(n, b)| !shins.contains(&n.as_str()) && (center(b)[0] - c[0]).abs() < 0.1 && (center(b)[2] - c[2]).abs() < 0.1
-                && center(b)[1] > c[1] && (b.1[1] - b.0[1]) < 0.35 * span[1])
+            .filter(|(n, b)| !shins.contains(&n.as_str())
+                && (center(b)[body_axis] - c[body_axis]).abs() < 0.12 * span[body_axis].max(0.08)
+                && (center(b)[side_axis] - c[side_axis]).abs() < 0.12 * span[side_axis].max(0.08)
+                && center(b)[up] > c[up]
+                && (b.1[up] - b.0[up]) < 0.45 * span[up])
             .map(|(n, _)| n.as_str()).collect();
         let thigh = thighs.into_iter().max_by(|a, b| {
             let va = bounds[*a]; let vb = bounds[*b];
@@ -494,18 +528,30 @@ fn derive_poses(
     }
     // Attach feet (small floor-level nodes) to nearest shin
     for (n, b) in bounds {
-        if shins.contains(&n.as_str()) || (b.1[1] - b.0[1]) > 0.15 * span[1] || b.0[1] > lo[1] + 0.06 * span[1] { continue; }
+        if shins.contains(&n.as_str()) || (b.1[up] - b.0[up]) > 0.18 * span[up] || b.0[up] > lo[up] + 0.1 * span[up] { continue; }
         let c = center(b);
         if let Some((_, leg)) = legs.iter_mut().min_by(|(_, la), (_, lb)| {
-            let da = (center(bounds.get(la.shin.as_str()).unwrap())[0] - c[0]).powi(2) + (center(bounds.get(la.shin.as_str()).unwrap())[2] - c[2]).powi(2);
-            let db = (center(bounds.get(lb.shin.as_str()).unwrap())[0] - c[0]).powi(2) + (center(bounds.get(lb.shin.as_str()).unwrap())[2] - c[2]).powi(2);
+            let ca = center(bounds.get(la.shin.as_str()).unwrap());
+            let cb = center(bounds.get(lb.shin.as_str()).unwrap());
+            let da = (ca[body_axis] - c[body_axis]).powi(2) + (ca[side_axis] - c[side_axis]).powi(2);
+            let db = (cb[body_axis] - c[body_axis]).powi(2) + (cb[side_axis] - c[side_axis]).powi(2);
             da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
         }) { leg.feet.push(n.clone()); }
     }
     if legs.len() != 4 { return Vec::new(); } // exactly 4 legs = quadruped; cameras/devices return empty
     let all_nodes: Vec<String> = bounds.keys().cloned().collect();
-    let hip = |n: &str| -> [f64; 3] { let b = bounds.get(n).unwrap(); [center(b)[0], b.1[1] - 0.04, center(b)[2]] };
-    let knee = |n: &str| -> [f64; 3] { let b = bounds.get(n).unwrap(); [center(b)[0], b.1[1] - 0.015, center(b)[2]] };
+    let hip = |n: &str| -> [f64; 3] {
+        let b = bounds.get(n).unwrap();
+        let mut p = center(b);
+        p[up] = b.1[up] - 0.04;
+        p
+    };
+    let knee = |n: &str| -> [f64; 3] {
+        let b = bounds.get(n).unwrap();
+        let mut p = center(b);
+        p[up] = b.1[up] - 0.015;
+        p
+    };
     let r = |nodes: &[String], pivot: [f64; 3], axis: &[f64; 3], deg: f64| json!({"nodes": nodes, "kind": "rotate", "pivot": pivot, "axis": axis, "angleDeg": deg});
     let t = |nodes: &[String], v: [f64; 3]| json!({"nodes": nodes, "kind": "translate", "vector": v});
     let leg_steps = |corner: &str, h: f64, k: f64| -> Vec<serde_json::Value> {
@@ -519,15 +565,22 @@ fn derive_poses(
     let pose = |id: &str, label: &str, desc: &str, ms: u32, per: &[(&str, f64, f64)], pitch: f64, pivot: [f64; 3]| -> serde_json::Value {
         let mut steps = Vec::new();
         for (corner, h, k) in per { steps.extend(leg_steps(corner, *h, *k)); }
-        if pitch.abs() > 0.001 { steps.push(r(&all_nodes, pivot, &swing, pitch)); }
+        // 每步最多引用 64 个节点（validate_interactive_patch）：整体俯仰按同一枢轴分块。
+        if pitch.abs() > 0.001 {
+            for chunk in all_nodes.chunks(64) { steps.push(r(chunk, pivot, &swing, pitch)); }
+        }
         json!({"id": id, "label": label, "description": desc, "durationMs": ms, "steps": steps})
     };
     vec![
         json!({"id": "stand", "label": "站立", "description": "默认站立姿态（模型原始姿态）。", "durationMs": 500, "steps": [r(&all_nodes[..1].to_vec(), [0.0; 3], &swing, 0.0)]}),
         pose("lie-down", "趴下", "腿部收起、腹部贴地。", 1200, &[("FL", -50.0, 115.0), ("FR", -50.0, 115.0), ("RL", -50.0, 115.0), ("RR", -50.0, 115.0)], 0.0, [0.0; 3]),
-        pose("sit", "坐下", "后腿收起、前腿支撑。", 1100, &[("RL", -55.0, 120.0), ("RR", -55.0, 120.0), ("FL", 10.0, 0.0), ("FR", 10.0, 0.0)], 24.0, [lo[body_axis] + 0.15, lo[1] + 0.3, 0.0]),
+        pose("sit", "坐下", "后腿收起、前腿支撑。", 1100, &[("RL", -55.0, 120.0), ("RR", -55.0, 120.0), ("FL", 10.0, 0.0), ("FR", 10.0, 0.0)], 24.0, {
+            let mut p = [0.0; 3]; p[body_axis] = lo[body_axis] + 0.15; p[up] = lo[up] + 0.3; p
+        }),
         pose("shake-hand", "握手", "抬起右前腿。", 900, &[("FR", 65.0, -20.0)], 0.0, [0.0; 3]),
-        pose("bow", "作揖", "前腿弯曲下压。", 1100, &[("FL", -45.0, 110.0), ("FR", -45.0, 110.0)], -16.0, [hi[body_axis] - 0.2, lo[1] + 0.3, 0.0]),
+        pose("bow", "作揖", "前腿弯曲下压。", 1100, &[("FL", -45.0, 110.0), ("FR", -45.0, 110.0)], -16.0, {
+            let mut p = [0.0; 3]; p[body_axis] = hi[body_axis] - 0.2; p[up] = lo[up] + 0.3; p
+        }),
     ]
 }
 
@@ -549,4 +602,78 @@ pub fn register(registry: &mut StageRegistry, settings: &Settings) -> Vec<StageK
     registry.register(StageKind::AutoBind, AutoBindHandler::new(settings));
     registered.push(StageKind::AutoBind);
     registered
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use manual_core::knowledge::{Evidence, Part, ReviewStatus};
+
+    fn part(name: &str) -> Part {
+        Part {
+            id: format!("part-{name}"),
+            name: name.to_owned(),
+            description: String::new(),
+            evidence: Vec::<Evidence>::new(),
+            review_status: ReviewStatus::NeedsReview,
+            source_batches: vec![0],
+        }
+    }
+
+    fn box_at(cx: f64, cy: f64, cz: f64, sx: f64, sy: f64, sz: f64) -> ([f64; 3], [f64; 3]) {
+        (
+            [cx - sx / 2.0, cy - sy / 2.0, cz - sz / 2.0],
+            [cx + sx / 2.0, cy + sy / 2.0, cz + sz / 2.0],
+        )
+    }
+
+    #[test]
+    fn camera_parts_do_not_get_quadruped_poses() {
+        let mut bounds = std::collections::BTreeMap::new();
+        for i in 0..12 {
+            bounds.insert(
+                format!("tripo_part_{i}"),
+                box_at((i as f64) * 0.04 - 0.2, 0.0, 0.0, 0.05, 0.08, 0.04),
+            );
+        }
+        let poses = derive_poses(&bounds, &[part("照相机"), part("快门释放按钮")]);
+        assert!(poses.is_empty(), "{poses:?}");
+    }
+
+    #[test]
+    fn quadruped_name_with_four_low_legs_gets_poses() {
+        let mut bounds = std::collections::BTreeMap::new();
+        bounds.insert("body".into(), box_at(0.0, 0.12, 0.0, 0.5, 0.12, 0.2));
+        bounds.insert("head".into(), box_at(0.28, 0.16, 0.0, 0.1, 0.1, 0.1));
+        // four shins touching the floor
+        bounds.insert("shin_fl".into(), box_at(0.18, 0.05, 0.08, 0.04, 0.12, 0.04));
+        bounds.insert("shin_fr".into(), box_at(0.18, 0.05, -0.08, 0.04, 0.12, 0.04));
+        bounds.insert("shin_rl".into(), box_at(-0.18, 0.05, 0.08, 0.04, 0.12, 0.04));
+        bounds.insert("shin_rr".into(), box_at(-0.18, 0.05, -0.08, 0.04, 0.12, 0.04));
+        bounds.insert("foot_fl".into(), box_at(0.18, 0.01, 0.08, 0.03, 0.02, 0.03));
+        bounds.insert("extra".into(), box_at(0.0, 0.18, 0.0, 0.08, 0.04, 0.08));
+        let poses = derive_poses(&bounds, &[part("仿生四足机器人"), part("电源键")]);
+        let ids: Vec<_> = poses.iter().filter_map(|p| p.get("id").and_then(|v| v.as_str())).collect();
+        assert_eq!(ids, ["stand", "lie-down", "sit", "shake-hand", "bow"], "{poses:?}");
+    }
+
+    #[test]
+    fn pose_steps_respect_node_limit_on_large_models() {
+        let mut bounds = std::collections::BTreeMap::new();
+        bounds.insert("body".into(), box_at(0.0, 0.12, 0.0, 0.5, 0.12, 0.2));
+        for (name, x, z) in [("fl", 0.18, 0.08), ("fr", 0.18, -0.08), ("rl", -0.18, 0.08), ("rr", -0.18, -0.08)] {
+            bounds.insert(format!("shin_{name}"), box_at(x, 0.05, z, 0.04, 0.12, 0.04));
+        }
+        for i in 0..80 {
+            bounds.insert(format!("bit_{i}"), box_at(0.0, 0.15, 0.0, 0.01, 0.01, 0.01));
+        }
+        let poses = derive_poses(&bounds, &[part("机器狗")]);
+        assert!(!poses.is_empty());
+        for pose in &poses {
+            for step in pose["steps"].as_array().unwrap() {
+                let n = step["nodes"].as_array().unwrap().len();
+                assert!((1..=64).contains(&n), "{} step has {n} nodes", pose["id"]);
+            }
+        }
+    }
 }

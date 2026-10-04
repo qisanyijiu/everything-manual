@@ -27,6 +27,8 @@ export function JobCompletionWatcher() {
   const interval = usePollingInterval();
   /** 本会话见过的非终态任务（只对它们的结束弹提示）。 */
   const pending = useRef(new Set<string>());
+  /** 已提示过「等待对账」的任务：每个任务只弹一次，对账完成后仍可走终态提示。 */
+  const unknownNotified = useRef(new Set<string>());
   const baseTitle = useRef<string | null>(null);
 
   const query = useQuery({
@@ -53,6 +55,14 @@ export function JobCompletionWatcher() {
     for (const job of jobs) {
       if (!isTerminalJobStatus(job.status)) {
         pending.current.add(job.id);
+        if (job.status === "submission_unknown" && !unknownNotified.current.has(job.id)) {
+          unknownNotified.current.add(job.id);
+          notify(`「${itemLabel(job)}」有付费提交结果未知：请先对账后再继续（不会自动重试，以免重复收费）。`, {
+            kind: "alert",
+            sticky: true,
+            action: { label: "去对账", to: `/jobs/${job.id}` },
+          });
+        }
         continue;
       }
       if (!pending.current.delete(job.id)) {
