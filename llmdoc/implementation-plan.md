@@ -2,7 +2,7 @@
 
 历史基线：1.0 · 2026-09-11。第 1～5 节保留初始工程规划，任务状态以各需求的 state/QA 和当前交付记录为准，不应由早期“待执行”描述推断现有实现状态。
 
-新增规划：2026-10-04，[第 6 节 UI 反馈第 3 和第 6 项待办](#6-ui-反馈第-3-和第-6-项待办)已并入本文件，包含两份 PRD、任务依赖和后续 agent 入口。**2026-10-05 视觉 VS-01～05 已全部接受，QA6 全部12AC与正式发行门禁PASS；社区按用户决定取消本轮实施。** 当前产物、范围与部署前提见[生产交付记录](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)；其他需求状态不变。
+新增规划：2026-10-04，[第 6 节 UI 反馈第 3 和第 6 项待办](#6-ui-反馈第-3-和第-6-项待办)已并入本文件，包含两份 PRD、任务依赖和后续 agent 入口。**2026-10-05 视觉 VS-01～05 已全部接受，QA6 全部12AC与正式发行门禁PASS；社区按用户决定取消本轮实施。** 用户后续新增 E2E-01 的当前来源、新包与状态见[完整复验记录](requirements/ui-feedback-3-6/e2e-delivery-2026-10-05.md)；历史 QA6 产物、范围与部署前提见[生产交付记录](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)；其他需求状态不变。
 
 ## 1. 如何派发给能力较弱的 Agent
 
@@ -254,10 +254,11 @@ E04 中的“同实例多用户与社区贡献”现由第 6 节 CI-00～06 细�
 所有任务依据[视觉 PRD 修订 1](requirements/ui-feedback-3-6/visual-style-prd.md)，AC 前缀为 `AC-VS-`。每片结果写入本需求的 `visual-implementation.md` 和 `visual-qa-report.md`，由实际实施与 QA 时创建。
 
 - [x] **VS-01 · 设计基线复核，P1。**（2026-10-04 设计门禁完成：`design/vs-01/` 六件产物 + UI 修订 1 冻结；运行 AC 由 VS-05 验收） 输入：原反馈第三节、视觉 PRD、现有主题/阅读器/表单；交付三类样页、设计变量与组件全状态说明，并复核全部 REQ/UI/AC 映射。允许修改本 PRD、设计附件及必要展示样页，不改变业务逻辑。完成条件：说明样页如何覆盖 AC-001/002/012，并冻结 UI 修订；本卡是设计门禁，不宣称运行验收通过。依赖：无。
-- [x] **VS-02 · 主题、外壳与资料库，P1。**（2026-10-04 接受：QA 回合 1 发现 BUG-VS02-001 → RD 修复 → [回合 2 PASS](requirements/ui-feedback-3-6/visual-qa-report.md#回合-2)，AC-VS-001/002/003/004/009/010 通过） 依赖 VS-01；修改主题、共享组件、导航、登录、资料库/详情展示。验收：AC-001～004、009、010 的对应页面，现有搜索/分页/路由可用，失败态无假计数。允许前端样式/结构和定向测试，不改后端/生成/发布规则。
+- [x] **VS-02 · 主题、外壳与资料库，P1。**（2026-10-04 接受：QA 回合 1 发现 BUG-VS02-001 → RD 修复 → [回合 2 PASS](requirements/ui-feedback-3-6/visual-qa-report.md)，AC-VS-001/002/003/004/009/010 通过） 依赖 VS-01；修改主题、共享组件、导航、登录、资料库/详情展示。验收：AC-001～004、009、010 的对应页面，现有搜索/分页/路由可用，失败态无假计数。允许前端样式/结构和定向测试，不改后端/生成/发布规则。
 - [x] **VS-03 · 阅读器、复核与独立 HTML，P1。**（2026-10-05 接受：QA 回合 3 PASS，0 缺陷；非阻断 N-VS03-1～5 留 VS-05 处置） 依赖 VS-02 验收；修改 viewer/manual/原件与 standalone viewer 展示层。验收：AC-005/006/008/009/010/011，热点/步骤/出处与焦点回归、新导出断网阅读、历史发布哈希不变。候选和确认热点不能视觉混同。
 - [x] **VS-04 · 上传、任务、设置和状态，P1。**（2026-10-05 接受：独立 QA4 FAIL → 两处移动触控尺寸修复 → [QA5 PASS](requirements/ui-feedback-3-6/vs04-qa-report.md)）依赖 VS-02 验收；修改 import/jobs/settings/版本列表展示。验收：AC-007/008/009/010，包括未保存保护、报价过期、确认未完成、提交未知、412/422 和密钥保护；样式交互不增加供应商请求。
 - [x] **VS-05 · 整体视觉验收，P1。**（2026-10-05接受：[QA6](requirements/ui-feedback-3-6/vs05-qa-report.md)全部12AC PASS；46项去重独立接受、141普通浏览器全回归、工程/正式Mac及Linux运行/包装修订2独立审计全部通过，[生产包及部署前提](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)已交付）依赖 VS-03/04 验收；运行类型/lint/受影响组件与浏览器检查，核对 375/768/1024/1440、真实 200% 缩放、键盘、离线 HTML、页面截图和 gzip 增量。5秒识别研究未实施，独立列为未验证，没有捏造用户数据；本轮未执行公网部署。
+- [x] **E2E-01 · 全量复验与缺陷修复，P1。**（2026-10-05 QA7 full独立验收PASS：209不同用例、兼容性/CLI/GPU及新版双平台发行与部署包闭环；旧QA6记录保留）普通/PC/原生恢复共 209 个不同用例、Edge/Firefox 兼容性、Linux CLI 与真实 GPU 300 秒性能，以及修改后的正式 Mac/Linux 包。原失败保留，新版包已完成独立验收；见[本轮记录](requirements/ui-feedback-3-6/e2e-delivery-2026-10-05.md)。
 
 ### 6.3 社区与激励任务
 
@@ -276,7 +277,7 @@ E04 中的“同实例多用户与社区贡献”现由第 6 节 CI-00～06 细�
 ### 6.4 后续 agent 接续规则
 
 1. 先读 `requirements/ui-feedback-3-6/request.md`、`prd.md`、`state.yaml` 与本节，再按当前任务读取对应完整 PRD；先核对工作区现有改动与代码实际状态，保留无关用户改动。
-2. 2026-10-05视觉VS-01～05全部完成，state为done；Claude交付VS-03后中断，Codex完成VS-04/05及最终发行。接续先读[state.yaml](requirements/ui-feedback-3-6/state.yaml)、[分工记录](requirements/ui-feedback-3-6/codex-handoff-2026-10-05.md)和[生产交付记录](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)；不重复派发完成卡。部署管理员须先执行最终包的目标机前置校验；社区按用户取消决定不进入CI-00。
+2. 2026-10-05视觉VS-01～05已接受；Claude交付VS-03后中断，Codex完成VS-04/05。用户新增E2E-01接续旧QA6发行，整体当前状态与新版包以[state.yaml](requirements/ui-feedback-3-6/state.yaml)和[完整复验记录](requirements/ui-feedback-3-6/e2e-delivery-2026-10-05.md)为准，旧[分工记录](requirements/ui-feedback-3-6/codex-handoff-2026-10-05.md)/[QA6交付记录](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)保留历史。不重复派发完成卡；目标机按新版包完成前置校验；社区不进入CI-00。
 3. 依项目 PM→UI→RD→QA 门禁推进，不重复从 T00 开始，不把历史构建结果当本轮通过。协调者在 `streams` 分别记录两条工作线的 UI 修订；只派当前已冻结且依赖通过的切片。
 4. 实际编码前给出本卡文件范围和 AC；实施记录与独立 QA 报告保存实际命令、版本、截图/日志索引、失败和未覆盖项。禁止付费调用作为默认验证路径；采用隔离 fixture，不修改用户当前资料库。
 5. 仅在卡级验收完成后勾选相应待办，同时从 `pending_tasks` 移除，并写入 `accepted_tasks`/`qa_history`；产品功能未验收前保留未勾选。进入社区时重置对应阶段与当前 QA 状态，不把视觉通过复用为社区通过。

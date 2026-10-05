@@ -89,7 +89,14 @@ test("PC2B-008: real stale record routes to explanation or explicit rebind, pres
   await page.setViewportSize({width:375,height:812});await open(page,data);await page.getByTestId(`todo-binding-${part.id}`).getByRole("button").click();await expect(page.locator(`[id="geometry-note-${old.id}"]`)).toBeFocused();await expect(page.locator(`[id="rebind-${old.id}"]`)).toBeDisabled();expect((await data.get()).draft.revision).toBe(revision);
   await page.setViewportSize({width:1440,height:1000});await expect(page.locator(`[id="rebind-${old.id}"]`)).toBeEnabled();await expect(page.locator(`[id="rebind-${old.id}"]`)).toBeFocused();await expect(page.getByTestId("viewer-status")).toContainText("模型已加载");
   await expect(page.getByTestId("pick-mode-active")).toHaveCount(0);await page.locator(`[id="rebind-${old.id}"]`).click();await expect(page.getByText(`当前绑定部件：${part.name}`,{exact:true})).toBeVisible();await page.getByRole("button",{name:"取消拾取",exact:true}).click();expect((await data.get()).draft.revision).toBe(revision);
-  await page.locator(`[id="rebind-${old.id}"]`).click();const projection=await page.evaluate(()=>window.__EM_VIEWER__?.project([0,0,1]));if(!projection)throw new Error("projection missing");const box=await page.getByTestId("viewer-canvas").boundingBox();if(!box)throw new Error("canvas missing");await page.mouse.click(box.x+projection.screen[0],box.y+projection.screen[1]);
+  await page.locator(`[id="rebind-${old.id}"]`).click();
+  const canvas=page.getByTestId("viewer-canvas");
+  await canvas.scrollIntoViewIfNeeded();
+  const projection=await page.evaluate(()=>window.__EM_VIEWER__?.project([0,0,1]));
+  if(!projection)throw new Error("projection missing");
+  // The rebind control can scroll a long review panel past the model viewport.
+  // Use a real canvas click with actionability checks, retaining the raycast assertion.
+  await canvas.click({position:{x:projection.screen[0],y:projection.screen[1]}});
   await expect(page.getByText("此项已处理",{exact:true})).toBeVisible();const now=readDraftHotspots((await data.get()).draft.knowledge);expect(now).toHaveLength(1);expect(now[0]).toMatchObject({id:old.id,status:"confirmed"});await expect(page.getByTestId("pick-mode-active")).toHaveCount(0);
 });
 

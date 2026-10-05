@@ -299,7 +299,10 @@ test("QA-T17-2 进行中状态区分 + 浏览器关闭后服务器继续推进",
   fixture.state.manualMode = "refuse";
   fixture.state.submitMode = "success";
   fixture.state.modelMode = "valid";
-  fixture.state.manualDelayMs = 10_000; // 给"页面打开时仍在本地执行"留确定窗口
+  fixture.state.manualDelayMs = 0;
+  let releaseManual!: () => void;
+  fixture.manualResponseGate = new Promise<void>((resolve) => { releaseManual = resolve; });
+  try {
   const { jobId } = await seedJob(request, backend, "QA21 关浏览器继续");
   await waitForJob(
     request,
@@ -331,6 +334,8 @@ test("QA-T17-2 进行中状态区分 + 浏览器关闭后服务器继续推进",
   expect(reservedAmount.replace(/[^0-9.]/g, ""), "预留金额不得显示成 0").not.toMatch(/^0(\.0+)?$/);
   await captureTo("t17-qa", page, "03b-detail-reserved");
   await context.close();
+  // Release only after the real browser context is closed.
+  releaseManual();
 
   // 浏览器关闭：服务器必须继续推进直到缺项（服务端事实）。
   const afterClose = await waitForJob(
@@ -352,6 +357,11 @@ test("QA-T17-2 进行中状态区分 + 浏览器关闭后服务器继续推进",
   ).toContainText("拒答");
   await captureTo("t17-qa", page2, "04-detail-after-reopen");
   await context2.close();
+  } finally {
+    releaseManual();
+    fixture.manualResponseGate = null;
+    fixture.state.manualDelayMs = 0;
+  }
 });
 
 test("QA-T17-3 断网显示网络问题（不误报业务失败），恢复后显示服务端新状态", async ({

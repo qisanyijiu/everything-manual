@@ -12,7 +12,7 @@
  *   （测试"同一局部点在不同旋转/缩放下一致"与"法线必须用逆转置"）；
  *   含内嵌 PNG 贴图（测试贴图释放）。
  * - `viewer-asymmetric-b.glb`：第二个不对称模型（换模型测试：旧资源/旧热点不串入）。
- * - `--large`：约 100k 三角面模型（性能测量用；按 REQ-040 的默认预算）。
+ * - `--large`：精确 100k 三角面模型（性能测量用；按 REQ-040 的默认预算）。
  *
  * 用法：
  *   node generate-viewer-fixtures.mjs                # 生成两个小模型
@@ -353,8 +353,7 @@ const MODEL_B = {
 };
 
 /** 100k 面地形（性能测量用）：解析法线、Uint16 索引。 */
-function largeTerrain({ segments = 224, size = 4 } = {}) {
-  const n = segments;
+function largeTerrain({ segmentsX = 200, segmentsY = 250, size = 4 } = {}) {
   const positions = [];
   const normals = [];
   const uvs = [];
@@ -364,10 +363,10 @@ function largeTerrain({ segments = 224, size = 4 } = {}) {
     0.35 * 2.1 * Math.cos(2.1 * x) * Math.cos(1.7 * y) + 0.18 * 3.3 * Math.cos(3.3 * x + 1.1 * y),
     -0.35 * 1.7 * Math.sin(2.1 * x) * Math.sin(1.7 * y) + 0.18 * 1.1 * Math.cos(3.3 * x + 1.1 * y),
   ];
-  for (let iy = 0; iy <= n; iy += 1) {
-    for (let ix = 0; ix <= n; ix += 1) {
-      const x = (ix / n - 0.5) * size;
-      const y = (iy / n - 0.5) * size;
+  for (let iy = 0; iy <= segmentsY; iy += 1) {
+    for (let ix = 0; ix <= segmentsX; ix += 1) {
+      const x = (ix / segmentsX - 0.5) * size;
+      const y = (iy / segmentsY - 0.5) * size;
       const z = height(x, y);
       positions.push(x, y, z);
       const [dzdx, dzdy] = gradient(x, y);
@@ -376,17 +375,18 @@ function largeTerrain({ segments = 224, size = 4 } = {}) {
       const nz = 1;
       const length = Math.hypot(nx, ny, nz);
       normals.push(nx / length, ny / length, nz / length);
-      uvs.push(ix / n, iy / n);
+      uvs.push(ix / segmentsX, iy / segmentsY);
     }
   }
   const indices = [];
-  for (let iy = 0; iy < n; iy += 1) {
-    for (let ix = 0; ix < n; ix += 1) {
-      const a = iy * (n + 1) + ix;
+  for (let iy = 0; iy < segmentsY; iy += 1) {
+    for (let ix = 0; ix < segmentsX; ix += 1) {
+      const a = iy * (segmentsX + 1) + ix;
       const b = a + 1;
-      const c = a + (n + 1);
+      const c = a + (segmentsX + 1);
       const d = c + 1;
-      indices.push(a, c, b, b, c, d);
+      // Match the +Z normals so the default front view renders the terrain.
+      indices.push(a, b, c, b, d, c);
     }
   }
   return { positions, normals, uvs, indices };

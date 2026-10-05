@@ -24,7 +24,11 @@ test("QA PC3-006 one library batch, real priority/old release and read-error fal
   for (let n = 0; n < 8; n++) expect((await api.post(b.base + "/api/v1/items", { headers: { "x-csrf-token": csrf }, data: { name: `PC03B visible batch ${n}`, model: "fake" } })).status()).toBe(201);
   const baseline = businessCounts(b); const { page, state } = await open(browser, "/"); const row = page.locator(".item-row").filter({ has: page.getByRole("link", { name: "PC03B library published history", exact: true }) });
   await expect(row.getByRole("link", { name: "处理任务", exact: true })).toHaveAttribute("href", `/jobs/${ref.jobId}`); await expect(row.getByRole("link", { name: "阅读已发布版", exact: true })).toHaveAttribute("href", `/items/${ref.itemId}/releases/${releaseId}`);
-  expect(state.reads.filter(v => v.startsWith("/api/v1/items/summaries?"))).toHaveLength(1); expect(state.reads.filter(v => /\/items\/[^/?]+\/(jobs|drafts|releases)(\?|$)/.test(v) || /^\/api\/v1\/jobs\//.test(v))).toEqual([]); await narrow(page);
+  expect(state.reads.filter(v => v.startsWith("/api/v1/items/summaries?"))).toHaveLength(1);
+  // PC05C adds one global activity summary; per-row detail fan-out stays forbidden.
+  expect(state.reads.filter(v => v === "/api/v1/jobs/activity")).toHaveLength(1);
+  expect(state.reads.filter(v => /\/items\/[^/?]+\/(jobs|drafts|releases)(\?|$)/.test(v) || /^\/api\/v1\/jobs\/(?!activity(?:\?|$))/.test(v))).toEqual([]);
+  await narrow(page);
   await page.route("**/api/v1/items/summaries?*", async route => { const bad = await route.fetch({ url: b.base + "/api/v1/items/summaries?ids=00000000-0000-4000-8000-000000000099" }); expect(bad.status()).toBe(404); await route.fulfill({ response: bad }); });
   await page.reload(); await expect(row).toContainText("处理状态暂不可用"); await expect(row.getByRole("link", { name: "查看物品", exact: true })).toHaveAttribute("href", `/items/${ref.itemId}`); await expect(row.getByRole("link", { name: "处理任务", exact: true })).toHaveCount(0); expect(state.writes).toEqual([]); expect(businessCounts(b)).toEqual(baseline); expect(state.external + state.pageErrors).toBe(0);
   saveEvidence("browser-library", { ...ref, releaseId, rows: 9, noRowDetailRequests: true, real404Fallback: true, viewport: 375, noWrites: true });

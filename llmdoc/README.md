@@ -2,7 +2,7 @@
 
 当前产品路线：React + Rust、前后端分离开发、单二进制自托管发布。2026-09-11 起替代旧 macOS 原生实现路线。2026-10-02 正在按用户要求继续补齐 PRD，最新范围和协调状态见 [prd-completion](requirements/prd-completion/prd.md) 与 [state](requirements/prd-completion/state.yaml)。已完成的交互 A、API 网页配置和密钥加密见下方索引；本轮发布包下载、原件阅读、知识复核闭环、准备/建单恢复、模型栏密钥防护与受控验证命令均已通过各自独立切片验收（QA1–9），当前实施资料库搜索、保存/离开保护和任务体验，随后执行当前版本的完整发布门禁。官方说明书原件与本地准备结果保存在忽略的运行目录中。
 
-原 web-mvp 的 T01–T21 历史验收已通过；T22 尚未完整关闭，BUG-013 的测试侧修复仍缺 Linux 复验，T23 真实供应商验收待正确配置与明确预算。九月两平台构建、哈希与测试计数属于历史版本，不能作为十月新增代码的发布证明；历史细节见 [进度快照](requirements/web-mvp/progress-summary.md) 和 [implementation §R30](requirements/web-mvp/implementation.md)。
+原 web-mvp 的 T01–T21 历史验收已通过；T22 的历史门禁详见原记录；2026-10-05 本轮已补齐 BUG-013 既定测试侧修复的 Linux 精确复验 3/3（未宣称生产启动窄窗口已改），T23 真实供应商验收仍待正确配置与明确预算。九月两平台构建、哈希与测试计数属于历史版本，不能作为十月新增代码的发布证明；历史细节见 [进度快照](requirements/web-mvp/progress-summary.md) 和 [implementation §R30](requirements/web-mvp/implementation.md)。
 
 ## 阅读顺序
 
@@ -20,7 +20,7 @@
 
 12. [受控本地生成验证](test-live.md)：具名案例与受限预算文件的 `test-live` 命令，复用冻结任务、幂等与账本；本机fixture交付不代表AC-042/T23真实供应商验收完成。
 
-13. [UI 反馈第 3 和第 6 项 PRD](requirements/ui-feedback-3-6/prd.md)：两份方案与12张任务卡已加入[现有实施规划第6节](implementation-plan.md#6-ui-反馈第-3-和第-6-项待办)。2026-10-05视觉VS-01～05全部接受，[QA6全部12AC PASS](requirements/ui-feedback-3-6/vs05-qa-report.md)，[正式生产包与部署前提](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)已交付；Claude完成VS-03后中断，Codex完成VS-04/05及发行验证。接续先读[state](requirements/ui-feedback-3-6/state.yaml)和[交接记录](requirements/ui-feedback-3-6/codex-handoff-2026-10-05.md)，不重复实施完成卡。社区/激励按用户后续决定本轮取消，保留PRD，未经重新授权不恢复。
+13. [UI 反馈第 3 和第 6 项 PRD](requirements/ui-feedback-3-6/prd.md)：两份方案与12张任务卡已加入[现有实施规划第6节](implementation-plan.md#6-ui-反馈第-3-和第-6-项待办)。2026-10-05视觉VS-01～05全部接受，[QA6全部12AC PASS](requirements/ui-feedback-3-6/vs05-qa-report.md)，[正式生产包与部署前提](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)已交付；Claude完成VS-03后中断，Codex完成VS-04/05及发行验证。用户后续要求的[完整 E2E 与新发行复验](requirements/ui-feedback-3-6/e2e-delivery-2026-10-05.md)接续旧 QA6，当前状态以该记录及 state 为准。接续先读[state](requirements/ui-feedback-3-6/state.yaml)和[交接记录](requirements/ui-feedback-3-6/codex-handoff-2026-10-05.md)，不重复实施完成卡。社区/激励按用户后续决定本轮取消，保留PRD，未经重新授权不恢复。
 
 14. [Nikon 76 编号分件观察](requirements/standalone-3d-viewer/nikon-all-parts-2026-10-04.md)：重新划分外观几何边界，全部编号可独立选择、高亮、展开/复原；保留已确认取景器和背带环绑定。在线、离线与全屏 Chrome 实际逐件验收通过，原发布保留，本轮 0 credits。
 

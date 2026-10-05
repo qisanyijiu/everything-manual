@@ -29,6 +29,7 @@ import {
   type Route,
 } from "@playwright/test";
 
+import { firefoxHeapSession, type FirefoxHeapSession } from "./qa-native-browser-tools";
 import { captureTo, loginViaUi } from "./helpers";
 import {
   BACKEND_PASSWORD,
@@ -380,7 +381,8 @@ async function restoreWebglContext(page: Page): Promise<void> {
  * 并在采样前**强制 GC**（`HeapProfiler.collectGarbage`）：测的是"保留堆"，与页面/账本
  * 侧的资源断言（modelsAlive=1、每轮真实 delete、卸载后 disposed==created）语义一致。
  */
-async function cdpHeapSession(page: Page): Promise<CDPSession> {
+async function cdpHeapSession(page: Page): Promise<CDPSession | FirefoxHeapSession> {
+  if (page.context().browser()?.browserType().name() === "firefox") return firefoxHeapSession(page);
   const session = await page.context().newCDPSession(page);
   await session.send("Performance.enable");
   return session;
@@ -388,9 +390,10 @@ async function cdpHeapSession(page: Page): Promise<CDPSession> {
 
 /** 采一次堆（`gc: true` 时先强制 GC，排除"还没回收的垃圾"这种噪声）。 */
 async function cdpHeapSample(
-  session: CDPSession,
+  session: CDPSession | FirefoxHeapSession,
   options?: { gc?: boolean },
 ): Promise<{ bytes: number | null; gcApplied: boolean }> {
+  if ("sample" in session) return session.sample(options);
   let gcApplied = false;
   if (options?.gc === true) {
     try {
@@ -831,6 +834,7 @@ test("QA-T18-4 资源释放与 10 次切换趋势（真实 GL 计数 + 账本对
   const heapRetainedSamples: (number | null)[] = [];
   const heapSession = await cdpHeapSession(page);
   let heapGcApplied = false;
+  try {
   const aliveSamples: string[] = [];
   const glRawSamples: Record<string, number>[] = [];
   const deleteDeltas: { buffers: number; textures: number }[] = [];
@@ -843,6 +847,9 @@ test("QA-T18-4 资源释放与 10 次切换趋势（真实 GL 计数 + 账本对
     await waitForRealViewer(page);
     draftIds.push(target.draftId);
 
+    // Route navigation can initially still expose the previous canvas/status/frames.
+    // Require the target model before retaining every original identity/resource assertion.
+    await expect.poll(() => viewerModel(page)).toMatchObject({assetId: target.assetId,sha256:target.sha256});
     const stats = await viewerStats(page);
     const counts = await glCounts(page);
     expect(stats.modelsAlive, `第 ${round + 1} 次切换后 modelsAlive`).toBe(1);
@@ -937,6 +944,7 @@ test("QA-T18-4 资源释放与 10 次切换趋势（真实 GL 计数 + 账本对
         heapRetainedSamples,
         heapRetainedRatio: retainedRatio,
         heapGcApplied,
+        heapNativeEvidence: "evidence" in heapSession ? heapSession.evidence() : { method: "Chromium CDP Performance.getMetrics/HeapProfiler.collectGarbage", metricDefinition: "JSHeapUsedSize; differs from Firefox target JS footprint; absolute bytes cannot be compared across engines" },
       },
       null,
       2,
@@ -982,6 +990,9 @@ test("QA-T18-4 资源释放与 10 次切换趋势（真实 GL 计数 + 账本对
       { timeout: 20_000 },
     )
     .toBeGreaterThan(0);
+  } finally {
+    await heapSession.detach();
+  }
 });
 
 test("QA-T18-5 加载与错误状态可观察（延迟/500 故障注入真实端点）+ 重试真的生效", async ({

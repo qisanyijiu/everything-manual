@@ -2,10 +2,9 @@
  * reader manifest 明确为布局夹具，PDF 字节来自真实后端，不据此验收发布语义。
  */
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
-import { chromium, expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 
 import {
   apiLogin,
@@ -18,8 +17,10 @@ import {
   setPreparationPointer,
   type SeededDocument,
 } from "./helpers";
-import { E2E_WEB_PORT, REPO_ROOT } from "./runtime";
+import { REPO_ROOT } from "./runtime";
 import { draftPayload, fixtureModel, installViewerRoutes } from "./viewer-harness";
+
+import { launchNativeZoom } from "./qa-native-browser-tools";
 
 const QA_DIR = path.join(REPO_ROOT, "artifacts", "interaction-a", "qa");
 const SCOPE_LABEL = /我已阅读并确认将上述资料发送给对应供应商/;
@@ -441,19 +442,11 @@ test("IA-QA-05 阅读器键盘标签/抽屉与手机触控（AC-009/010/011/012�
   await expect(trigger).toBeFocused();
 });
 
-test("IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012）", async ({ request }) => {
+test("IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012）", async ({ request }, testInfo) => {
   const seed = await readyItem(request, "IA QA 真实浏览器缩放");
-  const extension = path.join(import.meta.dirname, "fixtures", "interaction-a-qa-zoom");
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), "interaction-a-qa-zoom-"));
-  const context = await chromium.launchPersistentContext(profile, {
-    channel: "chromium", headless: true, viewport: null, deviceScaleFactor: undefined, isMobile: undefined, locale: "zh-CN",
-    baseURL: `http://127.0.0.1:${E2E_WEB_PORT}`,
-    args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`, "--window-size=1440,1000"],
-    ignoreDefaultArgs: ["--disable-extensions"],
-  });
+  const native = await launchNativeZoom(testInfo);
+  const { context, page } = native;
   try {
-    const worker = context.serviceWorkers()[0] ?? await context.waitForEvent("serviceworker");
-    const page = context.pages()[0] ?? await context.newPage();
     const external: string[] = [];
     await page.route("**/*", async (route) => {
       const url = new URL(route.request().url());
@@ -463,17 +456,15 @@ test("IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012�
     });
     await openConfirm(page, seed);
     const before = await page.evaluate(() => ({ innerWidth, outerWidth, dpr: devicePixelRatio }));
-    const zoom = await worker.evaluate(`(async () => {
-      const tabs = await chrome.tabs.query({});
-      const tab = tabs.find((tab) => tab.url?.startsWith('http://127.0.0.1:${E2E_WEB_PORT}/'));
-      if (!tab) throw new Error('QA tab missing');
-      await chrome.tabs.setZoom(tab.id, 2);
-      return await chrome.tabs.getZoom(tab.id);
-    })()`);
+    const nativeOuterBefore = await native.nativeOuterWidth();
+    const zoom = await native.setZoom(2);
     expect(zoom).toBe(2);
     await expect.poll(() => page.evaluate(() => devicePixelRatio)).toBe(before.dpr * 2);
     const after = await page.evaluate(() => ({ innerWidth, outerWidth, dpr: devicePixelRatio }));
-    expect(after.outerWidth).toBe(before.outerWidth);
+    const nativeOuterAfter = await native.nativeOuterWidth();
+    expect(nativeOuterAfter).toBe(nativeOuterBefore);
+    // Firefox content outerWidth is zoom-relative; actual browser window pixels remain unchanged.
+    if (native.engine !== "firefox") expect(after.outerWidth).toBe(before.outerWidth);
     expect(Math.abs(after.innerWidth * 2 - before.innerWidth)).toBeLessThanOrEqual(2);
     await noOverflow(page);
     await page.locator("#budget-tripo").focus();
@@ -510,10 +501,11 @@ test("IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012�
       expect(element.left).toBeGreaterThanOrEqual(0);
       expect(element.right).toBeLessThanOrEqual(confirmGeometry.innerWidth + 1);
     }
-    const cdp = await context.newCDPSession(page);
-    const confirmImage = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    fs.writeFileSync(path.join(QA_DIR, "06-confirm-browser-zoom-200-viewport.png"), Buffer.from(confirmImage.data, "base64"));
+    await page.screenshot({ path: path.join(QA_DIR, "06-confirm-browser-zoom-200-viewport.png"), fullPage: false });
     await page.goto("/items/new");
+    await expect.poll(() => page.evaluate(() => devicePixelRatio)).toBe(before.dpr * 2);
+    expect(await native.nativeOuterWidth()).toBe(nativeOuterBefore);
+    expect(Math.abs((await page.evaluate(() => innerWidth)) * 2 - before.innerWidth)).toBeLessThanOrEqual(2);
     await expect(page.getByRole("heading", { name: "新建物品" })).toBeVisible();
     await page.getByLabel(/^名称/).fill("缩放键盘输入");
     expect(await page.getByLabel(/^名称/).evaluate((el) => {
@@ -530,11 +522,14 @@ test("IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012�
     await page.keyboard.press("Tab"); await page.keyboard.press("Tab"); await page.keyboard.press("Tab");
     await expect(page.getByRole("button", { name: "创建并继续" })).toBeFocused();
     await noOverflow(page);
+    const formFocusBeforeSettle = await page.getByRole("button", { name: "创建并继续" }).evaluate((button) => {const rect=button.getBoundingClientRect();return {innerWidth,innerHeight,dpr:devicePixelRatio,scrollY,focused:button===document.activeElement,centerHit:button.contains(document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)),rect:{x:rect.x,y:rect.y,width:rect.width,height:rect.height}};});
+    // Observe Firefox's native focus scroll without initiating scroll or changing focus.
+    await expect.poll(() => page.getByRole("button", { name: "创建并继续" }).evaluate((button) => {const rect=button.getBoundingClientRect();return button.contains(document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2));})).toBe(true);
     const formGeometry = await page.evaluate(() => {
       const button = document.querySelector<HTMLButtonElement>('.item-form button[type="submit"]')!;
       const rect = button.getBoundingClientRect();
       const selectors = [".item-form-page", ".item-form-page .page__lead", ".item-form", "#field-name", "#field-model", '.item-form button[type="submit"]'];
-      return { innerWidth, innerHeight, scrollY, buttonHit: button.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)), elements: selectors.map((selector) => {
+      return { innerWidth, innerHeight, dpr: devicePixelRatio, scrollY, buttonHit: button.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)), elements: selectors.map((selector) => {
         const element = document.querySelector<HTMLElement>(selector)!;
         const box = element.getBoundingClientRect();
         return { selector, left: box.left, right: box.right, top: box.top, bottom: box.bottom, fontSize: getComputedStyle(element).fontSize };
@@ -545,14 +540,11 @@ test("IA-QA-06 实际浏览器 200% 缩放保持表单与确认可达（AC-012�
       expect(element.left).toBeGreaterThanOrEqual(0);
       expect(element.right).toBeLessThanOrEqual(formGeometry.innerWidth + 1);
     }
-    const formImage = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
-    fs.writeFileSync(path.join(QA_DIR, "06-create-browser-zoom-200-viewport.png"), Buffer.from(formImage.data, "base64"));
-    await cdp.detach();
-    fs.writeFileSync(path.join(QA_DIR, "06-browser-zoom-evidence.json"), JSON.stringify({ method: "chrome.tabs.setZoom", zoom, before, after, confirmGeometry, formGeometry, browser: context.browser()?.version(), external }, null, 2));
+    await page.screenshot({ path: path.join(QA_DIR, "06-create-browser-zoom-200-viewport.png"), fullPage: false });
+    fs.writeFileSync(path.join(QA_DIR, "06-browser-zoom-evidence.json"), JSON.stringify({ method: native.method, engine: native.engine, nativeOuterBefore, nativeOuterAfter, zoom, before, after, confirmGeometry, formGeometry, formFocusBeforeSettle, browser: context.browser()?.version(), external }, null, 2));
     expect(external).toEqual([]);
   } finally {
-    await context.close();
-    fs.rmSync(profile, { recursive: true, force: true });
+    await native.close();
   }
 });
 

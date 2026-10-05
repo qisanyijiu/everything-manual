@@ -410,6 +410,12 @@ input[type="file"]:disabled::file-selector-button { background: var(--color-surf
 .reader-page .entity-list { font-size: var(--font-size-body); }
 .reader-page .entity-list p { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
 .reader-page .entity-list button { font-size: var(--font-size-body); padding: 6px 10px; min-height: var(--control-height); }
+/* Review actions retain their 44px targets inside shared reader lists. */
+.reader-page .review-tasks button, .reader-page .review-task-progress button,
+.reader-page .publish-panel button, .reader-page [data-testid="knowledge-panel"] button,
+.reader-page [data-testid="parts-panel"] button, .reader-page [data-testid="step-navigation"] button {
+  min-height: var(--control-height-touch);
+}
 .reader-page .entity-list .status-label { margin: 7px 0 0 6px; }
 /* 选中（列表项 / 步骤 / 引用部件）：底 + 边框 + aria-current 三重表达（component-states §6）。 */
 .reader-page [aria-current="true"] { background: var(--color-selected); color: var(--color-ink); border-color: var(--color-accent); }

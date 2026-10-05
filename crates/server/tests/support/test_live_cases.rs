@@ -590,20 +590,45 @@ async fn pc04_cli_safe_retry_requires_exact_scope_and_unknown_never_rebuys() {
 #[ignore = "requires explicit job-failpoints xtask binary; localhost only"]
 async fn pc04_cli_runtime_expiry_configuration_scope_and_actual_risk_stop_new_calls() {
     for change in ["expiry", "configuration", "stage", "actual"] {
+        // Only the expiry fixture needs a response that stays in flight across
+        // the deadline. Keep the original 2s request-arrival and 30s CLI limits.
+        let response_delay_ms = if change == "expiry" { 6_000 } else { 500 };
         let manual = manual_ai_server(vec![delay(
             respond_file(&responses_path("success.json")),
-            500,
+            response_delay_ms,
         )]);
         let tripo = tripo_server(vec![], vec![]);
         let chain = chain("pc04-runtime", &tripo, &manual).await;
         let (files, plan) = authorize_files(&chain).await;
-        if change == "expiry" {
+        let expiry_timing = if change == "expiry" {
+            let authorized_at = Timestamp::now();
+            let expires_at = authorized_at.checked_add_millis(5_000).unwrap();
             let mut b = budget_for(&plan);
-            b["expiresAt"] = json!(Timestamp::now().checked_add_millis(350).unwrap());
+            b["expiresAt"] = json!(expires_at);
             private_json(&files.budget, &b);
-        }
+            Some((authorized_at, expires_at))
+        } else {
+            None
+        };
         let child = spawn(&files, None);
         wait_calls(&manual, MANUAL_AI_PATH, 1).await;
+        let request_observed_at = Timestamp::now();
+        if let Some((authorized_at, expires_at)) = expiry_timing {
+            // The request is already recorded, so its actual arrival precedes
+            // this observation. The fixed fixture delay begins after arrival,
+            // which itself follows authorization and spawn.
+            assert!(
+                request_observed_at < expires_at,
+                "request must arrive before expiry"
+            );
+            let response_not_before = authorized_at
+                .checked_add_millis(i64::try_from(response_delay_ms).unwrap())
+                .unwrap();
+            assert!(
+                response_not_before > expires_at,
+                "fixture response must cross expiry"
+            );
+        }
         match change {
             "configuration" => {
                 let path = chain.app.dir().join("price-catalog.toml");
@@ -627,7 +652,23 @@ async fn pc04_cli_runtime_expiry_configuration_scope_and_actual_risk_stop_new_ca
             _ => {}
         }
         let out = wait(child).await;
+        let cli_returned_at = Timestamp::now();
         let report = output_json(&out);
+        if let Some((authorized_at, expires_at)) = expiry_timing {
+            assert!(
+                cli_returned_at > expires_at,
+                "CLI result must be observed after expiry"
+            );
+            eprintln!(
+                "PC04_EXPIRY_TIMING authorizedAtMs={} requestObservedAtMs={} expiresAtMs={} responseDelayMs={} responseNotBeforeMs={} cliReturnedAtMs={}",
+                authorized_at.as_millis(),
+                request_observed_at.as_millis(),
+                expires_at.as_millis(),
+                response_delay_ms,
+                authorized_at.as_millis() + i64::try_from(response_delay_ms).unwrap(),
+                cli_returned_at.as_millis(),
+            );
+        }
         assert!(!out.status.success(), "{change}: {report}");
         assert_eq!(manual.call_count("POST", MANUAL_AI_PATH), 1);
         assert_eq!(

@@ -69,14 +69,27 @@ test("C4 aggregate polls beyond page one, observes zero-to-new, error is unavail
   const link = page.getByTestId("job-activity-link"); await expect(link).toHaveAccessibleName("进行中任务 28 个");
   const box = await link.boundingBox(); expect(box?.height).toBeGreaterThanOrEqual(44); expect(box?.width).toBeGreaterThanOrEqual(44);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
-  const listReads = () => s.wire.reads.filter(v => /^\/api\/v1\/jobs(?:\?|$)/.test(v)); expect(listReads()).toEqual([]);
+  const listReads = () => s.wire.reads.filter(v => /^\/api\/v1\/jobs(?:\?|$)/.test(v));
+  const noBadgePagination = () => {
+    expect(listReads().filter(v => v !== "/api/v1/jobs?limit=20")).toEqual([]);
+    expect(s.wire.reads.filter(v => /^\/api\/v1\/jobs\/(?!activity(?:\?|$))/.test(v))).toEqual([]);
+  };
+  noBadgePagination();
+  // VS04's completion watcher reads one fixed page independently of the COUNT badge.
+  // Block those real reads while changing counts to prove the badge does not depend on it.
+  let watcherReadsBlocked = 0;
+  const unavailableWatcher = async (route: import("@playwright/test").Route) => { watcherReadsBlocked++; await route.abort("failed"); };
+  await page.route("**/api/v1/jobs?*", unavailableWatcher);
   b.db("UPDATE jobs SET status='succeeded',revision=revision+1 WHERE id=?", [ids.active[0]]); await expect(link).toHaveAccessibleName("进行中任务 27 个");
   b.db("UPDATE jobs SET status='cancelled',revision=revision+1 WHERE status IN ('queued','running','retry_wait','waiting_provider')"); await expect(link).toHaveAccessibleName("进行中任务 0 个");
   b.db("UPDATE jobs SET status='queued',revision=revision+1 WHERE id=?", [ids.active[0]]); await expect(link).toHaveAccessibleName("进行中任务 1 个");
-  const countBefore = s.wire.reads.filter(v => v === "/api/v1/jobs/activity").length; await page.waitForTimeout(4500); const countAfter = s.wire.reads.filter(v => v === "/api/v1/jobs/activity").length; expect(countAfter - countBefore).toBeLessThanOrEqual(3); expect(listReads()).toEqual([]);
+  const countBefore = s.wire.reads.filter(v => v === "/api/v1/jobs/activity").length; await page.waitForTimeout(4500); const countAfter = s.wire.reads.filter(v => v === "/api/v1/jobs/activity").length; expect(countAfter - countBefore).toBeLessThanOrEqual(3); noBadgePagination();
   const failure = async (route: import("@playwright/test").Route) => route.abort("failed"); await page.route("**/api/v1/jobs/activity", failure); await expect(link).toHaveAccessibleName("任务数暂不可用"); await expect(link).toHaveAttribute("href", "/jobs");
+  const watcherListReads = listReads().length;
+  expect(watcherReadsBlocked).toBeGreaterThan(0);
+  await page.unroute("**/api/v1/jobs?*", unavailableWatcher);
   await tabTo(page, link); await page.keyboard.press("Enter"); await expect(page).toHaveURL(WEB + "/jobs"); await page.unroute("**/api/v1/jobs/activity", failure); await expect(link).toHaveAccessibleName("进行中任务 1 个");
-  evidence("c4-activity-ui", { counts: [28, 27, 0, 1], privateCountFixture: true, noPagedListReadsInShell: true, visiblePollReadsIn4500ms: countAfter - countBefore, unavailableNotZero: true, keyboardEntry: true, width: 375, geometry: box });
+  evidence("c4-activity-ui", { counts: [28, 27, 0, 1], privateCountFixture: true, noBadgePagination: true, independentWatcherListReads: watcherListReads, watcherReadsBlocked, badgeUpdatedWithWatcherReadsBlocked: true, visiblePollReadsIn4500ms: countAfter - countBefore, unavailableNotZero: true, keyboardEntry: true, width: 375, geometry: box });
 });
 
 test("C5 anonymous login is ordinary; actual expiry preserves safe next and B item/knowledge memory without storage or replay", async ({ browser }) => {

@@ -73,6 +73,8 @@ function freePort(): Promise<number> {
 
 /** 缺脚本必须显式失败（不返回通用成功），与 T05 fixture 的约定一致。 */
 export class LocalFixture {
+  /** QA-only deterministic response gate; tests must release it in finally. */
+  manualResponseGate: Promise<void> | null = null;
   readonly state: FixtureState = {
     manualMode: "success",
     submitMode: "success",
@@ -178,6 +180,7 @@ export class LocalFixture {
     }
     if (method === "POST" && url.pathname === "/v1/responses") {
       this.counts.manual += 1;
+      if (this.manualResponseGate) await this.manualResponseGate;
       if (this.state.manualDelayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, this.state.manualDelayMs));
       }

@@ -1,7 +1,7 @@
 work_id: ui-feedback-3-6
 updated_at: "2026-10-05"
 phase: done
-request_revision: 1
+request_revision: 2
 prd_revision: 1
 ui_revision: 1
 prd_index: "llmdoc/requirements/ui-feedback-3-6/prd.md"
@@ -10,16 +10,26 @@ prd_files:
   - "llmdoc/requirements/ui-feedback-3-6/community-incentives-prd.md"
 plan: "llmdoc/implementation-plan.md#6-ui-反馈第-3-和第-6-项待办"
 scope_changes:
+  - date: "2026-10-05"
+    change: "用户新增：完成E2E、修复全部发现问题并验证可交付；E2E-01接续历史QA6，不恢复社区。"
+    impact: "本轮生产44px修复后重建Mac/Linux，完整209用例及兼容性/CLI/GPU/部署门禁重新验收，进入QA7。"
   - date: "2026-10-04"
     change: "用户决定：社区与激励（CI-00～CI-06）本轮不实施；只继续视觉流 VS-01～VS-05，全部完成后通知用户。"
     impact: "社区任务从 pending_tasks 移除，streams.community_incentives 置 cancelled；PRD 与设计文档保留；未经用户重新授权不恢复派发。"
 external_streams:
   - name: "viewer-interactive（用户并行写入流，非本流程派发）"
     files: "apps/web/src/features/viewer/**、apps/web/src/features/standalone/**（含 PartsExplorer、part-inspection、PartsFullscreen 等；测试全通过）"
-    impact: "VS-03 已在其之上实施且未回退；VS-04/05均已接受，最终发行源bb88保留该并行流的已授权实现。"
+    impact: "VS-03 已在其之上实施且未回退；VS-04/05均已接受，历史QA6 bb88及本轮QA7正式运行代码均保留该并行流的已授权实现；当前来源见verification_gates。"
 current_tasks: []
 pending_tasks: []
 accepted_tasks:
+  - task_id: E2E-01
+    prd_revision: 1
+    qa_round: 7
+    report: "llmdoc/requirements/ui-feedback-3-6/e2e-delivery-2026-10-05.md"
+    accepted_ac_ids: []
+    status: accepted
+    note: "用户新增全量复验：209不同E2E、三引擎当前141覆盖、677不同Rust/CLI、新Mac/Linux/4正式浏览器/真实GPU300秒/部署包全部独立验收；沿用冻结PRD，非新增AC"
   - task_id: VS-05
     prd_revision: 1
     qa_round: 6
@@ -43,7 +53,7 @@ accepted_tasks:
   - task_id: VS-02
     prd_revision: 1
     qa_round: 2
-    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-2"
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md"
     accepted_ac_ids: [AC-VS-001, AC-VS-002, AC-VS-003, AC-VS-004, AC-VS-009, AC-VS-010]
     status: accepted
   - task_id: VS-03
@@ -73,14 +83,14 @@ qa_history:
     task_ids: [VS-02]
     prd_revision: 1
     result: FAIL
-    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-1"
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md"
     note: "仅 AC-VS-003 的 aria-current 子项失败；其余必选 AC 全通过"
   - round: 2
     scope: "BUG-VS02-001 复验 + AC-VS-003 复核"
     task_ids: [VS-02]
     prd_revision: 1
     result: PASS
-    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-2"
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md"
     note: "BUG-VS02-001 CLOSED；五路由 aria 矩阵全绿；lint/typecheck exit 0，vitest 48 文件/322 用例"
   - round: 3
     scope: "VS-03 slice（AC-VS-005/006/008 片内/009/010/011 + VS-02 回归）"
@@ -96,8 +106,15 @@ qa_history:
     result: PASS
     report: "llmdoc/requirements/ui-feedback-3-6/vs05-qa-report.md"
     note: "46去重独立接受（45严格实现映射+1正式HTTPS Chrome）；141普通E2E、672Rust/336前端、Mac原生/Linux正式运行、35成员/34SHA及镜像导入/非root前置/独立归档审计全部闭环；原失败和中间包装保留"
-qa_round: 6
-qa_scope: "VS-05全部12AC与最终生产发行门禁；最终bb88来源，包装修订2全部独立验收PASS"
+  - round: 7
+    scope: full
+    task_ids: [E2E-01]
+    prd_revision: 1
+    result: PASS
+    report: "llmdoc/requirements/ui-feedback-3-6/e2e-delivery-2026-10-05.md"
+    note: "592当前源73e，生产44px修复与受影响复验通过；QA6视觉12AC历史证据结合未受影响源码前移、PC02B触控复验；209不同E2E/677RustCLI/三引擎/4正式HTTPS/真实GPU/新双平台与35成员包独立门禁PASS，原失败保留"
+qa_round: 7
+qa_scope: "full：E2E-01当前592源73e；完整209不同用例、兼容性/CLI/GPU与新Mac/Linux正式交付；独立验收PASS，QA6历史保留"
 qa_result: PASS
 open_defects: []
 blocked_reason: null
@@ -108,7 +125,7 @@ document_delivery: complete
 implementation_started: true
 coordination_owner: "codex_current_chat"
 coordination_handoff: "llmdoc/requirements/ui-feedback-3-6/codex-handoff-2026-10-05.md"
-coordination_note: "Claude在VS-03 QA3 PASS后被中断，未实际派发VS-04；Codex接手并完成VS-04/05，已有规划/共享交接已更新。直接终端消息受限，回执未确认；恢复此需求先读done状态，不重复实施。"
+coordination_note: "Claude在VS-03 QA3 PASS后被中断，未实际派发VS-04；Codex接手并完成VS-04/05，已有规划/共享交接已更新。直接终端消息受限，回执未确认；视觉卡已接受；用户新增E2E-01的当前状态以本文件及新完整复验报告为准，不重复实施视觉卡。"
 streams:
   visual_style:
     priority: P1
@@ -122,7 +139,7 @@ streams:
     ui_revision: 0
     next_task: null
     status: cancelled_by_user_2026-10-04
-verification_gates:
+historical_qa6_verification_gates:
   source_inventory_sha256: "bb88c81f209e3b6dbac1dba1b9a2f9f65ed5c2d69396bcb1c9dd30624cc07a49"
   source_manifest: "var/ui-feedback-3-6-vs05-qa/release-source-final-manifest.json"
   visual_ac001_011: "独立45项、72组AFTER、52装饰扫描PASS；431实现/fixture/锁/合同逐字节不变，新源映射PASS"
@@ -138,4 +155,25 @@ verification_gates:
   final_linux_package: "var/ui-feedback-3-6-vs05-qa/linux-release-final-20261005/revision-2/everything-manual-linux-amd64-production-vs05.tar.gz"
   final_linux_package_sha256: "47d38665d38ea06de0f3f46ff705744f86433e5538e9e42d2d40606c6aa13e64"
   production_delivery: "llmdoc/requirements/ui-feedback-3-6/production-delivery-2026-10-05.md"
-next_action: "本轮视觉VS-01～05全部完成，社区仍为用户取消范围。部署管理员按最终包装修订2先完成目标机导入身份/非root执行前置，准备实际HTTPS域名/证书/私有口令/主密钥后依README部署；本轮未公网部署。后续代码改动须新冻结并重新验受影响门禁，不重派已完成卡。"
+verification_gates:
+  source_inventory_sha256: "73e224e76dc8e0b59c47de966c0ed1863d60ea8bcaee3d0b522a84ec1bcdecb1"
+  source_manifest: "var/e2e-delivery-20261005/final-source-r2-manifest.json"
+  source_forward: "Mac11/Linux9测试文件差异，生产代码0差异；完整矩阵仅3个QA文件前移，逐字节审核通过"
+  e2e_unique: "209/209不同产品用例，0当前未通过；141普通+67PC+1官方Firefox原生恢复；不累加重跑"
+  ordinary_matrix: "Chrome完整141/141；Firefox156完整141/141；Edge原140/1+原ROW1/2复验通过，各引擎当前141接受；原失败保留"
+  rust_cli: "Linux默认671/0/8ignored，PC04另显式6/6，677不同通过；两既有可选ignore保留"
+  engineering_check: "新Linuxvalidation完整671Rust/336前端/fmt/clippy/lint/type/合同；dist默认pool336；最终QA修订后lint/type exit0"
+  macos_arm64: "新正式88fa binary，可重现独立链接、完整七步/OS断网七步、7成员归档通过；未签名公证"
+  linux_runtime: "新正式c04 binary，静态musl、无failpoints/源码/Node/Python、network-none非root只读完整七步通过"
+  docker_operations: "新六阶段9报告661检查，fixture provider1/paid0，恢复/重启/资产/秘密检查通过"
+  strict_https: "新严格TLS216通过；自有栈清理完成"
+  formal_browser: "新Chrome154/Edge154/PWFirefox156完整3例+未改官方157完整原例显式forward，4/4通过；0skip/retry/error"
+  gpu_300s: "Apple M1真实Metal/Chrome154，100000面300.034秒，帧间隔p95=18.5ms/API150样本p95=6.941ms；16x16纹理边界"
+  linux_package: "修订2 35成员/34SHA；save-load/defaultID/Config/RootFS/UID10001及101探针、外层解压一致通过；Engine29.8.2 containerd实际环境"
+  final_linux_package: "var/e2e-delivery-20261005/linux-source/var/release/revision-2/everything-manual-linux-amd64-production-vs05.tar.gz"
+  final_linux_package_sha256: "2e479cd7651c327d2d8750d61e5c09dd854791fffe6c67b3de906a3fdd9e4fe2"
+  final_mac_package: "var/e2e-delivery-20261005/native-run-final/everything-manual-macos-arm64-vs05.tar.gz"
+  final_mac_package_sha256: "d3217375780a41c1b28db8ede994732b6bb5f5b2a4778dd48b9cf089d1d3b45c"
+  final_independent_audit: "var/e2e-delivery-20261005/platform-gates/final-delivery-audit/signature.json"
+  production_delivery: "llmdoc/requirements/ui-feedback-3-6/e2e-delivery-2026-10-05.md"
+next_action: "E2E-01/QA7 full已完成；视觉卡不重派，社区仍取消。当前新版包见e2e-delivery报告；部署前执行目标机身份/非root门禁，填写实际域名、证书、私有材料；本轮未公网部署或付费T23。后续源变更重新冻结并验受影响门禁。"

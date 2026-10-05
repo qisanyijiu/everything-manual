@@ -77,10 +77,13 @@ async function resizeTo(
   width: number,
 ): Promise<RowGeometry> {
   await page.setViewportSize({ width, height: 900 });
+  // CSS media queries update before React remounts the corresponding PageLayout.
+  // Await that declared breakpoint, then measure its current row with all original gates.
+  const breakpoint = width >= 1280 ? "wide" : width >= 768 ? "mid" : "narrow";
+  await expect.poll(() => page.evaluate(() => window.innerWidth)).toBe(width);
+  await expect(page.locator(".page-layout")).toHaveClass(new RegExp(`page-layout--${breakpoint}(?:\\s|$)`));
   await expect(row).toBeVisible();
   await expect(row.getByRole("link", { name: "补齐资料", exact: true })).toBeVisible();
-  // 断点切换会让 PageLayout 重挂载（wide/mid/narrow 三套 DOM），等一帧再量。
-  await page.waitForTimeout(100);
   return measureRow(row);
 }
 
