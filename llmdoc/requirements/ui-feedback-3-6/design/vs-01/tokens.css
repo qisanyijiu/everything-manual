@@ -1,0 +1,109 @@
+/* 万物说明书 · 设计变量 v1（VS-01 冻结，2026-10-04）
+ *
+ * 权威来源：llmdoc/requirements/ui-feedback-3-6/visual-style-prd.md §6.1（修订 1，VS-01 样页校正）。
+ * 用途：VS-02 起由 apps/web/src/theme.css 引用（可直接内联本 :root 块），
+ *       新导出独立 HTML 阅读器复用同一组取值；样页 design/vs-01/*.html 全部只引用本文件。
+ * 约束：不引入网络字体、位图或第三方资源；数值变更须同步 PRD §6.1、§9 与验收截图。
+ * 命名：--color-* 颜色 / --font-* 字体 / --space-* 间距 / --radius-* 圆角 /
+ *       --control-* 控件尺寸 / --focus-* 焦点 / --duration-* 过渡 / --layout-* 版面。
+ */
+:root {
+  /* —— 纸面与正文（PRD §6.1 第 1 行）—— */
+  --color-paper: #F4F1E8;            /* 页面底色 */
+  --color-surface: #FFFEF9;          /* 内容面板底色 */
+  --color-ink: #232620;              /* 主文字（墨色） */
+  --color-ink-muted: #62665D;        /* 辅助字；内容底约 5.8:1，页面底约 5.2:1（静态计算） */
+  --color-ink-on-accent: #FFFFFF;    /* 主操作实底上的文字 */
+
+  /* —— 强调与状态（PRD §6.1 第 2 行）—— */
+  --color-accent: #A63F21;           /* 主操作实底 / 链接 / 焦点环 */
+  --color-accent-hover: #8F3518;     /* 悬停 */
+  --color-accent-active: #7A2C12;    /* 按下 */
+  --color-selected: #EEE2CF;         /* 选中背景（配墨色文字） */
+  --color-success: #2F6248;
+  --color-warning: #805D12;
+  --color-danger: #A12F2F;
+  --color-success-soft: #E9EFE6;     /* 状态徽标软底（可选，不单独承载含义） */
+  --color-warning-soft: #F4E8D2;
+  --color-danger-soft: #F6E3DE;
+
+  /* —— 线与网格（PRD §6.1 第 3 行）—— */
+  --color-line: #D5D1C5;             /* 装饰分隔，1px 实线 */
+  --color-line-control: #7D8176;     /* 交互控件边界；内容底约 3.9:1（静态计算） */
+  --color-grid-line: rgba(35, 38, 32, 0.06); /* 低对比网格线（墨色 6%） */
+  --grid-size: 24px;                 /* 限量用于模型空白区 / 章节装饰区 */
+  --border-width: 1px;
+
+  /* —— 中性填充（悬停 / 禁用 / 次级底）—— */
+  --color-surface-hover: #F0EDE2;
+  --color-surface-soft: #EDEAE0;     /* 禁用底：不整体降透明度，文字保持可读 */
+
+  /* —— 字体（PRD §6.1 第 4 行；全部系统本地字体，不远程加载）—— */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --letter-spacing-label: 0.14em;    /* 全大写英文眉题 */
+
+  /* —— 文字层级（PRD §6.1 第 5 行；信息性文字下限 12/18px）—— */
+  --font-size-page-title: 28px;      --line-height-page-title: 36px;  /* 手机 24/32，见下方媒体查询 */
+  --font-size-section: 18px;         --line-height-section: 26px;
+  --font-size-body: 14px;            --line-height-body: 22px;
+  --font-size-reading: 16px;         --line-height-reading: 26px;     /* 说明书正文（阅读器长文） */
+  --font-size-aux: 12px;             --line-height-aux: 18px;         /* 辅助字 / 编号 / 徽标下限 */
+
+  /* —— 布局（PRD §6.1 第 6 行）—— */
+  --space-base: 8px;                 /* 8px 主间距系统，4px 微调 */
+  --space-micro: 4px;
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+  --layout-content-max: 1440px;
+  --layout-measure: 72ch;            /* 说明正文推荐字宽上限 */
+  --layout-grid-columns-desktop: 12;
+  --layout-grid-gutter: 24px;
+  --layout-grid-columns-mobile: 4;
+  --layout-margin-mobile: 16px;
+  --layout-nav-width: 232px;         /* 结构建议值（非冻结 AC 项），VS-02 可调 */
+
+  /* —— 组件形状（PRD §6.1 第 7 行）—— */
+  --radius-panel: 2px;
+  --radius-control: 4px;
+  --radius-plate: 2px;               /* 矩形编号牌，非胶囊 */
+  --radius-full: 999px;              /* 仅语义圆形：头像、3D 热点编号 */
+  --shadow-overlay: 0 8px 28px rgba(35, 38, 32, 0.16); /* 仅浮层一层轻阴影 */
+
+  /* —— 操作反馈（PRD §6.1 第 8 行）—— */
+  --control-height: 40px;            /* 桌面按钮 / 输入默认高度 */
+  --control-height-touch: 44px;      /* 窄屏（<768px）全部可点击元素的最小触控高度 */
+  --control-height-compact: 32px;    /* 桌面阅读器工具条等紧凑次要按钮；窄屏回到 44px */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 3px;
+  --focus-ring-color: var(--color-accent);
+  --focus-ring-color-inverse: #F4F1E8; /* 深色浮层上的等效焦点环 */
+  --duration-quick: 120ms;
+  --duration-control: 140ms;         /* 冻结取值（PRD 范围 120～180ms） */
+  --duration-panel: 180ms;
+  --ease-standard: ease;
+}
+
+/* 手机页标题（PRD §6.1 第 5 行：24/32px） */
+@media (max-width: 767px) {
+  :root {
+    --font-size-page-title: 24px;
+    --line-height-page-title: 32px;
+  }
+}
+
+/* 减少动效：把时长降为 0（组件过渡必须使用 --duration-* 记号才能生效） */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-quick: 0ms;
+    --duration-control: 0ms;
+    --duration-panel: 0ms;
+  }
+}

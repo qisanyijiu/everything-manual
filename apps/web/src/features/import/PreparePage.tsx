@@ -43,6 +43,7 @@ export function PreparePage() {
   const document = all.find((entry) => entry.id === selectedId) ?? null;
   return <PageLayout><section className="page prepare-page" aria-labelledby="prepare-title">
     <WizardSteps currentSegment="import/prepare" itemId={itemId} />
+    <p className="eyebrow">DOCUMENT PREPARATION</p>
     <h1 id="prepare-title">准备说明书资料</h1>
     <p className="page__lead">{item.data?.data.name ?? "物品"}：把原件整理为可核对的逐页资料。此步骤不调用生成服务。</p>
     {summary.isError && <p role="alert">处理状态暂不可用。<button type="button" onClick={() => void summary.refetch()}>重新读取处理状态</button></p>}

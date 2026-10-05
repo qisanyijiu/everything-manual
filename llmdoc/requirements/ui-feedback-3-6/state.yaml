@@ -1,0 +1,141 @@
+work_id: ui-feedback-3-6
+updated_at: "2026-10-05"
+phase: done
+request_revision: 1
+prd_revision: 1
+ui_revision: 1
+prd_index: "llmdoc/requirements/ui-feedback-3-6/prd.md"
+prd_files:
+  - "llmdoc/requirements/ui-feedback-3-6/visual-style-prd.md"
+  - "llmdoc/requirements/ui-feedback-3-6/community-incentives-prd.md"
+plan: "llmdoc/implementation-plan.md#6-ui-反馈第-3-和第-6-项待办"
+scope_changes:
+  - date: "2026-10-04"
+    change: "用户决定：社区与激励（CI-00～CI-06）本轮不实施；只继续视觉流 VS-01～VS-05，全部完成后通知用户。"
+    impact: "社区任务从 pending_tasks 移除，streams.community_incentives 置 cancelled；PRD 与设计文档保留；未经用户重新授权不恢复派发。"
+external_streams:
+  - name: "viewer-interactive（用户并行写入流，非本流程派发）"
+    files: "apps/web/src/features/viewer/**、apps/web/src/features/standalone/**（含 PartsExplorer、part-inspection、PartsFullscreen 等；测试全通过）"
+    impact: "VS-03 已在其之上实施且未回退；VS-04/05均已接受，最终发行源bb88保留该并行流的已授权实现。"
+current_tasks: []
+pending_tasks: []
+accepted_tasks:
+  - task_id: VS-05
+    prd_revision: 1
+    qa_round: 6
+    report: "llmdoc/requirements/ui-feedback-3-6/vs05-qa-report.md"
+    accepted_ac_ids: [AC-VS-001, AC-VS-002, AC-VS-003, AC-VS-004, AC-VS-005, AC-VS-006, AC-VS-007, AC-VS-008, AC-VS-009, AC-VS-010, AC-VS-011, AC-VS-012]
+    status: accepted
+    note: "46项独立接受用例、全部12AC、工程/正式运行/包装修订2独立审计PASS；签署2026-10-05T03:39:26+08:00；未执行公网部署"
+  - task_id: VS-04
+    prd_revision: 1
+    qa_round: 5
+    report: "llmdoc/requirements/ui-feedback-3-6/vs04-qa-report.md"
+    accepted_ac_ids: [AC-VS-007, AC-VS-008, AC-VS-009, AC-VS-010]
+    status: accepted
+  # VS-01 为设计门禁：卡级验收=设计基线交付+UI 修订冻结，非运行验收；AC-VS-001/002/012 的独立 QA 由 VS-05 覆盖
+  - task_id: VS-01
+    prd_revision: 1
+    qa_round: null
+    report: "llmdoc/requirements/ui-feedback-3-6/design/vs-01/README.md"
+    accepted_ac_ids: []
+    status: accepted
+  - task_id: VS-02
+    prd_revision: 1
+    qa_round: 2
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-2"
+    accepted_ac_ids: [AC-VS-001, AC-VS-002, AC-VS-003, AC-VS-004, AC-VS-009, AC-VS-010]
+    status: accepted
+  - task_id: VS-03
+    prd_revision: 1
+    qa_round: 3
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-3vs-03-切片验收"
+    accepted_ac_ids: [AC-VS-005, AC-VS-006, AC-VS-008, AC-VS-009, AC-VS-010, AC-VS-011]
+    status: accepted
+    note: "0缺陷；N-VS03-1/2/3/5由VS-05修复或准确复验关闭，N-VS03-4中性热点牌按冻结可选软底合同保留，非阻断"
+qa_history:
+  - round: 4
+    scope: "VS-04 切片首次验收"
+    task_ids: [VS-04]
+    prd_revision: 1
+    result: FAIL
+    report: "llmdoc/requirements/ui-feedback-3-6/vs04-qa-report.md"
+    note: "32项业务PASS；真实四宽度测量发现两个移动尺寸缺陷 BUG-VS04-001/002"
+  - round: 5
+    scope: "VS-04 返工1独立复验"
+    task_ids: [VS-04]
+    prd_revision: 1
+    result: PASS
+    report: "llmdoc/requirements/ui-feedback-3-6/vs04-qa-report.md"
+    note: "52/52页面宽度状态、真实200%、键盘、11近邻与显式部分成功通过；两缺陷关闭"
+  - round: 1
+    scope: "VS-02 slice（AC-VS-001/002/003/004/009/010）"
+    task_ids: [VS-02]
+    prd_revision: 1
+    result: FAIL
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-1"
+    note: "仅 AC-VS-003 的 aria-current 子项失败；其余必选 AC 全通过"
+  - round: 2
+    scope: "BUG-VS02-001 复验 + AC-VS-003 复核"
+    task_ids: [VS-02]
+    prd_revision: 1
+    result: PASS
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-2"
+    note: "BUG-VS02-001 CLOSED；五路由 aria 矩阵全绿；lint/typecheck exit 0，vitest 48 文件/322 用例"
+  - round: 3
+    scope: "VS-03 slice（AC-VS-005/006/008 片内/009/010/011 + VS-02 回归）"
+    task_ids: [VS-03]
+    prd_revision: 1
+    result: PASS
+    report: "llmdoc/requirements/ui-feedback-3-6/visual-qa-report.md#回合-3vs-03-切片验收"
+    note: "QA 自编 11/11；vitest 50 文件/336；gzip 136,732 B（+335 B）；历史哈希不变；非阻断 5 条"
+  - round: 6
+    scope: "VS-05全部12AC及最终bb88正式发行/包装修订2"
+    task_ids: [VS-05]
+    prd_revision: 1
+    result: PASS
+    report: "llmdoc/requirements/ui-feedback-3-6/vs05-qa-report.md"
+    note: "46去重独立接受（45严格实现映射+1正式HTTPS Chrome）；141普通E2E、672Rust/336前端、Mac原生/Linux正式运行、35成员/34SHA及镜像导入/非root前置/独立归档审计全部闭环；原失败和中间包装保留"
+qa_round: 6
+qa_scope: "VS-05全部12AC与最终生产发行门禁；最终bb88来源，包装修订2全部独立验收PASS"
+qa_result: PASS
+open_defects: []
+blocked_reason: null
+resume_phase: null
+blocked_on: null
+unblock_condition: null
+document_delivery: complete
+implementation_started: true
+coordination_owner: "codex_current_chat"
+coordination_handoff: "llmdoc/requirements/ui-feedback-3-6/codex-handoff-2026-10-05.md"
+coordination_note: "Claude在VS-03 QA3 PASS后被中断，未实际派发VS-04；Codex接手并完成VS-04/05，已有规划/共享交接已更新。直接终端消息受限，回执未确认；恢复此需求先读done状态，不重复实施。"
+streams:
+  visual_style:
+    priority: P1
+    prd_revision: 1
+    ui_revision: 1
+    next_task: null
+    status: done
+  community_incentives:
+    priority: P2
+    prd_revision: 1
+    ui_revision: 0
+    next_task: null
+    status: cancelled_by_user_2026-10-04
+verification_gates:
+  source_inventory_sha256: "bb88c81f209e3b6dbac1dba1b9a2f9f65ed5c2d69396bcb1c9dd30624cc07a49"
+  source_manifest: "var/ui-feedback-3-6-vs05-qa/release-source-final-manifest.json"
+  visual_ac001_011: "独立45项、72组AFTER、52装饰扫描PASS；431实现/fixture/锁/合同逐字节不变，新源映射PASS"
+  visual_all_ac: "QA6全部12AC PASS，46去重独立接受；机器签署var/ui-feedback-3-6-vs05-qa/final/signature.json；591文件零漂移"
+  macos_arm64: "最终bb88 v3 PASS：正式重链接一致、双完整七步/真实OS沙箱/真实无子进程、归档7文件SHA校验"
+  engineering_check: "最终bb88完整check PASS：672 Rust/10 ignored、50文件336前端、fmt/clippy/lint/typecheck/合同一致性；591主源零漂移"
+  ordinary_browser_first_run: "136 PASS / 3 FAIL / 2未运行：旧阅读器提示断言、通知关闭测量前置、切宽时下载等待布局；原失败保留，独立诊断及最终完整141补验已关闭"
+  ordinary_browser_final: "最终bb88完整141/141 PASS、0失败/跳过/重跑；三项原失败与两未执行均关闭，591主源/快照零漂移"
+  linux_validation_first_run: "334/336前端PASS；同源workers1全336及完整工程门禁PASS；原失败保留，正式Dockerfile ENV1的最终bb88全量复验PASS"
+  linux_runtime: "最终bb88正式validation 671 Rust/336前端与dist336前端PASS；静态musl/正式image+binary SHA、networknone完整七步PASS"
+  docker_operations: "实际六阶段/9份HTTP报告661断言PASS；providerRequests=1为自有TLS fixture且paidRequests=0；恢复/重启/加密配置/秘密清理通过"
+  linux_https_and_package: "包装修订2 PASS：TLS216/正式Chrome1/镜像save-load/35文件34SHA/23blob15层/非root目标机前置/外层归档独立审计；Engine29.8.2 containerd为实际验收范围"
+  final_linux_package: "var/ui-feedback-3-6-vs05-qa/linux-release-final-20261005/revision-2/everything-manual-linux-amd64-production-vs05.tar.gz"
+  final_linux_package_sha256: "47d38665d38ea06de0f3f46ff705744f86433e5538e9e42d2d40606c6aa13e64"
+  production_delivery: "llmdoc/requirements/ui-feedback-3-6/production-delivery-2026-10-05.md"
+next_action: "本轮视觉VS-01～05全部完成，社区仍为用户取消范围。部署管理员按最终包装修订2先完成目标机导入身份/非root执行前置，准备实际HTTPS域名/证书/私有口令/主密钥后依README部署；本轮未公网部署。后续代码改动须新冻结并重新验受影响门禁，不重派已完成卡。"

@@ -9,7 +9,7 @@ import { useWorkProtection } from "./work-protection";
  * 任务计数使用全库有界汇总，失败不以0替代；本地倒计时不增加请求。
  */
 
-import { Link, NavLink, Outlet, useLocation, useMatch, useNavigate } from "react-router";
+import { Link, Outlet, useLocation, useMatch, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { describeError } from "../../api/client";
@@ -30,6 +30,18 @@ export function AppShell() {
   const exactItemMatch = useMatch("/items/:itemId");
   const nestedItemMatch = useMatch("/items/:itemId/*");
   const itemId = exactItemMatch?.params.itemId ?? nestedItemMatch?.params.itemId;
+
+  /**
+   * 侧栏选中判定（component-states.md §1「选中」冻结态）：视觉类名与 `aria-current="page"`
+   * 必须由**同一布尔**驱动。不用 `NavLink` 的原因：react-router v7 的 `aria-current` 由
+   * NavLink 自身 `isActive` 门控（传入值仅在内部 isActive 为真时生效），无法表达「资料库在
+   * 物品相关路由保持选中」（BUG-VS02-001 根因）；这里按路由表统一判定三个导航项。
+   */
+  const pathname = location.pathname;
+  const inRouteFamily = (base: string): boolean => pathname === base || pathname.startsWith(`${base}/`);
+  const libraryActive = pathname === "/" || inRouteFamily("/items");
+  const jobsActive = inRouteFamily("/jobs");
+  const settingsActive = inRouteFamily("/settings");
 
   const itemQuery = useQuery({
     queryKey: itemKeys.detail(itemId ?? ""),
@@ -60,9 +72,9 @@ export function AppShell() {
         </Link>
         <p className="sidebar-label">我的工作空间</p>
         <nav className="sidebar-nav" aria-label="主导航">
-          <NavLink to="/" end className={({ isActive }) => isActive || location.pathname.startsWith("/items") ? "active" : ""}><Icon name="grid" /><span>资料库</span></NavLink>
-          <NavLink to="/jobs"><Icon name="activity" /><span>任务中心</span></NavLink>
-          <NavLink to="/settings"><Icon name="settings" /><span>设置</span></NavLink>
+          <Link to="/" className={libraryActive ? "active" : undefined} aria-current={libraryActive ? "page" : undefined}><Icon name="grid" /><span>资料库</span></Link>
+          <Link to="/jobs" className={jobsActive ? "active" : undefined} aria-current={jobsActive ? "page" : undefined}><Icon name="activity" /><span>任务中心</span></Link>
+          <Link to="/settings" className={settingsActive ? "active" : undefined} aria-current={settingsActive ? "page" : undefined}><Icon name="settings" /><span>设置</span></Link>
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-note"><Icon name="shield" size={22} /><p>你的物品，你的资料。<small>自托管 · 本地保存</small></p></div>

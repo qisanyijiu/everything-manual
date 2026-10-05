@@ -3,6 +3,10 @@
 面向部署「万物说明书」单二进制的管理员。命令合同与验收标准见
 [llmdoc/validation-release.md](../llmdoc/validation-release.md)；本文件只讲**怎么用**。
 
+本机统一预览使用 `bash scripts/start-project.sh`，Docker使用同一脚本加 `--docker`，
+均从 `var/preview/data` 打开资料库。当前Docker部署、秘密文件与本轮Linux状态见
+[Docker部署](docker.md)；本页保留单二进制的通用运维命令。
+
 ## 1. 取得产物与校验
 
 发布产物在构建机 `dist/<target>/` 下（由 `cargo xtask dist --target <target>` 生成）：
@@ -24,13 +28,14 @@ sha256sum -c SHA256SUMS         # Linux
 
 | 平台 | 状态 | 证据 |
 | --- | --- | --- |
-| macOS Apple Silicon（`aarch64-apple-darwin`） | 已构建并自证（原生构建 + 可复现哈希 + 冷目录 smoke 7 步 + 断网复检）；**尚未经独立 QA 验收** | `cargo xtask dist --target aarch64-apple-darwin`（本地 `dist/` 已按用户要求清理，可由该命令重建，哈希可复现） |
-| Linux x86_64 静态（`x86_64-unknown-linux-musl`） | 已构建并自证（Linux 容器内原生 `dist` + 原生 `smoke` 7 步 + `--network none` 整条 smoke + 静态链接与 0 动态依赖）；**尚未经独立 QA 验收** | `scripts/linux-musl.sh --arch amd64`、`scripts/linux-musl.sh --offline-only`；证据 `artifacts/web-mvp/t22-rd/linux/`，摘要见 [implementation §T22](../llmdoc/requirements/web-mvp/implementation.md) |
+| macOS Apple Silicon（`aarch64-apple-darwin`） | 2026-10-04当前master已原生构建、两次重链接哈希一致、冷目录七步检查及Nikon真实Chrome流程通过；未签名/公证 | [2026-10-04交付验收](../llmdoc/requirements/standalone-3d-viewer/delivery-2026-10-04.md) |
+| Linux AMD64 ABI（`x86_64-unknown-linux-musl`） | 当前工作树镜像构建、完整工程检查（Rust671/前端311）、Compose647项HTTP断言、整条断网七步检查及Chrome复核通过；ARM虚拟机经Rosetta运行 | [本轮Docker/Linux交付记录](../llmdoc/requirements/standalone-3d-viewer/docker-delivery-2026-10-04.md) |
+| 物理Linux x86服务器 / 原生Linux ARM64 | 本轮未验证；不从AMD64 ABI模拟执行结果推定这些环境已通过 | — |
 | Windows / Intel macOS | **未支持**（未构建、未运行） | — |
 
 按 `validation-release.md` §6：**未跑平台不得贴支持标签**。
 
-Linux 侧复现（Apple Silicon 宿主上跑 x86_64 容器，Rosetta 执行）需要 Docker：
+历史musl构建脚本仍可复现；需要可用Docker，不属于当前统一预览的启动入口：
 
 ```sh
 scripts/linux-musl.sh --arch amd64          # 复制工作树 → 容器内原生 dist + file/ldd + smoke 7 步
@@ -58,6 +63,12 @@ Mach-O 使用临时（ad-hoc）签名；代码更新会改变其身份，即使�
 钥匙串仍可能把新版当作新的访问者。保留同一份已授权的二进制并重启，通常无需再次
 确认。不要为消除弹窗而将主密钥改为网页登录密码、写入仓库/数据目录，或开放该
 钥匙串条目给所有应用。
+
+仅迭代前端时，可运行 `bash scripts/start-project.sh --source-ui`：保留固定后端的代码身份，
+用本地 Vite 展示当前前端，默认地址为 `127.0.0.1:5173`，代理到本机后端 `8080`。
+脚本记住此偏好，之后仍只用 `bash scripts/start-project.sh`；`--status` 显示两者，
+`--stop` 停两者，`--embedded-ui` 清偏好并回到内嵌页面。源码模式需已安装前端依赖，
+不导出密钥、不修改钥匙串权限。它适用于本机预览；正式发行仍使用内嵌前端。
 
 长期在本机迭代时，可以由所有者**先准备一个现有的 macOS 代码签名身份**，再将每次
 预览构建签成相同的身份和固定标识。仓库提供可选的
@@ -158,7 +169,7 @@ mkdir -p /srv/manual-data            # 数据目录：独立、可写、随备�
 ## 6. 离线与外部服务
 
 - 外部 AI（Tripo / 说明书 AI）未配置或不可达时：已有物品、部件、步骤、原文页图与本地 PDF
-  仍可完整读取；`/health/ready` 不因云端不可达失败；生成与报价返回 409「供应商未配置」，
+  仍可完整读取；`/api/v1/health/ready` 不因云端不可达失败；生成与报价返回 409「供应商未配置」，
   **不会**回退到 mock 或假成功。
 - 服务停止则网站不可用——这是部署边界，不是离线 PWA 能力。
 - 供应商关停或密钥撤销后，历史说明书仍本地可读。
@@ -195,9 +206,8 @@ mkdir -p /srv/manual-data            # 数据目录：独立、可写、随备�
   资源/路由 → Range/HEAD/未配置拒绝 → 断网读取 → 重启持久化 → backup→restore 再读）；
   这是**发布包检查**，与 T01 的 `smoke-bootstrap` 不同。
   样例备份不在仓库里完整存在时，先按 §1 的 `--prepare-sample-backup` 重新生成。
-- Linux 侧（Apple Silicon / 任意宿主）：见 §1 的 `scripts/linux-musl.sh` 三条命令；
-  容器内是**原生 Linux x86_64 构建与运行**（`file` 结论为 `static-pie linked`、`ldd` 为
-  `statically linked`、`DT_NEEDED` 为 0），离线读取证据由 `--network none` 整条 smoke 提供。
+- Linux侧当前Docker部署与验证以 [Docker文档](docker.md) 的实际记录为准；
+  §1的musl脚本及历史静态链接结果可作复现参考，不能代替当前master构建/运行验收。
 - CI：`.github/workflows/ci.yml`（推送到 master / PR 触发）跑 `cargo xtask check`，并在
   `dist-musl` job 中原生构建 Linux musl 产物与 smoke（该 job 会先用 T20 造数用例重建样例备份，
   因为 `*.sqlite3` 不入库）。CI **未**覆盖浏览器矩阵（Firefox/Edge）、macOS 构建与

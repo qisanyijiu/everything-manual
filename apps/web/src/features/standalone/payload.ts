@@ -69,6 +69,8 @@ export interface StandalonePayload {
   readonly hotspots: readonly StandaloneHotspot[];
   /** 交互层（ADR-042）：有值时内嵌的 GLB 是分件模型（与热点同一坐标系）。 */
   readonly interactive: {
+    /** 全部分件编号；不要求与说明书部件建立语义绑定。旧载荷可省略。 */
+    readonly nodeNames?: readonly string[];
     readonly bindings: readonly { readonly partId: string; readonly nodes: readonly string[] }[];
     readonly actions: readonly import("../viewer/interactive-view").ModelActionView[];
     readonly poses: readonly import("../viewer/interactive-view").ModelPoseView[];

@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VS-01 样页 C · 上传 / 准备 / 确认 / 任务 / 设置表单（万物说明书）</title>
+<!-- 自包含静态样页：仅引用同目录 tokens.css；无脚本、无网络字体、无外链图片、无 CDN。 -->
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* 样页脚手架：颜色 / 字号 / 圆角 / 焦点 / 过渡一律引用 tokens.css 变量；
+   个别演示用尺寸（如缩略图高度）不属于设计参数。 */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--font-size-body); line-height: var(--line-height-body); }
+.mono { font-family: var(--font-mono); }
+.mono-sm { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
+.icon { flex: 0 0 auto; vertical-align: middle; }
+h1 { font-size: var(--font-size-page-title); line-height: var(--line-height-page-title); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-xs); }
+h2 { font-size: var(--font-size-section); line-height: var(--line-height-section); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-xs); }
+h3 { font-size: var(--font-size-body); line-height: var(--line-height-body); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-micro); }
+p { margin: 0 0 var(--space-xs); }
+.spec-head { max-width: var(--layout-content-max); margin: 0 auto; padding: var(--space-xl) var(--space-md) var(--space-lg); border-bottom: 1px solid var(--color-line); }
+.spec-kicker { font-family: var(--font-mono); font-size: var(--font-size-aux); letter-spacing: var(--letter-spacing-label); color: var(--color-ink-muted); margin: 0 0 var(--space-xs); text-transform: uppercase; }
+.note { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); max-width: var(--layout-measure); }
+.token-note { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+.spec { max-width: var(--layout-content-max); margin: 0 auto; padding: 0 var(--space-md); }
+.spec > section { padding-top: var(--space-lg); margin-bottom: var(--space-lg); }
+.sec-head { display: flex; align-items: baseline; gap: var(--space-sm); margin-bottom: var(--space-xs); }
+.sid { font-family: var(--font-mono); font-size: var(--font-size-aux); color: var(--color-accent); letter-spacing: 0.08em; }
+.sec-head h2 { margin: 0; }
+.sec-note { margin: 0 0 var(--space-sm); }
+
+/* —— 按钮（默认 / 悬停 / 焦点 / 禁用 / 进行中）—— */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--control-height); padding: 0 var(--space-sm); border: 1px solid var(--color-line-control); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); font: inherit; font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; transition: background var(--duration-control) var(--ease-standard), border-color var(--duration-control) var(--ease-standard), color var(--duration-control) var(--ease-standard); }
+.btn--primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-ink-on-accent); }
+.btn--primary.is-hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
+.btn--primary.is-active { background: var(--color-accent-active); border-color: var(--color-accent-active); }
+.btn.is-focus { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.btn.is-disabled, .btn:disabled { background: var(--color-surface-soft); border-color: var(--color-line); color: var(--color-ink-muted); cursor: not-allowed; }
+.btn.is-busy { background: var(--color-accent-hover); border-color: var(--color-accent-hover); color: var(--color-ink-on-accent); cursor: progress; }
+.btn--link { min-height: var(--control-height-touch); padding: 0; border: 0; background: none; color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; font-weight: var(--font-weight-regular); }
+.state-strip { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }
+.state-cell { display: grid; gap: var(--space-micro); justify-items: start; }
+
+/* —— 面板 / 表单 —— */
+.panel { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-md); margin-bottom: var(--space-sm); }
+.form { max-width: 720px; }
+.form-section { border: 0; margin: 0 0 var(--space-md); padding: 0; }
+.form-section > legend { font-family: var(--font-mono); font-size: var(--font-size-aux); letter-spacing: 0.08em; color: var(--color-ink-muted); padding: 0 0 var(--space-micro); }
+.field { margin-bottom: var(--space-sm); }
+.field > label { display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--space-micro); }
+.field input[type="text"], .field input[type="password"], .field input[type="url"], .field select, .field textarea { width: 100%; min-height: var(--control-height); padding: 8px 12px; border: 1px solid var(--color-line-control); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: var(--font-size-body); }
+.field input.is-focus, .field select.is-focus { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); border-color: var(--color-accent); }
+.field.is-error input { border-color: var(--color-danger); }
+.field-hint { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.field-error { color: var(--color-danger); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.field-warning { color: var(--color-warning); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.form-errors { border: 1px solid var(--color-danger); border-left-width: 4px; border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); }
+.form-errors h2 { margin: 0 0 var(--space-micro); }
+.form-errors ul { margin: 0; padding-left: 1.2em; }
+.req { color: var(--color-danger); }
+.form-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; margin-top: var(--space-sm); }
+.check-row { display: flex; align-items: flex-start; gap: var(--space-xs); min-height: var(--control-height-touch); padding: var(--space-xs) 0; }
+.check-row input { flex: 0 0 auto; width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--color-accent); }
+.error-panel { border: 1px solid var(--color-danger); border-left-width: 4px; border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); }
+.error-panel--warning { border-color: var(--color-warning); }
+.notice-inline { border: 1px solid var(--color-line); border-left: 4px solid var(--color-accent); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-xs) var(--space-sm); margin: 0 0 var(--space-sm); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.notice-inline--warning { border-left-color: var(--color-warning); }
+
+/* —— 向导步骤 —— */
+.wizard { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); margin: 0; padding: 0 0 var(--space-sm); border-bottom: 1px solid var(--color-line); counter-reset: wiz; }
+.wizard li { display: flex; align-items: center; gap: var(--space-xs); counter-increment: wiz; }
+.wizard li::before { content: counter(wiz, decimal-leading-zero); font-family: var(--font-mono); font-size: var(--font-size-aux); color: var(--color-ink-muted); }
+.wizard .current { font-weight: var(--font-weight-semibold); color: var(--color-accent); }
+.wizard .state { font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+.wizard .state--done { color: var(--color-success); }
+.wizard .state--review { color: var(--color-warning); }
+.wizard-nav { display: flex; flex-wrap: wrap; gap: var(--space-xs); justify-content: space-between; align-items: center; margin-top: var(--space-sm); }
+.wizard-nav__reason { display: block; max-width: 52ch; color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+
+/* —— 上传卡 / 视图槽 —— */
+.upload-card { border: 1px dashed var(--color-line-control); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-md); margin-bottom: var(--space-sm); }
+.upload-card .file-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-sm); }
+.slot { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-sm); }
+.slot .slot-title { font-weight: var(--font-weight-medium); }
+.slot .slot-thumb { height: 88px; border: 1px dashed var(--color-line-control); border-radius: var(--radius-plate); display: grid; place-items: center; color: var(--color-ink-muted); font-size: var(--font-size-aux); margin: var(--space-xs) 0; background: var(--color-paper); }
+.slot .btn { width: 100%; min-height: var(--control-height-touch); }
+.plate { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border: 1px solid var(--color-line); border-radius: var(--radius-plate); background: var(--color-surface); color: var(--color-ink); font-size: var(--font-size-aux); line-height: var(--line-height-aux); white-space: nowrap; }
+.plate--success { color: var(--color-success); background: var(--color-success-soft); }
+.plate--warning { color: var(--color-warning); background: var(--color-warning-soft); }
+.plate--danger { color: var(--color-danger); background: var(--color-danger-soft); }
+.candidate-bar { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; border: 1px dashed var(--color-accent); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-xs) var(--space-sm); margin-bottom: var(--space-sm); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.progress { width: 100%; height: 12px; accent-color: var(--color-accent); }
+.page-chips { display: flex; flex-wrap: wrap; gap: var(--space-micro); }
+.page-chip { min-width: 28px; min-height: 28px; display: inline-grid; place-items: center; border: 1px solid var(--color-line); border-radius: var(--radius-plate); font-family: var(--font-mono); font-size: var(--font-size-aux); }
+.page-chip--missing { border-color: var(--color-warning); color: var(--color-warning); }
+
+/* —— 金额 / 范围 / 状态徽标 —— */
+.amount-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); margin: 0 0 var(--space-sm); }
+.amount-list > div { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-paper); padding: var(--space-sm); }
+.amount-list dt { color: var(--color-ink-muted); font-size: var(--font-size-aux); }
+.amount-list dd { margin: var(--space-micro) 0 0; font-family: var(--font-mono); font-size: 18px; }
+.amount-list .secondary { font-size: var(--font-size-aux); color: var(--color-ink-muted); font-family: var(--font-sans); }
+.scope-list { margin: 0 0 var(--space-sm); padding-left: 1.2em; }
+.scope-list li { margin-bottom: var(--space-micro); }
+.status-tag { display: inline-flex; align-items: center; gap: var(--space-xs); border: 1px solid var(--color-line); border-radius: var(--radius-plate); padding: 1px 8px; font-size: var(--font-size-aux); line-height: var(--line-height-aux); background: var(--color-surface); }
+.status-tag::before { content: ""; width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--color-line-control); }
+.status-tag--done::before { background: var(--color-success); }
+.status-tag--failed::before { background: var(--color-danger); }
+.status-tag--unknown::before { background: var(--color-warning); }
+.status-tag--manual::before { background: var(--color-accent); }
+.stage-list { list-style: none; margin: 0; padding: 0; }
+.stage-list li { display: grid; grid-template-columns: minmax(150px, 1.2fr) minmax(120px, 1fr) minmax(160px, 1.4fr); gap: var(--space-sm); padding: var(--space-xs) 0; border-bottom: 1px solid var(--color-line); align-items: center; }
+.stage-list li:last-child { border-bottom: 0; }
+.stage-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.dialog { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); box-shadow: var(--shadow-overlay); padding: var(--space-md); max-width: 440px; }
+.dialog h3 { margin-top: 0; }
+.bottom-bar { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-xs) var(--space-sm); display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
+.bottom-bar .btn { min-height: var(--control-height-touch); }
+.narrow-frame { width: 375px; max-width: 100%; border: 1px dashed var(--color-line-control); border-radius: var(--radius-panel); padding: var(--space-sm); background: var(--color-surface); }
+footer.spec-foot { max-width: var(--layout-content-max); margin: var(--space-lg) auto 0; padding: var(--space-md); border-top: 1px solid var(--color-line); }
+</style>
+</head>
+<body>
+
+<header class="spec-head">
+  <p class="spec-kicker">VS-01 Design Baseline · Specimen C</p>
+  <h1>上传 / 准备 / 确认 / 任务 / 设置表单</h1>
+  <p class="note">静态样页：展示向导与表单类页面的规格 v1 形态。覆盖 AC-VS-001/002、AC-VS-007（上传失败、报价过期、确认未完成、提交未知）、AC-VS-008（未保存保护、冲突、发布显式确认、密钥不回显）、AC-VS-010（窄屏底栏不遮挡）。所有金额、费用与状态为示意；未知/待处理绝不显示为完成。数据为示意内容。</p>
+</header>
+
+<main class="spec">
+
+<section id="F-S1">
+  <div class="sec-head"><span class="sid">F-S1</span><h2>向导步骤条（五步固定；状态由服务端摘要给出）</h2></div>
+  <p class="note sec-note">已完成 / 当前 / 待补充 / 需重新检查 / 状态未读取五种标签；可导航步骤是链接（键盘可达），不可用步骤是文字并说明原因，不用死链接假装可点。</p>
+  <div class="panel">
+    <ol class="wizard" aria-label="新建向导步骤（静态示意）">
+      <li><a href="#F-S1">基本信息</a><span class="state state--done">已完成</span></li>
+      <li><a href="#F-S1">说明书</a><span class="state state--done">已完成</span></li>
+      <li><a href="#F-S1">视图排列</a><span class="state state--done">已完成</span></li>
+      <li><a href="#F-S1">准备</a><span class="state state--review">需重新检查</span></li>
+      <li class="current"><span aria-current="step">预算/隐私确认</span><span class="state">当前步骤</span></li>
+    </ol>
+    <div class="wizard-nav">
+      <a class="btn" href="#F-S1">上一步：准备</a>
+      <span>
+        <button type="button" class="btn btn--primary is-disabled" disabled aria-describedby="wiz-reason">下一步：不可用</button>
+        <span class="wizard-nav__reason" id="wiz-reason">前置未满足时按钮可见并禁用，原因常驻在按钮旁，不用悬停提示。</span>
+      </span>
+    </div>
+  </div>
+</section>
+
+<section id="F-S2">
+  <div class="sec-head"><span class="sid">F-S2</span><h2>新建物品：同宽分节表单、错误摘要与字段级错误</h2></div>
+  <p class="note sec-note">分区用编号与单列表单；错误同时出现在顶部摘要与字段旁，摘要可聚焦朗读。未知提交结果不自动重试，先核对。</p>
+  <div class="panel">
+    <div class="form-errors" role="alert" tabindex="-1">
+      <h2>请修正以下 2 处内容</h2>
+      <ul>
+        <li><a href="#f-name">名称：不能为空</a></li>
+        <li><a href="#f-model">准确型号：包含无法保存的字符</a></li>
+      </ul>
+    </div>
+    <form class="form">
+      <fieldset class="form-section">
+        <legend>PART 01 / 基本信息</legend>
+        <div class="field is-error">
+          <label for="f-name">名称 <span class="req" aria-hidden="true">*</span></label>
+          <input id="f-name" type="text" value="" aria-invalid="true" aria-describedby="f-name-err" style="border-color:var(--color-danger)">
+          <p class="field-error" id="f-name-err">不能为空（必填）。</p>
+        </div>
+        <div class="field">
+          <label for="f-brand">品牌</label>
+          <input id="f-brand" type="text" value="Nikon" aria-describedby="f-brand-hint">
+          <p class="field-hint" id="f-brand-hint">选填；用于资料库排序与归档标题。</p>
+        </div>
+        <div class="field is-error">
+          <label for="f-model">准确型号</label>
+          <input id="f-model" class="is-focus" type="text" value="F3HP·" aria-invalid="true" aria-describedby="f-model-err">
+          <p class="field-error" id="f-model-err">包含无法保存的字符；示例：F3HP、New FM2/T。</p>
+        </div>
+        <div class="field">
+          <label for="f-variant">变体 / 配置</label>
+          <input id="f-variant" type="text" placeholder="示例：黑色机身 / 含马达手柄">
+        </div>
+      </fieldset>
+      <div class="form-actions">
+        <button type="button" class="btn btn--primary">创建并继续</button>
+        <button type="button" class="btn btn--primary is-busy" aria-busy="true">正在保存…</button>
+        <button type="button" class="btn is-disabled" disabled>创建并继续（名称为必填）</button>
+      </div>
+    </form>
+  </div>
+  <div class="panel">
+    <h3>提交结果未知（不自动重试，先核对）</h3>
+    <div class="error-panel" role="alert" style="margin:0">
+      <p>创建结果未知，请先读取核对。未收到响应不代表未创建，不会自动重复提交。</p>
+      <button type="button" class="btn" style="min-height:var(--control-height-touch)">核对创建结果</button>
+      <p class="field-hint" style="margin-top:var(--space-xs)">核对按名称列出已保存物品：名称相同或未找到都不能证明本次请求的结果。</p>
+    </div>
+  </div>
+</section>
+
+<section id="F-S3">
+  <div class="sec-head"><span class="sid">F-S3</span><h2>上传卡：默认 / 已选择 / 失败</h2></div>
+  <div class="panel">
+    <div class="upload-card">
+      <h3>绑定说明书原件</h3>
+      <div class="file-row">
+        <input type="file" aria-label="选择 PDF 文件">
+        <button type="button" class="btn">选择文件</button>
+      </div>
+      <p class="field-hint" style="margin-top:var(--space-xs)">PDF，最大 200 MiB、最多 500 页；这里只登记文件信息，不上传照片页。原文只在本机保存与解析。</p>
+    </div>
+    <div class="upload-card">
+      <h3>已选择</h3>
+      <div class="file-row">
+        <span class="mono-sm">Nikon-F3HP-manual.pdf · 42.6 MiB</span>
+        <button type="button" class="btn btn--primary is-busy" aria-busy="true">正在上传…</button>
+        <button type="button" class="btn">重新选择</button>
+      </div>
+    </div>
+    <div class="error-panel" role="alert" style="margin:0">
+      <h2>上传未完成</h2>
+      <p>文件较大，连接中断。已上传的数据不会记入资料，请重新选择文件。</p>
+      <button type="button" class="btn" style="min-height:var(--control-height-touch)">重新上传</button>
+    </div>
+  </div>
+</section>
+
+<section id="F-S4">
+  <div class="sec-head"><span class="sid">F-S4</span><h2>视图排列：槽位、候选与占用错误</h2></div>
+  <p class="note sec-note">特写槽注明「仅用于理解与核对，不发送给 Tripo」；候选图带「候选」标签；同视图占用给出可行动文案（替换或改选），本版本不提供删除入口。</p>
+  <div class="panel">
+    <div class="candidate-bar">
+      <span class="plate plate--warning">候选</span>
+      <span>从说明书 PDF 拆出 3 张候选图；建议视图为 automatic 判断。</span>
+      <button type="button" class="btn" style="min-height:var(--control-height-touch)">自动填入空槽</button>
+    </div>
+    <div class="slot-grid">
+      <div class="slot"><span class="slot-title">正面（front）· 必需</span><div class="slot-thumb">已选：candidate-a.jpg</div><button type="button" class="btn">替换照片</button></div>
+      <div class="slot"><span class="slot-title">背面（back）</span><div class="slot-thumb">已选：candidate-b.jpg</div><button type="button" class="btn">替换照片</button></div>
+      <div class="slot"><span class="slot-title">左侧（left）</span><div class="slot-thumb">空槽</div><button type="button" class="btn">选择文件上传</button></div>
+      <div class="slot"><span class="slot-title">右侧（right）</span><div class="slot-thumb">空槽</div><button type="button" class="btn is-busy" aria-busy="true">正在上传…</button></div>
+      <div class="slot"><span class="slot-title">特写（detail）</span><div class="slot-thumb">空槽</div><button type="button" class="btn">选择文件上传</button><p class="field-hint">特写仅用于理解与核对，不发送给 Tripo。</p></div>
+    </div>
+    <div class="error-panel" role="alert" style="margin-top:var(--space-sm)">
+      <p>「左侧（left）」已有照片：请先移除或改选。当前版本不提供删除照片的入口，可用该槽位的「替换照片」更新内容，或把另一张照片改到其它槽位。</p>
+    </div>
+    <p class="notice-inline notice-inline--warning" role="status" style="margin:0">缺项：还缺 1 张侧面视图（left 或 right 至少一张）。补齐后进入下一步。</p>
+  </div>
+</section>
+
+<section id="F-S5">
+  <div class="sec-head"><span class="sid">F-S5</span><h2>准备页：进度、缺页、冲突与离开保护</h2></div>
+  <div class="panel">
+    <div class="field" style="max-width:420px">
+      <label for="f-doc">所选原件</label>
+      <select id="f-doc"><option>Nikon F3HP 使用说明书（扫描）</option></select>
+    </div>
+    <h3>准备进度</h3>
+    <progress class="progress" max="68" value="43">43 / 68</progress>
+    <p class="mono-sm">已处理 43 / 68 页；缺页可在下方补跑，已保存的页不会重复。</p>
+    <div class="page-chips">
+      <span class="page-chip">1</span><span class="page-chip">2</span><span class="page-chip">3</span><span class="page-chip">4</span>
+      <span class="page-chip page-chip--missing">5</span><span class="page-chip">6</span><span class="page-chip page-chip--missing">7</span><span class="page-chip">8</span>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn--primary">继续准备缺页</button>
+      <button type="button" class="btn">停止</button>
+    </div>
+    <p class="notice-inline" role="status">离开将停止本页尚未完成的资料准备。已上传及已保存的页保留；返回后读取进度，仅补缺页。在途请求可能已经完成。</p>
+    <div class="error-panel error-panel--warning" role="alert" style="margin:0">
+      <p>记录已更新，请重新读取进度（本次进度未覆盖服务器上的新记录）。</p>
+      <button type="button" class="btn" style="min-height:var(--control-height-touch)">重新读取进度</button>
+    </div>
+  </div>
+</section>
+
+<section id="F-S6">
+  <div class="sec-head"><span class="sid">F-S6</span><h2>确认页：费用分列、发送范围与显式确认</h2></div>
+  <p class="note sec-note">费用与数据发送范围在连续主内容中，不被折叠或装饰遮挡；确认框默认不勾选；生成按钮的禁用原因常驻可见；报价过期只能重新获取报价，不自动重复报价。</p>
+  <div class="panel">
+    <h3>费用预估（各自带单位，不相加）</h3>
+    <dl class="amount-list">
+      <div><dt>Tripo 模型生成</dt><dd>约 32.5 credits</dd><dd class="secondary">保守上界 42 credits；价格版本 2026-09-30；有效期至 2026-10-04 21:40</dd></div>
+      <div><dt>说明书 AI 抽取</dt><dd>约 $0.86</dd><dd class="secondary">保守上界 $1.20；覆盖 68 页、1 个批次</dd></div>
+    </dl>
+    <p class="notice-inline">预算说明：这是本应用发起的预留上限，不是供应商账户级封顶。</p>
+    <h3>将发送的数据范围</h3>
+    <ul class="scope-list">
+      <li>发送给 Tripo：4 张视图照片（正/背/左/右）；不包含特写照片与说明原文。</li>
+      <li>发送给说明书 AI：说明书第 1–68 页的文本与版面；物品名称「尼康 F3HP」与型号「F3HP」。</li>
+      <li>模型预设：tripo-h-v3.1-standard（服务端支持的唯一预设）。</li>
+    </ul>
+    <div class="error-panel error-panel--warning" role="alert">
+      <p>报价已过期。为避免重复付费，系统不会自动重新报价；请重新获取报价并核对发送范围。</p>
+      <button type="button" class="btn" style="min-height:var(--control-height-touch)">重新获取报价</button>
+    </div>
+    <div class="check-row">
+      <input type="checkbox" id="f-consent">
+      <label for="f-consent">我已核对上述费用与发送范围；本操作将向供应商发起付费提交。<span class="field-hint">勾选后写入确认记录；未勾选不能生成。</span></label>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn--primary is-disabled" disabled aria-describedby="gen-reason">确认并开始生成</button>
+      <button type="button" class="btn btn--primary is-busy" aria-busy="true">正在提交…</button>
+      <span class="field-hint" id="gen-reason">禁用原因（常驻、可朗读）：需先勾选确认，且报价必须在有效期内。</span>
+    </div>
+    <div class="error-panel" role="alert" style="margin-top:var(--space-sm)">
+      <h2>提交结果未知，等待对账</h2>
+      <p>未收到供应商确认：系统不会重复提交同一付费操作。请稍后在任务中心查看对账结果。</p>
+      <a class="btn" href="#F-S7" style="min-height:var(--control-height-touch)">前往任务中心</a>
+    </div>
+  </div>
+</section>
+
+<section id="F-S7">
+  <div class="sec-head"><span class="sid">F-S7</span><h2>任务：状态徽标与阶段（未知/待处理不显示完成）</h2></div>
+  <p class="note sec-note">状态一律文本 + 圆点，不用百分比或预计时间；「付费提交结果未知」不得写成失败，也不提供盲目重试；succeeded 写作「可复核草稿已产出，尚未发布」。</p>
+  <div class="panel">
+    <div class="state-strip" style="margin-bottom:var(--space-sm)">
+      <span class="status-tag">排队中</span>
+      <span class="status-tag">本地阶段进行中</span>
+      <span class="status-tag">等待供应商</span>
+      <span class="status-tag">退避重试中</span>
+      <span class="status-tag status-tag--manual">等待人工补齐</span>
+      <span class="status-tag status-tag--unknown">付费提交结果未知（等待对账）</span>
+      <span class="status-tag status-tag--done">已完成（可复核草稿已产出，尚未发布）</span>
+      <span class="status-tag status-tag--failed">失败</span>
+      <span class="status-tag">已取消</span>
+    </div>
+    <p class="mono-sm">阶段：共 8（已完成 5、进行中 1、缺项 1、待对账 0、失败 1、已取消 0）</p>
+    <ul class="stage-list">
+      <li><span>冻结输入</span><span class="status-tag status-tag--done">已完成</span><span class="stage-actions"></span></li>
+      <li><span>说明书提取（批次）</span><span class="status-tag status-tag--done">已完成</span><span class="stage-actions"></span></li>
+      <li><span>照片上传（Tripo）</span><span class="status-tag status-tag--failed">失败</span><span class="stage-actions"><button type="button" class="btn" style="min-height:var(--control-height-touch)">重试该阶段</button></span></li>
+      <li><span>模型生成提交（付费）</span><span class="status-tag status-tag--unknown">结果未知（等待对账）</span><span class="stage-actions"><button type="button" class="btn" style="min-height:var(--control-height-touch)">核对供应商账户</button></span></li>
+      <li><span>模型下载</span><span class="status-tag status-tag--manual">缺项（等待人工）</span><span class="stage-actions"><button type="button" class="btn is-disabled" disabled>立即重试（退避中不可用）</button></span></li>
+    </ul>
+    <p class="field-hint">费用预留：Tripo 32.5 credits（预留中）；说明书 AI $0.86（已结算）。无费用记录时显示「未产生付费提交」。</p>
+  </div>
+  <div class="panel">
+    <h3>任务列表行（摘要）</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-sm);align-items:center;justify-content:space-between">
+      <div>
+        <p style="margin:0"><a href="#F-S7">尼康 F3HP · F3HP</a></p>
+        <p class="mono-sm" style="margin:0">创建于 2026-10-03 18:02；更新于 2026-10-03 18:31</p>
+      </div>
+      <span class="status-tag status-tag--unknown">付费提交结果未知（等待对账）</span>
+      <div class="stage-actions"><a class="btn" href="#F-S7" style="min-height:var(--control-height-touch)">查看阶段与恢复入口</a></div>
+    </div>
+    <p class="notice-inline" role="status" style="margin-top:var(--space-sm)">网络连接异常，正在自动重试（本地状态未变；下面显示的是最后一次读到的服务端状态）。</p>
+  </div>
+</section>
+
+<section id="F-S8">
+  <div class="sec-head"><span class="sid">F-S8</span><h2>设置：供应商状态、密钥输入与保存生效</h2></div>
+  <p class="note sec-note">密钥只做瞬时输入：不回显、不写入浏览器存储；保存后需重启服务生效，页面不改写已有密钥。</p>
+  <div class="panel">
+    <h3>供应商配置</h3>
+    <ul class="stage-list" style="margin-bottom:var(--space-sm)">
+      <li><span>Tripo（模型生成）</span><span class="plate plate--success">已配置</span><span class="field-hint">地址与模型：https://api.tripo3d.ai · tripo-h-v3.1-standard</span></li>
+      <li><span>说明书 AI</span><span class="plate">未配置</span><span class="field-hint">未配置的供应商：生成与报价不可用；已有资料仍可读。</span></li>
+      <li><span>生成能力</span><span class="plate plate--warning">待重启，生成暂停</span><span class="field-hint">保存的配置需重启服务后生效。</span></li>
+    </ul>
+    <form class="form">
+      <div class="field">
+        <label for="f-url">Tripo 地址</label>
+        <input id="f-url" type="url" value="https://api.tripo3d.ai">
+      </div>
+      <div class="field">
+        <label for="f-key">API 密钥（仅本次输入）</label>
+        <input id="f-key" type="password" value="" placeholder="输入新密钥以替换；留空表示不变" autocomplete="new-password" aria-describedby="f-key-hint">
+        <p class="field-hint" id="f-key-hint">密钥不回显、不缓存到浏览器；已保存的密钥不会被读回显示。</p>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn--primary">保存</button>
+        <button type="button" class="btn is-disabled" disabled>保存（无修改）</button>
+        <button type="button" class="btn is-busy" aria-busy="true">正在保存…</button>
+      </div>
+      <p class="field-hint">保存只写入配置，不验证连接、不发起生成；重启服务后生效。</p>
+    </form>
+    <div class="dialog" style="margin-top:var(--space-sm)">
+      <h3>离开设置页？</h3>
+      <p>有未保存的修改。离开将丢弃这些修改；已保存的配置保留。</p>
+      <div class="form-actions" style="margin-top:0">
+        <button type="button" class="btn btn--primary">留在本页</button>
+        <button type="button" class="btn">丢弃修改并离开</button>
+      </div>
+      <p class="field-hint">对话框打开时焦点进入对话框，Esc 关闭并回到触发处。</p>
+    </div>
+  </div>
+</section>
+
+<section id="F-S9">
+  <div class="sec-head"><span class="sid">F-S9</span><h2>控件状态矩阵（按钮与输入）</h2></div>
+  <div class="panel">
+    <h3>按钮</h3>
+    <div class="state-strip" style="margin-bottom:var(--space-sm)">
+      <div class="state-cell"><button type="button" class="btn btn--primary">主操作 · 默认</button><span class="token-note">--color-accent</span></div>
+      <div class="state-cell"><button type="button" class="btn btn--primary is-hover">主操作 · 悬停</button><span class="token-note">--color-accent-hover</span></div>
+      <div class="state-cell"><button type="button" class="btn btn--primary is-active">主操作 · 按下</button><span class="token-note">--color-accent-active</span></div>
+      <div class="state-cell"><button type="button" class="btn btn--primary is-focus">主操作 · 焦点</button><span class="token-note">3px 焦点环 + 3px 偏移</span></div>
+      <div class="state-cell"><button type="button" class="btn is-disabled" disabled>禁用</button><span class="token-note">软底 + 辅助字色，不整体降透明</span></div>
+      <div class="state-cell"><button type="button" class="btn btn--primary is-busy" aria-busy="true">正在保存…</button><span class="token-note">进行中：文案 + aria-busy</span></div>
+      <div class="state-cell"><button type="button" class="btn">次操作</button><span class="token-note">描边</span></div>
+      <div class="state-cell"><button type="button" class="btn btn--link">链接式操作</button><span class="token-note">下划线，≥44px 触控</span></div>
+    </div>
+    <h3>输入</h3>
+    <div class="state-strip">
+      <div class="state-cell"><input type="text" aria-label="输入默认" placeholder="默认" style="min-height:var(--control-height);padding:8px 12px;border:1px solid var(--color-line-control);border-radius:var(--radius-control);background:var(--color-surface)"><span class="token-note">边界 --color-line-control ≥3:1</span></div>
+      <div class="state-cell"><input type="text" aria-label="输入焦点" class="is-focus" value="焦点" style="min-height:var(--control-height);padding:8px 12px;border:1px solid var(--color-accent);border-radius:var(--radius-control);background:var(--color-surface);outline:var(--focus-ring-width) solid var(--focus-ring-color);outline-offset:var(--focus-ring-offset)"><span class="token-note">焦点环</span></div>
+      <div class="state-cell"><input type="text" aria-label="输入错误" value="错误" aria-invalid="true" style="min-height:var(--control-height);padding:8px 12px;border:1px solid var(--color-danger);border-radius:var(--radius-control);background:var(--color-surface)"><span class="token-note">错误边界 + 字段文案</span></div>
+      <div class="state-cell"><input type="text" aria-label="输入禁用" value="禁用" disabled style="min-height:var(--control-height);padding:8px 12px;border:1px solid var(--color-line);border-radius:var(--radius-control);background:var(--color-surface-soft);color:var(--color-ink-muted)"><span class="token-note">软底，文字仍可读</span></div>
+    </div>
+    <p class="field-hint" style="margin-top:var(--space-sm)">窄屏（&lt;768px）所有可点击元素最小 44×44px；桌面次要工具按钮可用 32px 紧凑规格（tokens: --control-height*）。</p>
+  </div>
+</section>
+
+<section id="F-S10">
+  <div class="sec-head"><span class="sid">F-S10</span><h2>窄屏（375px 示意）：确认按钮在连续主内容中不被遮挡</h2></div>
+  <p class="note sec-note">底栏只放当前页唯一主操作；为固定导航预留底部空间，键盘弹出时底栏上移而不是盖住字段。</p>
+  <div class="narrow-frame">
+    <p style="margin-top:0"><strong>预算/隐私确认</strong></p>
+    <p class="mono-sm">费用：32.5 credits / $0.86（各自单位）</p>
+    <p class="field-hint">发送范围：4 张视图照片 → Tripo；说明书 1–68 页 → 说明书 AI。</p>
+    <label class="check-row"><input type="checkbox">我已核对费用与发送范围</label>
+    <div class="bottom-bar">
+      <button type="button" class="btn btn--primary">确认并开始生成</button>
+      <button type="button" class="btn is-busy" aria-busy="true">正在提交…</button>
+    </div>
+    <p class="mono-sm" style="margin-bottom:0">底栏上的按钮 ≥44px；正文底部预留 88px 滚动余量。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="spec-foot">
+  <p class="note">对照口径：本页与 tokens.css 为 AC-VS-007/008 的实现对照基线；金额与状态为示意。样页不是浏览器验收，实际以 VS-04/VS-05 的定向回归与截图为准。</p>
+</footer>
+
+</body>
+</html>

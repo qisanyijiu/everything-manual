@@ -148,7 +148,7 @@ export function ItemOverviewPage() {
         <div>
           <dt>状态</dt>
           <dd>
-            <span className="status-label">{archived ? "已归档" : "使用中"}</span>
+            <span className={`status-label ${archived ? "status-label--archived" : "status-label--success"}`}>{archived ? "已归档" : "使用中"}</span>
             {archived && item.archivedAt !== null && item.archivedAt !== undefined && (
               <span className="meta-list__extra">（{formatLocalDateTime(item.archivedAt)}）</span>
             )}
@@ -163,6 +163,19 @@ export function ItemOverviewPage() {
         <div>
           <dt>创建</dt>
           <dd>{formatLocalDateTime(item.createdAt)}</dd>
+        </div>
+        {/* 缺失字段显示「未提供」，不虚构字段值（L-S8 / AC-VS-004）。 */}
+        <div>
+          <dt>型号</dt>
+          <dd>{item.model !== "" ? item.model : <span className="meta-list__missing">未提供</span>}</dd>
+        </div>
+        <div>
+          <dt>品牌</dt>
+          <dd>{item.brand !== null && item.brand !== undefined && item.brand !== "" ? item.brand : <span className="meta-list__missing">未提供</span>}</dd>
+        </div>
+        <div>
+          <dt>变体</dt>
+          <dd>{item.variant !== null && item.variant !== undefined && item.variant !== "" ? item.variant : <span className="meta-list__missing">未提供</span>}</dd>
         </div>
       </dl>
 

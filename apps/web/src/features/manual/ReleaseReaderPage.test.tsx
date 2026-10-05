@@ -19,7 +19,11 @@ function manifest(version?: string) {
     knowledge: {
       model: { revisionId: "model", sha256: "hash", assetId: "glb", validationState: "validated" },
       knowledge: {
-        parts: [{ id: "p", name: "原部件", description: "原说明", evidence }, { id: "text", name: "原文字条目", description: "", evidence: [] }],
+        parts: [
+          { id: "p", name: "原部件", description: "原说明", evidence },
+          { id: "text", name: "原文字条目", description: "", evidence: [] },
+          { id: "q", name: "无定位部件", description: "", evidence: [] },
+        ],
         steps: [{ id: "s", title: "原步骤", orderedActions: ["原操作"], safetyNotes: ["保留安全提示"], partIds: ["p"], evidence }],
         specs: [{ id: "v", label: "原规格", value: "原数值", evidence }],
       },
@@ -141,4 +145,33 @@ it("reads each release's safety correction or explicit removal while preserving 
   fireEvent.click(screen.getByRole("button", { name: "打开 A" }));
   expect(await screen.findByText("注意：红灯亮起之后等待至少四秒")).toBeVisible();
   expect(JSON.stringify(releases)).toBe(before);
+});
+
+it("部件状态牌区分热点/无热点/仅文本，选中项带「已选」语义与 aria-current（VS-03 / AC-VS-005）", async () => {
+  show();
+  const part = await screen.findByTestId("reader-part-p");
+  const textOnly = screen.getByTestId("reader-part-text");
+  const noHotspot = screen.getByTestId("reader-part-q");
+
+  // 状态牌：已确认热点（success）/无热点（warning）/仅文本条目（中性）。
+  expect(part).toHaveTextContent("热点 1");
+  expect(part.querySelector(".status-label--success")).not.toBeNull();
+  expect(noHotspot).toHaveTextContent("无热点");
+  expect(noHotspot.querySelector(".status-label--warning")).not.toBeNull();
+  expect(textOnly).toHaveTextContent("仅文本条目");
+
+  // 选中：底/边框/aria-current（样式由 theme.css token 提供）+ 「已选」文字语义。
+  const partButton = within(part).getByRole("button", { name: "A部件" });
+  expect(partButton).toHaveAttribute("aria-current", "false");
+  fireEvent.click(partButton);
+  expect(partButton).toHaveAttribute("aria-current", "true");
+  expect(part).toHaveTextContent("已选");
+  expect(textOnly).not.toHaveTextContent("已选");
+
+  // 无热点部件：模型区不新增标记（热点集合不变），文字提示「暂无定位」。
+  expect(screen.getByTestId("viewer").querySelectorAll("button")).toHaveLength(1);
+  fireEvent.click(within(noHotspot).getByRole("button", { name: "无定位部件" }));
+  expect(screen.getByTestId("reader-notice")).toHaveTextContent("暂无定位");
+  expect(noHotspot).toHaveTextContent("已选");
+  expect(noHotspot).not.toHaveTextContent("已修订");
 });

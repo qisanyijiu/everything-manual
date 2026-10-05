@@ -1,7 +1,8 @@
 //! 网页供应商覆盖：秘密仅在受限文件；运行配置固定，代次与准入共用进程锁。
 //! 文件不存在时保持部署行为；空覆盖文件仍保留修订，旧报价不能因恢复而复活。
+use std::ffi::OsStr;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use axum::http::StatusCode;
 use manual_core::ApiErrorCode;
@@ -20,7 +21,40 @@ use crate::http::dto::{
 use crate::http::error::ApiError;
 
 pub const FILE_NAME: &str = "provider-overrides.json";
+/// Explicit separate storage for a runtime with its own encryption backend.
+/// The default remains the data-dir; selecting another directory never reads the old overlay.
+pub const DIRECTORY_ENV: &str = "EM_PROVIDER_OVERRIDES_DIR";
 pub const LEGACY_REVISION: &str = "deployment";
+
+fn overlay_path(data_dir: &Path, directory: Option<&OsStr>) -> Result<PathBuf, super::CliError> {
+    let Some(directory) = directory else {
+        return Ok(data_dir.join(FILE_NAME));
+    };
+    let directory = Path::new(directory);
+    if !directory.is_absolute() {
+        return Err(super::CliError::config(
+            "EM_PROVIDER_OVERRIDES_DIR 必须是已有私有目录的绝对路径",
+        ));
+    }
+    let metadata = fs::symlink_metadata(directory).map_err(|_| {
+        super::CliError::config("网页 API 配置目录不存在或不可访问；未回退到数据目录")
+    })?;
+    if !metadata.is_dir() || metadata.file_type().is_symlink() {
+        return Err(super::CliError::config(
+            "网页 API 配置目录必须是普通目录，不能是符号链接",
+        ));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if metadata.permissions().mode() & 0o077 != 0 {
+            return Err(super::CliError::config(
+                "网页 API 配置目录必须为私有权限（0700）；未读取配置",
+            ));
+        }
+    }
+    Ok(directory.join(FILE_NAME))
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(tag = "mode", rename_all = "camelCase", deny_unknown_fields)]
@@ -104,6 +138,10 @@ impl ProviderConfigStore {
         migrate_legacy: bool,
     ) -> Result<Self, super::CliError> {
         let mut store = Self::deployment(settings).with_secrets(secrets);
+        store.path = overlay_path(
+            &settings.data_dir,
+            std::env::var_os(DIRECTORY_ENV).as_deref(),
+        )?;
         let bytes = match fs::symlink_metadata(&store.path) {
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(store),
             Err(_) => return Err(super::CliError::config("无法读取网页 API 配置文件")),
@@ -663,5 +701,61 @@ mod tests {
             ),
             "Replace { value: [redacted] }"
         );
+    }
+
+    #[test]
+    fn external_overlay_keeps_legacy_config_and_encrypts_with_its_own_key() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = std::env::temp_dir().join(format!("em-overlay-{}", uuid::Uuid::now_v7()));
+        let data = root.join("data");
+        let runtime = root.join("runtime");
+        fs::create_dir_all(&data).unwrap();
+        fs::create_dir_all(&runtime).unwrap();
+        fs::set_permissions(&runtime, fs::Permissions::from_mode(0o700)).unwrap();
+        let legacy = data.join(FILE_NAME);
+        fs::write(&legacy, b"legacy-ciphertext-sentinel").unwrap();
+        let path = overlay_path(&data, Some(runtime.as_os_str())).unwrap();
+        let secrets = Secrets::fixed([73; 32]);
+        let overlay = Overlay {
+            revision: "isolated-runtime".into(),
+            tripo: Some(ProviderOverride {
+                base_url: "https://example.com/v3".into(),
+                model: Some("v3.1-20260211".into()),
+                key: KeyOverride::Replace {
+                    value: SecretString::new("fixture-external-overlay-canary"),
+                },
+            }),
+            manual_ai: None,
+        };
+        write_overlay(&path, &overlay, &secrets).unwrap();
+        let bytes = read_private_file(&path).unwrap();
+        assert!(!String::from_utf8_lossy(&bytes).contains("fixture-external-overlay-canary"));
+        let stored: DiskOverlay = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(stored.open(&secrets).unwrap(), overlay);
+        assert_eq!(fs::read(&legacy).unwrap(), b"legacy-ciphertext-sentinel");
+        assert_eq!(overlay_path(&data, None).unwrap(), legacy);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn external_overlay_rejects_unsafe_directory_without_fallback() {
+        use std::os::unix::fs::{PermissionsExt, symlink};
+        let root = std::env::temp_dir().join(format!("em-overlay-{}", uuid::Uuid::now_v7()));
+        fs::create_dir_all(&root).unwrap();
+        assert!(overlay_path(&root, Some(OsStr::new("relative"))).is_err());
+        assert!(overlay_path(&root, Some(OsStr::new(""))).is_err());
+        assert!(overlay_path(&root, Some(root.join("missing").as_os_str())).is_err());
+        let private = root.join("private");
+        fs::create_dir(&private).unwrap();
+        fs::set_permissions(&private, fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(overlay_path(&root, Some(private.as_os_str())).is_err());
+        fs::set_permissions(&private, fs::Permissions::from_mode(0o700)).unwrap();
+        let link = root.join("link");
+        symlink(&private, &link).unwrap();
+        assert!(overlay_path(&root, Some(link.as_os_str())).is_err());
+        let file = root.join("file");
+        fs::write(&file, b"").unwrap();
+        assert!(overlay_path(&root, Some(file.as_os_str())).is_err());
+        fs::remove_dir_all(root).unwrap();
     }
 }

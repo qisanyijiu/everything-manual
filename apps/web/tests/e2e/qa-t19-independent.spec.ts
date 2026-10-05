@@ -1900,7 +1900,7 @@ test("QA19-7 发布版阅读器：部件↔热点↔步骤↔原文联动与 1-b
   const partButton = page.getByTestId(`reader-part-${part1.id}`).getByRole("button").first();
   await partButton.click();
   await expect(partButton).toHaveAttribute("aria-current", "true");
-  await expect(page.getByTestId("reader-notice")).toContainText("已在 3D 中定位部件");
+  await expect(page.getByTestId("reader-notice")).toHaveText(`已选择部件「${part1.name}」及关联热点`);
   const anchors = await viewerAnchors(page);
   expect(anchors.length, "发布版的 confirmed 热点必须作为有效热点显示").toBeGreaterThan(0);
   expect(anchors.some((anchor) => anchor.partId === part1.id)).toBe(true);

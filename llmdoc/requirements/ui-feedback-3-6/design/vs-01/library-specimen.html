@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VS-01 样页 A · 资料库与物品概览（万物说明书）</title>
+<!-- 自包含静态样页：仅引用同目录 tokens.css；无脚本、无网络字体、无外链图片、无 CDN。 -->
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* 样页脚手架：颜色 / 字号 / 圆角 / 焦点 / 过渡一律引用 tokens.css 变量；
+   个别演示用尺寸（如占位框高度）不属于设计参数。
+   无发光、无渐变、无多层阴影；正文面板仅纯色 + 1px 实线。 */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--font-size-body); line-height: var(--line-height-body); }
+.mono { font-family: var(--font-mono); }
+a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
+.icon { flex: 0 0 auto; vertical-align: middle; }
+h1 { font-size: var(--font-size-page-title); line-height: var(--line-height-page-title); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-xs); }
+h2 { font-size: var(--font-size-section); line-height: var(--line-height-section); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-xs); }
+h3 { font-size: var(--font-size-body); line-height: var(--line-height-body); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-micro); }
+p { margin: 0 0 var(--space-xs); }
+.spec-head { max-width: var(--layout-content-max); margin: 0 auto; padding: var(--space-xl) var(--space-md) var(--space-lg); border-bottom: 1px solid var(--color-line); }
+.spec-kicker { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); letter-spacing: var(--letter-spacing-label); color: var(--color-ink-muted); margin: 0 0 var(--space-xs); text-transform: uppercase; }
+.note { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); max-width: var(--layout-measure); }
+.token-note { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+.spec { max-width: var(--layout-content-max); margin: 0 auto; padding: 0 var(--space-md); }
+.spec > section { padding-top: var(--space-lg); margin-bottom: var(--space-lg); }
+.sec-head { display: flex; align-items: baseline; gap: var(--space-sm); margin-bottom: var(--space-xs); }
+.sid { font-family: var(--font-mono); font-size: var(--font-size-aux); color: var(--color-accent); letter-spacing: 0.08em; }
+.sec-head h2 { margin: 0; }
+.sec-note { margin: 0 0 var(--space-sm); }
+
+/* —— 按钮（默认 / 悬停 / 焦点 / 禁用 / 进行中）—— */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--control-height); padding: 0 var(--space-sm); border: 1px solid var(--color-line-control); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); font: inherit; font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; transition: background var(--duration-control) var(--ease-standard), border-color var(--duration-control) var(--ease-standard), color var(--duration-control) var(--ease-standard); }
+.btn--primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-ink-on-accent); }
+.btn--primary.is-hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
+.btn--primary.is-active { background: var(--color-accent-active); border-color: var(--color-accent-active); }
+.btn.is-focus { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.btn.is-disabled, .btn:disabled { background: var(--color-surface-soft); border-color: var(--color-line); color: var(--color-ink-muted); cursor: not-allowed; }
+.btn--link { min-height: var(--control-height-touch); padding: 0; border: 0; background: none; color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; font-weight: var(--font-weight-regular); }
+.state-strip { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }
+.state-cell { display: grid; gap: var(--space-micro); justify-items: start; }
+.state-cell .token-note { text-transform: none; }
+
+/* —— 编号牌 / 状态牌（矩形，非胶囊；文字始终是主载体）—— */
+.plate { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border: 1px solid var(--color-line); border-radius: var(--radius-plate); background: var(--color-surface); color: var(--color-ink); font-size: var(--font-size-aux); line-height: var(--line-height-aux); white-space: nowrap; }
+.plate--active { background: var(--color-selected); border-color: var(--color-accent); }
+.plate--success { color: var(--color-success); background: var(--color-success-soft); }
+.plate--warning { color: var(--color-warning); background: var(--color-warning-soft); }
+.plate--danger { color: var(--color-danger); background: var(--color-danger-soft); }
+
+/* —— 应用外壳（目录页式导航：默认 / 悬停 / 选中 / 焦点）—— */
+.shell-demo { display: grid; grid-template-columns: var(--layout-nav-width) minmax(0, 1fr); border: 1px solid var(--color-line); border-radius: var(--radius-panel); overflow: hidden; background: var(--color-paper); }
+.demo-sidebar { background: var(--color-surface); border-right: 1px solid var(--color-line); padding: var(--space-md) var(--space-sm); }
+.brand { display: flex; align-items: center; gap: var(--space-xs); font-weight: var(--font-weight-semibold); padding: 0 var(--space-xs); }
+.brand small { display: block; font-family: var(--font-mono); font-size: var(--font-size-aux); font-weight: var(--font-weight-regular); letter-spacing: 0.12em; color: var(--color-ink-muted); }
+.nav-label { margin: var(--space-md) var(--space-xs) var(--space-xs); font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); letter-spacing: var(--letter-spacing-label); text-transform: uppercase; }
+.nav-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-micro); }
+.nav-item { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--control-height); padding: 0 var(--space-sm); border-left: 3px solid transparent; border-radius: var(--radius-control); color: var(--color-ink); text-decoration: none; font-weight: var(--font-weight-medium); }
+.nav-item.is-hover { background: var(--color-surface-hover); }
+.nav-item.is-selected { background: var(--color-selected); border-left-color: var(--color-accent); font-weight: var(--font-weight-semibold); }
+.nav-item.is-focus { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.demo-main { padding: var(--space-md); }
+.demo-topbar { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--color-line); }
+.demo-topbar .crumb { color: var(--color-ink); }
+
+/* —— 资料库标题区与搜索 —— */
+.collection-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-sm); margin-bottom: var(--space-sm); }
+.lead { color: var(--color-ink-muted); max-width: var(--layout-measure); }
+.searchbar { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: end; margin-bottom: var(--space-xs); }
+.field { display: grid; gap: var(--space-micro); min-width: 240px; }
+.field > label { font-weight: var(--font-weight-medium); }
+.field input[type="search"] { width: 100%; min-height: var(--control-height); padding: 8px 12px; border: 1px solid var(--color-line-control); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: var(--font-size-body); }
+.field input.is-focus { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); border-color: var(--color-accent); }
+.field input.is-error { border-color: var(--color-danger); }
+.field-hint { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.field-error { color: var(--color-danger); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.check-row { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: var(--control-height-touch); }
+.check-row input { width: 18px; height: 18px; accent-color: var(--color-accent); }
+
+/* —— 档案行：桌面网格 / 长型号换行 / 无封面回退 —— */
+.row-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); }
+.item-row { display: grid; grid-template-columns: minmax(220px, 2.2fr) minmax(110px, 0.9fr) minmax(150px, 1fr) minmax(190px, auto); gap: var(--space-sm); align-items: center; padding: var(--space-sm); border-bottom: 1px solid var(--color-line); }
+.item-row:last-child { border-bottom: 0; }
+.item-row.is-hover { background: var(--color-surface-hover); }
+.identity { display: flex; gap: var(--space-sm); align-items: flex-start; min-width: 0; }
+.cover { flex: 0 0 auto; width: 52px; height: 56px; border: 1px solid var(--color-line); border-radius: var(--radius-plate); background: var(--color-paper); color: var(--color-ink-muted); display: grid; place-items: center; }
+.item-name { font-size: var(--font-size-body); overflow-wrap: anywhere; }
+.item-model { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); overflow-wrap: anywhere; }
+.item-time { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.row-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
+.row-actions .btn { min-height: var(--control-height-touch); }
+.workflow-status { display: block; font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+
+/* —— 面板 / 规格栏 / 空态 / 错误 / 骨架 —— */
+.panel { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-md); margin-bottom: var(--space-sm); }
+.meta-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-md); margin: 0 0 var(--space-sm); }
+.meta-list dt { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.meta-list dd { margin: var(--space-micro) 0 0; }
+.missing { color: var(--color-ink-muted); }
+.entity-list { list-style: none; margin: 0; padding: 0; }
+.entity-list li { padding: var(--space-xs) 0; border-bottom: 1px solid var(--color-line); }
+.entity-list li:last-child { border-bottom: 0; }
+.entity-title { font-weight: var(--font-weight-medium); }
+.entity-meta { display: block; color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); margin-top: var(--space-micro); }
+details summary { min-height: var(--control-height-touch); display: flex; align-items: center; cursor: pointer; color: var(--color-ink-muted); font-size: var(--font-size-aux); }
+.error-panel { border: 1px solid var(--color-danger); border-left-width: 4px; border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); }
+.error-panel h2 { margin: 0 0 var(--space-micro); }
+.empty-state { border: 1px dashed var(--color-line-control); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-xl) var(--space-md); text-align: center; }
+.empty-state p { color: var(--color-ink-muted); }
+.notice-inline { border: 1px solid var(--color-line); border-left: 4px solid var(--color-accent); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-xs) var(--space-sm); margin: 0 0 var(--space-sm); font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.skeleton { padding: var(--space-sm); }
+.skeleton .bar { height: 12px; margin: 10px 0; background: var(--color-surface-soft); }
+.skeleton .bar.w60 { width: 60%; } .skeleton .bar.w80 { width: 80%; } .skeleton .bar.w40 { width: 40%; }
+.pager { text-align: center; padding: var(--space-sm) 0; }
+.link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
+.link-list a { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--control-height-touch); padding: 0 var(--space-sm); border: 1px solid var(--color-line); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); text-decoration: none; }
+.link-list a::after { content: "→"; margin-left: auto; color: var(--color-ink-muted); }
+.frame-narrow { width: 375px; max-width: 100%; border: 1px dashed var(--color-line-control); border-radius: var(--radius-panel); padding: var(--space-sm); background: var(--color-surface); }
+.frame-narrow .item-row { grid-template-columns: 1fr; gap: var(--space-xs); align-items: start; }
+.frame-narrow .bottom-nav { display: flex; justify-content: space-between; gap: var(--space-xs); border-top: 1px solid var(--color-line); padding-top: var(--space-xs); margin-top: var(--space-sm); }
+.frame-narrow .bottom-nav a { flex: 1; display: grid; justify-items: center; gap: 2px; min-height: var(--control-height-touch); padding: 6px; border-radius: var(--radius-control); color: var(--color-ink); text-decoration: none; font-size: var(--font-size-aux); }
+.frame-narrow .bottom-nav a.is-selected { background: var(--color-selected); font-weight: var(--font-weight-semibold); }
+.layout-scale { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--layout-grid-gutter); margin-bottom: var(--space-xs); }
+.layout-scale span { height: 8px; background: var(--color-surface-soft); border: 1px solid var(--color-line); }
+footer.spec-foot { max-width: var(--layout-content-max); margin: var(--space-lg) auto 0; padding: var(--space-md); border-top: 1px solid var(--color-line); }
+</style>
+</head>
+<body>
+
+<header class="spec-head">
+  <p class="spec-kicker">VS-01 Design Baseline · Specimen A</p>
+  <h1>资料库与物品概览</h1>
+  <p class="note">静态样页：展示资料库与物品概览在规格 v1 下的真实语义、状态与操作。覆盖 AC-VS-001（同一套变量、无发光/装饰渐变/多层阴影）、AC-VS-002（字号与对比度取值）、AC-VS-004（档案语义、空库、无结果、失败、分页、无封面回退、长型号换行）。全部取值来自同目录 <span class="mono">tokens.css</span>；本页无脚本。样页中的名称/型号/日期为示意内容，不代表真实资料库数据。</p>
+</header>
+
+<main class="spec">
+
+<section id="L-S1">
+  <div class="sec-head"><span class="sid">L-S1</span><h2>应用外壳与导航（目录页语言）</h2></div>
+  <p class="note sec-note">导航像目录页：当前项用「左边线 + 底色 + 文字加重」三重表达，不只靠颜色；键盘焦点环 3px 外偏移 3px。真实实现中选中项带 <span class="mono">aria-current</span>，名称与图标在所有页面保持一致。</p>
+  <div class="shell-demo">
+    <aside class="demo-sidebar">
+      <div class="brand">
+        <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-2H4V4Zm16 0h-4a3 3 0 0 0-3 3v14a4 4 0 0 1 4-2h3V4Z"/></svg>
+        <span>万物说明书<small>EVERYTHING MANUAL</small></span>
+      </div>
+      <p class="nav-label">我的工作空间</p>
+      <nav aria-label="主导航（静态示意：四种状态并列展示）">
+        <ul class="nav-list">
+          <li><a class="nav-item" href="#L-S1"><svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>资料库</a><span class="token-note">默认</span></li>
+          <li><a class="nav-item is-hover" href="#L-S1"><svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>任务中心</a><span class="token-note">悬停（--color-surface-hover）</span></li>
+          <li><a class="nav-item is-selected" href="#L-S1" aria-current="page"><svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>资料库</a><span class="token-note">选中（aria-current=page）：左 3px 线 + 底色 + 加粗</span></li>
+          <li><a class="nav-item is-focus" href="#L-S1"><svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg>设置</a><span class="token-note">键盘焦点（--focus-ring 3px / offset 3px）</span></li>
+        </ul>
+      </nav>
+    </aside>
+    <div class="demo-main">
+      <div class="demo-topbar"><span>工作空间</span><svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg><span class="crumb">资料库</span><span>· 尼康 F3HP</span></div>
+      <p class="note" style="margin-top:var(--space-sm)">页面首行提供「跳到主要内容」跳转链接（键盘聚焦后才出现，不占常驻版面）。顶栏只放导航与任务摘要，不承载业务提交按钮。</p>
+    </div>
+  </div>
+</section>
+
+<section id="L-S2">
+  <div class="sec-head"><span class="sid">L-S2</span><h2>资料库标题区与搜索</h2></div>
+  <p class="note sec-note">标题为 28/36px（手机 24/32px）；搜索词上限 200 字符，错误贴近字段。搜索属于 URL（<span class="mono">?q=</span>），刷新与后退保留。</p>
+  <div class="panel">
+    <div class="collection-head">
+      <div>
+        <h1 style="margin-bottom:var(--space-micro)">资料库<span style="color:var(--color-accent)" aria-hidden="true">.</span></h1>
+        <p class="lead">收藏物品的每一份资料，让了解与使用更简单。<span class="token-note">（--font-size-page-title 28/36；手机 24/32）</span></p>
+      </div>
+      <a class="btn btn--primary" href="#L-S2"><svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新建物品</a>
+    </div>
+    <form class="searchbar" role="search">
+      <div class="field" style="flex:1 1 320px">
+        <label for="demo-q">按名称或型号搜索</label>
+        <input id="demo-q" class="is-focus" type="search" value="F3" placeholder="输入名称或型号" aria-describedby="demo-q-hint">
+        <p class="field-hint" id="demo-q-hint">搜索使用中物品的名称或型号，最多 200 个字符。搜到的结果按名称、型号、状态、操作排列。<span class="token-note">（辅助 12/18；输入焦点：3px 焦点环 + 边框强调）</span></p>
+      </div>
+      <button type="button" class="btn">搜索</button>
+      <button type="button" class="btn">清除搜索</button>
+      <label class="check-row"><input type="checkbox">显示已归档</label>
+    </form>
+    <div class="field" style="max-width:560px">
+      <label for="demo-q-long">搜索错误示例（超过 200 字符）</label>
+      <input id="demo-q-long" class="is-error" type="search" value="（示意：超长搜索词）" aria-invalid="true" aria-describedby="demo-q-long-err">
+      <p class="field-error" id="demo-q-long-err" role="alert">搜索词最多 200 个字符，请缩短后重试</p>
+    </div>
+  </div>
+</section>
+
+<section id="L-S3">
+  <div class="sec-head"><span class="sid">L-S3</span><h2>档案行：默认 / 长型号换行 / 无封面回退 / 已归档</h2></div>
+  <p class="note sec-note">每行含真实语义：名称、品牌与型号（等宽字体）、处理状态、最近版本、更新时间和既有操作。不伪造封面：无图时用本地线性物品图标。行内状态标签与主操作并列，处理状态不可读时显示「处理状态暂不可用」而不是空。</p>
+  <ul class="row-list">
+    <li class="item-row is-hover">
+      <div class="identity">
+        <span class="cover" aria-hidden="true"><svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10 9-5M12 13 3 8m9 5v9M7.5 5.5l9 5"/></svg></span>
+        <div>
+          <a class="item-name" href="#L-S3">尼康 F3HP</a>
+          <p class="item-model">Nikon · 黑色机身 · 变体 1982 版</p>
+          <span class="workflow-status">资料：原件 1 · 视图 5 · 发布版 1</span>
+          <span class="workflow-status">已有发布版 · 草稿 r7 · 2026-10-02</span>
+        </div>
+      </div>
+      <div><span class="plate plate--success">使用中</span></div>
+      <div class="item-time">更新于 2026-10-02 14:20</div>
+      <div class="row-actions">
+        <a class="btn btn--primary" href="#L-S3">阅读说明书</a>
+        <a class="btn" href="#L-S3">历史版本</a>
+        <a class="btn btn--link" href="#L-S3">查看任务</a>
+      </div>
+    </li>
+    <li class="item-row">
+      <div class="identity">
+        <span class="cover" aria-hidden="true"><svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10 9-5M12 13 3 8m9 5v9M7.5 5.5l9 5"/></svg></span>
+        <div>
+          <a class="item-name" href="#L-S3">FM2/T 限定套装</a>
+          <p class="item-model">Nikon · New FM2/T Titanium「1994 限定」机身套装含 MD-12 马达手柄（序列号 945127）</p>
+          <span class="workflow-status">资料：原件 1 · 视图 3</span>
+          <span class="workflow-status">待补齐正面和侧面视图</span>
+        </div>
+      </div>
+      <div><span class="plate">使用中</span></div>
+      <div class="item-time">更新于 2026-10-01 09:05</div>
+      <div class="row-actions">
+        <a class="btn btn--primary" href="#L-S3">补齐资料</a>
+        <a class="btn btn--link" href="#L-S3">查看物品</a>
+      </div>
+    </li>
+    <li class="item-row">
+      <div class="identity">
+        <span class="cover" aria-hidden="true" title="无封面：使用本地线性图标"><svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10 9-5M12 13 3 8m9 5v9M7.5 5.5l9 5"/></svg></span>
+        <div>
+          <a class="item-name" href="#L-S3">奥林巴斯 OM-1</a>
+          <p class="item-model">Olympus · 未提供型号（字段缺失显示「未提供」）</p>
+          <span class="workflow-status">任务进行中 · 等待供应商</span>
+        </div>
+      </div>
+      <div><span class="plate">使用中</span></div>
+      <div class="item-time">更新于 2026-10-03 18:44</div>
+      <div class="row-actions">
+        <a class="btn btn--primary" href="#L-S3">查看进度</a>
+        <a class="btn btn--link" href="#L-S3">查看物品</a>
+      </div>
+    </li>
+    <li class="item-row">
+      <div class="identity">
+        <span class="cover" aria-hidden="true"><svg class="icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10 9-5M12 13 3 8m9 5v9M7.5 5.5l9 5"/></svg></span>
+        <div>
+          <a class="item-name" href="#L-S3">康泰时 T2</a>
+          <p class="item-model">Contax · 钛灰</p>
+          <span class="workflow-status">已归档 2026-09-28</span>
+        </div>
+      </div>
+      <div><span class="plate">已归档</span></div>
+      <div class="item-time">更新于 2026-09-28 11:12</div>
+      <div class="row-actions"><a class="btn" href="#L-S3">查看物品</a></div>
+    </li>
+  </ul>
+</section>
+
+<section id="L-S4">
+  <div class="sec-head"><span class="sid">L-S4</span><h2>空库（真实零条，不伪造总数）</h2></div>
+  <div class="empty-state">
+    <h2>还没有物品</h2>
+    <p>收藏资料，从新建物品开始。</p>
+    <a class="btn btn--primary" href="#L-S4">新建物品</a>
+  </div>
+</section>
+
+<section id="L-S5">
+  <div class="sec-head"><span class="sid">L-S5</span><h2>搜索无结果（保留搜索语义）</h2></div>
+  <div class="empty-state">
+    <h2>当前范围没有匹配物品</h2>
+    <p>换个名称或型号，或清除搜索查看当前范围。</p>
+    <button type="button" class="btn">清除搜索</button>
+  </div>
+</section>
+
+<section id="L-S6">
+  <div class="sec-head"><span class="sid">L-S6</span><h2>请求失败（保留上次结果，不显示零条）</h2></div>
+  <p class="note sec-note">失败时不把列表清空冒充「0 条」；仍显示上次结果并标注。诊断 ID 可复制，用于服务端日志核对。</p>
+  <div class="error-panel" role="alert">
+    <h2>此次搜索未完成</h2>
+    <p>此次搜索未完成，仍显示上次结果。</p>
+    <p>网络连接超时。</p>
+    <p class="token-note">诊断请求 ID：<code>req_01J9Z4K2M8Q7</code></p>
+    <div class="state-strip" style="margin-top:var(--space-xs)">
+      <button type="button" class="btn">重试</button>
+      <button type="button" class="btn is-disabled" disabled>重试（请求进行中）</button>
+    </div>
+  </div>
+</section>
+
+<section id="L-S7">
+  <div class="sec-head"><span class="sid">L-S7</span><h2>加载骨架 / 处理状态不可用 / 分页</h2></div>
+  <div class="panel skeleton" role="status" aria-label="正在查找物品…">
+    <p class="field-hint">正在查找物品…（骨架按真实分区：身份 / 状态 / 时间）</p>
+    <div class="bar w80"></div>
+    <div class="bar w60"></div>
+    <div class="bar w40"></div>
+  </div>
+  <p class="notice-inline" role="status">处理状态暂不可用。<button type="button" class="btn btn--link">重新读取处理状态</button></p>
+  <div class="pager">
+    <button type="button" class="btn" style="min-height:var(--control-height-touch)">加载更多</button>
+    <p class="field-hint" style="margin-top:var(--space-xs)">每页 20 件；游标写入 URL（刷新/后退保留阅读位置）。</p>
+  </div>
+  <div class="pager">
+    <button type="button" class="btn is-disabled" disabled style="min-height:var(--control-height-touch)">正在加载…</button>
+    <p class="field-hint" style="margin-top:var(--space-xs)">加载中的按钮保持可见并禁用，不改变列表高度。</p>
+  </div>
+  <p class="note">已显示 43 件物品，当前分页已到末尾。（只对已加载范围计数，不冒充全库总量）</p>
+</section>
+
+<section id="L-S8">
+  <div class="sec-head"><span class="sid">L-S8</span><h2>物品概览：规格栏与章节</h2></div>
+  <div class="panel">
+    <div class="collection-head">
+      <div>
+        <p class="spec-kicker" style="font-family:var(--font-mono)">Object Details</p>
+        <h1 style="margin-bottom:var(--space-micro)">尼康 F3HP</h1>
+        <p class="lead">Nikon F3HP · Nikon · 黑色机身 <span class="token-note">（型号/品牌用真实字段；缺失时显示「未提供」）</span></p>
+      </div>
+      <div class="state-strip">
+        <a class="btn btn--primary" href="#L-S8">继续复核</a>
+        <a class="btn" href="#L-S8">生成历史</a>
+        <a class="btn" href="#L-S8">编辑</a>
+        <button type="button" class="btn is-disabled" disabled>处理中…</button>
+      </div>
+    </div>
+    <dl class="meta-list">
+      <div><dt>状态</dt><dd><span class="plate plate--success">使用中</span></dd></div>
+      <div><dt>版本</dt><dd>r4（更新于 2026-10-02 14:20）</dd></div>
+      <div><dt>创建</dt><dd>2026-09-18 10:02</dd></div>
+      <div><dt>品牌</dt><dd>Nikon</dd></div>
+      <div><dt>变体</dt><dd class="missing">未提供</dd></div>
+      <div><dt>序号</dt><dd class="missing">未提供</dd></div>
+    </dl>
+  </div>
+  <div class="panel">
+    <h3>说明书原件</h3>
+    <ul class="entity-list">
+      <li>
+        <span class="entity-title">Nikon F3HP 使用说明书（扫描）</span>
+        <span class="entity-meta">添加于 2026-09-18 10:06 · 68 页</span>
+        <a class="btn" style="margin-top:var(--space-xs);min-height:var(--control-height-touch)" href="#L-S8">查看原件</a>
+        <details><summary>文件校验信息</summary><code class="mono">SHA256 9f2c…41ab</code></details>
+      </li>
+      <li>
+        <span class="entity-title">Nikon F3 补充说明页</span>
+        <span class="entity-meta">添加于 2026-09-20 09:31 · 4 页</span>
+        <a class="btn" style="margin-top:var(--space-xs);min-height:var(--control-height-touch)" href="#L-S8">查看原件</a>
+      </li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h3>视图照片</h3>
+    <ul class="entity-list">
+      <li><span class="entity-title">视图：正面（front）</span></li>
+      <li><span class="entity-title">视图：背面（back）</span></li>
+      <li><span class="entity-title">视图：左侧（left）</span></li>
+      <li><span class="entity-title">视图：右侧（right）</span></li>
+      <li><span class="entity-title">视图：特写（detail）</span> <span class="entity-meta">特写仅用于理解与核对，不发送给 Tripo</span></li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h3>下一步</h3>
+    <ul class="link-list">
+      <li><a href="#L-S8">绑定说明书原件（向导第 2 步）</a></li>
+      <li><a href="#L-S8">上传与排列视图（向导第 3 步）</a></li>
+      <li><a href="#L-S8">准备资料（向导第 4 步）</a></li>
+      <li><a href="#L-S8">报价、确认与生成（向导第 5 步）</a></li>
+    </ul>
+  </div>
+  <div class="error-panel" role="alert" style="border-color:var(--color-warning);border-left-color:var(--color-warning)">
+    <h2>内容已在其他窗口更新（当前 r5）</h2>
+    <p>为避免覆盖他人修改，本次操作没有提交。请刷新读取最新版本后重试；你的输入仍在本页保留。</p>
+    <button type="button" class="btn" style="min-height:var(--control-height-touch)">刷新后重试</button>
+  </div>
+  <p class="notice-inline" role="status">该物品有进行中的生成任务：任务使用提交时的资料快照，之后的编辑不影响本次生成。</p>
+</section>
+
+<section id="L-S9">
+  <div class="sec-head"><span class="sid">L-S9</span><h2>窄屏结构（375px 示意）：档案行堆叠</h2></div>
+  <p class="note sec-note">窄屏下档案行按「名称 → 型号 → 状态 → 操作」纵向堆叠，不变成横向宽表格；主操作仍 ≥44×44px 触控；底部导航不遮挡内容（正文区预留底部间距）。</p>
+  <div class="frame-narrow">
+    <div class="demo-topbar" style="border-bottom:0;padding-bottom:0"><span>资料库</span></div>
+    <ul class="row-list" style="margin-top:var(--space-xs)">
+      <li class="item-row">
+        <div class="identity">
+          <span class="cover" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10 9-5M12 13 3 8m9 5v9M7.5 5.5l9 5"/></svg></span>
+          <div>
+            <a class="item-name" href="#L-S9">尼康 F3HP</a>
+            <p class="item-model">Nikon · 黑色机身</p>
+            <span class="plate plate--success">使用中</span>
+            <span class="workflow-status">已有发布版 · 草稿 r7</span>
+          </div>
+        </div>
+        <div class="row-actions">
+          <a class="btn btn--primary" href="#L-S9">阅读说明书</a>
+          <a class="btn btn--link" href="#L-S9">历史版本</a>
+        </div>
+      </li>
+    </ul>
+    <nav class="bottom-nav" aria-label="移动导航（静态示意）">
+      <a class="is-selected" href="#L-S9" aria-current="page"><svg class="icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>资料库</a>
+      <a href="#L-S9"><svg class="icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>任务中心</a>
+      <a href="#L-S9"><svg class="icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg>设置</a>
+    </nav>
+  </div>
+  <p class="note" style="margin-top:var(--space-sm)">桌面 12 列 / 24px 列距、内容区最大 1440px；手机 4 列 / 16px 外边距（见 tokens.css <span class="mono">--layout-*</span>）。</p>
+  <div class="layout-scale" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <p class="token-note">示意：12 列网格（桌面）。网格仅作对齐参考，不在正文背后铺纹样。</p>
+</section>
+
+</main>
+
+<footer class="spec-foot">
+  <p class="note">对照口径：本页与 tokens.css 为 AC-VS-001/002/004 的实现对照基线；样页不是浏览器验收，实际以 VS-05 的截图与计算样式测量为准。度量方法见 README。</p>
+</footer>
+
+</body>
+</html>

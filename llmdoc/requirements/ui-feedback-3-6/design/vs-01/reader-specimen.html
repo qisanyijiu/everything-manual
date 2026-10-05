@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VS-01 样页 B · 3D 阅读器与复核（万物说明书）</title>
+<!-- 自包含静态样页：仅引用同目录 tokens.css；无脚本、无网络字体、无外链图片、无 CDN。
+     中央模型区用占位框代表画布；热点只展示「标记样式」，不在占位框上伪造真实标注位置，
+     也不画装饰连线冒充真实标注。 -->
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* 样页脚手架：颜色 / 字号 / 圆角 / 焦点 / 过渡一律引用 tokens.css 变量；
+   个别演示用尺寸（如占位框高度）不属于设计参数。 */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-sans); font-size: var(--font-size-body); line-height: var(--line-height-body); }
+.mono { font-family: var(--font-mono); }
+.mono-sm { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
+.icon { flex: 0 0 auto; vertical-align: middle; }
+h1 { font-size: var(--font-size-page-title); line-height: var(--line-height-page-title); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-xs); }
+h2 { font-size: var(--font-size-section); line-height: var(--line-height-section); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-xs); }
+h3 { font-size: var(--font-size-body); line-height: var(--line-height-body); font-weight: var(--font-weight-semibold); margin: 0 0 var(--space-micro); }
+p { margin: 0 0 var(--space-xs); }
+.spec-head { max-width: var(--layout-content-max); margin: 0 auto; padding: var(--space-xl) var(--space-md) var(--space-lg); border-bottom: 1px solid var(--color-line); }
+.spec-kicker { font-family: var(--font-mono); font-size: var(--font-size-aux); letter-spacing: var(--letter-spacing-label); color: var(--color-ink-muted); margin: 0 0 var(--space-xs); text-transform: uppercase; }
+.note { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); max-width: var(--layout-measure); }
+.token-note { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+.spec { max-width: var(--layout-content-max); margin: 0 auto; padding: 0 var(--space-md); }
+.spec > section { padding-top: var(--space-lg); margin-bottom: var(--space-lg); }
+.sec-head { display: flex; align-items: baseline; gap: var(--space-sm); margin-bottom: var(--space-xs); }
+.sid { font-family: var(--font-mono); font-size: var(--font-size-aux); color: var(--color-accent); letter-spacing: 0.08em; }
+.sec-head h2 { margin: 0; }
+.sec-note { margin: 0 0 var(--space-sm); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--control-height); padding: 0 var(--space-sm); border: 1px solid var(--color-line-control); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-ink); font: inherit; font-weight: var(--font-weight-medium); text-decoration: none; cursor: pointer; transition: background var(--duration-control) var(--ease-standard), border-color var(--duration-control) var(--ease-standard); }
+.btn--primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-ink-on-accent); }
+.btn.is-focus { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.btn.is-disabled, .btn:disabled { background: var(--color-surface-soft); border-color: var(--color-line); color: var(--color-ink-muted); cursor: not-allowed; }
+.btn--compact { min-height: var(--control-height-compact); padding: 0 var(--space-xs); font-size: var(--font-size-body); }
+.plate { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; border: 1px solid var(--color-line); border-radius: var(--radius-plate); background: var(--color-surface); color: var(--color-ink); font-size: var(--font-size-aux); line-height: var(--line-height-aux); white-space: nowrap; }
+.plate--success { color: var(--color-success); background: var(--color-success-soft); }
+.plate--warning { color: var(--color-warning); background: var(--color-warning-soft); }
+.panel { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-md); }
+.panel h2, .panel h3 { margin-top: 0; }
+
+/* —— 页头 / 版本 / 下载块 —— */
+.reader-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-sm); }
+.reader-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.version-details summary { display: inline-flex; align-items: center; gap: var(--space-xs); cursor: pointer; color: var(--color-ink-muted); font-size: var(--font-size-aux); }
+.download-block { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-sm) var(--space-md); margin-top: var(--space-sm); }
+
+/* —— 三栏布局（≥1280px 参考）—— */
+.three-pane { display: grid; grid-template-columns: 264px minmax(0, 1fr) 340px; gap: var(--space-sm); align-items: start; margin-top: var(--space-sm); }
+.pane-title { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); margin-bottom: var(--space-xs); }
+.parts-list, .steps-list { list-style: none; margin: 0; padding: 0; }
+.parts-list li { padding: var(--space-xs) 0; border-bottom: 1px solid var(--color-line); }
+.parts-list li:last-child { border-bottom: 0; }
+.part-button { display: block; width: 100%; min-height: var(--control-height-touch); padding: var(--space-xs) var(--space-xs); text-align: left; border: 1px solid transparent; border-radius: var(--radius-control); background: none; color: var(--color-ink); font: inherit; font-weight: var(--font-weight-medium); cursor: pointer; }
+.part-button.is-selected { background: var(--color-selected); border-color: var(--color-accent); }
+.part-button.is-focus { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.part-desc { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); margin: var(--space-micro) 0 0; }
+.part-plates { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--space-micro); }
+
+/* —— 中央查看器（占位框代表画布）—— */
+.viewer { border: 1px solid var(--color-line); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-xs); }
+.viewer-toolbar { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; padding: var(--space-micro); }
+.viewer-toolbar .spacer { flex: 1; }
+.viewer-stage { border: 1px dashed var(--color-line-control); border-radius: var(--radius-plate); min-height: 340px; display: grid; place-items: center; text-align: center; padding: var(--space-md);
+  background-color: var(--color-paper);
+  background-image: linear-gradient(var(--color-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--color-grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size); }
+.viewer-status { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); padding: var(--space-xs) var(--space-micro) var(--space-micro); }
+.viewer-notice { color: var(--color-ink-muted); font-size: var(--font-size-aux); line-height: var(--line-height-aux); padding: 0 var(--space-micro); }
+.stage-message { max-width: 46ch; }
+.stage-message p { margin-bottom: var(--space-xs); }
+
+/* —— 步骤 / 出处 —— */
+.step-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); margin-bottom: var(--space-xs); }
+.step-nav .mono-sm { white-space: nowrap; }
+.step-item { padding: var(--space-xs) 0; border-bottom: 1px solid var(--color-line); }
+.step-item:last-child { border-bottom: 0; }
+.step-button { display: block; width: 100%; min-height: var(--control-height-touch); padding: var(--space-xs); text-align: left; border: 1px solid transparent; border-radius: var(--radius-control); background: none; color: var(--color-ink); font: inherit; font-weight: var(--font-weight-medium); cursor: pointer; }
+.step-button.is-current { background: var(--color-selected); border-color: var(--color-accent); }
+.step-detail { margin: var(--space-xs) 0 0 var(--space-sm); }
+.step-detail ol, .step-detail ul { padding-left: 20px; margin: 0 0 var(--space-xs); }
+.step-detail li { margin-bottom: var(--space-micro); }
+.chip-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
+.chip { display: inline-flex; align-items: center; min-height: 32px; padding: 0 var(--space-xs); border: 1px solid var(--color-line-control); border-radius: var(--radius-full); background: var(--color-surface); color: var(--color-ink); font: inherit; font-size: var(--font-size-aux); cursor: pointer; }
+.chip.is-selected { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-ink-on-accent); }
+.evidence-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xs); }
+.evidence-row .btn { min-height: var(--control-height-touch); font-size: var(--font-size-body); }
+
+/* —— 热点标记样式（示意，不代表真实模型位置）—— */
+.marker-strip { display: flex; flex-wrap: wrap; gap: var(--space-lg); align-items: start; }
+.marker-cell { display: grid; gap: var(--space-xs); justify-items: center; width: 132px; text-align: center; }
+.marker-dot { width: 30px; height: 30px; border-radius: var(--radius-full); display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--font-size-aux); }
+.marker-dot--confirmed { background: var(--color-accent); color: var(--color-ink-on-accent); }
+.marker-dot--candidate { background: var(--color-surface); border: 2px dashed var(--color-accent); color: var(--color-accent); }
+.marker-dot--selected { background: var(--color-accent); color: var(--color-ink-on-accent); outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.marker-dot--none { background: var(--color-surface); border: 1px dashed var(--color-line-control); color: var(--color-ink-muted); }
+.marker-label { font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+.disabled-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.narrow-frame { width: 375px; max-width: 100%; border: 1px dashed var(--color-line-control); border-radius: var(--radius-panel); padding: var(--space-sm); background: var(--color-surface); }
+.narrow-frame .viewer-stage { min-height: 220px; }
+.narrow-tabs { display: flex; gap: var(--space-xs); margin-top: var(--space-xs); }
+.narrow-tabs .btn { flex: 1; min-height: var(--control-height-touch); }
+.dialog-note { border: 1px solid var(--color-line); border-left: 4px solid var(--color-accent); border-radius: var(--radius-panel); background: var(--color-surface); padding: var(--space-sm) var(--space-md); }
+footer.spec-foot { max-width: var(--layout-content-max); margin: var(--space-lg) auto 0; padding: var(--space-md); border-top: 1px solid var(--color-line); }
+</style>
+</head>
+<body>
+
+<header class="spec-head">
+  <p class="spec-kicker">VS-01 Design Baseline · Specimen B</p>
+  <h1>3D 阅读器与复核</h1>
+  <p class="note">静态样页：展示已发布说明书阅读器与草稿复核的关键布局、状态与降级。覆盖 AC-VS-001/002、AC-VS-005（热点联动、无热点、候选可区分、出处）、AC-VS-006（WebGL 关闭、加载失败、文字可读）、AC-VS-010（宽屏三栏与窄屏抽屉）。中央模型区为占位框；热点只展示样式语法，不伪造真实标注位置，不画装饰连线。数据为示意内容。</p>
+</header>
+
+<main class="spec">
+
+<section id="R-S1">
+  <div class="sec-head"><span class="sid">R-S1</span><h2>阅读器页头、版本信息与离线导出入口</h2></div>
+  <div class="panel">
+    <div class="reader-head">
+      <div>
+        <p class="spec-kicker" style="font-family:var(--font-mono)">The Interactive Manual</p>
+        <h1 style="margin-bottom:var(--space-micro)">已发布说明书</h1>
+        <p class="note">旋转模型探索部件，跟随步骤查看说明，随时对照原文。</p>
+      </div>
+      <div class="reader-actions">
+        <a class="btn" href="#R-S1">下载离线 3D 页面</a>
+        <a class="btn" href="#R-S1">返回版本列表</a>
+      </div>
+    </div>
+    <details class="version-details"><summary>已发布 · 草稿 r7 · 查看版本信息</summary>
+      <p class="mono-sm">发布版本 rel_01J8… · 草稿 r7 · 模型 rev_01J8… · manifest 9f2c41ab7d03…（不可变）</p>
+      <p class="note">内容保留发布时的版本，之后修改草稿不会影响这里。</p>
+    </details>
+    <div class="download-block">
+      <p style="margin:0 0 var(--space-xs)"><strong>当前发布版 · 草稿 r7</strong></p>
+      <button type="button" class="btn" style="min-height:var(--control-height-touch)">下载当前发布版本（ZIP）</button>
+      <p class="note" style="margin-top:var(--space-xs)">下载的是发布时的不可变内容；离线 HTML 阅读器共用同一纸面、编号与工具条（VS-03 同步样式）。</p>
+    </div>
+  </div>
+</section>
+
+<section id="R-S2">
+  <div class="sec-head"><span class="sid">R-S2</span><h2>宽屏三栏总览（≥1280px）</h2></div>
+  <p class="note sec-note">左：部件目录（3D 热点的文字替代，一直可达）；中：模型阅读器，工具条固定在模型容器内；右：步骤与出处。任一侧选择在其它侧可见。768–1279px 保留侧面板标签页；&lt;768px 模型加单抽屉（见 R-S7）。</p>
+  <div class="three-pane">
+    <div class="panel">
+      <div class="pane-title"><h3>部件</h3><span class="mono-sm">4 项</span></div>
+      <ul class="parts-list">
+        <li>
+          <button type="button" class="part-button is-selected" aria-current="true">快门速度转盘</button>
+          <div class="part-plates"><span class="plate plate--success">热点 2</span><span class="plate">已选</span></div>
+          <p class="part-desc">选择发布时冻结的部件知识；模型与列表选中态联动。</p>
+        </li>
+        <li>
+          <button type="button" class="part-button">取景器眼罩</button>
+          <div class="part-plates"><span class="plate plate--warning">无热点</span></div>
+          <p class="part-desc">暂无 3D 定位；文字说明与出处仍可阅读。</p>
+        </li>
+        <li>
+          <button type="button" class="part-button">多重曝光拨杆</button>
+          <div class="part-plates"><span class="plate">仅文本条目</span></div>
+          <p class="part-desc">发布时保留为文字条目，不显示 3D 标记。</p>
+        </li>
+        <li>
+          <button type="button" class="part-button is-focus">胶片回卷按钮</button>
+          <div class="part-plates"><span class="plate plate--success">热点 1</span></div>
+          <p class="part-desc">键盘焦点示例：Tab 可达、回车选择、焦点环可见。</p>
+        </li>
+      </ul>
+    </div>
+
+    <div class="viewer" aria-label="3D 模型阅读器（静态示意）">
+      <div class="viewer-toolbar" role="group" aria-label="模型视角操作">
+        <button type="button" class="btn btn--compact">复位视角</button>
+        <button type="button" class="btn btn--compact">适配模型</button>
+        <span class="spacer"></span>
+        <span class="mono-sm">模型已加载，可旋转/缩放</span>
+      </div>
+      <div class="viewer-stage" role="img" aria-label="3D 画布占位（真实渲染由 ViewerStage 提供）">
+        <div class="stage-message">
+          <p class="mono-sm">3D 画布（ViewerStage 渲染区）</p>
+          <p class="note">占位框代表画布：真实热点标记由「已确认热点」数据生成，位置忠于模型；本样页不在框内绘制任何伪造标注或连线。</p>
+        </div>
+      </div>
+      <p class="viewer-status" role="status">模型已加载，可旋转/缩放。</p>
+      <p class="viewer-notice">模型为外观资产，不表示机械结构；拖动旋转、滚轮缩放，键盘可用上方按钮完成等效操作。</p>
+    </div>
+
+    <div class="panel">
+      <div class="pane-title"><h3>步骤</h3><span class="mono-sm">3 步</span></div>
+      <div class="step-nav" role="group" aria-label="步骤导航">
+        <button type="button" class="btn btn--compact" disabled>上一步</button>
+        <span class="mono-sm">第 1 / 3 步</span>
+        <button type="button" class="btn btn--compact">下一步</button>
+      </div>
+      <ul class="steps-list">
+        <li class="step-item">
+          <button type="button" class="step-button is-current" aria-current="true">安装电池与检查电量</button>
+          <div class="step-detail">
+            <ol>
+              <li>取下底盖，按正负极装入两节 1.5V 电池。</li>
+              <li>半按快门，观察取景器内 LED 是否点亮。</li>
+            </ol>
+            <ul><li>注意：长时间存放请取出电池，避免漏液。</li></ul>
+            <p style="margin:0 0 var(--space-micro)">引用部件：</p>
+            <div class="chip-row">
+              <button type="button" class="chip is-selected">快门速度转盘</button>
+              <button type="button" class="chip">胶片回卷按钮</button>
+            </div>
+            <div class="evidence-row">
+              <button type="button" class="btn">出处：原件 1 · 第 12 页</button>
+              <button type="button" class="btn">出处：原件 2 · 第 3 页</button>
+            </div>
+          </div>
+        </li>
+        <li class="step-item"><button type="button" class="step-button">设定快门速度</button></li>
+        <li class="step-item"><button type="button" class="step-button">装片与过片检查</button></li>
+      </ul>
+      <h3 style="margin-top:var(--space-sm)">规格</h3>
+      <p>快门类型：机械纵走式金属幕帘 <span class="mono-sm">（出自原件 p.48）</span></p>
+      <p>电池：两节 1.5V 碱性/氧化银电池 <span class="mono-sm">（出自原件 p.12）</span></p>
+    </div>
+  </div>
+</section>
+
+<section id="R-S3">
+  <div class="sec-head"><span class="sid">R-S3</span><h2>查看器状态行（真实界面一次只显示一条）</h2></div>
+  <p class="note sec-note">每种状态给出可读原因与现有恢复入口；失败不阻断部件/步骤/原文（它们不经过 WebGL）。下方并列展示全部状态供实现对照。</p>
+  <div class="panel">
+    <ul class="entity-list" style="list-style:none;margin:0;padding:0">
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)"><span class="mono-sm">fetching</span>　正在加载模型…（42%）<span class="token-note"> role=status，带真实进度；不预判成功</span></li>
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)"><span class="mono-sm">ready</span>　模型已加载，可旋转/缩放。<span class="token-note"> 工具条按钮此时才启用</span></li>
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)"><span class="mono-sm">noModel</span>　没有可显示的模型（仅文字与原文可用）。<span class="token-note"> 空态不是错误</span></li>
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)"><span class="mono-sm">unavailable</span>　当前浏览器不支持 WebGL，3D 显示不可用。可改用文字阅读。<span class="token-note"> 不挂载画布，不假装渲染</span></li>
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)"><span class="mono-sm">lost / restoring</span>　3D 显示已中断，正在重建…<span class="token-note"> 交互禁用，提供「立即重建」；超时未恢复才判「上下文不可用」</span></li>
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)"><span class="mono-sm">error</span>　模型加载失败：网络连接中断。<span class="token-note"> 可重试加载 / 改用文字阅读</span></li>
+      <li style="padding:var(--space-xs) 0"><span class="mono-sm">restored</span>　3D 显示已恢复。（短暂提示）</li>
+    </ul>
+    <div class="disabled-row" style="margin-top:var(--space-xs)">
+      <button type="button" class="btn is-disabled" disabled>复位视角（加载完成前禁用）</button>
+      <button type="button" class="btn is-disabled" disabled>适配模型（加载完成前禁用）</button>
+      <button type="button" class="btn">立即重建（仅中断时出现）</button>
+      <button type="button" class="btn">改用文字阅读</button>
+    </div>
+  </div>
+</section>
+
+<section id="R-S4">
+  <div class="sec-head"><span class="sid">R-S4</span><h2>热点标记样式（示意，不代表真实模型位置）</h2></div>
+  <p class="note sec-note">已确认与候选必须一眼可区分：已确认＝实心编号圆；候选＝虚线空心环，配「候选」文字；选中＝额外焦点环，不闪烁。装饰连线一律不画：没有实体依据的连线不得出现。</p>
+  <div class="panel">
+    <div class="marker-strip">
+      <div class="marker-cell">
+        <span class="marker-dot marker-dot--confirmed">1</span>
+        <span><span class="plate plate--success">已确认</span></span>
+        <span class="marker-label">实心编号圆；进入发布版，可从部件列表与 3D 双向选中</span>
+      </div>
+      <div class="marker-cell">
+        <span class="marker-dot marker-dot--candidate">?</span>
+        <span><span class="plate plate--warning">候选（待复核）</span></span>
+        <span class="marker-label">虚线空心环＋问号；复核前不进入发布版；与应用内「候选」文字一致</span>
+      </div>
+      <div class="marker-cell">
+        <span class="marker-dot marker-dot--selected">1</span>
+        <span><span class="plate plate--success">已选</span></span>
+        <span class="marker-label">选中：实心圆 + 3px 外环；列表侧同步显示「已选」语义（aria-current）</span>
+      </div>
+      <div class="marker-cell">
+        <span class="marker-dot marker-dot--none">–</span>
+        <span><span class="plate plate--warning">无热点</span></span>
+        <span class="marker-label">模型区不显示标记；文字提示「暂无定位」，不画装饰连线冒充标注</span>
+      </div>
+    </div>
+    <p class="note" style="margin-top:var(--space-sm)">实体列表中的对应语法：部件条目按钮 + 状态牌（「热点 N」/「无热点」/「仅文本条目」）；选择动作为按钮，键盘可达，全部操作有文字名称。</p>
+  </div>
+</section>
+
+<section id="R-S5">
+  <div class="sec-head"><span class="sid">R-S5</span><h2>文字降级与键盘等效操作</h2></div>
+  <div class="panel">
+    <h3>WebGL 不可用（文字降级示意）</h3>
+    <div class="viewer-stage" style="min-height:180px">
+      <div class="stage-message">
+        <p>当前浏览器不支持 WebGL，3D 显示不可用。</p>
+        <div class="state-strip" style="display:flex;gap:var(--space-xs);justify-content:center"><button type="button" class="btn">改用文字阅读</button></div>
+      </div>
+    </div>
+    <p class="viewer-status">3D 不可用：请使用文字阅读。</p>
+  </div>
+  <div class="dialog-note">
+    <p style="margin:0"><strong>键盘与减少动效：</strong>部件列表项、步骤按钮、翻页与视角按钮全部可 Tab 与回车操作；视角按钮为拖拽的等效替代；列表是 3D 选择的文字替代入口。减少动效模式取消相机动画与非必要过渡（tokens 时长降为 0ms）。</p>
+  </div>
+  <div class="panel">
+    <h3>原文摘录（阅读正文用 16/26px，字宽 ≤72ch）</h3>
+    <p style="font-size:var(--font-size-reading);line-height:var(--line-height-reading);max-width:var(--layout-measure)">装片前请确认快门速度转盘不处于 B 门位置。将片头插入卷片轴缝隙，合上后盖后依次扳动过片扳手两次，确认计数器从 S 走到 1，即完成装片。若计数器未走动，请打开后盖重新装片。</p>
+    <p class="token-note">--font-size-reading 16/26；--layout-measure 72ch。阅读器中的说明长文使用该档；界面控件文字仍用正文 14/22。</p>
+  </div>
+</section>
+
+<section id="R-S6">
+  <div class="sec-head"><span class="sid">R-S6</span><h2>复核工作区中的热点状态（候选 / 已确认 / 失效 / 文字条目）</h2></div>
+  <p class="note sec-note">草稿复核阶段与发布阅读器使用同一视觉语法：候选与已确认不得混同；失效（stale）不显示在 3D，也不能悄悄变成已确认。</p>
+  <div class="panel">
+    <ul class="entity-list" style="list-style:none;margin:0;padding:0">
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)">快门速度转盘　<span class="plate plate--success">已确认</span>　<span class="part-desc">人工确认，发布时冻结。</span></li>
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)">胶片回卷按钮　<span class="plate plate--warning">候选</span>　<span class="part-desc">自动绑定产出，待人工确认；确认前不进入发布版。</span></li>
+      <li style="padding:var(--space-xs) 0;border-bottom:1px solid var(--color-line)">取景器眼罩　<span class="plate">失效（stale）</span>　<span class="part-desc">模型已更新，定位不再可用；不显示在 3D。</span></li>
+      <li style="padding:var(--space-xs) 0">多重曝光拨杆　<span class="plate">仅文本条目</span>　<span class="part-desc">无 3D 定位，保留文字并明显标识。</span></li>
+    </ul>
+    <div class="disabled-row" style="margin-top:var(--space-xs)">
+      <button type="button" class="btn">标记为已确认</button>
+      <button type="button" class="btn is-disabled" disabled>标记为已确认（无候选选中）</button>
+    </div>
+  </div>
+</section>
+
+<section id="R-S7">
+  <div class="sec-head"><span class="sid">R-S7</span><h2>窄屏结构（&lt;768px）：模型 + 单抽屉</h2></div>
+  <p class="note sec-note">同一 URL、同一数据；窄屏只保留模型区与面板切换按钮，同一时刻只开一个抽屉；抽屉 Esc 关闭并把焦点还给触发按钮。</p>
+  <div class="narrow-frame">
+    <div class="viewer">
+      <div class="viewer-toolbar" role="group" aria-label="模型视角操作（窄屏）">
+        <button type="button" class="btn">复位视角</button>
+        <button type="button" class="btn">适配模型</button>
+      </div>
+      <div class="viewer-stage" role="img" aria-label="3D 画布占位（窄屏）">
+        <p class="note" style="margin:0">3D 画布（占位）</p>
+      </div>
+      <p class="viewer-status" role="status">模型已加载，可旋转/缩放。</p>
+    </div>
+    <div class="narrow-tabs">
+      <button type="button" class="btn">部件</button>
+      <button type="button" class="btn">步骤</button>
+      <button type="button" class="btn">原文</button>
+    </div>
+    <p class="mono-sm" style="margin-top:var(--space-xs)">窄屏按钮 ≥44×44px；底部留白避免固定导航遮挡操作。</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="spec-foot">
+  <p class="note">对照口径：本页与 tokens.css 为 AC-VS-005/006 的实现对照基线；热点位置与模型外观以真实数据为准，本页不构成浏览器或 3D 运行验收。度量方法见 README。</p>
+</footer>
+
+</body>
+</html>

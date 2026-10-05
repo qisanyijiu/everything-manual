@@ -32,18 +32,25 @@ export function ReleaseListPage() {
   }
   if (releasesQuery.isError) {
     return (
-      <div className="page-error" role="alert">
+      <div className="page releases-page" aria-labelledby="releases-title">
+        <p className="eyebrow">PUBLISHED MANUALS</p>
+        <h1 id="releases-title">发布版本</h1>
+        <div className="page-error error-panel" role="alert">
         <p>版本列表读取失败：{describeError(releasesQuery.error).message}</p>
+        <button type="button" disabled={releasesQuery.isFetching} onClick={() => void releasesQuery.refetch()}>
+          {releasesQuery.isFetching ? "正在重新读取…" : "重新读取发布版本"}
+        </button>{" "}
         <Link to={`/items/${itemId}`}>返回物品概览</Link> <LibraryBackLink itemId={itemId} />
+        </div>
       </div>
     );
   }
   const releases = releasesQuery.data ?? [];
 
   return (
-    <div className="page releases-page">
+    <div className="page releases-page" aria-labelledby="releases-title">
       <p className="eyebrow">PUBLISHED MANUALS</p>
-      <h1>发布版本</h1>
+      <h1 id="releases-title">发布版本</h1>
       <p className="page-subtitle">
         每一次发布，都是一份完整留存的说明书。之后修改草稿，不会改变已发布的内容。
       </p>
@@ -58,7 +65,7 @@ export function ReleaseListPage() {
           {releases.map((release) => (
             <li key={release.id}>
               <div className="release-list__identity"><Icon name="book" size={34} /><div>
-                <strong>交互说明书 <span className="status-label">已发布</span></strong>
+                <strong>交互说明书 <span className="status-label status-label--success">已发布</span></strong>
               <p className="page-note">
                 发布时间 {new Date(release.createdAt).toLocaleString("zh-CN", { hour12: false })} · 草稿 r{release.draftRevision}
               </p>

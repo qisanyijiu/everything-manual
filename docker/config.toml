@@ -1,0 +1,18 @@
+# The application is reachable only through the adjacent proxy in the same
+# network namespace. Host publishing remains bound to 127.0.0.1 in compose.yaml.
+listen = "127.0.0.1:8081"
+trusted_proxy_cidrs = ["127.0.0.1/32"]
+
+[download]
+allowed_hosts = ["cdn.tripo3d.ai", "tripo-data.rg1.data.tripo3d.com"]
+
+[concurrency]
+manual_ai_batches = 1
+
+[session]
+# EM_PUBLIC_ORIGIN=https://manual.example automatically enables Secure cookies.
+# Local HTTP defaults to http://127.0.0.1:8080 and accepts that exact Origin.
+cookie_secure = "auto"
+
+# API keys are entered in Settings and AES-256-GCM encrypted in /runtime-config.
+# Historical documents in /data can be read without configuring any providers.

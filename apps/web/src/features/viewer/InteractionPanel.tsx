@@ -9,6 +9,7 @@
 import { useMemo } from "react";
 
 import type { ModelActionView, ModelPoseView } from "./interactive-view";
+import { PartsExplorer, type PartsExplorerProps } from "./PartsExplorer";
 
 export interface InteractionPanelProps {
   readonly actions: readonly ModelActionView[];
@@ -19,6 +20,7 @@ export interface InteractionPanelProps {
   readonly onAction: (action: ModelActionView) => void;
   readonly onPose: (poseId: string | null) => void;
   readonly onReset: () => void;
+  readonly inspection?: PartsExplorerProps;
 }
 
 export function InteractionPanel({
@@ -30,6 +32,7 @@ export function InteractionPanel({
   onAction,
   onPose,
   onReset,
+  inspection,
 }: InteractionPanelProps) {
   const ordered = useMemo(() => {
     if (selectedPartId === null) {
@@ -40,11 +43,12 @@ export function InteractionPanel({
     return [...related, ...rest];
   }, [actions, selectedPartId]);
 
-  if (actions.length === 0 && poses.length === 0) {
+  if (actions.length === 0 && poses.length === 0 && (inspection?.nodeNames.length ?? 0) === 0) {
     return null;
   }
   return (
     <section className="interaction-panel" aria-label="模型交互" data-testid="interaction-panel">
+      {inspection !== undefined && <PartsExplorer {...inspection} />}
       {poses.length > 0 && (
         <div className="interaction-panel__group" role="group" aria-label="姿势">
           <span className="interaction-panel__label">姿势</span>

@@ -42,6 +42,7 @@ export function DocumentStepPage() {
   return (
     <section className="page document-step" aria-labelledby="document-step-title">
       <WizardSteps currentSegment="import/document" itemId={id} />
+      <p className="eyebrow">SOURCE DOCUMENT</p>
       <h1 id="document-step-title">说明书原件</h1>
       <p className="page__lead">
         {itemQuery.data?.data.name ?? "物品"}：上传 PDF 原件并绑定为说明书；

@@ -84,7 +84,8 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
   const interaction = useInteractive(interactiveView, selectedPartId);
 
   // 只把"锚点仍属于发布模型版本"的热点交给 3D（stale 不显示；发布不变量已保证
-  // 不存在冒充 confirmed 的绑定，这里再挡一次读取侧防线）。
+  // 不存在冒充 confirmed 的绑定，这里再挡一次读取侧防线）。状态原样透传：
+  // 已确认＝实心圆、候选＝虚线空心环（reader-specimen 冻结语法；发布版应为全已确认）。
   const displayHotspots = useMemo(() => {
     if (model === null) {
       return [];
@@ -94,7 +95,12 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
         return [];
       }
       return [
-        { id: hotspot.id, partId: hotspot.partId, positionLocal: hotspot.anchor.positionLocal },
+        {
+          id: hotspot.id,
+          partId: hotspot.partId,
+          status: hotspot.status,
+          positionLocal: hotspot.anchor.positionLocal,
+        },
       ];
     });
   }, [hotspots, model]);
@@ -204,30 +210,33 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
                         (hotspot) => hotspot.partId === part.id,
                       );
                       const textOnly = review.entities[part.id]?.textOnly === true;
+                      const selected = selectedPartId === part.id;
                       return (
                         <li key={part.id} data-testid={`reader-part-${part.id}`}>
                           <button
                             type="button"
-                            aria-current={selectedPartId === part.id}
+                            aria-current={selected}
                             onClick={() => {
                               setSelectedPartId(part.id);
                               setSelectedHotspotId(partHotspots[0]?.id ?? null);
                               setNotice(
                                 partHotspots.length > 0
-                                  ? `已在 3D 中定位部件「${part.name}」的热点`
-                                  : `部件「${part.name}」没有 3D 热点（发布时标记为文字条目）`,
+                                  ? `已选择部件「${part.name}」及关联热点`
+                                  : `部件「${part.name}」暂无定位（没有 3D 热点，发布时按文字条目保留）`,
                               );
                             }}
                           >
                             {part.name}
                           </button>
-                          <span className="status-label">
+                          {/* 状态牌：候选/已确认/无热点/仅文本，始终带文字（不只靠颜色）。 */}
+                          <span className={`status-label${textOnly ? "" : partHotspots.length > 0 ? " status-label--success" : " status-label--warning"}`}>
                             {textOnly
                               ? "仅文本条目"
                               : partHotspots.length > 0
                                 ? `热点 ${partHotspots.length}`
                                 : "无热点"}
                           </span>
+                          {selected && <span className="status-label">已选</span>}
                           {part.description !== "" && <p>{part.description}</p>}
                           {part.hasUserEdit && <ReleaseRevision entityId={part.id}>
                             <p>{part.original.name}</p>
@@ -323,6 +332,7 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
                                     <button
                                       key={`${step.id}-part-${partId}`}
                                       type="button"
+                                      aria-current={selectedPartId === partId}
                                       className={
                                         selectedPartId === partId
                                           ? "step-parts__chip step-parts__chip--active"

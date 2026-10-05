@@ -1,283 +1,343 @@
 {
   "1024": {
-    "gridTemplateColumns": "311px 155.5px 155.5px 294px",
+    "gridTemplateColumns": "329.328px 60px 164.672px 150px",
     "row": {
-      "x": 24,
-      "y": 294.296875,
-      "width": 976,
-      "height": 108.65625
+      "x": 219,
+      "y": 383.578125,
+      "width": 776,
+      "height": 106.59375
     },
+    "content": "RD 行布局守卫T16-RD 行布局守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 776,
+    "clientWidth": 776,
+    "verticalWhitespace": 36,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 311,
-        "height": 51.1875
+        "x": 237,
+        "y": 412.375,
+        "width": 329.328125,
+        "height": 49
       },
       "name": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 311,
-        "height": 25.59375
+        "x": 293,
+        "y": 414.171875,
+        "width": 273.328125,
+        "height": 22.390625
       },
       "status": {
-        "x": 359,
-        "y": 318.515625,
-        "width": 155.5,
-        "height": 26.75
+        "x": 578.328125,
+        "y": 425.375,
+        "width": 60,
+        "height": 23
       },
       "time": {
-        "x": 526.5,
-        "y": 308.859375,
-        "width": 155.5,
-        "height": 46.0625
+        "x": 650.328125,
+        "y": 416.875,
+        "width": 164.671875,
+        "height": 40
       },
       "actions": {
-        "x": 694,
-        "y": 310.09375,
-        "width": 294,
-        "height": 43.59375
+        "x": 827,
+        "y": 401.578125,
+        "width": 150,
+        "height": 70.59375
       },
-      "note": {
-        "x": 36,
-        "y": 369.484375,
-        "width": 952,
-        "height": 20.46875
+      "primaryAction": {
+        "x": 827,
+        "y": 428.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 927.5,
+        "y": 428.171875,
+        "width": 48,
+        "height": 44
       }
     }
   },
   "1280": {
-    "gridTemplateColumns": "243px 121.5px 121.5px 294px",
+    "gridTemplateColumns": "253.516px 76.0625px 101.422px 200px",
     "row": {
-      "x": 24,
-      "y": 294.296875,
-      "width": 840,
-      "height": 129.125
+      "x": 271,
+      "y": 391.578125,
+      "width": 708,
+      "height": 102.59375
     },
+    "content": "RD 行布局守卫T16-RD 行布局守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 708,
+    "clientWidth": 708,
+    "verticalWhitespace": 32,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 316.53125,
-        "width": 243,
-        "height": 51.1875
+        "x": 287,
+        "y": 413.875,
+        "width": 253.515625,
+        "height": 58
       },
       "name": {
-        "x": 36,
-        "y": 316.53125,
-        "width": 243,
-        "height": 25.59375
+        "x": 354,
+        "y": 420.171875,
+        "width": 186.515625,
+        "height": 22.390625
       },
       "status": {
-        "x": 291,
-        "y": 328.75,
-        "width": 121.5,
-        "height": 26.75
+        "x": 555.515625,
+        "y": 431.375,
+        "width": 76.0625,
+        "height": 23
       },
       "time": {
-        "x": 424.5,
-        "y": 306.296875,
-        "width": 121.5,
-        "height": 71.65625
+        "x": 646.578125,
+        "y": 413.875,
+        "width": 101.421875,
+        "height": 58
       },
       "actions": {
-        "x": 558,
-        "y": 320.328125,
-        "width": 294,
-        "height": 43.59375
+        "x": 763,
+        "y": 407.578125,
+        "width": 200,
+        "height": 70.59375
       },
-      "note": {
-        "x": 36,
-        "y": 389.953125,
-        "width": 816,
-        "height": 20.46875
+      "primaryAction": {
+        "x": 763,
+        "y": 434.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 863.5,
+        "y": 434.171875,
+        "width": 48,
+        "height": 44
       }
     }
   },
   "1366": {
-    "gridTemplateColumns": "286px 143px 143px 294px",
+    "gridTemplateColumns": "304.109px 91.2344px 121.656px 200px",
     "row": {
-      "x": 24,
-      "y": 294.296875,
-      "width": 926,
-      "height": 108.65625
+      "x": 271,
+      "y": 391.578125,
+      "width": 794,
+      "height": 102.59375
     },
+    "content": "RD 行布局守卫T16-RD 行布局守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 794,
+    "clientWidth": 794,
+    "verticalWhitespace": 32,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 286,
-        "height": 51.1875
+        "x": 287,
+        "y": 413.875,
+        "width": 304.109375,
+        "height": 58
       },
       "name": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 286,
-        "height": 25.59375
+        "x": 354,
+        "y": 420.171875,
+        "width": 237.109375,
+        "height": 22.390625
       },
       "status": {
-        "x": 334,
-        "y": 318.515625,
-        "width": 143,
-        "height": 26.75
+        "x": 606.109375,
+        "y": 431.375,
+        "width": 91.234375,
+        "height": 23
       },
       "time": {
-        "x": 489,
-        "y": 308.859375,
-        "width": 143,
-        "height": 46.0625
+        "x": 712.34375,
+        "y": 422.875,
+        "width": 121.65625,
+        "height": 40
       },
       "actions": {
-        "x": 644,
-        "y": 310.09375,
-        "width": 294,
-        "height": 43.59375
+        "x": 849,
+        "y": 407.578125,
+        "width": 200,
+        "height": 70.59375
       },
-      "note": {
-        "x": 36,
-        "y": 369.484375,
-        "width": 902,
-        "height": 20.46875
+      "primaryAction": {
+        "x": 849,
+        "y": 434.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 949.5,
+        "y": 434.171875,
+        "width": 48,
+        "height": 44
       }
     }
   },
   "1440": {
-    "gridTemplateColumns": "323px 161.5px 161.5px 294px",
+    "gridTemplateColumns": "347.641px 104.297px 139.062px 200px",
     "row": {
-      "x": 24,
-      "y": 294.296875,
-      "width": 1000,
-      "height": 108.65625
+      "x": 271,
+      "y": 391.578125,
+      "width": 868,
+      "height": 102.59375
     },
+    "content": "RD 行布局守卫T16-RD 行布局守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 868,
+    "clientWidth": 868,
+    "verticalWhitespace": 32,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 323,
-        "height": 51.1875
+        "x": 287,
+        "y": 413.875,
+        "width": 347.640625,
+        "height": 58
       },
       "name": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 323,
-        "height": 25.59375
+        "x": 354,
+        "y": 420.171875,
+        "width": 280.640625,
+        "height": 22.390625
       },
       "status": {
-        "x": 371,
-        "y": 318.515625,
-        "width": 161.5,
-        "height": 26.75
+        "x": 649.640625,
+        "y": 431.375,
+        "width": 104.296875,
+        "height": 23
       },
       "time": {
-        "x": 544.5,
-        "y": 308.859375,
-        "width": 161.5,
-        "height": 46.0625
+        "x": 768.9375,
+        "y": 422.875,
+        "width": 139.0625,
+        "height": 40
       },
       "actions": {
-        "x": 718,
-        "y": 310.09375,
-        "width": 294,
-        "height": 43.59375
+        "x": 923,
+        "y": 407.578125,
+        "width": 200,
+        "height": 70.59375
       },
-      "note": {
-        "x": 36,
-        "y": 369.484375,
-        "width": 976,
-        "height": 20.46875
+      "primaryAction": {
+        "x": 923,
+        "y": 434.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 1023.5,
+        "y": 434.171875,
+        "width": 48,
+        "height": 44
       }
     }
   },
   "1600": {
-    "gridTemplateColumns": "361px 180.5px 180.5px 294px",
+    "gridTemplateColumns": "441.75px 132.531px 176.719px 200px",
     "row": {
-      "x": 24,
-      "y": 294.296875,
-      "width": 1076,
-      "height": 108.65625
+      "x": 271,
+      "y": 391.578125,
+      "width": 1028,
+      "height": 102.59375
     },
+    "content": "RD 行布局守卫T16-RD 行布局守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 1028,
+    "clientWidth": 1028,
+    "verticalWhitespace": 32,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 361,
-        "height": 51.1875
+        "x": 287,
+        "y": 413.875,
+        "width": 441.75,
+        "height": 58
       },
       "name": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 361,
-        "height": 25.59375
+        "x": 354,
+        "y": 420.171875,
+        "width": 374.75,
+        "height": 22.390625
       },
       "status": {
-        "x": 409,
-        "y": 318.515625,
-        "width": 180.5,
-        "height": 26.75
+        "x": 743.75,
+        "y": 431.375,
+        "width": 132.53125,
+        "height": 23
       },
       "time": {
-        "x": 601.5,
-        "y": 308.859375,
-        "width": 180.5,
-        "height": 46.0625
+        "x": 891.28125,
+        "y": 422.875,
+        "width": 176.71875,
+        "height": 40
       },
       "actions": {
-        "x": 794,
-        "y": 310.09375,
-        "width": 294,
-        "height": 43.59375
+        "x": 1083,
+        "y": 407.578125,
+        "width": 200,
+        "height": 70.59375
       },
-      "note": {
-        "x": 36,
-        "y": 369.484375,
-        "width": 1052,
-        "height": 20.46875
+      "primaryAction": {
+        "x": 1083,
+        "y": 434.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 1183.5,
+        "y": 434.171875,
+        "width": 48,
+        "height": 44
       }
     }
   },
   "1920": {
-    "gridTemplateColumns": "361px 180.5px 180.5px 294px",
+    "gridTemplateColumns": "528.812px 158.656px 211.531px 200px",
     "row": {
-      "x": 24,
-      "y": 294.296875,
-      "width": 1076,
-      "height": 108.65625
+      "x": 357,
+      "y": 391.578125,
+      "width": 1176,
+      "height": 102.59375
     },
+    "content": "RD 行布局守卫T16-RD 行布局守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 1176,
+    "clientWidth": 1176,
+    "verticalWhitespace": 32,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 361,
-        "height": 51.1875
+        "x": 373,
+        "y": 413.875,
+        "width": 528.8125,
+        "height": 58
       },
       "name": {
-        "x": 36,
-        "y": 306.296875,
-        "width": 361,
-        "height": 25.59375
+        "x": 440,
+        "y": 420.171875,
+        "width": 461.8125,
+        "height": 22.390625
       },
       "status": {
-        "x": 409,
-        "y": 318.515625,
-        "width": 180.5,
-        "height": 26.75
+        "x": 916.8125,
+        "y": 431.375,
+        "width": 158.65625,
+        "height": 23
       },
       "time": {
-        "x": 601.5,
-        "y": 308.859375,
-        "width": 180.5,
-        "height": 46.0625
+        "x": 1090.46875,
+        "y": 422.875,
+        "width": 211.53125,
+        "height": 40
       },
       "actions": {
-        "x": 794,
-        "y": 310.09375,
-        "width": 294,
-        "height": 43.59375
+        "x": 1317,
+        "y": 407.578125,
+        "width": 200,
+        "height": 70.59375
       },
-      "note": {
-        "x": 36,
-        "y": 369.484375,
-        "width": 1052,
-        "height": 20.46875
+      "primaryAction": {
+        "x": 1317,
+        "y": 434.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 1417.5,
+        "y": 434.171875,
+        "width": 48,
+        "height": 44
       }
     }
   }

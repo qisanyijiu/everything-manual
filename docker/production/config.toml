@@ -1,0 +1,11 @@
+listen = "127.0.0.1:8081"
+trusted_proxy_cidrs = ["127.0.0.1/32"]
+
+[download]
+allowed_hosts = ["cdn.tripo3d.ai", "tripo-data.rg1.data.tripo3d.com"]
+
+[concurrency]
+manual_ai_batches = 1
+
+[session]
+cookie_secure = "always"

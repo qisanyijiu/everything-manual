@@ -42,10 +42,13 @@ import {
   type StandalonePayload,
 } from "../payload";
 import { PartAnimator } from "../../viewer/interactive";
-import type { ModelActionView } from "../../viewer/interactive-view";
+import { partNodeLabel, type ModelActionView } from "../../viewer/interactive-view";
+import { findPartNode } from "../../viewer/part-inspection";
 
-const HOTSPOT_COLOR = 0xc8643c;
-const HOTSPOT_SELECTED_COLOR = 0x1f4d3a;
+// 与应用阅读器同一套 token 取值（--color-accent / --color-accent-active）。
+// 发布版只含已确认热点（实心圆语义），离线侧不画候选。
+const HOTSPOT_COLOR = 0xa63f21;
+const HOTSPOT_SELECTED_COLOR = 0x7a2c12;
 
 function byId<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
@@ -93,8 +96,17 @@ function evidenceLabel(evidence: readonly StandaloneEvidence[]): string | null {
   return pages.length === 0 ? null : `原文：第 ${pages.join("、")} 页`;
 }
 
+/** 发布时间显示：可解析时本地化，否则原样显示（不猜测）。 */
+function formatPublished(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString("zh-CN", { hour12: false });
+}
+
 interface Viewer {
   selectPart(partId: string | null): void;
+  selectNode(name: string | null): void;
+  readonly nodeNames: readonly string[];
+  partStates(): readonly { name: string; matrix: number[]; expanded: boolean }[];
   resetView(): void;
   /** 交互层（分件模型才有）。 */
   animator: PartAnimator | null;
@@ -109,6 +121,7 @@ function setStatus(text: string, isError = false): void {
 async function createViewer(
   payload: StandalonePayload,
   onPick: (partId: string) => void,
+  onNodePick: (name: string) => void,
 ): Promise<Viewer> {
   const host = byId<HTMLDivElement>("em-canvas");
   const renderer = new WebGLRenderer({ antialias: true });
@@ -118,7 +131,8 @@ async function createViewer(
   host.appendChild(renderer.domElement);
 
   const scene = new Scene();
-  scene.background = new Color(0xeef1ea);
+  // 纸面底色（--color-paper）：与网页阅读器的模型空白区一致。
+  scene.background = new Color(0xf4f1e8);
   const pmrem = new PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
@@ -128,6 +142,12 @@ async function createViewer(
 
   const gltf = await new GLTFLoader().parseAsync(readModelBytes(), "");
   const assetRoot: Object3D = gltf.scene;
+  const fallbackNames: string[] = [];
+  assetRoot.traverse((object) => {
+    if ((object as Mesh).isMesh && object.name !== "") fallbackNames.push(object.name);
+  });
+  const nodeNames = payload.interactive === null ? [] : [...new Set(payload.interactive.nodeNames ?? fallbackNames)];
+  const registeredNodes = new Set(nodeNames);
   // 显示变换只放在外层：居中 + 统一缩放到单位尺寸。
   const display = new Group();
   display.add(assetRoot);
@@ -154,12 +174,17 @@ async function createViewer(
   }
 
   const resetView = (): void => {
-    camera.position.set(0.9, 0.55, 1.35);
-    controls.target.set(0, 0, 0);
+    assetRoot.updateWorldMatrix(true, true);
+    const current = new Box3().setFromObject(assetRoot);
+    const target = current.getCenter(new Vector3());
+    const radius = current.getSize(new Vector3()).length() * 0.5;
+    const verticalHalfFov = (camera.fov * Math.PI) / 360;
+    const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * camera.aspect);
+    const distance = Math.max(radius / Math.sin(Math.min(verticalHalfFov, horizontalHalfFov)) * 1.1, 0.6);
+    camera.position.copy(target).add(new Vector3(0.9, 0.55, 1.35).normalize().multiplyScalar(distance));
+    controls.target.copy(target);
     controls.update();
   };
-  resetView();
-
   const resize = (): void => {
     const width = host.clientWidth;
     const height = host.clientHeight;
@@ -169,6 +194,7 @@ async function createViewer(
   };
   new ResizeObserver(resize).observe(host);
   resize();
+  resetView();
 
   // 点击热点 → 选中部件（拖动旋转不算点击）。
   let downAt: { x: number; y: number } | null = null;
@@ -190,7 +216,11 @@ async function createViewer(
     const partId = hit?.object.userData.partId;
     if (typeof partId === "string") {
       onPick(partId);
+      return;
     }
+    const surfaceHit = raycaster.intersectObject(assetRoot, true).find((entry) => !entry.object.userData.emHotspot);
+    const nodeName = surfaceHit ? findPartNode(surfaceHit.object, registeredNodes) : null;
+    if (nodeName !== null) onNodePick(nodeName);
   });
 
   const animator =
@@ -198,6 +228,7 @@ async function createViewer(
       ? null
       : new PartAnimator(assetRoot, window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   if (animator !== null && payload.interactive !== null) {
+    animator.configureParts(nodeNames);
     animator.attachMarkers(
       assetRoot,
       new Map(payload.interactive.bindings.flatMap((b) => (b.nodes[0] ? [[b.partId, b.nodes[0]] as const] : []))),
@@ -212,6 +243,19 @@ async function createViewer(
   return {
     resetView,
     animator,
+    nodeNames,
+    selectNode(name) {
+      animator?.highlight(name === null ? [] : [name]);
+    },
+    partStates() {
+      assetRoot.updateWorldMatrix(true, true);
+      const inverse = assetRoot.matrixWorld.clone().invert();
+      const expanded = new Set(animator?.expandedNodeNames ?? []);
+      return nodeNames.flatMap((name) => {
+        const node = assetRoot.getObjectByName(name);
+        return node ? [{ name, matrix: inverse.clone().multiply(node.matrixWorld).toArray(), expanded: expanded.has(name) }] : [];
+      });
+    },
     selectPart(partId) {
       const nodes = payload.interactive?.bindings.find((b) => b.partId === partId)?.nodes ?? [];
       animator?.highlight(nodes);
@@ -241,7 +285,7 @@ function renderPanels(payload: StandalonePayload, select: (partId: string | null
     button.addEventListener("click", () => select(part.id));
     item.append(button);
     const count = hotspotCount.get(part.id) ?? 0;
-    item.append(el("span", { className: "tag", text: count > 0 ? `热点 ${count}` : "仅文字" }));
+    item.append(el("span", { className: "tag", text: count > 0 ? `热点 ${count}` : "无热点" }));
     if (part.description !== "") {
       item.append(el("p", { text: part.description }));
     }
@@ -328,7 +372,7 @@ function renderInteractions(payload: StandalonePayload, viewer: Viewer): void {
   const host = byId<HTMLDivElement>("em-interactions");
   const interactive = payload.interactive;
   const animator = viewer.animator;
-  if (interactive === null || animator === null || (interactive.actions.length === 0 && interactive.poses.length === 0)) {
+  if (interactive === null || animator === null) {
     host.hidden = true;
     return;
   }
@@ -340,6 +384,7 @@ function renderInteractions(payload: StandalonePayload, viewer: Viewer): void {
     host.append(row);
     return row;
   };
+  if (viewer.nodeNames.length > 0) renderPartsExplorer(host, viewer);
   if (interactive.poses.length > 0) {
     const row = group("姿势");
     const buttons: HTMLButtonElement[] = [];
@@ -381,30 +426,136 @@ function renderInteractions(payload: StandalonePayload, viewer: Viewer): void {
       animator.resetActions(performance.now());
       animator.setPose(null, performance.now());
       toggles.forEach((b) => b.setAttribute("aria-pressed", "false"));
+      host.dispatchEvent(new Event("em-inspection-reset"));
     });
     row.append(reset);
   }
   host.append(el("p", { className: "source", text: "动作与姿势为外观示意（分件模型刚体变换），不代表真实机械结构。" }));
 }
 
+/** 独立网格观察与说明书动作分别展示，编号不冒充已确认的部件名称。 */
+function renderPartsExplorer(host: HTMLElement, viewer: Viewer): void {
+  const animator = viewer.animator;
+  if (animator === null) return;
+  const section = el("section", { className: "mesh-explorer" });
+  section.setAttribute("aria-label", "全部分件观察");
+  section.dataset.testid = "offline-parts-explorer";
+  section.append(el("h3", { text: `全部分件 · ${viewer.nodeNames.length}` }));
+  section.append(el("p", { className: "source", text: "编号对应模型几何分区；展开仅供观察，不表示真实拆卸方向或机械零件。" }));
+  const search = el("input");
+  search.type = "search";
+  search.placeholder = "搜索分件编号";
+  search.setAttribute("aria-label", "搜索分件编号");
+  const list = el("div", { className: "mesh-explorer__list" });
+  list.setAttribute("role", "group");
+  list.setAttribute("aria-label", "分件编号");
+  const detail = el("p", { className: "source", text: "选择一个编号，观察对应网格。" });
+  detail.setAttribute("aria-live", "polite");
+  const controls = el("div", { className: "chips" });
+  const toggle = el("button", { className: "chip", text: "展开选中分件" });
+  toggle.type = "button";
+  toggle.disabled = true;
+  toggle.dataset.testid = "offline-part-toggle";
+  const all = el("button", { className: "chip", text: "全部展开" });
+  all.type = "button";
+  all.dataset.testid = "offline-parts-expand-all";
+  const reset = el("button", { className: "chip", text: "全部复原" });
+  reset.type = "button";
+  reset.dataset.testid = "offline-parts-reset";
+  let selected: string | null = null;
+  let expanded = new Set<string>();
+  const buttons = new Map<string, HTMLButtonElement>();
+  const update = (): void => {
+    const active = selected !== null && expanded.has(selected);
+    toggle.disabled = selected === null;
+    toggle.textContent = active ? "复原选中分件" : "展开选中分件";
+    toggle.setAttribute("aria-pressed", String(active));
+    detail.textContent = selected === null ? "选择一个编号，观察对应网格。" : `${partNodeLabel(selected)} · ${expanded.has(selected) ? "已展开" : "原位"}`;
+    for (const [name, button] of buttons) {
+      button.setAttribute("aria-pressed", String(name === selected));
+      button.dataset.expanded = String(expanded.has(name));
+    }
+  };
+  const select = (name: string): void => {
+    selected = name;
+    viewer.selectNode(name);
+    update();
+  };
+  for (const name of viewer.nodeNames) {
+    const button = el("button", { className: "chip", text: partNodeLabel(name) });
+    button.type = "button";
+    button.title = name;
+    button.dataset.testid = `offline-inspect-node-${name}`;
+    button.addEventListener("click", () => select(name));
+    buttons.set(name, button);
+    list.append(button);
+  }
+  search.addEventListener("input", () => {
+    const query = search.value.trim().toLowerCase();
+    for (const [name, button] of buttons) button.hidden = !`${name} ${partNodeLabel(name)}`.toLowerCase().includes(query);
+  });
+  toggle.addEventListener("click", () => {
+    if (selected === null) return;
+    if (expanded.has(selected)) expanded.delete(selected);
+    else expanded.add(selected);
+    animator.setExpandedNodes([...expanded], performance.now());
+    update();
+  });
+  all.addEventListener("click", () => {
+    expanded = new Set(viewer.nodeNames);
+    animator.setExpandedNodes([...expanded], performance.now());
+    update();
+    setTimeout(() => viewer.resetView(), 450);
+  });
+  reset.addEventListener("click", () => {
+    expanded.clear();
+    animator.setExpandedNodes([], performance.now());
+    update();
+  });
+  controls.append(toggle, all, reset);
+  section.append(search, list, detail, controls);
+  host.prepend(section);
+  // Local QA can read geometry only. No setters, bytes, credentials or requests.
+  if (new URLSearchParams(location.hash.slice(1)).has("em-inspect-qa")) {
+    Object.defineProperty(window, "__EM_OFFLINE_PARTS__", { value: { parts: () => viewer.partStates() }, configurable: true });
+  }
+  host.addEventListener("em-node-pick", (event) => {
+    const name = (event as CustomEvent<string>).detail;
+    if (buttons.has(name)) select(name);
+  });
+  host.addEventListener("em-inspection-reset", () => reset.click());
+  host.addEventListener("em-part-selected", () => { selected = null; update(); });
+  update();
+}
+
 async function main(): Promise<void> {
   const payload = readPayload();
   byId<HTMLHeadingElement>("em-title").textContent = payload.title;
   byId<HTMLParagraphElement>("em-subtitle").textContent = payload.subtitle;
+  // 版本信息公开可展开（与网页阅读器的「查看版本信息」同语义）；内容为发布时冻结版本。
+  const published =
+    payload.publishedAt === null
+      ? ""
+      : ` · 发布于 ${formatPublished(payload.publishedAt)}`;
+  byId<HTMLParagraphElement>("em-release").textContent =
+    `发布版本 ${payload.releaseId}${published} · 内容为发布时冻结版本（不可变）`;
 
   let viewer: Viewer | null = null;
   let panels: { markPart(partId: string | null): void } | null = null;
   const select = (partId: string | null): void => {
     panels?.markPart(partId);
     viewer?.selectPart(partId);
+    byId<HTMLDivElement>("em-interactions").dispatchEvent(new Event("em-part-selected"));
   };
   panels = renderPanels(payload, select);
 
   try {
-    viewer = await createViewer(payload, select);
+    viewer = await createViewer(payload, select, (name) => {
+      byId<HTMLDivElement>("em-interactions").dispatchEvent(new CustomEvent("em-node-pick", { detail: name }));
+    });
     byId<HTMLButtonElement>("em-reset").addEventListener("click", () => viewer?.resetView());
     renderInteractions(payload, viewer);
-    setStatus("拖动旋转、滚轮缩放；点击橙色热点或左侧部件可互相定位。");
+    setStatus("拖动旋转、滚轮缩放；点击热点定位部件，点击模型或分件编号可逐件展开观察。");
   } catch (error) {
     setStatus(`3D 模型无法显示：${error instanceof Error ? error.message : String(error)}`, true);
   }

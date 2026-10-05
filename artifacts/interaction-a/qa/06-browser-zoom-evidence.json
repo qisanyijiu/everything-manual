@@ -14,7 +14,7 @@
   "confirmGeometry": {
     "innerWidth": 720,
     "innerHeight": 456,
-    "scrollY": 1800.5,
+    "scrollY": 2064.5,
     "visualViewport": {
       "width": 720,
       "height": 456.5,
@@ -25,105 +25,105 @@
         "selector": ".confirm-step",
         "left": 20,
         "right": 700,
-        "top": -1711.5,
-        "bottom": 368.453125,
+        "top": -1964.5,
+        "bottom": 368.640625,
         "fontSize": "14px"
       },
       {
         "selector": ".confirm-step .page__lead",
         "left": 20,
         "right": 700,
-        "top": -1576.75,
-        "bottom": -1553.65625,
+        "top": -1831.5,
+        "bottom": -1809.5,
         "fontSize": "14px"
       },
       {
         "selector": "#budget-tripo",
         "left": 41,
         "right": 679,
-        "top": -700.046875,
-        "bottom": -652.953125,
+        "top": -659.15625,
+        "bottom": -615.15625,
         "fontSize": "14px"
       },
       {
         "selector": "#budget-manual",
         "left": 41,
         "right": 679,
-        "top": -589.859375,
-        "bottom": -542.765625,
+        "top": -553.15625,
+        "bottom": -509.15625,
         "fontSize": "14px"
       },
       {
         "selector": ".confirm-box",
         "left": 20,
         "right": 700,
-        "top": 87.46875,
-        "bottom": 298.65625,
+        "top": 95.84375,
+        "bottom": 296.2421875,
         "fontSize": "14px"
       },
       {
         "selector": "[data-testid=\"generate-button\"]",
         "left": 20,
         "right": 700,
-        "top": 322.65625,
-        "bottom": 368.453125,
-        "fontSize": "12px"
+        "top": 320.2421875,
+        "bottom": 368.640625,
+        "fontSize": "14px"
       }
     ]
   },
   "formGeometry": {
     "innerWidth": 720,
     "innerHeight": 456,
-    "scrollY": 445,
+    "scrollY": 487,
     "buttonHit": true,
     "elements": [
       {
         "selector": ".item-form-page",
         "left": 20,
         "right": 700,
-        "top": -356,
-        "bottom": 344.5859375,
+        "top": -387,
+        "bottom": 389.390625,
         "fontSize": "14px"
       },
       {
         "selector": ".item-form-page .page__lead",
         "left": 20,
         "right": 700,
-        "top": -245.453125,
-        "bottom": -222.359375,
+        "top": -277.0078125,
+        "bottom": -255.0078125,
         "fontSize": "14px"
       },
       {
         "selector": ".item-form",
         "left": 20,
         "right": 700,
-        "top": -198.359375,
-        "bottom": 344.5859375,
+        "top": -231.0078125,
+        "bottom": 389.390625,
         "fontSize": "14px"
       },
       {
         "selector": "#field-name",
         "left": 41,
         "right": 679,
-        "top": -146.265625,
-        "bottom": -99.171875,
+        "top": -180.0078125,
+        "bottom": -136.0078125,
         "fontSize": "14px"
       },
       {
         "selector": "#field-model",
         "left": 41,
         "right": 679,
-        "top": -48.078125,
-        "bottom": -0.984375,
+        "top": -68.0078125,
+        "bottom": -24.0078125,
         "fontSize": "14px"
       },
       {
         "selector": ".item-form button[type=\"submit\"]",
         "left": 41,
-        "right": 133,
-        "top": 279.5859375,
-        "bottom": 323.5859375,
-        "fontSize": "12px"
+        "right": 145,
+        "top": 324.390625,
+        "bottom": 368.390625,
+        "fontSize": "14px"
       }
     ]
   },

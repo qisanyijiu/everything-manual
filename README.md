@@ -8,20 +8,22 @@
   内嵌静态资源、PDF.js 运行资源、数据库迁移与 bundled SQLite；运行期不需要 Node / Python / PDF 程序。
 - **外部依赖只有两类 HTTP API**：Tripo（3D 生成）与说明书 AI（知识提取），密钥只留在服务端。
 
-## 当前状态（2026-09-13）
+## 当前状态（2026-10-04）
 
 | 阶段 | 状态 |
 | --- | --- |
-| T01–T21（骨架 → 认证/资产/资料 → 生成闭环 → 校准/发布/导出备份 → 回归矩阵） | 已实现，**经 QA 独立验收 PASS**（回合 1–29，缺陷 BUG-001~012 全部关闭） |
-| T22（多平台单二进制发布） | macOS 平台已构建并自证；**Linux 平台未验证**（本机 Docker 引擎故障，环境阻塞）；尚未经 QA 验收 |
-| T23（授权真实 Provider 链路与最终 QA） | 未开始，需要用户提供凭据与一次生成预算 |
+| 核心流程与独立 3D 阅读器 | 已合并到本地 `master`；既有macOS验收Rust669项、前端311项、Chrome140项通过 |
+| Nikon F3HP 真实供应商流程 | 47页说明书导入、整机/分件生成、人工知识校对、发布、ZIP与离线HTML导出、重启复读通过；实际消耗70 Tripo credits |
+| macOS Apple Silicon 单二进制 | 构建、可复现哈希、冷目录七步检查及断网读取通过；未签名/公证 |
+| Docker / Linux AMD64 ABI | 新76分件镜像、前端336项测试与生产Chrome验收通过；既有Rust671项、Compose647项及断网七步记录保留；ARM虚拟机内经Rosetta运行 |
+| 统一预览资料库 | 8个物品、7份说明书/166页、370条资产、363个blob、3份草稿及3个发布版本；原资料与发布保留 |
+| Nikon 76 个编号分件 | 本地重新划分几何边界，全部76件可选择、高亮、展开/复原；草稿、新发布及断网离线HTML的Chrome逐件矩阵验证通过，本轮0 credits |
 
-完整的实现概览、未完成项与证据索引见
-[llmdoc/requirements/web-mvp/progress-summary.md](llmdoc/requirements/web-mvp/progress-summary.md)；
-验收细节见 [qa-report.md](llmdoc/requirements/web-mvp/qa-report.md)。
-
-> 说明：当前交付物在 fixture（本机假 Provider）环境下完成端到端验证，**尚未对真实 Tripo / 说明书 AI
-> 服务做过付费验证**；未配置的真实链路不声称通过。
+当前合并与真实样本证据见 [2026-10-04交付验收](llmdoc/requirements/standalone-3d-viewer/delivery-2026-10-04.md)，
+Docker部署与本轮Linux状态见 [Docker部署](docs/docker.md) 和
+[Docker、Linux与统一资料交付记录](llmdoc/requirements/standalone-3d-viewer/docker-delivery-2026-10-04.md)。
+[历史进度](llmdoc/requirements/web-mvp/progress-summary.md)及 [早期QA报告](llmdoc/requirements/web-mvp/qa-report.md)
+保留各轮事实，不代表最新交付状态。
 
 ## 技术栈
 
@@ -33,6 +35,39 @@
 | 工程 | Cargo workspace + `xtask`、npm lockfile、Playwright（e2e）、OpenAPI → TS 生成类型（禁止手抄 DTO） |
 
 ## 快速开始
+
+在本机项目根目录运行一条命令，启动并在Chrome打开统一资料库：
+
+```sh
+bash scripts/start-project.sh
+```
+
+当前本机已启用源码前端，地址为 `http://127.0.0.1:5173/`，后端为 `http://127.0.0.1:8080/`。
+全新克隆或内嵌前端模式地址为 `http://127.0.0.1:8080/`。当前本机整理后的资料统一放在 `var/preview/data`，
+可浏览8个有效样本，包含Nikon F3HP和Wii U；登录密码为 `12345678`。
+38个旧数据目录已移至 `var/preview/archive/originals`，旧位置仅保留兼容软链接；项目 `var/preview` 外已无物理应用数据库。
+历史快照、合成压力资料和回归样例备份也集中在 `var/preview/` 下。
+这些资料与私有配置均被Git忽略，全新克隆会创建空资料库并要求首次设置密码。
+脚本在macOS默认用本机发行程序，在Linux默认用Docker；Docker须先安装并启动。
+
+```sh
+bash scripts/start-project.sh --docker  # 改用Docker，仍读取同一份资料
+bash scripts/start-project.sh --source-ui  # 当前源码前端，复用本机后端并记住偏好
+bash scripts/start-project.sh --embedded-ui  # 回到发行程序内嵌页面
+bash scripts/start-project.sh --status  # 查看状态
+bash scripts/start-project.sh --stop    # 停止服务，保留资料
+```
+
+Docker使用独立的文件主密钥，不读取macOS钥匙串中的旧密钥；切换后历史资料可读，
+如需继续生成，请在「设置 → API配置」重新录入供应商地址和key，再重启。
+首次镜像构建、持久化、备份与恢复见 [Docker部署](docs/docker.md)。
+
+统一资料库已在Chrome验证本机及Linux容器中的8个样本可浏览；原两个发布版本的五份资产SHA保持一致。
+Nikon新增76分件版本保留旧语义绑定，其全部编号均可观察展开；这些编号仍表示外观几何区域，不表示真实机械拆解。
+统一脚本的本机启动、重复启动、停止与重启已实测通过；源码前端模式保留已获钥匙串授权的后端身份。
+这轮资料整理与Chrome复核未发送供应商请求或新增账务记录。
+
+### 从源码开发
 
 前置：Rust（rustup 会按 `rust-toolchain.toml` 自动安装固定工具链）、Node ≥ 22.12 与 npm、C 编译器
 （bundled SQLite）；首次构建需要网络拉取依赖与 npm 包。
@@ -56,10 +91,8 @@ cargo run -p everything-manual -- serve --data-dir ./var/dev   # 一个终端
 npm --prefix apps/web run dev                                   # 另一个终端
 ```
 
-要打开本机已有的 Wii U 样本预览，可在项目根目录运行
-`bash scripts/start-wiiu-preview.sh`。脚本使用现有的 `var/chrome-live-wiiu-20261003`
-数据与预览二进制，前端地址为 `http://127.0.0.1:5173/`；按 Ctrl+C 会停止本次启动的服务。
-这些 `var/` 文件是本机数据，新的仓库克隆不会自动带上。
+日常预览使用上面的统一启动脚本；原 `scripts/start-wiiu-preview.sh` 现转发到同一入口。
+分离的Vite开发地址仅用于前端热更新。
 
 ## 工程命令
 
@@ -82,7 +115,8 @@ npm --prefix apps/web run test:e2e                       # Playwright（自管�
 ```
 
 约定：**默认测试禁止调用真实收费 API**；缺配置时系统返回"未配置"而不是假成功；
-真实链路只经显式授权入口（`cargo xtask test-live`，属 T23，尚未启用）。
+真实链路须有明确的供应商、样本与预算授权，不能从默认回归触发；
+本轮Nikon实际运行记录见 [交付验收](llmdoc/requirements/standalone-3d-viewer/delivery-2026-10-04.md)。
 
 ## 目录结构
 
@@ -95,7 +129,9 @@ xtask/               工程命令（contracts / check / dist / smoke / smoke-boo
 migrations/          SQL 迁移（只追加，随二进制内嵌）
 contracts/           openapi.json（由 Rust DTO 生成）
 tests/fixtures/      原创样例资料与脱敏响应（含来源与许可）
-scripts/             Linux 容器构建/验证脚本
+scripts/             统一启动、Linux 容器构建/验证脚本
+Dockerfile / compose.yaml  Linux 镜像与本机 Compose 部署
+docs/docker.md       Docker 快速启动、持久化、密钥、备份与恢复
 docs/operations.md   运维：安装、启动、升级、回滚、备份
 llmdoc/              为什么这样做：架构、合同、决策、任务卡、验收与进度
 ```
@@ -117,14 +153,18 @@ llmdoc/              为什么这样做：架构、合同、决策、任务卡�
 - 回滚 = 停服后用旧二进制 + 迁移前备份恢复到新空目录；旧程序拒绝打开更新的 schema。
 - 已发布的说明书是**不可变版本**；修改草稿不影响已发布内容。
 
-签名/公证、Linux 平台验证、浏览器矩阵（Firefox/Edge）等未完成项与解除条件，
-见 [进度总结](llmdoc/requirements/web-mvp/progress-summary.md) 与 [运维说明](docs/operations.md)。
+签名/公证、Linux平台的当前验证状态见 [运维说明](docs/operations.md) 与 [Docker部署](docs/docker.md)。
+本轮浏览器验收按用户要求只覆盖Chrome。
 
 ## 文档
 
 | 文档 | 内容 |
 | --- | --- |
 | [llmdoc/README.md](llmdoc/README.md) | 项目知识总索引（阅读顺序） |
+| [Docker部署](docs/docker.md) | 统一脚本启动、Compose、私有密钥、持久化及Linux验证状态 |
+| [Docker、Linux与统一资料交付记录](llmdoc/requirements/standalone-3d-viewer/docker-delivery-2026-10-04.md) | 本轮镜像/静态发行程序、隔离验证、资料迁移及Chrome读取证据 |
+| [Nikon 76 分件观察](llmdoc/requirements/standalone-3d-viewer/nikon-all-parts-2026-10-04.md) | 新几何分区、在线/离线全部编号交互、Chrome逐件证据与预览方式 |
+| [2026-10-04交付验收](llmdoc/requirements/standalone-3d-viewer/delivery-2026-10-04.md) | 本地master合并、Chrome140项、Nikon真实完整流程、macOS发行包证据 |
 | [交互体验改进方案](docs/interaction-experience-improvement-plan.md) | 流程连续性、准备恢复、复核与阅读、可访问性及分阶段验收（建议方案） |
 | [交互改进 · 切片 A](llmdoc/requirements/interaction-a/prd.md) | 创建跳转、生成确认、键盘操作与可读性已实现；[独立验收通过](llmdoc/requirements/interaction-a/qa-report.md)（2026-09-20） |
 | [网页 API 配置](docs/api-settings.md) | Tripo / 说明书 AI 设置、AES-256-GCM 密钥存储、迁移及故障处理；[网页配置验收](llmdoc/requirements/api-settings/state.yaml)、[加密升级验收](llmdoc/requirements/encrypted-secrets/qa-report.md) |

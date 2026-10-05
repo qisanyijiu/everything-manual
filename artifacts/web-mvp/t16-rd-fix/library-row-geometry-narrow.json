@@ -1,95 +1,115 @@
 {
   "375": {
-    "gridTemplateColumns": "303px",
+    "gridTemplateColumns": "293px",
     "row": {
-      "x": 24,
-      "y": 484.328125,
-      "width": 327,
-      "height": 281.53125
+      "x": 21,
+      "y": 580.578125,
+      "width": 333,
+      "height": 246.59375
     },
+    "content": "RD 窄屏行守卫T16-RD 窄屏行守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 333,
+    "clientWidth": 333,
+    "verticalWhitespace": 162,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 496.328125,
-        "width": 303,
-        "height": 51.1875
+        "x": 41,
+        "y": 600.578125,
+        "width": 293,
+        "height": 56
       },
       "name": {
-        "x": 36,
-        "y": 496.328125,
-        "width": 303,
-        "height": 25.59375
+        "x": 107,
+        "y": 605.875,
+        "width": 227,
+        "height": 22.390625
       },
       "status": {
-        "x": 36,
-        "y": 559.515625,
-        "width": 303,
-        "height": 26.75
+        "x": 107,
+        "y": 664.578125,
+        "width": 227,
+        "height": 23
       },
       "time": {
-        "x": 36,
-        "y": 598.265625,
-        "width": 303,
-        "height": 46.0625
+        "x": 41,
+        "y": 695.578125,
+        "width": 293,
+        "height": 18
       },
       "actions": {
-        "x": 36,
-        "y": 656.328125,
-        "width": 303,
-        "height": 43.59375
+        "x": 41,
+        "y": 721.578125,
+        "width": 293,
+        "height": 84.59375
       },
-      "note": {
-        "x": 36,
-        "y": 711.921875,
-        "width": 303,
-        "height": 40.9375
+      "primaryAction": {
+        "x": 41,
+        "y": 762.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 141.5,
+        "y": 762.171875,
+        "width": 48,
+        "height": 44
       }
     }
   },
   "767": {
-    "gridTemplateColumns": "695px",
+    "gridTemplateColumns": "685px",
     "row": {
-      "x": 24,
-      "y": 403.296875,
-      "width": 719,
-      "height": 261.0625
+      "x": 21,
+      "y": 548.578125,
+      "width": 725,
+      "height": 246.59375
     },
+    "content": "RD 窄屏行守卫T16-RD 窄屏行守卫使用中更新于2026-10-04 23:04待绑定说明书补齐资料历史版本",
+    "scrollWidth": 725,
+    "clientWidth": 725,
+    "verticalWhitespace": 162,
     "parts": {
       "identity": {
-        "x": 36,
-        "y": 415.296875,
-        "width": 695,
-        "height": 51.1875
+        "x": 41,
+        "y": 568.578125,
+        "width": 685,
+        "height": 56
       },
       "name": {
-        "x": 36,
-        "y": 415.296875,
-        "width": 695,
-        "height": 25.59375
+        "x": 107,
+        "y": 573.875,
+        "width": 619,
+        "height": 22.390625
       },
       "status": {
-        "x": 36,
-        "y": 478.484375,
-        "width": 695,
-        "height": 26.75
+        "x": 107,
+        "y": 632.578125,
+        "width": 619,
+        "height": 23
       },
       "time": {
-        "x": 36,
-        "y": 517.234375,
-        "width": 695,
-        "height": 46.0625
+        "x": 41,
+        "y": 663.578125,
+        "width": 685,
+        "height": 18
       },
       "actions": {
-        "x": 36,
-        "y": 575.296875,
-        "width": 695,
-        "height": 43.59375
+        "x": 41,
+        "y": 689.578125,
+        "width": 685,
+        "height": 84.59375
       },
-      "note": {
-        "x": 36,
-        "y": 630.890625,
-        "width": 695,
-        "height": 20.46875
+      "primaryAction": {
+        "x": 41,
+        "y": 730.171875,
+        "width": 90,
+        "height": 44
+      },
+      "historyLink": {
+        "x": 141.5,
+        "y": 730.171875,
+        "width": 48,
+        "height": 44
       }
     }
   }

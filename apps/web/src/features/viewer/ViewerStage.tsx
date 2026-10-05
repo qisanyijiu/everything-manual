@@ -18,9 +18,24 @@
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Group, Raycaster, Vector2, Vector3, type PerspectiveCamera } from "three";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  CanvasTexture,
+  Group,
+  Raycaster,
+  SRGBColorSpace,
+  Vector2,
+  Vector3,
+  type PerspectiveCamera,
+} from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+import {
+  describeHotspotMarker,
+  hotspotMarkerSpriteSize,
+  paintHotspotMarker,
+  HOTSPOT_MARKER_TEXTURE_SIZE,
+} from "./hotspot-markers";
 
 import { createAssetRoot, type AssetRoot } from "./asset-root";
 import {
@@ -40,6 +55,7 @@ import {
 } from "./coordinates";
 import { ViewerError, loadGlbModel, summarizeScene, type LoadedModel } from "./glb";
 import { PartAnimator } from "./interactive";
+import { findPartNode } from "./part-inspection";
 import type { ModelActionView, ModelPoseView } from "./interactive-view";
 import { viewerResourceStats } from "./resources";
 import type { WebglContextState } from "./webgl";
@@ -48,6 +64,12 @@ export interface ViewerHotspotView {
   readonly id: string;
   readonly partId: string;
   readonly positionLocal: Vec3;
+  /**
+   * 热点状态（可选；缺省按已确认）。冻结语法见 `hotspot-markers.ts`：
+   * 候选（candidate）＝虚线空心环＋问号，已确认＝实心圆；调用方负责把
+   * stale/unbound 过滤掉（本组件只画可用热点）。
+   */
+  readonly status?: string;
 }
 
 export interface ViewerStageModel {
@@ -109,6 +131,10 @@ export interface ViewerStageProps {
     readonly resetNonce?: number;
     /** 部件 → 跟随的分件节点（热点标记随部件一起移动）。 */
     readonly partNodes?: ReadonlyMap<string, string>;
+    /** 全部可独立观察的几何分件，不要求已有语义绑定。 */
+    readonly nodeNames?: readonly string[];
+    readonly expandedNodes?: readonly string[];
+    readonly onNodeSelect?: (nodeName: string) => void;
   };
   readonly apiRef: { current: ViewerStageApi | null };
   /** 观察方向（世界坐标；默认正面）。reset 会回到同一方向。 */
@@ -123,9 +149,6 @@ export interface ViewerStageProps {
 
 const FIT_MARGIN = 1.35;
 const DEFAULT_FOV = 40;
-const HOTSPOT_RADIUS = 0.035;
-const HOTSPOT_COLOR = "#b45309";
-const HOTSPOT_SELECTED_COLOR = "#1d4ed8";
 const DEFAULT_DIRECTION: Vec3 = [0, 0, 1];
 
 /** 点击判定阈值：位移超过它（或按住超过它）就不是"点击"，只旋转相机（UI-048）。 */
@@ -219,6 +242,7 @@ function StageScene({
     }
     const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
     const animator = new PartAnimator(loaded.scene, reduced);
+    animator.configureParts(interactive.nodeNames ?? []);
     animatorRef.current = animator;
     return () => {
       animator.dispose();
@@ -227,6 +251,11 @@ function StageScene({
     // 只在场景对象变化时重建；姿势/动作/高亮由下面的 effect 驱动。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, interactive !== undefined]);
+
+  const expandedKey = JSON.stringify(interactive?.expandedNodes ?? []);
+  useEffect(() => {
+    animatorRef.current?.setExpandedNodes(JSON.parse(expandedKey) as string[], performance.now());
+  }, [expandedKey, loaded]);
 
   const poseId = interactive?.poseId ?? null;
   const poses = interactive?.poses;
@@ -253,6 +282,8 @@ function StageScene({
   }, [resetNonce]);
 
   const partNodes = interactive?.partNodes;
+  const onNodeSelect = interactive?.onNodeSelect;
+  const inspectNodeNames = interactive?.nodeNames;
   useEffect(() => {
     if (loaded !== null && partNodes !== undefined) {
       animatorRef.current?.attachMarkers(loaded.scene, partNodes);
@@ -368,7 +399,7 @@ function StageScene({
     (options: { keepDirection: boolean }) => {
       const controls = controlsRef.current;
       const display = displayRef.current;
-      const bounds = boundsRef.current;
+      const bounds = assetRootRef.current?.localBounds() ?? boundsRef.current;
       if (controls === null || display === null || bounds === null) {
         return;
       }
@@ -611,6 +642,15 @@ function StageScene({
         return;
       }
       if (!pickModeRef.current) {
+        const root = assetRootRef.current;
+        if (root !== null && onNodeSelect !== undefined) {
+          raycaster.setFromCamera(toNdc(rect, screenX, screenY), camera);
+          const hit = raycaster.intersectObject(root.object, true)[0];
+          if (hit) {
+            const node = findPartNode(hit.object, new Set(inspectNodeNames ?? []));
+            if (node !== null) onNodeSelect(node);
+          }
+        }
         return;
       }
       const hit = surfaceHit(event);
@@ -628,7 +668,7 @@ function StageScene({
       canvas.removeEventListener("pointerdown", handleDown);
       canvas.removeEventListener("pointerup", handleUp);
     };
-  }, [camera, gl, onHotspotSelect, onPick]);
+  }, [camera, gl, onHotspotSelect, onPick, onNodeSelect, inspectNodeNames]);
 
   // --- 上下文丢失/恢复 -----------------------------------------------------------
   useEffect(() => {
@@ -684,6 +724,7 @@ function StageScene({
         return hotspotsRef.current.map((hotspot) => ({
           id: hotspot.id,
           partId: hotspot.partId,
+          status: hotspot.status ?? "confirmed",
           local: hotspot.positionLocal,
           world: root.toWorld(hotspot.positionLocal),
         }));
@@ -719,11 +760,22 @@ function StageScene({
       lastPick: () => lastPickRef.current,
       picking: () => pickModeRef.current,
       stats: () => viewerResourceStats(),
+      ...(import.meta.env.DEV ? { parts: () => animatorRef.current?.inspectParts() ?? [] } : {}),
     });
     return () => {
       clearViewerBridgeHandlers();
     };
   }, [apiRef, camera, gl, modelInfo, size.height, size.width]);
+
+  const localBounds = boundsRef.current;
+  const maxDimension =
+    localBounds === null
+      ? 1
+      : Math.max(
+          localBounds.max[0] - localBounds.min[0],
+          localBounds.max[1] - localBounds.min[1],
+          localBounds.max[2] - localBounds.min[2],
+        );
 
   return (
     <>
@@ -740,7 +792,11 @@ function StageScene({
       <group ref={displayRef} name="em-display-group">
         {loaded !== null && (
           <primitive object={loaded.scene}>
-            <HotspotMarkers hotspots={hotspots} selectedHotspotId={selectedHotspotId ?? null} />
+            <HotspotMarkers
+              hotspots={hotspots}
+              selectedHotspotId={selectedHotspotId ?? null}
+              maxDimension={maxDimension}
+            />
           </primitive>
         )}
       </group>
@@ -771,36 +827,69 @@ function FrameTicker({
  * 时同一坐标空间，因此外层显示变换（fit 的平移/缩放）与相机变化都不会让标记
  * 偏离模型表面。`raycast` 置空：标记不参与射线拾取——点选标记由**屏幕投影距离**
  * 判定（`pickHotspotAt`），raycast 只命中模型 mesh（architecture §5.4）。
- * 选中的热点放大并换色（与左栏部件列表的选中状态一致；UI-046）。
+ * 视觉语法（VS-03 冻结，`hotspot-markers.ts`）：已确认＝实心圆；候选＝虚线空心环
+ * ＋问号；选中＝额外外环。标记用画布贴图 Sprite，始终正对相机、尺寸随模型等比。
  */
 function HotspotMarkers({
   hotspots,
   selectedHotspotId,
+  maxDimension,
 }: {
   hotspots: readonly ViewerHotspotView[];
   selectedHotspotId: string | null;
+  maxDimension: number;
 }) {
   return (
     <>
-      {hotspots.map((hotspot) => {
-        const selected = hotspot.id === selectedHotspotId;
-        return (
-          <mesh
-            key={hotspot.id}
-            position={[
-              hotspot.positionLocal[0],
-              hotspot.positionLocal[1],
-              hotspot.positionLocal[2],
-            ]}
-            userData={{ emHotspot: true, hotspotId: hotspot.id, partId: hotspot.partId }}
-            raycast={() => null}
-          >
-            <sphereGeometry args={[selected ? HOTSPOT_RADIUS * 1.5 : HOTSPOT_RADIUS, 16, 12]} />
-            <meshBasicMaterial color={selected ? HOTSPOT_SELECTED_COLOR : HOTSPOT_COLOR} />
-          </mesh>
-        );
-      })}
+      {hotspots.map((hotspot) => (
+        <HotspotMarker
+          key={hotspot.id}
+          hotspot={hotspot}
+          selected={hotspot.id === selectedHotspotId}
+          maxDimension={maxDimension}
+        />
+      ))}
     </>
+  );
+}
+
+function HotspotMarker({
+  hotspot,
+  selected,
+  maxDimension,
+}: {
+  hotspot: ViewerHotspotView;
+  selected: boolean;
+  maxDimension: number;
+}) {
+  const status = hotspot.status;
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = HOTSPOT_MARKER_TEXTURE_SIZE;
+    canvas.height = HOTSPOT_MARKER_TEXTURE_SIZE;
+    const context = canvas.getContext("2d");
+    if (context !== null) {
+      paintHotspotMarker(context, describeHotspotMarker(status, selected));
+    }
+    const created = new CanvasTexture(canvas);
+    created.colorSpace = SRGBColorSpace;
+    return created;
+    // 贴图只随"状态 + 选中"变化；位置变化不需要重建贴图。
+  }, [status, selected]);
+  useEffect(() => () => texture.dispose(), [texture]);
+  const size = useMemo(() => hotspotMarkerSpriteSize(maxDimension), [maxDimension]);
+
+  return (
+    <sprite
+      position={[hotspot.positionLocal[0], hotspot.positionLocal[1], hotspot.positionLocal[2]]}
+      scale={[size, size, 1]}
+      renderOrder={10}
+      userData={{ emHotspot: true, hotspotId: hotspot.id, partId: hotspot.partId }}
+      raycast={() => null}
+    >
+      {/* depthTest 关闭：标记始终可辨（与列表状态一致），不因模型朝向被切碎。 */}
+      <spriteMaterial map={texture} transparent depthTest={false} />
+    </sprite>
   );
 }
 

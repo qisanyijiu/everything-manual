@@ -14,7 +14,7 @@ import type { ItemSummaryDto } from "../../api/endpoints";
 import { readFieldErrors } from "../../components/form";
 import { rememberLibraryItem, useLibraryPosition } from "./library-navigation";
 import type { ItemDto } from "../../api/endpoints";
-import { Icon, ManualArtwork } from "../../components/Icon";
+import { Icon } from "../../components/Icon";
 
 export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,10 +81,6 @@ export function LibraryPage() {
         <div><p className="eyebrow">YOUR PERSONAL COLLECTION</p><h1 id="library-title">资料库<span className="heading-dot" aria-hidden="true">.</span></h1><p className="page__lead">收藏物品的每一份资料，让了解与使用更简单。</p></div>
         <Link className="button-primary" to="/items/new"><Icon name="plus" size={18} />新建物品</Link>
       </div>
-      <section className="library-hero" aria-label="资料库介绍">
-        <div className="library-hero__copy"><span className="hero-kicker"><span />从一份说明书开始</span><h2>熟悉你的物品，<br />发现更多可能。</h2><p>说明书、照片与 3D 模型，妥善收在一起。<br />从每一个部件，读懂每一个使用步骤。</p><Link to="/items/new">为物品建立说明书 <Icon name="arrow" size={17} /></Link></div>
-        <ManualArtwork />
-      </section>
     <PageLayout
       aside={{ id: "summary", label: "资料库摘要", content: <LibrarySummary loadedCount={loadedItems.length} archived={archived} /> }}
     >
@@ -136,7 +132,7 @@ export function LibraryPage() {
           action={search ? <button type="button" onClick={() => { setInputDraft(null); updateParams({ q: null, cursor: null }); }}>清除搜索</button>
             : archived ? <button type="button" onClick={() => updateParams({ archived: null, cursor: null })}>查看使用中的物品</button>
             : <Link className="button-primary" to="/items/new">新建物品</Link>} />}
-        {summaries.isError && <p role="alert">处理状态暂不可用。<button type="button" onClick={() => void summaries.refetch()}>重新读取处理状态</button></p>}
+        {summaries.isError && <p className="notice-inline" role="alert">处理状态暂不可用。<button type="button" className="link-button" onClick={() => void summaries.refetch()}>重新读取处理状态</button></p>}
         {loadedItems.length > 0 && <>
           <ul className="item-list">
             {loadedItems.map((item) => <ItemRow key={item.id} item={item}
@@ -164,14 +160,16 @@ function ItemRow({ item, summary, unavailable, loading, onOpen }: { onOpen: () =
           {item.name}
         </Link>
         <p className="item-row__meta">
-          {item.model}
-          {item.brand !== null && item.brand !== undefined && ` · ${item.brand}`}
-          {item.variant !== null && item.variant !== undefined && ` · ${item.variant}`}
+          {item.model !== "" ? item.model : "未提供型号"}
+          {item.brand !== null && item.brand !== undefined && item.brand !== "" && ` · ${item.brand}`}
+          {item.variant !== null && item.variant !== undefined && item.variant !== "" && ` · ${item.variant}`}
         </p>
         </div>
       </div>
       <div className="item-row__status">
-        <span className="status-label">
+        <span
+          className={`status-label ${item.archivedAt !== null && item.archivedAt !== undefined ? "status-label--archived" : "status-label--success"}`}
+        >
           {item.archivedAt !== null && item.archivedAt !== undefined ? "已归档" : "使用中"}
         </span>
       </div>

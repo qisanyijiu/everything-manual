@@ -30,10 +30,19 @@ export interface ViewerModelInfo {
 export interface ViewerAnchorProjection {
   readonly id: string;
   readonly partId: string;
+  /** 热点的当前状态（confirmed / candidate；调用方只把可用热点送进舞台）。 */
+  readonly status: string;
   /** asset-root 局部坐标（保存下来的那一个）。 */
   readonly local: Vec3;
   /** 同一局部点在当前显示变换下的世界坐标（用于断言"不漂移"）。 */
   readonly world: Vec3;
+}
+
+export interface ViewerPartProjection {
+  readonly name: string;
+  /** 当前真实节点矩阵，asset-root 局部空间；不受显示缩放影响。 */
+  readonly matrixRoot: readonly number[];
+  readonly expanded: boolean;
 }
 
 /** 单个局部点的屏幕投影（拾取验证与"热点居中"的可观察证据）。 */
@@ -86,6 +95,8 @@ export interface ViewerBridge {
   /** 是否处于拾取模式。 */
   picking(): boolean;
   stats(): ViewerResourceStats & { frames: number };
+  /** 仅开发构建注册；逐件观察的只读几何验收，不提供写操作。 */
+  readonly parts?: () => readonly ViewerPartProjection[];
 }
 
 interface ViewerBridgeHandlers {
@@ -101,6 +112,7 @@ interface ViewerBridgeHandlers {
   lastPick: () => ViewerPickProjection | null;
   picking: () => boolean;
   stats: () => ViewerResourceStats;
+  parts?: () => readonly ViewerPartProjection[];
 }
 
 declare global {
@@ -131,6 +143,7 @@ function currentBridge(): ViewerBridge {
       const stats: ViewerResourceStats = handlers?.stats() ?? viewerResourceStats();
       return { ...stats, frames: handlers?.frames() ?? 0 };
     },
+    ...(import.meta.env.DEV ? { parts: () => handlers?.parts?.() ?? [] } : {}),
   };
 }
 

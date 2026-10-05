@@ -372,7 +372,7 @@ impl Smoke {
             "[步骤 2] 生产服务已启动：PID {} {}（环境清空，工作目录不在仓库内）",
             service.pid, service.base_url
         );
-        check_no_child_processes(service.pid);
+        check_no_child_processes(service.pid)?;
 
         // ---- 步骤 3：静态资源 / 嵌套路由 / 未知 API ----
         let index_html = fetch_index(&client, &service.base_url)?;
@@ -566,8 +566,15 @@ impl Smoke {
             .with_context(|| format!("写入沙箱 profile 失败：{}", profile.display()))?;
         let _profile_guard = FileGuard(&profile);
 
-        let mut service = Service::start(binary, &self.work_dir, data_dir, Some(&self.log))
-            .context("在断网沙箱内启动服务失败")?;
+        let mut service = Service::start_sandboxed(
+            binary,
+            &self.work_dir,
+            data_dir,
+            Some(&self.log),
+            sandbox,
+            &profile,
+        )
+        .context("在断网沙箱内启动服务失败")?;
         let session = Session::login(client, &service.base_url, &self.password)?;
         let release = read_release(&session)?;
         check_asset(
@@ -1170,7 +1177,39 @@ impl Service {
         data_dir: &Path,
         log: Option<&LogBuffer>,
     ) -> Result<Self> {
-        let mut command = Command::new(binary);
+        Self::start_command(Command::new(binary), binary, work_dir, data_dir, log)
+    }
+
+    fn start_sandboxed(
+        binary: &Path,
+        work_dir: &Path,
+        data_dir: &Path,
+        log: Option<&LogBuffer>,
+        sandbox: &Path,
+        profile: &Path,
+    ) -> Result<Self> {
+        println!(
+            "  [沙箱执行] {} -f {} {} serve",
+            sandbox.display(),
+            profile.display(),
+            binary.display()
+        );
+        Self::start_command(
+            sandbox_command(sandbox, profile, binary),
+            binary,
+            work_dir,
+            data_dir,
+            log,
+        )
+    }
+
+    fn start_command(
+        mut command: Command,
+        binary: &Path,
+        work_dir: &Path,
+        data_dir: &Path,
+        log: Option<&LogBuffer>,
+    ) -> Result<Self> {
         command
             .arg("serve")
             .arg("--data-dir")
@@ -1213,6 +1252,12 @@ impl Service {
             println!("  [清理] 已结束自启动的服务进程 PID {}", self.pid);
         }
     }
+}
+
+fn sandbox_command(sandbox: &Path, profile: &Path, binary: &Path) -> Command {
+    let mut command = Command::new(sandbox);
+    command.arg("-f").arg(profile).arg(binary);
+    command
 }
 
 impl Drop for Service {
@@ -1280,21 +1325,35 @@ fn write_password_file(path: &Path, password: &str) -> Result<()> {
 }
 
 /// 复核服务进程没有派生子进程（Node/Python 等运行时不是本产品的运行依赖）。
-fn check_no_child_processes(pid: u32) {
+fn check_no_child_processes(pid: u32) -> Result<()> {
     let output = Command::new("pgrep")
         .args(["-P", &pid.to_string()])
         .output();
     match output {
-        Ok(output) if output.status.success() => {
+        Ok(output)
+            if output.status.success()
+                || (output.status.code() == Some(1)
+                    && output.stdout.is_empty()
+                    && output.stderr.is_empty()) =>
+        {
             let children = String::from_utf8_lossy(&output.stdout).trim().to_owned();
             if children.is_empty() {
                 println!("  [检查] 服务进程无子进程（不依赖 Node/Python/外部程序）");
             } else {
-                println!("  [注意] 服务进程存在子进程：{children}（请人工复核是否为运行依赖）");
+                bail!("服务进程存在子进程：{children}；必须复核运行依赖后再验收");
             }
         }
-        _ => println!("  [检查] pgrep 不可用，跳过子进程复核"),
+        Ok(output) => bail!(
+            "pgrep 子进程复核失败：{} {}",
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        ),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            println!("  [检查] pgrep 不可用，跳过子进程复核");
+        }
+        Err(error) => return Err(error).context("执行 pgrep 子进程复核失败"),
     }
+    Ok(())
 }
 
 fn temp_work_dir(kind: &str) -> PathBuf {
@@ -1407,6 +1466,51 @@ fn header_value(response: &Response, name: &str) -> Option<String> {
 mod resource_tests {
     use super::*;
     use std::collections::BTreeMap;
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn offline_sandbox_allows_loopback_and_denies_nonlocal_connect() {
+        use std::net::TcpListener;
+        let directory = temp_work_dir("offline-policy-test");
+        std::fs::create_dir_all(&directory).unwrap();
+        let profile = directory.join("offline.sb");
+        std::fs::write(&profile, OFFLINE_SANDBOX_PROFILE).unwrap();
+        let result = std::panic::catch_unwind(|| {
+            let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+            let port = listener.local_addr().unwrap().port().to_string();
+            let run = |host: &str, port: &str| {
+                sandbox_command(
+                    Path::new("/usr/bin/sandbox-exec"),
+                    &profile,
+                    Path::new("/usr/bin/nc"),
+                )
+                .args(["-z", "-v", "-G", "1", host, port])
+                .env_clear()
+                .env("PATH", "/usr/bin:/bin")
+                .output()
+                .unwrap()
+            };
+            let local = run("127.0.0.1", &port);
+            assert!(
+                local.status.success(),
+                "{}",
+                String::from_utf8_lossy(&local.stderr)
+            );
+            // RFC 5737 documentation address: denial must come from the policy,
+            // rather than a timeout, refused connection or unavailable DNS.
+            let external = run("192.0.2.1", "9");
+            assert!(!external.status.success());
+            assert!(
+                String::from_utf8_lossy(&external.stderr).contains("Operation not permitted"),
+                "{}",
+                String::from_utf8_lossy(&external.stderr)
+            );
+        });
+        std::fs::remove_dir_all(directory).unwrap();
+        if let Err(error) = result {
+            std::panic::resume_unwind(error);
+        }
+    }
 
     fn roots() -> Vec<String> {
         collect_asset_refs(

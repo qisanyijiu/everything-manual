@@ -477,6 +477,11 @@ test("BUG-002 复验：通知可见时顶栏指针/键盘可用（1280/390；并
     // 通知条自身仍可交互（关闭按钮命中按钮本身并可点击）。
     const dismiss = page.getByRole("button", { name: /^关闭通知：/ }).first();
     if ((await dismiss.count()) > 0) {
+      // 通知在正常文档流中；DOM可见并不保证中心位于viewport内。
+      await dismiss.scrollIntoViewIfNeeded();
+      await expect(dismiss).toBeInViewport();
+      const dismissLabel = await dismiss.getAttribute("aria-label");
+      expect(dismissLabel).not.toBeNull();
       const dismissBox = await dismiss.boundingBox();
       if (dismissBox !== null) {
         const dismissHit = await page.evaluate(
@@ -485,7 +490,8 @@ test("BUG-002 复验：通知可见时顶栏指针/键盘可用（1280/390；并
         );
         expect(dismissHit, "通知「关闭」按钮中心必须命中按钮").toBe("BUTTON");
       }
-      await dismiss.click().catch(() => undefined);
+      await dismiss.click();
+      await expect(page.getByRole("button", { name: dismissLabel!, exact: true })).toHaveCount(0);
     }
   }
 

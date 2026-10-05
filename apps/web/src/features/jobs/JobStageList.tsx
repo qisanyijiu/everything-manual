@@ -31,7 +31,7 @@ import { Drawer } from "../shell/Drawer";
 import { jobKeys, readCurrentRevision, useRetryJob, useReconcileJob } from "./jobs";
 import { formatLocalDateTime } from "../../lib/format";
 import { CREDIT_MINOR_SCALE, USD_MICROS_SCALE, minorToInputString, parseMinorInput } from "../import/money";
-import { isTerminalJobStatus, retryDeniedHint, stageKindLabel, stageStatusLabel } from "./status";
+import { isTerminalJobStatus, jobStatusMeta, retryDeniedHint, stageKindLabel, stageStatusLabel } from "./status";
 
 export interface JobStageListProps {
   readonly itemId: string;
@@ -78,7 +78,7 @@ export function JobStageList(props: JobStageListProps) {
         阶段明细
       </h2>
       <p className="field__hint">
-        阶段按执行顺序列出（批次阶段各自一行）：这里不显示线性百分比——各阶段的状态与
+        阶段记录（批次阶段各自一行）的编号便于定位，不代表执行先后；这里不显示线性百分比——各阶段的状态与
         结果才是可核对的事实。
       </p>
       <ol className="job-stages__list">
@@ -147,7 +147,7 @@ function StageRow({
       <div className="job-stage__head">
         <h3 className="job-stage__title">
           {stageKindLabel(stage.stageKind, stage.batchIndex)}
-          <span className="job-stage__status" data-testid="job-stage-status">
+          <span className={`job-stage__status status-tag status-tag--${jobStatusMeta(stage.status).category}`} data-testid="job-stage-status">
             {stageStatusLabel(stage.status)}
           </span>
         </h3>

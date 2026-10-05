@@ -92,6 +92,7 @@ export function buildStandalonePayload(
       return view === null
         ? null
         : {
+            nodeNames: view.partsModel.nodeNames,
             bindings: view.bindings.map((binding) => ({ partId: binding.partId, nodes: binding.nodes })),
             actions: view.actions,
             poses: view.poses,
@@ -162,6 +163,10 @@ export function buildStandaloneHtml(
     <p class="eyebrow">THE INTERACTIVE MANUAL</p>
     <h1 id="em-title"></h1>
     <p id="em-subtitle" class="subtitle"></p>
+    <details class="version-details">
+      <summary>版本信息</summary>
+      <p id="em-release"></p>
+    </details>
   </div>
   <p class="meta">离线版 · 由万物说明书导出</p>
 </header>

@@ -20,6 +20,10 @@
 
 12. [受控本地生成验证](test-live.md)：具名案例与受限预算文件的 `test-live` 命令，复用冻结任务、幂等与账本；本机fixture交付不代表AC-042/T23真实供应商验收完成。
 
+13. [UI 反馈第 3 和第 6 项 PRD](requirements/ui-feedback-3-6/prd.md)：两份方案与12张任务卡已加入[现有实施规划第6节](implementation-plan.md#6-ui-反馈第-3-和第-6-项待办)。2026-10-05视觉VS-01～05全部接受，[QA6全部12AC PASS](requirements/ui-feedback-3-6/vs05-qa-report.md)，[正式生产包与部署前提](requirements/ui-feedback-3-6/production-delivery-2026-10-05.md)已交付；Claude完成VS-03后中断，Codex完成VS-04/05及发行验证。接续先读[state](requirements/ui-feedback-3-6/state.yaml)和[交接记录](requirements/ui-feedback-3-6/codex-handoff-2026-10-05.md)，不重复实施完成卡。社区/激励按用户后续决定本轮取消，保留PRD，未经重新授权不恢复。
+
+14. [Nikon 76 编号分件观察](requirements/standalone-3d-viewer/nikon-all-parts-2026-10-04.md)：重新划分外观几何边界，全部编号可独立选择、高亮、展开/复原；保留已确认取景器和背带环绑定。在线、离线与全屏 Chrome 实际逐件验收通过，原发布保留，本轮 0 credits。
+
 ## llmdoc 记录规则
 
 只保存代码无法充分表达、值得后续子 agent 知道的重点。每条记录应能回答：结论是什么、为什么、影响哪里、证据在哪里、是否已实现／已验证、何时更新。

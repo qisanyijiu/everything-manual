@@ -135,7 +135,8 @@ export function GenerationResultPage() {
                         >
                           <strong>{part.name}</strong>
                         </button>
-                        {hotspotParts.has(part.id) && <span className="status-label">热点（待复核）</span>}
+                        {part.id === selectedPartId && <span className="status-label">已选</span>}
+                        {hotspotParts.has(part.id) && <span className="status-label status-label--warning">热点（待复核）</span>}
                         {part.description !== "" && <p>{part.description}</p>}
                         {part.evidence.length > 0 && <p className="step-evidence">原文：{pages(part.evidence)}</p>}
                       </li>

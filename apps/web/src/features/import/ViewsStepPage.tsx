@@ -116,6 +116,7 @@ export function ViewsStepPage() {
   return (
     <section className="page views-step" aria-labelledby="views-step-title">
       <WizardSteps currentSegment="import/views" itemId={id} />
+      <p className="eyebrow">REFERENCE VIEWS</p>
       <h1 id="views-step-title">视图排列</h1>
       <p className="page__lead">
         {itemQuery.data?.data.name ?? "物品"}

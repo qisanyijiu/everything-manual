@@ -124,7 +124,7 @@ export function ProviderSettingsForm() {
     {loading && <Skeleton label="正在读取 API 配置…" rows={3} />}
     {readError !== null && <div className="error-panel" role="alert"><p>无法读取 API 配置。{describeError(readError).message}</p><p>请求 ID：{describeError(readError).requestId ?? "暂不可用"}</p><button type="button" onClick={reload}>重新读取</button></div>}
     {data !== null && edits !== null && <form onSubmit={(event) => void save(event)} noValidate>
-      <div className="api-config-status" role="status"><strong>{data.pending ? "已保存，重启服务后生效" : "当前运行配置已生效"}</strong><span>连接未验证</span><p>{dirty ? "有未保存修改" : "所有修改已保存"}</p></div>
+      <div className={`api-config-status${data.pending ? " api-config-status--pending" : ""}`} role="status"><strong>{data.pending ? "已保存，重启服务后生效" : "当前运行配置已生效"}</strong><span>连接未验证</span><p>{dirty ? "有未保存修改" : "所有修改已保存"}</p></div>
       {data.pending && <aside className="api-restart-note"><p>新报价、确认与生成操作暂不可用；已有资料和任务记录仍可查看。</p><p>在运行服务的终端停止并使用原启动方式重新启动；使用进程管理器时重启对应服务，然后刷新此页。</p><button type="button" disabled={saving || loading} onClick={reload}>刷新状态</button></aside>}
       <fieldset className="api-form-fields" disabled={saving || loading}>
         {names.map((name) => {
@@ -153,7 +153,7 @@ export function ProviderSettingsForm() {
               {edit.keyAction === "replace" && field("apiKey", `新的${title === "Tripo" ? " Tripo " : title}密钥`, "password", "新密钥将在服务端加密保存，已保存密钥不会回显。")}
               {edit.keyAction === "clear" && <p className="api-impact">保存后将不使用该供应商的密钥，也不会自动使用部署配置中的密钥；重启后该供应商不能生成。</p>}
               {(!saved.keyConfigured || (!saved.model && !saved.modelIssue)) && <p className="status-note">已保存配置缺项：{[!saved.keyConfigured && "密钥", !saved.model && !saved.modelIssue && "模型"].filter(Boolean).join("、")}。可保存不完整配置；生成需先补齐。</p>}
-              <button type="button" className="button--secondary" onClick={() => setRestore(name, true)}>恢复部署配置</button>
+              <button type="button" className="button-secondary" onClick={() => setRestore(name, true)}>恢复部署配置</button>
             </>}
           </section>;
         })}
@@ -162,7 +162,8 @@ export function ProviderSettingsForm() {
       {names.filter((name) => edits[name].restore || edits[name].keyAction === "clear").map((name) => <p className="api-impact" key={name}>{titles[name]}：{edits[name].restore ? "本次保存将撤销全部网页覆盖，重启后使用部署配置。" : "本次保存将清除密钥并屏蔽部署密钥，重启后不能生成。"}</p>)}
       {Object.keys(fields).length > 0 && <div role="alert" className="error-panel"><p>请修正以下字段：</p><ul>{Object.entries(fields).map(([path, message]) => <li key={path}><a href={`#api-${path}`} onClick={() => document.getElementById(`api-${path}`)?.focus()}>{message}</a></li>)}</ul></div>}
       {saveError !== null && <div className="error-panel" role="alert"><p>{conflict ? "配置已在其他页面更新，你的编辑尚未保存。" : "未能保存配置。"}{describeError(saveError).message}</p><p>请求 ID：{describeError(saveError).requestId ?? "暂不可用"}</p>{conflict ? <><p>重新加载将丢弃本页编辑和新密钥。</p><button type="button" onClick={reload}>重新加载已保存配置</button></> : <><p>请求结果可通过重新读取核对；未保存的输入仍保留在当前页。</p><button type="button" onClick={reload}>重新读取配置</button><Link to="/jobs">前往任务中心</Link></>}</div>}
-      <div className="api-save-row"><button type="submit" className="button--primary" disabled={saving || loading || conflict || !dirty} aria-busy={saving}>{saving ? "正在保存…" : "保存配置"}</button><span role="status">{saving ? "正在保存 API 配置…" : notice}</span></div>
+      <div className="api-save-row"><button type="submit" className="button-primary" disabled={saving || loading || conflict || !dirty} aria-busy={saving} aria-describedby="api-save-reason">{saving ? "正在保存…" : "保存配置"}</button><span role="status">{saving ? "正在保存 API 配置…" : notice}</span></div>
+      <p id="api-save-reason" className="field-hint">{conflict ? "配置版本已改变，请先重新加载已保存配置。" : saving ? "正在保存，请等待完成。" : loading ? "正在读取配置，请等待完成。" : !dirty ? "没有未保存修改。" : "保存后重启服务生效；保存不会验证连接或发起生成。"}</p>
       <p className="field-hint">备份与导出不包含 API 密钥；迁移服务后需重新配置。</p>
       <p className="field-hint">加密存储与部署迁移方法见项目文档《在网页中配置 API》。</p>
     </form>}

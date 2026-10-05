@@ -95,7 +95,7 @@ describe("热点视图（stale 不冒充有效热点）", () => {
     expect(usableHotspots(views)[0]?.positionLocal).toEqual([0.1, 0.2, 0.3]);
   });
 
-  it("部件热点统计区分已确认/失效/未绑定", () => {
+  it("部件热点统计区分已确认/候选/失效/未绑定", () => {
     const views = hotspotViews(
       [
         {
@@ -111,10 +111,26 @@ describe("热点视图（stale 不冒充有效热点）", () => {
           anchor: { modelRevisionId: "old", modelSha256: "c".repeat(64), positionLocal: [0, 0, 0] },
         },
         { id: "h3", partId: "p1", status: "unbound", anchor: null },
+        {
+          id: "h4",
+          partId: "p1",
+          status: "candidate",
+          anchor: { modelRevisionId: MODEL.revisionId, modelSha256: MODEL.sha256, positionLocal: [0, 0, 1] },
+        },
       ],
       MODEL,
     );
-    expect(summarizePartHotspots(views, "p1")).toEqual({ confirmed: 1, stale: 1, unbound: 1 });
+    expect(summarizePartHotspots(views, "p1")).toEqual({
+      confirmed: 1,
+      candidate: 1,
+      stale: 1,
+      unbound: 1,
+    });
+    // 候选与已确认都是"可用热点"（进入 3D），但状态必须原样传给标记语法。
+    expect(usableHotspots(views).map((hotspot) => [hotspot.id, hotspot.status])).toEqual([
+      ["h1", "confirmed"],
+      ["h4", "candidate"],
+    ]);
   });
 });
 

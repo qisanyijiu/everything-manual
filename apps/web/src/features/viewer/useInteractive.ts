@@ -8,6 +8,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import type { InteractiveView, ModelActionView } from "./interactive-view";
+import type { PartsExplorerProps } from "./PartsExplorer";
 
 export interface InteractiveController {
   readonly view: InteractiveView;
@@ -19,6 +20,7 @@ export interface InteractiveController {
     readonly onAction: (action: ModelActionView) => void;
     readonly onPose: (poseId: string | null) => void;
     readonly onReset: () => void;
+    readonly inspection: PartsExplorerProps;
   };
   readonly viewerProp: {
     readonly partsAssetId: string;
@@ -30,6 +32,9 @@ export interface InteractiveController {
       readonly highlightNodes: readonly string[];
       readonly resetNonce: number;
       readonly partNodes: ReadonlyMap<string, string>;
+      readonly nodeNames: readonly string[];
+      readonly expandedNodes: readonly string[];
+      readonly onNodeSelect: (node: string) => void;
     };
   };
   /** 部件被选中时可触发的动作（点击热点/部件时提示）。 */
@@ -41,6 +46,26 @@ export function useInteractive(view: InteractiveView | null, selectedPartId: str
   const [actionRequest, setActionRequest] = useState<{ action: ModelActionView; nonce: number } | null>(null);
   const [toggles, setToggles] = useState<ReadonlySet<string>>(new Set());
   const [resetNonce, setResetNonce] = useState(0);
+  const [inspection, setInspection] = useState<{ assetId: string; selected: string | null; partId: string | null; expanded: ReadonlySet<string> } | null>(null);
+  const nodeNames = useMemo(() => [...new Set(view?.partsModel.nodeNames ?? [])].filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })), [view]);
+  const expanded = useMemo(() => new Set(inspection !== null && inspection.assetId === view?.partsModel.assetId ? [...inspection.expanded].filter((node) => nodeNames.includes(node)) : []), [inspection, view, nodeNames]);
+  const selectedNode = inspection !== null && inspection.assetId === view?.partsModel.assetId && inspection.partId === selectedPartId && inspection.selected !== null && nodeNames.includes(inspection.selected) ? inspection.selected : null;
+  const onSelectNode = useCallback((node: string) => {
+    if (!view || !nodeNames.includes(node)) return;
+    setInspection({ assetId: view.partsModel.assetId, selected: node, partId: selectedPartId, expanded });
+  }, [view, nodeNames, selectedPartId, expanded]);
+  const onToggleNode = useCallback((node: string) => {
+    if (!view || !nodeNames.includes(node)) return;
+    const next = new Set(expanded);
+    if (next.has(node)) next.delete(node); else next.add(node);
+    setInspection({ assetId: view.partsModel.assetId, selected: node, partId: selectedPartId, expanded: next });
+  }, [view, nodeNames, selectedPartId, expanded]);
+  const onExpandAll = useCallback(() => {
+    if (view) setInspection({ assetId: view.partsModel.assetId, selected: selectedNode, partId: selectedPartId, expanded: new Set(nodeNames) });
+  }, [view, selectedNode, selectedPartId, nodeNames]);
+  const onRestoreParts = useCallback(() => {
+    if (view) setInspection({ assetId: view.partsModel.assetId, selected: selectedNode, partId: selectedPartId, expanded: new Set() });
+  }, [view, selectedNode, selectedPartId]);
 
   const onAction = useCallback((action: ModelActionView) => {
     setActionRequest((current) => ({ action, nonce: (current?.nonce ?? 0) + 1 }));
@@ -60,14 +85,16 @@ export function useInteractive(view: InteractiveView | null, selectedPartId: str
     setToggles(new Set());
     setPoseId(null);
     setResetNonce((value) => value + 1);
+    setInspection(null);
   }, []);
 
   const highlightNodes = useMemo(() => {
+    if (selectedNode !== null) return [selectedNode];
     if (view === null || selectedPartId === null) {
       return [];
     }
     return view.bindings.find((binding) => binding.partId === selectedPartId)?.nodes ?? [];
-  }, [view, selectedPartId]);
+  }, [view, selectedPartId, selectedNode]);
 
   const partNodes = useMemo(
     () => new Map((view?.bindings ?? []).flatMap((binding) => (binding.nodes[0] ? [[binding.partId, binding.nodes[0]] as const] : []))),
@@ -85,11 +112,11 @@ export function useInteractive(view: InteractiveView | null, selectedPartId: str
   }
   return {
     view,
-    panel: { actions: view.actions, poses: view.poses, activeToggles: toggles, poseId, onAction, onPose: setPoseId, onReset },
+    panel: { actions: view.actions, poses: view.poses, activeToggles: toggles, poseId, onAction, onPose: setPoseId, onReset, inspection: { nodeNames, selectedNode, expandedNodes: expanded, onSelectNode, onToggleNode, onExpandAll, onRestoreParts } },
     viewerProp: {
       partsAssetId: view.partsModel.assetId,
       partsSha256: view.partsModel.sha256,
-      stage: { poses: view.poses, poseId, actionRequest, highlightNodes, resetNonce, partNodes },
+      stage: { poses: view.poses, poseId, actionRequest, highlightNodes, resetNonce, partNodes, nodeNames, expandedNodes: [...expanded], onNodeSelect: onSelectNode },
     },
     actionsForPart,
   };

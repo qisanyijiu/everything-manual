@@ -607,3 +607,53 @@ describe("路由骨架与文案边界", () => {
     result.unmount();
   });
 });
+
+describe("侧栏导航选中语义（UI-VS-001 / AC-VS-003，BUG-VS02-001 回归）", () => {
+  /** 五个导航路由的最小桩：页面数据允许失败，侧栏选中态不依赖它们。 */
+  function stubNavRoutes(): void {
+    stubFetch((url) => {
+      if (url === "/api/v1/auth/session") {
+        return jsonResponse(SESSION);
+      }
+      if (url === "/api/v1/jobs/activity") {
+        return jsonResponse({ data: { active: 0 } });
+      }
+      if (url.startsWith("/api/v1/jobs")) {
+        return jsonResponse({ data: [], nextCursor: null });
+      }
+      if (url === "/api/v1/items/item-1") {
+        return jsonResponse({ data: ITEM }, { etag: '"r3"' });
+      }
+      if (url.startsWith("/api/v1/items")) {
+        return jsonResponse({ data: [], nextCursor: null });
+      }
+      return undefined;
+    });
+  }
+
+  it("每路由恰有一个选中项；视觉选中与 aria-current=page 一致（资料库覆盖 /items/*）", async () => {
+    const cases = [
+      ["/", "资料库"],
+      ["/items/new", "资料库"],
+      ["/items/item-1", "资料库"],
+      ["/jobs", "任务中心"],
+      ["/settings", "设置"],
+    ] as const;
+
+    for (const [route, label] of cases) {
+      stubNavRoutes();
+      const view = renderApp({ route });
+      const nav = await screen.findByRole("navigation", { name: "主导航" });
+      const links = within(nav).getAllByRole("link");
+      expect(links, `${route} 的导航项数量`).toHaveLength(3);
+      const active = links.filter((link) => link.classList.contains("active"));
+      expect(active, `${route} 的选中项数量`).toHaveLength(1);
+      expect(active[0]?.textContent, `${route} 的选中项名称`).toContain(label);
+      expect(active[0]?.getAttribute("aria-current"), `${route} 的 aria-current`).toBe("page");
+      for (const inactive of links.filter((link) => link !== active[0])) {
+        expect(inactive.getAttribute("aria-current")).toBeNull();
+      }
+      view.unmount();
+    }
+  });
+});

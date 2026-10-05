@@ -62,21 +62,27 @@ export function hotspotViews(
   });
 }
 
-/** 可用于 3D 显示的热点（stale/unbound/不匹配一律不显示为有效热点）。 */
+/**
+ * 可用于 3D 显示的热点（stale/unbound/不匹配一律不显示为有效热点）。
+ * `status` 供标记视觉语法区分候选（虚线空心环）与已确认（实心圆）；只有
+ * 明确的 candidate 才会画成候选，其余可显示状态按已确认。
+ */
 export function usableHotspots(
   views: readonly HotspotView[],
-): { id: string; partId: string; positionLocal: Vec3 }[] {
+): { id: string; partId: string; status: "candidate" | "confirmed"; positionLocal: Vec3 }[] {
   return views
     .filter((hotspot) => hotspot.usable && hotspot.anchor !== null)
     .map((hotspot) => ({
       id: hotspot.id,
       partId: hotspot.partId,
+      status: hotspot.status === "candidate" ? ("candidate" as const) : ("confirmed" as const),
       positionLocal: (hotspot.anchor as Anchor).positionLocal,
     }));
 }
 
 export interface PartHotspotSummary {
   readonly confirmed: number;
+  readonly candidate: number;
   readonly stale: number;
   readonly unbound: number;
 }
@@ -89,6 +95,7 @@ export function summarizePartHotspots(
     views.filter((hotspot) => hotspot.partId === partId && predicate(hotspot)).length;
   return {
     confirmed: of((hotspot) => hotspot.usable && hotspot.status === "confirmed"),
+    candidate: of((hotspot) => hotspot.usable && hotspot.status === "candidate"),
     stale: of((hotspot) => hotspot.status === "stale" || (!hotspot.usable && hotspot.anchor !== null)),
     unbound: of((hotspot) => hotspot.status === "unbound" || hotspot.anchor === null),
   };

@@ -20,7 +20,10 @@ export function Icon({ name, size = 20, style }: { name: keyof typeof paths; siz
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={style}><path d={paths[name]} /></svg>;
 }
 
-/** Local vector artwork: a manual and an exploded object, rather than a pretend product photo. */
+/**
+ * Local vector artwork: a manual and an exploded object, rather than a pretend product photo.
+ * 全部取色走 token（var(--color-*)），与 theme.css 同一套设计变量；不引入位图或网络资源。
+ */
 export function ManualArtwork() {
   return (
     <svg className="manual-artwork" viewBox="0 0 380 260" fill="none" aria-hidden="true">
@@ -28,26 +31,26 @@ export function ManualArtwork() {
       <circle cx="220" cy="132" r="78" stroke="currentColor" strokeOpacity=".08" strokeDasharray="3 6" />
       <path d="M38 216h304M63 39v181M328 39v181" stroke="currentColor" strokeOpacity=".08" />
       <g transform="translate(65 38) rotate(-9 90 90)">
-        <rect x="4" y="7" width="143" height="183" rx="9" fill="#253E36" opacity=".08" />
-        <rect width="143" height="183" rx="8" fill="#FFFEFA" stroke="#D5D6C8" />
-        <path d="M17 0v183" stroke="#DADCCF" />
-        <rect x="30" y="22" width="29" height="5" rx="2.5" fill="#D9774E" />
-        <path d="M30 41h78M30 50h54" stroke="#B7BEB3" strokeWidth="3" strokeLinecap="round" />
-        <path d="m49 90 29-16 29 16v32l-29 17-29-17V90Zm0 0 29 17 29-17m-29 17v32M63 82l30 16" stroke="#315247" strokeWidth="1.5" />
-        <path d="M30 155h78M30 163h51" stroke="#D4D9CD" strokeWidth="3" strokeLinecap="round" />
+        <rect x="4" y="7" width="143" height="183" rx="9" fill="var(--color-ink)" opacity=".08" />
+        <rect width="143" height="183" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" />
+        <path d="M17 0v183" stroke="var(--color-line)" />
+        <rect x="30" y="22" width="29" height="5" rx="2.5" fill="var(--color-accent)" />
+        <path d="M30 41h78M30 50h54" stroke="var(--color-ink-muted)" strokeOpacity=".45" strokeWidth="3" strokeLinecap="round" />
+        <path d="m49 90 29-16 29 16v32l-29 17-29-17V90Zm0 0 29 17 29-17m-29 17v32M63 82l30 16" stroke="var(--color-ink-muted)" strokeWidth="1.5" />
+        <path d="M30 155h78M30 163h51" stroke="var(--color-line)" strokeWidth="3" strokeLinecap="round" />
       </g>
-      <path d="m194 154 56-32 57 32-57 33-56-33Z" fill="#B7C4B3" stroke="#456255" />
-      <path d="M194 154v17l56 33 57-33v-17l-57 33-56-33Z" fill="#E0E6D8" stroke="#456255" />
-      <path d="M250 187v17" stroke="#456255" />
-      <path d="M210 107v42m81-42v42m-41-65v38" stroke="#7D9484" strokeDasharray="3 4" />
-      <path d="m194 95 56-32 57 32-57 33-56-33Z" fill="#DDE7D5" stroke="#456255" />
-      <path d="M194 95v16l56 33 57-33V95l-57 33-56-33Z" fill="#F1F3E8" stroke="#456255" />
-      <path d="M250 128v16m-24-49 24-14 24 14-24 14-24-14Z" stroke="#456255" />
-      <circle cx="306" cy="69" r="17" fill="#D9774E" />
-      <path d="m299 69 5 5 9-10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M318 152h23m-23 0-6 5" stroke="#A2AE9E" />
-      <circle cx="344" cy="152" r="3" fill="#D9774E" />
-      <text x="237" y="235" fill="#64786B" fontSize="9" letterSpacing="2" fontFamily="monospace">FIG. 01 / EXPLORE</text>
+      <path d="m194 154 56-32 57 32-57 33-56-33Z" fill="var(--color-surface-soft)" stroke="var(--color-ink-muted)" />
+      <path d="M194 154v17l56 33 57-33v-17l-57 33-56-33Z" fill="var(--color-paper)" stroke="var(--color-ink-muted)" />
+      <path d="M250 187v17" stroke="var(--color-ink-muted)" />
+      <path d="M210 107v42m81-42v42m-41-65v38" stroke="var(--color-ink-muted)" strokeOpacity=".6" strokeDasharray="3 4" />
+      <path d="m194 95 56-32 57 32-57 33-56-33Z" fill="var(--color-paper)" stroke="var(--color-ink-muted)" />
+      <path d="M194 95v16l56 33 57-33V95l-57 33-56-33Z" fill="var(--color-surface)" stroke="var(--color-ink-muted)" />
+      <path d="M250 128v16m-24-49 24-14 24 14-24 14-24-14Z" stroke="var(--color-ink-muted)" />
+      <circle cx="306" cy="69" r="17" fill="var(--color-accent)" />
+      <path d="m299 69 5 5 9-10" stroke="var(--color-ink-on-accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M318 152h23m-23 0-6 5" stroke="var(--color-ink-muted)" strokeOpacity=".5" />
+      <circle cx="344" cy="152" r="3" fill="var(--color-accent)" />
+      <text x="206" y="235" fill="var(--color-ink-muted)" fontSize="12" letterSpacing="1" fontFamily="ui-monospace, Menlo, monospace">FIG. 01 / EXPLORE</text>
     </svg>
   );
 }

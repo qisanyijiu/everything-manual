@@ -131,6 +131,7 @@ export function JobDetailPage() {
       }}
     >
       <section className="page job-detail" aria-labelledby="job-detail-title">
+        <p className="eyebrow">TASK RECORD</p>
         <h1 id="job-detail-title">
           {detail === null ? "任务详情" : `${detail.item.name}${detail.item.model !== "" ? ` · ${detail.item.model}` : ""}`}
         </h1>

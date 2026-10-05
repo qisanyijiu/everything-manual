@@ -2,6 +2,11 @@
 
 export type Vec3Tuple = readonly [number, number, number];
 
+export function partNodeLabel(name: string): string {
+  const number = /^tripo_part_(\d+)$/i.exec(name)?.[1];
+  return number === undefined ? name : `编号分件 ${number.padStart(3, "0")}`;
+}
+
 export interface TransformStepView {
   readonly nodes: readonly string[];
   readonly kind: "translate" | "rotate";

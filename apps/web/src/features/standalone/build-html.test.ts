@@ -74,6 +74,28 @@ describe("buildStandalonePayload", () => {
     expect(() => buildStandalonePayload(ITEM, { id: "rel-1", manifest: bad })).toThrow(StandaloneExportError);
   });
 
+  it("保留全部76个编号，即使只有一项说明书动作与两条语义绑定", () => {
+    const original = manifest();
+    const names = Array.from({ length: 76 }, (_, index) => `tripo_part_${index}`);
+    const withParts = {
+      ...original,
+      knowledge: {
+        ...original.knowledge,
+        interactive: {
+          partsModel: { assetId: "parts-asset", sha256: "b".repeat(64), modelRevisionId: MODEL.revisionId, modelSha256: MODEL.sha256, nodeNames: names },
+          bindings: [{ partId: "part-a", nodes: [names[0]], status: "confirmed" }, { partId: "part-b", nodes: [names[6], names[7]], status: "confirmed" }],
+          actions: [{ id: "inspect-finder", label: "观察取景器", mode: "toggle", steps: [] }],
+          poses: [],
+        },
+      },
+    };
+    const payload = buildStandalonePayload(ITEM, { id: "rel-76", manifest: withParts });
+    expect(payload.interactive?.nodeNames).toEqual(names);
+    expect(payload.interactive?.actions).toHaveLength(1);
+    expect(payload.interactive?.bindings).toHaveLength(2);
+    expect(payload.parts).toHaveLength(2);
+  });
+
   it("离线版保留发布时冻结的人工更正，包括操作与安全说明，并保留原出处", () => {
     const frozen = {
       ...manifest(),
@@ -127,6 +149,19 @@ describe("buildStandaloneHtml", () => {
     expect(html).toContain("<title>传感器控制盒 · 交互式说明书</title>");
     const evil = buildStandaloneHtml({ ...payload, title: "<img src=x>" }, new Uint8Array(), "");
     expect(evil).toContain("<title>&lt;img src=x&gt; · 交互式说明书</title>");
+  });
+
+  it("含可展开的版本信息且不含任何网络资源引用（VS-03 / AC-VS-011）", () => {
+    expect(html).toContain('<details class="version-details">');
+    expect(html).toContain('id="em-release"');
+    expect(html).toContain("版本信息");
+    // 新导出采用 tokens 的设计语义（纸面/墨色/工业橙），不再是旧绿色主题。
+    expect(html).toContain("--color-paper:#F4F1E8");
+    expect(html).toContain("--color-accent:#A63F21");
+    // 断网可用：不得出现 http(s) 资源引用、@import 或 url()。
+    expect(html).not.toMatch(/https?:\/\//);
+    expect(html).not.toContain("@import");
+    expect(html).not.toMatch(/url\(/);
   });
 });
 

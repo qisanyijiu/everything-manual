@@ -550,6 +550,7 @@ function ConfirmWorkspace({ id }: { id: string }) {
     <PageLayout>
       <section className="page confirm-step" aria-labelledby="confirm-step-title">
         <WizardSteps currentSegment="import/confirm" itemId={id} />
+        <p className="eyebrow">BUDGET &amp; DATA CONSENT</p>
         <h1 id="confirm-step-title">预算与隐私确认</h1>
         <p className="page__lead">
           {itemName}：报价只计算计划、不调用生成服务；确认后才允许提交（生成在后台继续执行）。

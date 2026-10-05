@@ -1,0 +1,62 @@
+/* 分件观察（ADR-042）展示层；VS-03 起取值全部来自设计 token（theme.css 同一份）。
+   结构/行为不变：编号仍来自模型几何名称，展开仅用于观察外观。 */
+.parts-explorer { display: grid; gap: 10px; min-width: 0; }
+.parts-explorer__heading, .parts-explorer__tools, .parts-explorer__selection { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); }
+.parts-explorer__heading span { font-size: var(--font-size-aux); line-height: var(--line-height-aux); font-weight: var(--font-weight-regular); color: var(--color-ink-muted); }
+.parts-explorer > label { font-size: var(--font-size-aux); line-height: var(--line-height-aux); color: var(--color-ink-muted); }
+.parts-explorer__tools { justify-content: flex-start; }
+.parts-explorer__list { max-height: 240px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 6px; padding: 3px; border: var(--border-width) solid var(--color-line); border-radius: var(--radius-panel); }
+.parts-explorer__node { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: var(--space-xs) 10px; min-width: 0; text-align: left; border-radius: var(--radius-control); }
+.parts-explorer__node small { color: var(--color-ink-muted); white-space: nowrap; font-size: var(--font-size-aux); line-height: var(--line-height-aux); }
+.parts-explorer__node[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-selected); color: var(--color-ink); }
+.parts-explorer__selection { padding: 10px; border: var(--border-width) solid var(--color-line); border-radius: var(--radius-panel); }
+.parts-explorer__selection > div { display: grid; gap: 3px; min-width: 0; }
+.parts-explorer__selection code { font-family: var(--font-mono); font-size: var(--font-size-aux); line-height: var(--line-height-aux); overflow-wrap: anywhere; color: var(--color-ink-muted); }
+.parts-explorer__fullscreen { display: grid; gap: var(--space-xs); }
+.parts-explorer__fullscreen button { justify-self: start; }
+/* 同一主栏进入浏览器 top layer，保留既有 Canvas；仅此模式隐藏校准和上下文补充栏。 */
+.page-layout__main.parts-observation-fullscreen:fullscreen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 16px;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  margin: 0;
+  padding: 16px;
+  overflow: hidden;
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+.page-layout__main.parts-observation-fullscreen:fullscreen > :not(.viewer-panel):not(.interaction-panel) { display: none; }
+.page-layout__main.parts-observation-fullscreen:fullscreen > .viewer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  grid-column: 1;
+  grid-row: 1;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+}
+.page-layout__main.parts-observation-fullscreen:fullscreen > .viewer-panel > .viewer-panel__stage { flex: 1 1 0; height: auto; min-height: 0; }
+.page-layout__main.parts-observation-fullscreen:fullscreen > .viewer-panel > :not(.viewer-panel__stage) { flex: 0 0 auto; }
+.page-layout__main.parts-observation-fullscreen:fullscreen > .interaction-panel {
+  grid-column: 2;
+  grid-row: 1;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.page-layout__main.parts-observation-fullscreen:fullscreen .parts-explorer__list { grid-template-columns: 1fr; max-height: min(45dvh, 440px); }
+@media (max-width: 900px) {
+  .page-layout__main.parts-observation-fullscreen:fullscreen { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: start; padding: 8px; gap: 8px; overflow-y: auto; }
+  .page-layout__main.parts-observation-fullscreen:fullscreen > .viewer-panel { grid-column: 1; grid-row: 1; height: 58dvh; min-height: 320px; }
+  .page-layout__main.parts-observation-fullscreen:fullscreen > .interaction-panel { grid-column: 1; grid-row: 2; height: auto; overflow-y: visible; }
+}

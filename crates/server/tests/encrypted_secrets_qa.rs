@@ -14,9 +14,9 @@ use std::sync::{
 
 use common::TestDir;
 use everything_manual::config::SecretString;
-use everything_manual::config::encrypted_secrets::{
-    Envelope, MasterKeySource, SecretError, Secrets,
-};
+#[cfg(target_os = "macos")]
+use everything_manual::config::encrypted_secrets::Envelope;
+use everything_manual::config::encrypted_secrets::{MasterKeySource, SecretError, Secrets};
 use everything_manual::config::provider_overrides::{FILE_NAME, ProviderConfigStore};
 use serde_json::{Value, json};
 use zeroize::Zeroizing;

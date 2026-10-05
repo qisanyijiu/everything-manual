@@ -40,3 +40,7 @@ provider-overrides.*.tmp
 *.local
 *.pem
 *.key
+
+# Python maintenance scripts
+__pycache__/
+*.pyc

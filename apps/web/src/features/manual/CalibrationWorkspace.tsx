@@ -292,7 +292,7 @@ function CalibrationWorkspaceContent() {
   const mutationError = mutations.lastError;
 
   return (
-    <div>
+    <div className="page reader-page">
       <h1>阅读与复核</h1>
       <p className="page-subtitle">
         校准工作区：确认知识（文字）、绑定热点与保存步骤视角（几何校准），再显式发布。
@@ -505,7 +505,8 @@ function CalibrationWorkspaceContent() {
         {candidates.length > 0 && (
           <div className="candidate-bar" role="group" aria-label="自动绑定候选" data-testid="candidate-bar">
             <p>
-              自动绑定生成了 {candidates.length} 个候选热点（橙色标记）：先点开部件核对位置，再批量确认；位置不对的可用「重新绑定」修正。
+              自动绑定生成了 {candidates.length} 个候选热点（模型上的虚线空心环标记，与已确认的实心圆明显区分）：
+              先点开部件核对位置，再批量确认；位置不对的可用「重新绑定」修正。
             </p>
             <button type="button" className="button" onClick={confirmCandidates} disabled={etag === null} data-testid="confirm-candidates">
               确认全部候选热点
@@ -668,14 +669,21 @@ function PartsPanel({
               <span className="status-label" data-testid={`part-review-${part.id}`}>
                 {reviewed ? "已确认（文字）" : "待确认（文字）"}
               </span>
-              <span className="status-label" data-testid={`part-hotspot-${part.id}`}>
+              {/* 热点状态牌：候选＝虚线空心环（待复核），已确认＝实心圆；始终带文字。 */}
+              <span
+                className={`status-label${textOnly ? "" : bound ? " status-label--success" : summary.candidate > 0 ? " status-label--warning" : ""}`}
+                data-testid={`part-hotspot-${part.id}`}
+              >
                 {textOnly
                   ? "仅文本条目（不进入 3D）"
                   : bound
-                    ? `热点已确认 ${summary.confirmed}`
-                    : "未绑定"}
+                    ? `热点已确认 ${summary.confirmed}${summary.candidate > 0 ? `（另有 ${summary.candidate} 个候选待复核）` : ""}`
+                    : summary.candidate > 0
+                      ? `候选热点 ${summary.candidate}（待复核）`
+                      : "未绑定"}
                 {summary.stale > 0 ? `（${summary.stale} 个已失效）` : ""}
               </span>
+              {selectedPartId === part.id && <span className="status-label">已选</span>}
               {part.description !== "" && <p>{part.description}</p>}
               <EvidenceLinks entityId={part.id} evidence={part.evidence} documents={documents} onOpen={(evidence, focusId) => onEvidence(part.id, evidence, focusId)} />
               {narrow && <p id={`geometry-note-${part.id}`} tabIndex={-1}>此项需要在 ≥768px 窗口绑定 / 重新绑定；此处仅查看文字。</p>}

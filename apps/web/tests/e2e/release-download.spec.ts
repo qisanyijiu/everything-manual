@@ -203,6 +203,9 @@ test("PC01 pending is single-flight and leaving discards it; reader size and sel
   expect(attempts).toBe(1);
   for (const width of [375, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
+    // CSS媒体查询先更新，React断点DOM随后更新；等待实际布局再测量。
+    const breakpoint = width < 768 ? "narrow" : width < 1280 ? "mid" : "wide";
+    await expect(page.locator(".reader-page .page-layout--" + breakpoint)).toBeVisible();
     await expect(control.getByRole("status")).toContainText("可离开页面");
     const box = await button.boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(44);

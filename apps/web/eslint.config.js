@@ -8,6 +8,8 @@ export default tseslint.config(
     ignores: [
       "dist/**",
       "node_modules/**",
+      // 本机运行资料与临时验证产物，和 Git 忽略的 var 目录一致。
+      "var/**",
       // 生成物：由 `cargo xtask contracts` 从 Rust DTO 生成，不手工维护也不 lint。
       "src/api/generated.ts",
     ],
