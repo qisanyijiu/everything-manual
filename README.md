@@ -19,6 +19,9 @@
 | 统一预览资料库 | 8个物品、7份说明书/166页、370条资产、363个blob、3份草稿及3个发布版本；原资料与发布保留 |
 | Nikon 76 个编号分件 | 本地重新划分几何边界，全部76件可选择、高亮、展开/复原；草稿、新发布及断网离线HTML的Chrome逐件矩阵验证通过，本轮0 credits |
 
+**演示**：[CyberDog 2 机器狗 3D 交互说明书](demo/cyberdog2/README.md)——克隆后双击 `demo/cyberdog2/cyberdog2-3d.html`
+即可离线体验部件热点、步骤与站立/坐下/握手等姿势，无需启动服务。
+
 当前合并与真实样本证据见 [2026-10-04交付验收](llmdoc/requirements/standalone-3d-viewer/delivery-2026-10-04.md)，
 Docker部署与本轮Linux状态见 [Docker部署](docs/docker.md) 和
 [Docker、Linux与统一资料交付记录](llmdoc/requirements/standalone-3d-viewer/docker-delivery-2026-10-04.md)。
