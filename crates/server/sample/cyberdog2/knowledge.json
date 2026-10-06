@@ -1,0 +1,1237 @@
+{
+ "schemaVersion": "manual_draft_v1",
+ "sourceJobId": "builtin-sample-cyberdog2",
+ "completeness": "complete",
+ "model": {
+  "revisionId": "{{MODEL_REV}}",
+  "sha256": "{{MODEL_SHA}}",
+  "validationState": "validated",
+  "assetId": "{{MODEL_ASSET}}",
+  "bounds": {
+   "min": [
+    -0.5,
+    -0.4046212136745453,
+    -0.2826782166957855
+   ],
+   "max": [
+    0.5,
+    0.4046212136745453,
+    0.2826782166957855
+   ]
+  }
+ },
+ "knowledge": {
+  "schemaVersion": "manual_extract_v1",
+  "promptVersion": "manual_extract_v1",
+  "pageFrom": 1,
+  "pageTo": 4,
+  "coverage": {
+   "complete": true,
+   "pageCount": 4,
+   "pages": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "batches": [
+    {
+     "batchIndex": 0,
+     "pages": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "partCount": 6,
+     "stepCount": 7,
+     "specCount": 8,
+     "uncertaintyCount": 0
+    }
+   ]
+  },
+  "parts": [
+   {
+    "id": "part-head",
+    "name": "头部",
+    "description": "头部装有 AI 交互相机、头灯与可触控区域；单指触摸头部 3 秒可进入配网，相机用于扫码配网、人脸与人体识别。",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     },
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 3,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "part-torso",
+    "name": "躯干",
+    "description": "机身内置可充电锂电池与主控，背部有电源键，侧面为充电口；腹部摄像头用于感知地面，使用前保持镜头清洁。",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     },
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 2,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "part-leg-fl",
+    "name": "左前腿",
+    "description": "由大腿、小腿与足垫组成，金属材质；开机前需把腿摆在机身两侧、小腿完全收起，避免被机身压住。",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     },
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 2,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "part-leg-fr",
+    "name": "右前腿",
+    "description": "与左前腿对称；使用前检查关节无异物、线束无破损、足垫完好。",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     },
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 4,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "part-leg-rl",
+    "name": "左后腿",
+    "description": "后腿支撑起立、坐下与作揖等动作；足垫为软质随机耗材，磨损后需更换。",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     },
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 4,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "part-leg-rr",
+    "name": "右后腿",
+    "description": "与左后腿对称；室内使用时建议铺胶垫或毛毯，避免湿滑、砂石等地面。",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     },
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 4,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   }
+  ],
+  "steps": [
+   {
+    "id": "step-charge",
+    "title": "给机器狗充电",
+    "orderedActions": [
+     "确认机器狗处于趴下状态。",
+     "检查电源适配器无损坏，放在干燥阴凉、散热良好的位置。",
+     "连接电源适配器与快充线，把快充线插入机身充电口。"
+    ],
+    "partIds": [
+     "part-torso"
+    ],
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 2,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "safetyNotes": [
+     "充电温度建议 0°C~40°C；充电时不要操控产品开机运动。"
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "step-pose",
+    "title": "开机前摆放机身",
+    "orderedActions": [
+     "放在周边至少 2 米空旷的平整地面上。",
+     "让机身水平趴下、腹部贴地。",
+     "把四条腿摆在机身两侧，小腿完全收起，确认没有被机身压住。"
+    ],
+    "partIds": [
+     "part-torso",
+     "part-leg-fl",
+     "part-leg-fr",
+     "part-leg-rl",
+     "part-leg-rr"
+    ],
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 2,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "safetyNotes": [
+     "大腿外伸或小腿被压，可能导致开机失败或站起后摔倒。"
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "step-power",
+    "title": "开机与关机",
+    "orderedActions": [
+     "长按电源键 3 秒开机，眼灯与尾灯亮起表示已开机。",
+     "开机状态下再次长按电源键 3 秒关机。",
+     "无法正常关机时，长按电源键 10 秒强制关机。"
+    ],
+    "partIds": [
+     "part-torso"
+    ],
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 2,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "safetyNotes": [
+     "强制关机可能造成文件损坏，请谨慎操作。"
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "step-network",
+    "title": "配置网络",
+    "orderedActions": [
+     "在 Android 手机上下载 APP 并登录小米账号。",
+     "在 APP 中按引导配置网络并生成二维码。",
+     "单指触摸机器狗头部可触控区域 3 秒，头灯橙色闪烁后把二维码对准头部 AI 交互相机。"
+    ],
+    "partIds": [
+     "part-head"
+    ],
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 3,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "safetyNotes": [],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "step-voice",
+    "title": "语音唤醒与互动",
+    "orderedActions": [
+     "对机器狗说「铁蛋铁蛋」唤醒。",
+     "唤醒后可用语音指令让它坐下、趴下或作揖。"
+    ],
+    "partIds": [
+     "part-head"
+    ],
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 3,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "safetyNotes": [
+     "周边环境嘈杂或说话距离过近，会影响唤醒和识别效果。"
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "step-check",
+    "title": "使用前检查",
+    "orderedActions": [
+     "检查各关节是否有异物、线束是否破损。",
+     "检查足垫是否正常无损坏。",
+     "确认头部与腹部摄像头表面清洁。"
+    ],
+    "partIds": [
+     "part-head",
+     "part-torso",
+     "part-leg-fl",
+     "part-leg-fr",
+     "part-leg-rl",
+     "part-leg-rr"
+    ],
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 4,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "safetyNotes": [
+     "避免用硬物划伤摄像头镜片，有污物时用干软布擦拭。"
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "step-trick",
+    "title": "做出作揖动作",
+    "orderedActions": [
+     "让机器狗在平整地面上站稳。",
+     "通过 APP 或语音指令触发作揖。",
+     "动作完成后机器狗回到站立。"
+    ],
+    "partIds": [
+     "part-head",
+     "part-leg-fl",
+     "part-leg-fr"
+    ],
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 3,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "safetyNotes": [
+     "做动作时周围保持足够空间，远离人群与障碍物。"
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   }
+  ],
+  "specs": [
+   {
+    "id": "spec-type",
+    "label": "产品类型",
+    "value": "小型、轻量化的仿生四足机器人",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "spec-dof",
+    "label": "自由度",
+    "value": "12 个",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 1,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "spec-battery",
+    "label": "续航时间",
+    "value": "约 90 分钟",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 2,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "spec-charge-temp",
+    "label": "推荐充电温度",
+    "value": "0°C~40°C",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 2,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "spec-wake",
+    "label": "语音唤醒词",
+    "value": "铁蛋铁蛋",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 3,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "spec-app",
+    "label": "手机系统",
+    "value": "Android",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 3,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "spec-material",
+    "label": "四肢材质",
+    "value": "四肢主要为金属，足垫为软质材料",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 4,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   },
+   {
+    "id": "spec-storage",
+    "label": "长期存储",
+    "value": "温度 20°C~25°C，电量 30%~50% 为佳",
+    "evidence": [
+     {
+      "documentId": "{{DOC}}",
+      "preparationId": "{{PREP}}",
+      "pageNumber": 4,
+      "quote": null,
+      "bbox": null,
+      "derived": false
+     }
+    ],
+    "reviewStatus": "needs_review",
+    "sourceBatches": [
+     0
+    ]
+   }
+  ],
+  "uncertainties": [],
+  "conflicts": []
+ },
+ "hotspots": [
+  {
+   "id": "hotspot-head",
+   "partId": "part-head",
+   "status": "confirmed",
+   "anchor": {
+    "modelRevisionId": "{{MODEL_REV}}",
+    "modelSha256": "{{MODEL_SHA}}",
+    "positionLocal": [
+     -0.5,
+     0.29318,
+     0.04051
+    ]
+   }
+  },
+  {
+   "id": "hotspot-torso",
+   "partId": "part-torso",
+   "status": "confirmed",
+   "anchor": {
+    "modelRevisionId": "{{MODEL_REV}}",
+    "modelSha256": "{{MODEL_SHA}}",
+    "positionLocal": [
+     -0.29221,
+     0.21597,
+     -0.05414
+    ]
+   }
+  },
+  {
+   "id": "hotspot-leg-fl",
+   "partId": "part-leg-fl",
+   "status": "confirmed",
+   "anchor": {
+    "modelRevisionId": "{{MODEL_REV}}",
+    "modelSha256": "{{MODEL_SHA}}",
+    "positionLocal": [
+     -0.22451,
+     -5e-05,
+     0.25212
+    ]
+   }
+  },
+  {
+   "id": "hotspot-leg-fr",
+   "partId": "part-leg-fr",
+   "status": "confirmed",
+   "anchor": {
+    "modelRevisionId": "{{MODEL_REV}}",
+    "modelSha256": "{{MODEL_SHA}}",
+    "positionLocal": [
+     -0.22451,
+     -5e-05,
+     -0.25212
+    ]
+   }
+  },
+  {
+   "id": "hotspot-leg-rl",
+   "partId": "part-leg-rl",
+   "status": "confirmed",
+   "anchor": {
+    "modelRevisionId": "{{MODEL_REV}}",
+    "modelSha256": "{{MODEL_SHA}}",
+    "positionLocal": [
+     0.31586,
+     0.0291,
+     0.28268
+    ]
+   }
+  },
+  {
+   "id": "hotspot-leg-rr",
+   "partId": "part-leg-rr",
+   "status": "confirmed",
+   "anchor": {
+    "modelRevisionId": "{{MODEL_REV}}",
+    "modelSha256": "{{MODEL_SHA}}",
+    "positionLocal": [
+     0.31733,
+     0.0277,
+     -0.28268
+    ]
+   }
+  }
+ ],
+ "stepPoses": {},
+ "interactive": {
+  "partsModel": {
+   "assetId": "{{PARTS_ASSET}}",
+   "sha256": "{{MODEL_SHA}}",
+   "modelRevisionId": "{{MODEL_REV}}",
+   "modelSha256": "{{MODEL_SHA}}",
+   "nodeNames": [
+    "右前腿-大腿",
+    "右前腿-小腿",
+    "右后腿-大腿",
+    "右后腿-小腿",
+    "头部",
+    "左前腿-大腿",
+    "左前腿-小腿",
+    "左后腿-大腿",
+    "左后腿-小腿",
+    "躯干"
+   ],
+   "source": "builtin-sample"
+  },
+  "bindings": [
+   {
+    "partId": "part-head",
+    "nodes": [
+     "头部"
+    ],
+    "status": "confirmed"
+   },
+   {
+    "partId": "part-torso",
+    "nodes": [
+     "躯干"
+    ],
+    "status": "confirmed"
+   },
+   {
+    "partId": "part-leg-fl",
+    "nodes": [
+     "左前腿-大腿",
+     "左前腿-小腿"
+    ],
+    "status": "confirmed"
+   },
+   {
+    "partId": "part-leg-fr",
+    "nodes": [
+     "右前腿-大腿",
+     "右前腿-小腿"
+    ],
+    "status": "confirmed"
+   },
+   {
+    "partId": "part-leg-rl",
+    "nodes": [
+     "左后腿-大腿",
+     "左后腿-小腿"
+    ],
+    "status": "confirmed"
+   },
+   {
+    "partId": "part-leg-rr",
+    "nodes": [
+     "右后腿-大腿",
+     "右后腿-小腿"
+    ],
+    "status": "confirmed"
+   }
+  ],
+  "actions": [],
+  "poses": [
+   {
+    "id": "stand",
+    "label": "站立",
+    "description": "默认站姿。",
+    "durationMs": 800,
+    "steps": [
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿",
+       "右后腿-大腿",
+       "右后腿-小腿",
+       "头部",
+       "左前腿-大腿",
+       "左前腿-小腿",
+       "左后腿-大腿",
+       "左后腿-小腿",
+       "躯干"
+      ],
+      "kind": "translate",
+      "vector": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "id": "lie-down",
+    "label": "趴下",
+    "description": "四肢收起，腹部贴地趴下（充电与开机前的姿态）。",
+    "durationMs": 1200,
+    "steps": [
+     {
+      "nodes": [
+       "左前腿-小腿",
+       "右前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.125,
+       -0.12,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": -80.95762856221623
+     },
+     {
+      "nodes": [
+       "左前腿-大腿",
+       "右前腿-大腿",
+       "左前腿-小腿",
+       "右前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.245,
+       0.06,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 31.30993247402023
+     },
+     {
+      "nodes": [
+       "左后腿-小腿",
+       "右后腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.46,
+       -0.12,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": -79.7673789314576
+     },
+     {
+      "nodes": [
+       "左后腿-大腿",
+       "右后腿-大腿",
+       "左后腿-小腿",
+       "右后腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.33,
+       0.07,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 30.61965527615513
+     },
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿",
+       "右后腿-大腿",
+       "右后腿-小腿",
+       "头部",
+       "左前腿-大腿",
+       "左前腿-小腿",
+       "左后腿-大腿",
+       "左后腿-小腿",
+       "躯干"
+      ],
+      "kind": "translate",
+      "vector": [
+       0.0,
+       -0.2831091284751892,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "id": "sit",
+    "label": "坐下",
+    "description": "后腿收起坐下，前腿撑地。",
+    "durationMs": 1200,
+    "steps": [
+     {
+      "nodes": [
+       "左前腿-小腿",
+       "右前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.125,
+       -0.12,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": -0.057628562216223145
+     },
+     {
+      "nodes": [
+       "左前腿-大腿",
+       "右前腿-大腿",
+       "左前腿-小腿",
+       "右前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.245,
+       0.06,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 40.00993247402022
+     },
+     {
+      "nodes": [
+       "左后腿-小腿",
+       "右后腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.46,
+       -0.12,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": -100.76737893145759
+     },
+     {
+      "nodes": [
+       "左后腿-大腿",
+       "右后腿-大腿",
+       "左后腿-小腿",
+       "右后腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.33,
+       0.07,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 83.61965527615513
+     },
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿",
+       "右后腿-大腿",
+       "右后腿-小腿",
+       "头部",
+       "左前腿-大腿",
+       "左前腿-小腿",
+       "左后腿-大腿",
+       "左后腿-小腿",
+       "躯干"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.33,
+       0.07,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": -40.0
+     },
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿",
+       "右后腿-大腿",
+       "右后腿-小腿",
+       "头部",
+       "左前腿-大腿",
+       "左前腿-小腿",
+       "左后腿-大腿",
+       "左后腿-小腿",
+       "躯干"
+      ],
+      "kind": "translate",
+      "vector": [
+       0.0,
+       -0.3721533417701721,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "id": "nod",
+    "label": "点头",
+    "description": "低头致意。",
+    "durationMs": 600,
+    "steps": [
+     {
+      "nodes": [
+       "头部"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.3,
+       0.215,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 25.0
+     },
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿",
+       "右后腿-大腿",
+       "右后腿-小腿",
+       "头部",
+       "左前腿-大腿",
+       "左前腿-小腿",
+       "左后腿-大腿",
+       "左后腿-小腿",
+       "躯干"
+      ],
+      "kind": "translate",
+      "vector": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    ]
+   },
+   {
+    "id": "bow",
+    "label": "作揖",
+    "description": "后腿蹲坐、上身立起，两只前爪在胸前合拢作揖。",
+    "durationMs": 1400,
+    "steps": [
+     {
+      "nodes": [
+       "左前腿-小腿",
+       "右前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.125,
+       -0.12,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 2.042371437783771
+     },
+     {
+      "nodes": [
+       "左前腿-大腿",
+       "右前腿-大腿",
+       "左前腿-小腿",
+       "右前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.245,
+       0.06,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 18.30993247402023
+     },
+     {
+      "nodes": [
+       "左后腿-小腿",
+       "右后腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.46,
+       -0.12,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": -100.76737893145759
+     },
+     {
+      "nodes": [
+       "左后腿-大腿",
+       "右后腿-大腿",
+       "左后腿-小腿",
+       "右后腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.33,
+       0.07,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 105.61965527615513
+     },
+     {
+      "nodes": [
+       "头部"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.3,
+       0.215,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": 35.0
+     },
+     {
+      "nodes": [
+       "左前腿-大腿",
+       "左前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.245,
+       0.06,
+       0.2
+      ],
+      "axis": [
+       1.0,
+       0.0,
+       0.0
+      ],
+      "angleDeg": 28.0
+     },
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       -0.245,
+       0.06,
+       -0.2
+      ],
+      "axis": [
+       1.0,
+       0.0,
+       0.0
+      ],
+      "angleDeg": -28.0
+     },
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿",
+       "右后腿-大腿",
+       "右后腿-小腿",
+       "头部",
+       "左前腿-大腿",
+       "左前腿-小腿",
+       "左后腿-大腿",
+       "左后腿-小腿",
+       "躯干"
+      ],
+      "kind": "rotate",
+      "pivot": [
+       0.33,
+       0.07,
+       0.0
+      ],
+      "axis": [
+       0.0,
+       0.0,
+       1.0
+      ],
+      "angleDeg": -62.0
+     },
+     {
+      "nodes": [
+       "右前腿-大腿",
+       "右前腿-小腿",
+       "右后腿-大腿",
+       "右后腿-小腿",
+       "头部",
+       "左前腿-大腿",
+       "左前腿-小腿",
+       "左后腿-大腿",
+       "左后腿-小腿",
+       "躯干"
+      ],
+      "kind": "translate",
+      "vector": [
+       0.0,
+       -0.3754572868347168,
+       0.0
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "missing": []
+}

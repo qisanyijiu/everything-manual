@@ -32,7 +32,7 @@ export class Pc01QaBackend extends TestBackend {
       "[providers.manual_ai]", `base_url = "${fixture.base}/v1"`, 'model = "gpt-5-mini"', 'api_key_env = "EM_T17_MANUAL_AI_KEY"',
       "[download]", 'allowed_hosts = ["127.0.0.1"]', "allow_local_fixture = true", "",
     ].join("\n"));
-    execFileSync(binary, ["init", "--data-dir", this.dataDir, "--password-file", passwordFile], { stdio: "ignore" });
+    execFileSync(binary, ["init", "--no-sample", "--data-dir", this.dataDir, "--password-file", passwordFile], { stdio: "ignore" });
     const log = fs.createWriteStream(this.logPath, { flags: "a" });
     this.qaProcess = spawn(binary, ["serve", "--data-dir", this.dataDir, "--listen", `127.0.0.1:${this.port}`], {
       cwd: this.workDir,

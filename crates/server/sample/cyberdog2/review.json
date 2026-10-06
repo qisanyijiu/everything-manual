@@ -1,0 +1,94 @@
+{
+ "entities": {
+  "part-head": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "part-torso": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "part-leg-fl": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "part-leg-fr": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "part-leg-rl": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "part-leg-rr": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "step-charge": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "step-pose": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "step-power": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "step-network": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "step-voice": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "step-check": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "step-trick": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-type": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-dof": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-battery": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-charge-temp": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-wake": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-app": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-material": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  },
+  "spec-storage": {
+   "reviewStatus": "confirmed",
+   "textOnly": false
+  }
+ },
+ "modelReview": {
+  "modelRevisionId": "{{MODEL_REV}}",
+  "modelSha256": "{{MODEL_SHA}}",
+  "loaded": true,
+  "userConfirmed": true
+ }
+}

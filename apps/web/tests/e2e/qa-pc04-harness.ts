@@ -105,7 +105,7 @@ export class Pc04Harness {
   async setup(api: APIRequestContext) {
     this.serverBinary = frozenBinary("SERVER"); this.xtaskBinary = frozenBinary("XTASK"); await this.proxy.start();
     fs.mkdirSync(this.outputDir, { mode: 0o700 }); const pw = path.join(this.workDir, "password.txt"); fs.writeFileSync(pw, this.password + "\n", { mode: 0o600 });
-    const init = spawnSync(this.serverBinary, ["init", "--data-dir", this.dataDir, "--password-file", pw], { cwd: this.workDir, env: this.env(), encoding: "utf8", timeout: 30000 });
+    const init = spawnSync(this.serverBinary, ["init", "--no-sample", "--data-dir", this.dataDir, "--password-file", pw], { cwd: this.workDir, env: this.env(), encoding: "utf8", timeout: 30000 });
     expect(init.status, "private fixture init (raw output withheld)").toBe(0);
     fs.copyFileSync(path.join(REPO_ROOT, "price-catalog.example.toml"), this.catalogPath);
     const port = await freePort(); this.base = `http://127.0.0.1:${port}`;

@@ -150,6 +150,20 @@ pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
             (admin.id, "已更新")
         }
     };
+    let sample_seeded = if args.no_sample {
+        false
+    } else {
+        let mut tx = crate::storage::begin_write(&mut connection)
+            .await
+            .map_err(|error| CliError::data_dir(format!("写入内置示例失败：{error}")))?;
+        let seeded = super::sample::seed(&mut tx, &settings.data_dir, &admin_id)
+            .await
+            .map_err(storage_error)?;
+        tx.commit()
+            .await
+            .map_err(|error| CliError::data_dir(format!("写入内置示例失败：{error}")))?;
+        seeded
+    };
     drop(connection);
 
     tracing::info!(
@@ -190,6 +204,13 @@ pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
         );
     }
     println!("密码来源：{password_source}；明文不落盘、不进入日志与 shell history。");
+    if sample_seeded {
+        println!("内置示例：已写入「机器狗」（CyberDog 2），包含已发布的 3D 说明书；可在资料库直接查看。");
+    } else if args.no_sample {
+        println!("内置示例：已跳过（--no-sample）。");
+    } else {
+        println!("内置示例：资料库非空，跳过写入。");
+    }
 
     database.close().await;
     drop(lock);

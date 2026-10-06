@@ -61,7 +61,7 @@ export class Pc06QaBackend {
       await this.fixture.start(); this.port = await freePort(); this.base = `http://127.0.0.1:${this.port}`;
       this.config(); const password = path.join(this.workDir, "password.txt");
       fs.writeFileSync(password, PASSWORD + "\n", { mode: 0o600 });
-      const initialized = this.command(["init", "--data-dir", this.dataDir, "--password-file", password]);
+      const initialized = this.command(["init", "--no-sample", "--data-dir", this.dataDir, "--password-file", password]);
       expect(initialized.code, "isolated init exit status only").toBe(0); this.noLeak(initialized.output);
       this.initialized = true;
     }

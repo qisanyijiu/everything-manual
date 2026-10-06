@@ -37,7 +37,7 @@ export class Pc05aBackend {
   async start() {
     const executable = binary(); await this.fixture.start(); const port = await freePort(); this.base = `http://127.0.0.1:${port}`;
     const pw = path.join(this.workDir, "password.txt"); fs.writeFileSync(pw, PASSWORD + "\n", { mode: 0o600 });
-    const init = spawnSync(executable, ["init", "--data-dir", this.dataDir, "--password-file", pw], { cwd: this.workDir, env: this.env(), stdio: "pipe", timeout: 30000 }); expect(init.status, "owned fixture init; raw log withheld").toBe(0);
+    const init = spawnSync(executable, ["init", "--no-sample", "--data-dir", this.dataDir, "--password-file", pw], { cwd: this.workDir, env: this.env(), stdio: "pipe", timeout: 30000 }); expect(init.status, "owned fixture init; raw log withheld").toBe(0);
     const catalog = path.join(this.dataDir, "price-catalog.toml"); fs.copyFileSync(path.join(REPO_ROOT, "price-catalog.example.toml"), catalog);
     const config = path.join(this.dataDir, "config.toml"); fs.writeFileSync(config, [`public_origin = "${WEB}"`, `price_catalog_path = ${JSON.stringify(catalog)}`, "[providers.tripo]", `base_url = "${this.fixture.base}/v3"`, 'api_key_env = "EM_PC05A_QA_TRIPO"', "[providers.manual_ai]", `base_url = "${this.fixture.base}/v1"`, 'api_key_env = "EM_PC05A_QA_MANUAL"', 'model = "gpt-5-mini"', "[download]", 'allowed_hosts = ["127.0.0.1"]', "allow_local_fixture = true", ""].join("\n"), { mode: 0o600 });
     this.log = fs.createWriteStream(path.join(this.workDir, "server.log"), { mode: 0o600 }); this.child = spawn(executable, ["serve", "--data-dir", this.dataDir, "--config", config, "--listen", `127.0.0.1:${port}`], { cwd: this.workDir, env: this.env(), stdio: ["ignore", "pipe", "pipe"] });

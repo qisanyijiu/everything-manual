@@ -46,6 +46,9 @@ bash scripts/start-project.sh
 ```
 
 当前本机已启用源码前端，地址为 `http://127.0.0.1:5173/`，后端为 `http://127.0.0.1:8080/`。
+`init` 会在空资料库中自带一份已发布的示例说明书「机器狗」（CyberDog 2：头部/躯干/四肢 6 个部件，
+站立、趴下、坐下、点头、作揖 5 个姿势），首次登录即可阅读；不需要时用 `init --no-sample`，
+说明见 [内置示例](crates/server/sample/cyberdog2/README.md)。
 全新克隆或内嵌前端模式地址为 `http://127.0.0.1:8080/`。当前本机整理后的资料统一放在 `var/preview/data`，
 可浏览8个有效样本，包含Nikon F3HP和Wii U；登录密码为 `12345678`。
 38个旧数据目录已移至 `var/preview/archive/originals`，旧位置仅保留兼容软链接；项目 `var/preview` 外已无物理应用数据库。

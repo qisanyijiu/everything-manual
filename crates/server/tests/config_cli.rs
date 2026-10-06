@@ -1074,3 +1074,62 @@ fn example_config_is_accepted_and_no_key_material_inside() {
         );
     }
 }
+
+/// `init` 在空 data-dir 中写入内置示例「机器狗」：已发布版本 + 6 部件 + 姿势；重复 init 不重复写入；
+/// `--no-sample` 跳过；`check` 通过且启动扫描不隔离任何 blob。
+#[test]
+fn init_seeds_builtin_cyberdog_sample_once() {
+    let dir = TestDir::new("init-sample");
+    let password = dir.join("pw.txt");
+    write_restricted(&password, "test-password-123\n");
+    let args = ["init", "--data-dir", "data", "--password-file", "pw.txt"];
+    let first = run(dir.path(), &args);
+    assert_eq!(first.status, 0, "{first:?}");
+    assert!(first.stdout.contains("已写入「机器狗」"), "{first:?}");
+    let again = run(dir.path(), &args);
+    assert!(again.stdout.contains("资料库非空，跳过写入"), "{again:?}");
+
+    let db = rusqlite_count(&dir.join("data/manual.sqlite3"));
+    assert_eq!(db.items, 1, "示例只写一次");
+    assert_eq!(db.releases, 1);
+    assert_eq!(db.blobs, 3, "GLB、PDF、manifest");
+    for sha in &db.blob_shas {
+        assert!(dir.join("data/blobs").join(&sha[..2]).join(sha).is_file(), "blob 文件缺失：{sha}");
+    }
+    assert!(db.knowledge.contains("\"作揖\"") && db.knowledge.contains("\"点头\""), "姿势缺失");
+    for part in ["头部", "躯干", "左前腿", "右前腿", "左后腿", "右后腿"] {
+        assert!(db.knowledge.contains(&format!("\"name\": \"{part}\"")), "部件缺失：{part}");
+    }
+
+    let check = run(dir.path(), &["check", "--data-dir", "data"]);
+    assert_eq!(check.status, 0, "{check:?}");
+
+    let skip = TestDir::new("init-no-sample");
+    write_restricted(&skip.join("pw.txt"), "test-password-123\n");
+    let out = run(skip.path(), &["init", "--no-sample", "--data-dir", "data", "--password-file", "pw.txt"]);
+    assert!(out.stdout.contains("已跳过（--no-sample）"), "{out:?}");
+    assert_eq!(rusqlite_count(&skip.join("data/manual.sqlite3")).items, 0);
+}
+
+struct SampleCounts {
+    items: i64,
+    releases: i64,
+    blobs: i64,
+    blob_shas: Vec<String>,
+    knowledge: String,
+}
+
+/// 用 sqlite3 命令行读计数（测试进程里不另起 sqlx 运行时）。
+fn rusqlite_count(db: &Path) -> SampleCounts {
+    let q = |sql: &str| -> String {
+        let out = Command::new("sqlite3").arg(db).arg(sql).output().expect("sqlite3 可用");
+        String::from_utf8_lossy(&out.stdout).trim().to_owned()
+    };
+    SampleCounts {
+        items: q("SELECT COUNT(*) FROM items").parse().unwrap_or(-1),
+        releases: q("SELECT COUNT(*) FROM manual_releases").parse().unwrap_or(-1),
+        blobs: q("SELECT COUNT(*) FROM blobs").parse().unwrap_or(-1),
+        blob_shas: q("SELECT sha256 FROM blobs").lines().map(str::to_owned).collect(),
+        knowledge: q("SELECT knowledge_json FROM manual_drafts"),
+    }
+}

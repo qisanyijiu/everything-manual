@@ -164,7 +164,7 @@ export class ApiSettingsQaBackend {
         'model = "qa-toml-manual"', 'api_key_env = "EM_API_SETTINGS_QA_MANUAL"',
         "[download]", 'allowed_hosts = ["127.0.0.1"]', 'allow_local_fixture = true', "",
       ].join("\n"));
-      execFileSync(checkedServerBinary(), ["init", "--data-dir", this.dataDir, "--password-file", passwordFile], {
+      execFileSync(checkedServerBinary(), ["init", "--no-sample", "--data-dir", this.dataDir, "--password-file", passwordFile], {
         cwd: this.workDir, env: this.environment(), stdio: "pipe",
       });
       this.initialized = true;

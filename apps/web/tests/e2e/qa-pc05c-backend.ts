@@ -43,7 +43,7 @@ export class Pc05cBackend {
     if (!this.initialized) {
       await this.fixture.start(); this.base = `http://127.0.0.1:${await freePort()}`;
     const pw = path.join(this.workDir, "password.txt"); fs.writeFileSync(pw, PASSWORD + "\n", { mode: 0o600 });
-    const init = spawnSync(executable, ["init", "--data-dir", this.dataDir, "--password-file", pw], { cwd: this.workDir, env: this.env(), stdio: "pipe", timeout: 30000 }); expect(init.status, "owned fixture init; raw log withheld").toBe(0);
+    const init = spawnSync(executable, ["init", "--no-sample", "--data-dir", this.dataDir, "--password-file", pw], { cwd: this.workDir, env: this.env(), stdio: "pipe", timeout: 30000 }); expect(init.status, "owned fixture init; raw log withheld").toBe(0);
       this.initialized = true;
     }
     const catalog = path.join(this.dataDir, "price-catalog.toml"); fs.copyFileSync(path.join(REPO_ROOT, "price-catalog.example.toml"), catalog);

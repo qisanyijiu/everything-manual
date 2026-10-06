@@ -21,6 +21,7 @@ pub mod logging;
 pub mod model_guard;
 pub mod password;
 pub mod provider_overrides;
+pub mod sample;
 pub mod secret;
 
 pub use error::{CliError, ExitCode};

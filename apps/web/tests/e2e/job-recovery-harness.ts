@@ -321,7 +321,7 @@ export class TestBackend {
           "",
         ].join("\n"),
       );
-      execFileSync(this.binary, ["init", "--data-dir", this.dataDir, "--password-file", passwordFile], {
+      execFileSync(this.binary, ["init", "--no-sample", "--data-dir", this.dataDir, "--password-file", passwordFile], {
         stdio: "inherit",
       });
     }

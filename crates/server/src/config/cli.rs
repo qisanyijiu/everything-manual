@@ -67,6 +67,9 @@ pub struct InitArgs {
     /// 从受限文件读取管理员密码（无人值守；文件权限要求 0600，无回显终端时必需）
     #[arg(long, value_name = "FILE")]
     pub password_file: Option<PathBuf>,
+    /// 不写入内置示例「机器狗」（默认在空资料库中写入一份已发布的示例说明书）
+    #[arg(long)]
+    pub no_sample: bool,
 }
 
 #[derive(Debug, Args)]

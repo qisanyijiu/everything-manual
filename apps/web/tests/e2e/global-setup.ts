@@ -44,7 +44,7 @@ export default async function globalSetup(): Promise<void> {
   const dataDir = path.join(E2E_WORK_DIR, "data");
   const passwordFile = path.join(E2E_WORK_DIR, "password.txt");
   fs.writeFileSync(passwordFile, `${PASSWORD}\n`, { mode: 0o600 });
-  execFileSync(binary, ["init", "--data-dir", dataDir, "--password-file", passwordFile], {
+  execFileSync(binary, ["init", "--no-sample", "--data-dir", dataDir, "--password-file", passwordFile], {
     stdio: "inherit",
   });
 
