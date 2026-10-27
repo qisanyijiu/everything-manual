@@ -5,16 +5,19 @@
  * - 登录中按钮禁用并显示「登录中…」；密码为空不提交；
  * - 失败文案：401「密码不正确」、429「尝试过于频繁，请稍后再试」、403「请刷新页面后重试」，
  *   `role="alert"` 并把焦点移到错误摘要；
- * - 成功跳转 `next`（只接受站内相对路径）或 `/`。
+ * - 成功跳转 `next`（只接受站内相对路径）或 `/`；
+ * - 服务端免登录模式（`loginRequired = false`）：打开即探测会话，直接进入 `next`。
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 import { describeError, isApiError } from "../../api/client";
+import { fetchSession } from "../../api/endpoints";
 import { TextField } from "../../components/form";
 import { safeNextPath } from "../../lib/next-path";
-import { useLogin } from "./session";
+import { adoptSession, useLogin } from "./session";
 import { Icon, ManualArtwork } from "../../components/Icon";
 
 interface LoginError {
@@ -49,6 +52,24 @@ export function LoginPage() {
 
   const next = safeNextPath(searchParams.get("next"));
   const expired = (location.state as { expired?: boolean } | null)?.expired === true;
+  const queryClient = useQueryClient();
+
+  // 免登录模式：服务端会自动建立会话，登录页只是旧链接/会话过期的落点，直接回到应用。
+  useEffect(() => {
+    let alive = true;
+    fetchSession().then(
+      (session) => {
+        if (alive && session.data.loginRequired === false) {
+          adoptSession(queryClient, session);
+          navigate(next, { replace: true });
+        }
+      },
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [navigate, next, queryClient]);
 
   useEffect(() => {
     if (error !== null) {

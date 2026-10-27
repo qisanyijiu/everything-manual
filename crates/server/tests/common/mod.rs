@@ -92,7 +92,11 @@ pub fn test_settings(data_dir: &Path) -> Settings {
         limits: Limits::default(),
         concurrency: Concurrency::default(),
         jobs: Jobs::default(),
-        session: Session::default(),
+        // 认证用例按"要求登录"运行；免登录模式由专门用例显式关闭。
+        session: Session {
+            login_required: true,
+            ..Session::default()
+        },
         price_catalog_path: None,
         price_catalog: None,
         // 默认空名单：拒绝一切模型下载（用例按需显式配置允许域）。
@@ -452,6 +456,7 @@ pub fn configured_tripo(canary_key: &str) -> ProviderSettings {
 pub fn session_with_secure(policy: CookieSecurePolicy) -> Session {
     Session {
         cookie_secure: policy,
+        login_required: true,
         ..Session::default()
     }
 }

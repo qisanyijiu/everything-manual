@@ -91,7 +91,7 @@ export default async function globalSetup(): Promise<void> {
     {
       stdio: ["ignore", "pipe", "pipe"],
       env: {
-        ...process.env,
+        ...process.env, EM_SESSION__LOGIN_REQUIRED: "true",
         EM_E2E_TRIPO_KEY: "e2e-fake-tripo-key-not-used",
         EM_E2E_MANUAL_AI_KEY: "e2e-fake-manual-ai-key-not-used",
       },

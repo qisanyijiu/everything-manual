@@ -39,6 +39,8 @@ pub struct SessionData {
     /// 会话绝对过期时间（UTC RFC3339；默认 7 天，假设 A-05，无滑动续期）。
     #[schema(value_type = String, example = "2026-09-19T00:00:00Z")]
     pub expires_at: Timestamp,
+    /// 服务端是否要求登录；false 时会话由服务端自动建立，前端不显示登录/登出入口。
+    pub login_required: bool,
 }
 
 /// 管理员摘要（只暴露公开 ID；口令哈希永不出现在任何响应）。

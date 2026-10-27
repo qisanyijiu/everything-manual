@@ -17,7 +17,7 @@ import { RouteErrorBoundary } from "../../components/ErrorBoundary";
 import { NotificationRegion, useNotify } from "../../components/notifications";
 import { getItem } from "../../api/endpoints";
 import { itemKeys } from "../library/items";
-import { useLogout } from "../auth/session";
+import { useLogout, useSession } from "../auth/session";
 import { Icon } from "../../components/Icon";
 import { JobCompletionWatcher } from "../jobs/JobCompletionWatcher";
 
@@ -27,6 +27,8 @@ export function AppShell() {
   const navigate = useNavigate();
   const notify = useNotify();
   const logoutMutation = useLogout();
+  // 免登录模式下没有可登出的身份：隐藏登出入口。
+  const loginRequired = useSession().data?.data.loginRequired ?? true;
   const exactItemMatch = useMatch("/items/:itemId");
   const nestedItemMatch = useMatch("/items/:itemId/*");
   const itemId = exactItemMatch?.params.itemId ?? nestedItemMatch?.params.itemId;
@@ -78,9 +80,9 @@ export function AppShell() {
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-note"><Icon name="shield" size={22} /><p>你的物品，你的资料。<small>自托管 · 本地保存</small></p></div>
-          <button className="sidebar-account" type="button" aria-label={logoutMutation.isPending ? "登出中…" : "登出"} onClick={() => request(() => { void handleLogout(); })} disabled={logoutMutation.isPending}>
+          {loginRequired && <button className="sidebar-account" type="button" aria-label={logoutMutation.isPending ? "登出中…" : "登出"} onClick={() => request(() => { void handleLogout(); })} disabled={logoutMutation.isPending}>
             <span className="account-avatar">我</span><span>管理员<small>{logoutMutation.isPending ? "登出中…" : "登出"}</small></span><Icon name="logout" size={17} />
-          </button>
+          </button>}
         </div>
       </aside>
       <header className="top-bar">
@@ -95,7 +97,7 @@ export function AppShell() {
             </p>
           )}
         </div>
-        <div className="top-bar__utilities"><JobActivityLink /><button className="mobile-logout" type="button" aria-label="退出登录" onClick={() => request(() => { void handleLogout(); })} disabled={logoutMutation.isPending}><Icon name="logout" size={17} /></button></div>
+        <div className="top-bar__utilities"><JobActivityLink />{loginRequired && <button className="mobile-logout" type="button" aria-label="退出登录" onClick={() => request(() => { void handleLogout(); })} disabled={logoutMutation.isPending}><Icon name="logout" size={17} /></button>}</div>
       </header>
       <NotificationRegion />
       {/* tabIndex=-1：作为程序化焦点目标（会话恢复后焦点落回页面主体），不进入 Tab 顺序。 */}

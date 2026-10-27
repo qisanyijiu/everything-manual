@@ -38,7 +38,7 @@ export class Pc06QaBackend {
   private log: fs.WriteStream | null = null;
 
   private environment(): NodeJS.ProcessEnv {
-    return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SECRETS_MASTER_KEY: this.masterKey,
+    return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", EM_SECRETS_MASTER_KEY: this.masterKey,
       EM_PC06_QA_TRIPO: this.fixture.keys.tripo, EM_PC06_QA_MANUAL: this.fixture.keys.manualAi,
       ...(this.source === "env" ? { EM_PROVIDERS__TRIPO__MODEL: this.models.tripo, EM_PROVIDERS__MANUAL_AI__MODEL: this.models.manualAi } : {}) };
   }

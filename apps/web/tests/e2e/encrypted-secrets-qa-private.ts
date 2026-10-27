@@ -17,7 +17,7 @@ export function newQaSecrets() {
 
 /** Deliberately exclude the host's EM_* and provider secrets. */
 export function privateQaEnvironment(values: Record<string, string> = {}): NodeJS.ProcessEnv {
-  return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, ...values };
+  return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", ...values };
 }
 
 /** Unlike execFileSync, an unsuccessful command does not throw captured stderr. */

@@ -100,7 +100,8 @@ macOS 仍可能要求所有者在系统弹窗选择“始终允许”。以后�
 ```sh
 mkdir -p /srv/manual-data            # 数据目录：独立、可写、随备份保护
 ./everything-manual init --data-dir /srv/manual-data
-# 交互输入管理员密码（不回显）。无人值守用 --password-file <0600 文件>。
+# 默认免登录，不需要密码。要求登录时（[session] login_required = true）交互输入密码，
+# 无人值守用 --password-file <0600 文件>。
 ./everything-manual check --data-dir /srv/manual-data
 ./everything-manual serve --data-dir /srv/manual-data --listen 127.0.0.1:8080
 ```

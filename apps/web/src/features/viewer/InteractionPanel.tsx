@@ -48,7 +48,6 @@ export function InteractionPanel({
   }
   return (
     <section className="interaction-panel" aria-label="模型交互" data-testid="interaction-panel">
-      {inspection !== undefined && <PartsExplorer {...inspection} />}
       {poses.length > 0 && (
         <div className="interaction-panel__group" role="group" aria-label="姿势">
           <span className="interaction-panel__label">姿势</span>
@@ -92,6 +91,7 @@ export function InteractionPanel({
         </div>
       )}
       <p className="field__hint">动作与姿势为外观示意（由分件模型做刚体变换），不代表真实机械结构。</p>
+      {inspection !== undefined && <PartsExplorer {...inspection} />}
     </section>
   );
 }

@@ -186,11 +186,6 @@ export function JobsListPage() {
                     {job.draftId !== null && job.draftId !== undefined && (
                       <Link to={`/jobs/${job.id}/result`}>查看生成结果</Link>
                     )}
-                    {job.draftId !== null && job.draftId !== undefined && (
-                      <Link to={`/items/${job.itemId}/drafts/${job.draftId}/review`}>
-                        打开草稿（待复核）
-                      </Link>
-                    )}
                   </div>
                 </li>
               );

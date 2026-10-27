@@ -20,7 +20,7 @@ use super::error::ApiError;
 use super::logging::request_logging;
 use super::state::AppState;
 use super::{
-    assets, auth, documents, drafts, estimates, health, items, jobs, photos, preparations,
+    assets, auth, chat, documents, drafts, estimates, health, items, jobs, photos, preparations,
     releases, settings, view_candidates,
 };
 
@@ -51,6 +51,8 @@ pub fn build_app(state: AppState) -> Router {
         .merge(drafts::routes())
         // T19：发布版本列表与完整 manifest 读取（发布动作在 drafts 的 publish 路由）。
         .merge(releases::routes())
+        // 说明书问答（依据发布版知识与原文页文字）。
+        .merge(chat::routes())
         // T06：上传路由自带更大的 `DefaultBodyLimit`（覆盖下面的 JSON 上限），
         // 内容路由受同一上限保护（无请求体，无实际影响）。
         .merge(assets::routes(&state.settings().limits))

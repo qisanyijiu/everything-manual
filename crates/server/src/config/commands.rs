@@ -83,10 +83,17 @@ fn overrides_from(common: &CommonArgs, listen: Option<SocketAddr>) -> CliOverrid
 ///    更新哈希并**撤销其全部既有会话**（重置密码路径）。明文密码不落盘、不进日志。
 pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
     let settings = Settings::load(&overrides_from(&args.common, None))?;
-    let secret = password::read_password(args.password_file.as_deref())?;
+    // 免登录模式（默认）不需要密码；显式给了 --password-file 或要求登录时才读取。
+    let password_needed = settings.session.login_required || args.password_file.is_some();
+    let secret = if password_needed {
+        Some(password::read_password(args.password_file.as_deref())?)
+    } else {
+        None
+    };
     let password_source = match args.password_file.as_deref() {
         Some(path) => format!("受限文件 {}", path.display()),
-        None => "交互终端（不回显）".to_owned(),
+        None if password_needed => "交互终端（不回显）".to_owned(),
+        None => "免登录模式（未设置密码）".to_owned(),
     };
 
     let created = datadir::ensure_initialized(&settings.data_dir)?;
@@ -103,7 +110,12 @@ pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
         .map_err(storage_error)?;
 
     // Argon2id（参数见 http::auth::password）；CPU/内存密集 → 阻塞线程池。
-    let password_text = secret.expose().to_owned();
+    // 免登录模式下用一次性随机口令（不输出、不保存明文），管理员行仍需要哈希。
+    let password_text = match &secret {
+        Some(secret) => secret.expose().to_owned(),
+        None => crate::http::auth::tokens::generate_session_token()
+            .map_err(|error| CliError::internal(format!("生成随机口令失败：{error}")))?,
+    };
     let password_hash = tokio::task::spawn_blocking(move || {
         crate::http::auth::password::hash_password(&password_text)
     })
@@ -126,6 +138,7 @@ pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
                 .map_err(storage_error)?;
             (admin.id, "已创建")
         }
+        Some(admin) if secret.is_none() => (admin.id, "保持不变"),
         Some(admin) => {
             crate::storage::repo::admins::update_password(
                 &mut connection,
@@ -190,10 +203,17 @@ pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
         crate::storage::database_path(&settings.data_dir).display(),
         schema_version
     );
-    println!(
-        "管理员凭据：{admin_status}（admins 表；{}；无默认密码）。",
-        crate::http::auth::password::PARAMETERS_SUMMARY
-    );
+    if secret.is_none() {
+        println!(
+            "管理员：{admin_status}（免登录模式：打开即用，无需密码；需要密码登录时在配置中设 \
+             [session] login_required = true 并用 --password-file 设置密码）。"
+        );
+    } else {
+        println!(
+            "管理员凭据：{admin_status}（admins 表；{}；无默认密码）。",
+            crate::http::auth::password::PARAMETERS_SUMMARY
+        );
+    }
     if admin_status == "已更新" {
         println!("  既有会话已全部撤销（重置密码后需重新登录）。");
     }
@@ -205,7 +225,9 @@ pub async fn run_init(args: &InitArgs) -> Result<(), CliError> {
     }
     println!("密码来源：{password_source}；明文不落盘、不进入日志与 shell history。");
     if sample_seeded {
-        println!("内置示例：已写入「机器狗」（CyberDog 2），包含已发布的 3D 说明书；可在资料库直接查看。");
+        println!(
+            "内置示例：已写入「机器狗」（CyberDog 2），包含已发布的 3D 说明书；可在资料库直接查看。"
+        );
     } else if args.no_sample {
         println!("内置示例：已跳过（--no-sample）。");
     } else {
@@ -347,7 +369,7 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
             .map(|kind| kind.as_str())
             .collect::<Vec<_>>()
             .join(","),
-        "组装阶段处理器已注册（本地确定性组装；不存在自动发布）"
+        "组装阶段处理器已注册（本地确定性组装；任务结束后自动发布）"
     );
     if registry.registered().len() == pipeline_stages.len() {
         tracing::warn!(
@@ -364,6 +386,8 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
         registry,
         state.provider_config_handle(),
     );
+    // 生成结束后自动发布（取消人工阅读与复核环节，结果直接可读）。
+    let executor = crate::jobs::JobExecutor::with_auto_publish(executor, settings.data_dir.clone());
     tracing::info!(
         event = "job_executor_start",
         owner = executor.owner(),
@@ -406,9 +430,18 @@ pub async fn run_serve(args: &ServeArgs) -> Result<(), CliError> {
         }
     }
 
+    if !settings.session.login_required && mode != SecurityMode::Loopback {
+        tracing::warn!(
+            event = "login_disabled_non_loopback",
+            listen = %addr,
+            "免登录模式下监听非 loopback 地址：能访问该地址的人都能使用本服务（含付费生成与问答）；\
+             如需对外提供，请设 [session] login_required = true"
+        );
+    }
     tracing::info!(
         event = "serve_start",
         listen = %addr,
+        loginRequired = settings.session.login_required,
         dataDir = %settings.data_dir.display(),
         securityMode = mode.as_str(),
         sessionTtlHours = settings.session.ttl_hours,

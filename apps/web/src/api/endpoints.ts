@@ -435,6 +435,24 @@ export function getRelease(itemId: string, releaseId: string): Promise<ApiResour
   );
 }
 
+// --- 说明书问答 ---
+
+export type ChatMessageDto = components["schemas"]["ChatMessageDto"];
+export type ChatAnswerDto = components["schemas"]["ChatAnswerDto"];
+
+/** `POST /items/{id}/releases/{releaseId}/chat`：整段历史回传，最后一条为用户问题。 */
+export function chatRelease(
+  itemId: string,
+  releaseId: string,
+  messages: readonly ChatMessageDto[],
+  signal?: AbortSignal,
+): Promise<ApiResource<ChatAnswerDto>> {
+  return requestData<ChatAnswerDto>(
+    `${API_PREFIX}/items/${encodeURIComponent(itemId)}/releases/${encodeURIComponent(releaseId)}/chat`,
+    { method: "POST", body: { messages }, signal },
+  );
+}
+
 // --- 任务中心（T15 端点；T17 的界面消费） ---
 
 export type JobSummaryDto = components["schemas"]["JobSummaryDto"];

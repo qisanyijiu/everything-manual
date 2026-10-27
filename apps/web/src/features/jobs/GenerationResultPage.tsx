@@ -3,7 +3,7 @@
  *
  * - 数据来自该任务**自己的**草稿（每个任务一个冻结快照与一份草稿，旧结果不会被新任务覆盖），
  *   因此任何一次历史生成都能用同一地址回看；
- * - 只读预览：不放热点（热点属于复核阶段），不改草稿；复核与发布仍走草稿复核页；
+ * - 只读预览：不改草稿；任务结束后服务端自动发布，这里直接链接到发布版阅读器（无人工复核环节）；
  * - 任务未结束时显示进度摘要并继续轮询，完成后自动切到结果。
  */
 
@@ -12,7 +12,7 @@ import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { describeError } from "../../api/client";
-import { getDraft } from "../../api/endpoints";
+import { getDraft, listReleases } from "../../api/endpoints";
 import { EmptyNote } from "../../components/EmptyState";
 import { Skeleton } from "../../components/Skeleton";
 import { formatLocalDateTime } from "../../lib/format";
@@ -44,6 +44,16 @@ export function GenerationResultPage() {
     queryFn: () => getDraft(itemId ?? "", draftId ?? ""),
     enabled: itemId !== null && draftId !== null,
   });
+  const terminal = job !== null && isTerminalJobStatus(job.status);
+  // 自动发布在任务结束后于后台完成：未出现前短暂轮询。
+  const releasesQuery = useQuery({
+    queryKey: ["releases", itemId],
+    queryFn: () => listReleases(itemId ?? ""),
+    enabled: itemId !== null && draftId !== null && terminal,
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((release) => release.draftId === draftId) ? false : 2000,
+  });
+  const release = (releasesQuery.data ?? []).find((entry) => entry.draftId === draftId) ?? null;
   const knowledge = draftQuery.data?.data.knowledge;
   const model = useMemo(() => readDraftModel(knowledge), [knowledge]);
   const parts = useMemo(() => readDraftParts(knowledge), [knowledge]);
@@ -81,7 +91,7 @@ export function GenerationResultPage() {
 
   const meta = jobStatusMeta(job.status);
   const finished = isTerminalJobStatus(job.status);
-  const reviewHref = draftId === null ? null : `/items/${job.item.id}/drafts/${draftId}/review`;
+  const readerHref = release === null ? null : `/items/${job.item.id}/releases/${release.id}`;
 
   return (
     <div className="page result-page" data-testid="generation-result">
@@ -94,8 +104,10 @@ export function GenerationResultPage() {
           </p>
         </div>
         <div className="page__header-actions">
-          {reviewHref !== null && (
-            <Link className="button-primary" to={reviewHref}>去复核并发布</Link>
+          {readerHref !== null ? (
+            <Link className="button-primary" to={readerHref} data-testid="open-release">阅读说明书</Link>
+          ) : (
+            finished && draftId !== null && <span className="field__hint" role="status">正在发布说明书…</span>
           )}
           <Link className="button" to={`/items/${job.item.id}/generations`}>本物品的生成历史</Link>
           <Link className="button" to={`/jobs/${job.id}`}>任务详情</Link>

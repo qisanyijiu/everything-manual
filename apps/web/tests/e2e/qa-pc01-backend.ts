@@ -36,7 +36,7 @@ export class Pc01QaBackend extends TestBackend {
     const log = fs.createWriteStream(this.logPath, { flags: "a" });
     this.qaProcess = spawn(binary, ["serve", "--data-dir", this.dataDir, "--listen", `127.0.0.1:${this.port}`], {
       cwd: this.workDir,
-      env: { ...process.env, EM_T17_TRIPO_KEY: "t17-fake-tripo-key", EM_T17_MANUAL_AI_KEY: "t17-fake-manual-ai-key" },
+      env: { ...process.env, EM_SESSION__LOGIN_REQUIRED: "true", EM_T17_TRIPO_KEY: "t17-fake-tripo-key", EM_T17_MANUAL_AI_KEY: "t17-fake-manual-ai-key" },
     });
     this.qaProcess.stdout?.pipe(log);
     this.qaProcess.stderr?.pipe(log);

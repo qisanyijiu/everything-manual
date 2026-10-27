@@ -101,7 +101,7 @@ export class Pc04Harness {
   private server: ChildProcess | null = null; private children = new Set<ChildProcess>();
   private serverBinary = ""; private xtaskBinary = "";
   base = ""; case!: CaseFile; quote!: Dict; missingManualKey = false;
-  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SECRETS_MASTER_KEY: this.master, EM_PC04_QA_TRIPO: FAKE_CANARY, ...(this.missingManualKey ? {} : { EM_PC04_QA_MANUAL: FAKE_CANARY + "_manual" }) }; }
+  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", EM_SECRETS_MASTER_KEY: this.master, EM_PC04_QA_TRIPO: FAKE_CANARY, ...(this.missingManualKey ? {} : { EM_PC04_QA_MANUAL: FAKE_CANARY + "_manual" }) }; }
   async setup(api: APIRequestContext) {
     this.serverBinary = frozenBinary("SERVER"); this.xtaskBinary = frozenBinary("XTASK"); await this.proxy.start();
     fs.mkdirSync(this.outputDir, { mode: 0o700 }); const pw = path.join(this.workDir, "password.txt"); fs.writeFileSync(pw, this.password + "\n", { mode: 0o600 });

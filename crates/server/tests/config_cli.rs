@@ -342,12 +342,28 @@ fn init_creates_structure_and_never_leaks_password() {
 }
 
 #[test]
+fn init_without_password_in_default_no_login_mode() {
+    let dir = TestDir::new("init-no-login");
+    let first = run(dir.path(), &["init", "--data-dir", "data", "--no-sample"]);
+    assert_eq!(first.status, 0, "{first:?}");
+    assert!(first.stdout.contains("免登录模式"), "{first:?}");
+    // 再次 init 不改动管理员（没有密码可更新）。
+    let again = run(dir.path(), &["init", "--data-dir", "data", "--no-sample"]);
+    assert_eq!(again.status, 0, "{again:?}");
+    assert!(again.stdout.contains("保持不变"), "{again:?}");
+}
+
+#[test]
 fn init_requires_password_source_and_rejects_argv_password() {
     const CANARY: &str = "canary-argv-pass-93ba";
     let dir = TestDir::new("init-password");
 
-    // 非交互环境且没有 --password-file：必须是可读错误，且不创建 data-dir。
-    let missing = run(dir.path(), &["init", "--data-dir", "data"]);
+    // 要求登录时，非交互环境且没有 --password-file：必须是可读错误，且不创建 data-dir。
+    let missing = run_with_env(
+        dir.path(),
+        &["init", "--data-dir", "data"],
+        &[("EM_SESSION__LOGIN_REQUIRED", "true")],
+    );
     assert_eq!(missing.status, 2, "{missing:?}");
     assert!(
         missing.stderr.contains("--password-file"),
@@ -1094,11 +1110,20 @@ fn init_seeds_builtin_cyberdog_sample_once() {
     assert_eq!(db.releases, 1);
     assert_eq!(db.blobs, 3, "GLB、PDF、manifest");
     for sha in &db.blob_shas {
-        assert!(dir.join("data/blobs").join(&sha[..2]).join(sha).is_file(), "blob 文件缺失：{sha}");
+        assert!(
+            dir.join("data/blobs").join(&sha[..2]).join(sha).is_file(),
+            "blob 文件缺失：{sha}"
+        );
     }
-    assert!(db.knowledge.contains("\"作揖\"") && db.knowledge.contains("\"点头\""), "姿势缺失");
+    assert!(
+        db.knowledge.contains("\"作揖\"") && db.knowledge.contains("\"点头\""),
+        "姿势缺失"
+    );
     for part in ["头部", "躯干", "左前腿", "右前腿", "左后腿", "右后腿"] {
-        assert!(db.knowledge.contains(&format!("\"name\": \"{part}\"")), "部件缺失：{part}");
+        assert!(
+            db.knowledge.contains(&format!("\"name\": \"{part}\"")),
+            "部件缺失：{part}"
+        );
     }
 
     let check = run(dir.path(), &["check", "--data-dir", "data"]);
@@ -1106,7 +1131,17 @@ fn init_seeds_builtin_cyberdog_sample_once() {
 
     let skip = TestDir::new("init-no-sample");
     write_restricted(&skip.join("pw.txt"), "test-password-123\n");
-    let out = run(skip.path(), &["init", "--no-sample", "--data-dir", "data", "--password-file", "pw.txt"]);
+    let out = run(
+        skip.path(),
+        &[
+            "init",
+            "--no-sample",
+            "--data-dir",
+            "data",
+            "--password-file",
+            "pw.txt",
+        ],
+    );
     assert!(out.stdout.contains("已跳过（--no-sample）"), "{out:?}");
     assert_eq!(rusqlite_count(&skip.join("data/manual.sqlite3")).items, 0);
 }
@@ -1122,14 +1157,23 @@ struct SampleCounts {
 /// 用 sqlite3 命令行读计数（测试进程里不另起 sqlx 运行时）。
 fn rusqlite_count(db: &Path) -> SampleCounts {
     let q = |sql: &str| -> String {
-        let out = Command::new("sqlite3").arg(db).arg(sql).output().expect("sqlite3 可用");
+        let out = Command::new("sqlite3")
+            .arg(db)
+            .arg(sql)
+            .output()
+            .expect("sqlite3 可用");
         String::from_utf8_lossy(&out.stdout).trim().to_owned()
     };
     SampleCounts {
         items: q("SELECT COUNT(*) FROM items").parse().unwrap_or(-1),
-        releases: q("SELECT COUNT(*) FROM manual_releases").parse().unwrap_or(-1),
+        releases: q("SELECT COUNT(*) FROM manual_releases")
+            .parse()
+            .unwrap_or(-1),
         blobs: q("SELECT COUNT(*) FROM blobs").parse().unwrap_or(-1),
-        blob_shas: q("SELECT sha256 FROM blobs").lines().map(str::to_owned).collect(),
+        blob_shas: q("SELECT sha256 FROM blobs")
+            .lines()
+            .map(str::to_owned)
+            .collect(),
         knowledge: q("SELECT knowledge_json FROM manual_drafts"),
     }
 }

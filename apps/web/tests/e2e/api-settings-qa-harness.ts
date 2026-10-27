@@ -129,7 +129,7 @@ export class ApiSettingsQaBackend {
   private environment(): NodeJS.ProcessEnv {
     return {
       PATH: process.env.PATH,
-      TMPDIR: process.env.TMPDIR,
+      TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true",
       EM_SECRETS_MASTER_KEY: this.masterKey,
       EM_API_SETTINGS_QA_TRIPO: this.deployment.keys.tripo,
       EM_API_SETTINGS_QA_MANUAL: this.deployment.keys.manualAi,

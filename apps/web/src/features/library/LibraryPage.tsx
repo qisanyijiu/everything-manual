@@ -200,7 +200,7 @@ function LibrarySummary({ loadedCount, archived }: { loadedCount: number; archiv
           <dd>{archived ? "仅已归档" : "仅使用中"}</dd>
         </div>
       </dl>
-      <div className="summary-guide"><Icon name="book" size={23} /><h3>让资料变得有用</h3><p>上传原版说明书与不同角度的照片，生成后复核知识、校准热点，即可发布交互说明书。</p><Link to="/jobs">前往任务中心 <Icon name="arrow" size={16} /></Link></div>
+      <div className="summary-guide"><Icon name="book" size={23} /><h3>让资料变得有用</h3><p>上传原版说明书与不同角度的照片，生成完成后自动发布交互说明书。</p><Link to="/jobs">前往任务中心 <Icon name="arrow" size={16} /></Link></div>
     </div>
   );
 }

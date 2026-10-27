@@ -2504,3 +2504,25 @@ ADR-xxx — 简短结论
 - 原因：说明书多为矢量线稿（PENTAX）或网页截图（CyberDog），只取内嵌位图会漏掉大半；建议视图会偏差（三分之四视角常判为正面），因此最终排列必须由用户决定。
 - 约束：候选不进报价/生成快照；删除为软删除可撤销；排列在单写事务内替换照片行（照片不被任何外键引用，已开始任务用冻结的 photo_ids + hashes 不受影响；已有报价因输入变化失效）；视图判断与提取同一服务端密钥，失败时候选记为未判断。
 - 证据：[view-candidates/notes.md](requirements/view-candidates/notes.md)。
+
+## ADR-046 — 默认免登录（服务端自动建立管理员会话）
+
+- 日期：2026-10-27；状态：implemented（分支 `feat/cyberdog-demo`），未经独立 QA。依据：用户要求"取消系统的密码"，并在确认中选择"完全关闭登录"。
+- 结论：新增 `session.login_required`（环境变量 `EM_SESSION__LOGIN_REQUIRED`），默认 `false`。此时 `auth_guard` 在没有有效会话的**读取**请求上为唯一管理员新建会话并经 `Set-Cookie` 下发；`GET /auth/session` 返回 `loginRequired=false`，前端隐藏登出、登录页自动回到应用；`init` 不再要求密码（管理员行使用不输出的一次性随机口令哈希，再次 init 不改动）。
+- 保留的防护：修改请求仍要求 CSRF token（无会话的修改请求直接 403，token 只能由同源页面读取）与 Origin 校验；cookie 仍是 HttpOnly + SameSite=Strict。默认只监听 loopback；免登录且监听非 loopback 时启动日志告警。
+- 风险：能访问监听地址的任何人都能使用全部功能（含付费生成与问答）。对外提供时必须设 `login_required = true`。
+- 测试：Rust 认证用例与 e2e/smoke 显式运行在 `login_required = true` 下，继续覆盖密码登录路径；新增 `tests/login_disabled.rs`（自动会话、CSRF/Origin 仍生效、未 init 仍 401）与 CLI 免密码 init 用例。
+
+## ADR-047 — 生成结束后自动发布（取消人工阅读与复核环节）
+
+- 日期：2026-10-17；状态：implemented（分支 `feat/cyberdog-demo`），未经独立 QA。依据：用户要求"取消阅读与复核环节，自动化的展示结果即可"。部分取代"不存在自动发布路径"的旧约束。
+- 结论：`serve` 装配的执行器在父任务进入 succeeded/failed 后调用 `releases::auto::publish_job`：以 `system:auto_publish` 身份 PATCH 草稿（部件/步骤/规格确认、模型复核两声明为真、候选热点升为已确认、无可用热点的部件标"仅文本条目"），再走与人工相同的 `publish_draft`（同一不变量与 manifest 冻结）。草稿停在"上次发布 + 1"时直接返回该版本，不重复发布。没有模型或知识的草稿跳过；发布失败只记日志，不改任务状态。
+- 前端：结果页、生成历史、任务列表/详情与资料库卡片改为指向发布版阅读器；复核页路由保留但无入口。
+- 测试：`tests/pipeline.rs` 全链路用例追加自动发布、重复触发不重复发布、发布版可读。
+
+## ADR-048 — 发布版说明书问答（服务端调用说明书 AI）
+
+- 日期：2026-10-17；状态：implemented（分支 `feat/cyberdog-demo`），未经独立 QA。依据：用户要求"前端加入对话窗口，后端调用大模型问答说明书内容"。
+- 结论：`POST /items/{id}/releases/{releaseId}/chat` 只以该 release 冻结的部件/步骤/规格（含人工修订）与说明书页文字（上限 6 万字符）为资料，复用说明书 AI 的 Responses 适配（strict json_schema `{answer, citedPages}`、store=false、不重试、不跟随重定向）；页码按页数过滤。对话历史由前端整段回传（≤20 条、每条 ≤2000 字），服务端不保存。未配置 → 409；上游失败 → 502 且不回显上游内容。
+- 前端：阅读器右下角"问说明书"浮窗，引用页码可跳原文。每次提问是一次说明书 AI 计费请求。
+- 测试：`tests/release_chat.rs`（本机 fixture）、`ManualChat.test.tsx`；真实 gpt-5.5 在 CyberDog 示例上验证过回答与页码跳转。

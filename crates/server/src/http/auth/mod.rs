@@ -63,6 +63,8 @@ pub struct SessionContext {
     /// 会话 token 明文（来自本次请求的 cookie）：仅用于派生 CSRF token 返回给前端。
     /// 私有字段 + 手工 `Debug`，避免进入任何日志或调试输出。
     session_token: String,
+    /// 服务端是否要求登录（前端据此隐藏登出入口）。
+    login_required: bool,
 }
 
 impl SessionContext {
@@ -79,6 +81,7 @@ impl SessionContext {
             },
             csrf_token: self.csrf_token(),
             expires_at: self.expires_at,
+            login_required: self.login_required,
         }
     }
 }
@@ -150,8 +153,12 @@ pub async fn auth_guard(
         .cloned()
         .unwrap_or_else(|| RequestId(uuid::Uuid::now_v7().to_string()));
 
+    let login_required = state.settings().session.login_required;
     let Some(session_token) = session_token_from_cookie(request.headers()) else {
-        return ApiError::unauthorized().render(&request_id);
+        if login_required {
+            return ApiError::unauthorized().render(&request_id);
+        }
+        return auto_session(state, request, next, &request_id).await;
     };
 
     let session = {
@@ -175,7 +182,10 @@ pub async fn auth_guard(
     };
 
     let Some(session) = session else {
-        return ApiError::unauthorized().render(&request_id);
+        if login_required {
+            return ApiError::unauthorized().render(&request_id);
+        }
+        return auto_session(state, request, next, &request_id).await;
     };
 
     if is_mutating(request.method()) {
@@ -205,8 +215,91 @@ pub async fn auth_guard(
         csrf_hash: session.csrf_hash,
         expires_at: session.expires_at,
         session_token,
+        login_required,
     });
     next.run(request).await
+}
+
+/// 免登录模式（`session.login_required = false`）：没有有效会话时为唯一管理员新建一个，
+/// 经 `Set-Cookie` 下发。只放行读取请求——修改请求没有 CSRF token，仍按 403 拒绝
+/// （浏览器先 `GET /auth/session` 取得 cookie 与 token，跨站页面读不到 token）。
+async fn auto_session(
+    state: AppState,
+    mut request: Request,
+    next: Next,
+    request_id: &RequestId,
+) -> Response {
+    if is_mutating(request.method()) {
+        if let Err(error) = origin_check(state.settings(), request.headers()) {
+            return error.render(request_id);
+        }
+        return ApiError::csrf_rejected().render(request_id);
+    }
+    let created = match create_admin_session(&state).await {
+        Ok(created) => created,
+        Err(error) => return error.render(request_id),
+    };
+    let Some((context, cookie)) = created else {
+        // 尚未 init：没有管理员可代表。
+        return ApiError::unauthorized().render(request_id);
+    };
+    request.extensions_mut().insert(context);
+    next.run(request).await.with_session_cookie(&cookie)
+}
+
+/// 为唯一管理员创建会话（登录成功与免登录模式共用）。没有管理员时返回 `None`。
+async fn create_admin_session(
+    state: &AppState,
+) -> Result<Option<(SessionContext, String)>, ApiError> {
+    let mut connection = state.database().pool().acquire().await.map_err(|error| {
+        tracing::error!(error = %error, "获取数据库连接失败");
+        ApiError::internal("服务器内部错误：数据库暂不可用")
+    })?;
+    let Some(admin) = crate::storage::repo::admins::get_single(&mut connection)
+        .await
+        .map_err(ApiError::from_storage)?
+    else {
+        return Ok(None);
+    };
+    let session_token = tokens::generate_session_token().map_err(|detail| {
+        tracing::error!(error = %detail, "生成会话 token 失败");
+        ApiError::internal("服务器内部错误：无法创建会话")
+    })?;
+    let csrf_token = tokens::csrf_token_for(&session_token);
+    let ttl_seconds = state.settings().session.ttl_hours * 3600;
+    let expires_at = Timestamp::now()
+        .checked_add_millis(ttl_seconds * 1000)
+        .ok_or_else(|| ApiError::internal("服务器内部错误：会话有效期溢出"))?;
+    if let Err(error) = sessions::purge_expired(&mut connection, Timestamp::now()).await {
+        tracing::warn!(error = %error, "清理过期会话失败（不影响本次会话）");
+    }
+    let session = sessions::create(
+        &mut connection,
+        NewSession {
+            admin_id: admin.id.clone(),
+            session_token_hash: tokens::session_token_hash(&session_token),
+            csrf_hash: tokens::csrf_hash(&csrf_token),
+            expires_at,
+        },
+    )
+    .await
+    .map_err(ApiError::from_storage)?;
+    let cookie = session_cookie(
+        &session_token,
+        ttl_seconds,
+        state.settings().cookie_secure(),
+    );
+    Ok(Some((
+        SessionContext {
+            session_id: session.id,
+            admin_id: admin.id,
+            csrf_hash: session.csrf_hash,
+            expires_at: session.expires_at,
+            session_token,
+            login_required: state.settings().session.login_required,
+        },
+        cookie,
+    )))
 }
 
 /// 修改请求的方法集合：CSRF 与 Origin 检查覆盖全部（**包括未来的 multipart POST**）。
@@ -371,6 +464,7 @@ pub async fn login(
         },
         csrf_token,
         expires_at: session.expires_at,
+        login_required: state.settings().session.login_required,
     };
     json_no_store(StatusCode::OK, LoginResponse { data: payload }).with_session_cookie(
         &session_cookie(
