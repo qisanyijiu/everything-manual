@@ -50,10 +50,10 @@ bash scripts/start-project.sh
 站立、趴下、坐下、点头、作揖 5 个姿势），首次登录即可阅读；不需要时用 `init --no-sample`，
 说明见 [内置示例](crates/server/sample/cyberdog2/README.md)。
 全新克隆或内嵌前端模式地址为 `http://127.0.0.1:8080/`。当前本机整理后的资料统一放在 `var/preview/data`，
-可浏览8个有效样本，包含Nikon F3HP和Wii U；登录密码为 `12345678`。
+可浏览8个有效样本，包含Nikon F3HP和Wii U。
 38个旧数据目录已移至 `var/preview/archive/originals`，旧位置仅保留兼容软链接；项目 `var/preview` 外已无物理应用数据库。
 历史快照、合成压力资料和回归样例备份也集中在 `var/preview/` 下。
-这些资料与私有配置均被Git忽略，全新克隆会创建空资料库并要求首次设置密码。
+这些资料与私有配置均被Git忽略，全新克隆会创建空资料库。
 脚本在macOS默认用本机发行程序，在Linux默认用Docker；Docker须先安装并启动。
 
 ```sh
@@ -82,7 +82,7 @@ Nikon新增76分件版本保留旧语义绑定，其全部编号均可观察展�
 # 1) 前端依赖
 npm --prefix apps/web ci
 
-# 2) 初始化 data-dir（管理员密码交互输入，不回显；无人值守用 --password-file <0600 文件>）
+# 2) 初始化 data-dir（默认免登录：不需要密码，打开即用）
 cargo run -p everything-manual -- init  --data-dir ./var/dev
 
 # 3) 启动服务（默认仅监听 127.0.0.1:8080）
@@ -153,6 +153,10 @@ llmdoc/              为什么这样做：架构、合同、决策、任务卡�
 
 ## 部署与安全要点
 
+- **默认免登录**：打开页面即可使用，服务端自动为唯一管理员建立会话；修改请求仍校验 CSRF token 与 Origin，
+  其它网站不能借浏览器代为操作。能访问监听地址的人都能使用本服务（含付费生成与问答），因此默认只监听 loopback。
+  需要密码登录时在配置中设 `[session] login_required = true`（或环境变量 `EM_SESSION__LOGIN_REQUIRED=true`），
+  并用 `init --password-file <0600 文件>` 设置密码。
 - 默认监听 `127.0.0.1:8080`；**非 loopback 必须放在受信反向代理之后**（配置 `trusted_proxy_cidrs`
   并显式启用 `Secure` cookie），否则拒绝启动。MVP 不内置 TLS 监听——配置 `tls.*` 即 fail-closed 拒绝启动。
 - 备份要求先停服（排他锁）；`restore` 只写入不存在或为空的目录，先校验 hash/外键/引用。

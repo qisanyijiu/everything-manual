@@ -312,7 +312,7 @@ pub async fn patch_draft(
     path = "/api/v1/items/{id}/drafts/{draftId}/publish",
     tag = "drafts",
     summary = "发布不可变说明书版本（If-Match + Idempotency-Key）",
-    description = "发布事务在**显式请求**中执行（不存在自动发布路径）。必须携带 If-Match \
+    description = "人工发布入口（生成任务结束后服务端也会以系统身份自动确认并发布，二者走同一发布事务与不变量）。必须携带 If-Match \
                    （缺失 428、过期 412）与 `Idempotency-Key`（缺失 422；同 key 同 body 重放\
                    返回同一 release 并标记 `x-idempotent-replay: true`；同 key 不同 body 409）。\
                    发布不变量全部满足才返回 201：必需知识已确认或有明确人工修订记录、引用页\

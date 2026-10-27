@@ -26,8 +26,11 @@ const SESSION = {
     admin: { id: "01993000-0000-7000-8000-000000000001" },
     csrfToken: "csrf-token-abc",
     expiresAt: "2026-09-19T00:00:00Z",
+    loginRequired: true,
   },
 };
+
+const NO_LOGIN_SESSION = { data: { ...SESSION.data, loginRequired: false } };
 
 /** 诊断请求 ID：所有桩响应共用，避免并行请求的到达顺序影响断言。 */
 const REQUEST_ID = "01993000-0000-7000-8000-0000000000ff";
@@ -212,6 +215,24 @@ describe("登录页（UI-001）", () => {
     fireEvent.change(secondPassword, { target: { value: "wrong" } });
     fireEvent.click(screen.getByRole("button", { name: "登录" }));
     expect((await screen.findByRole("alert")).textContent).toContain("请刷新页面后重试");
+  });
+
+  it("免登录模式：直接进入资料库，不显示登出；登录页自动回到应用", async () => {
+    stubFetch((url) => {
+      if (url === "/api/v1/auth/session") {
+        return jsonResponse(NO_LOGIN_SESSION);
+      }
+      if (url.startsWith("/api/v1/items")) {
+        return jsonResponse({ data: [], nextCursor: null });
+      }
+      return undefined;
+    });
+
+    renderApp({ route: "/login?next=%2F" });
+
+    expect(await screen.findByRole("heading", { name: "资料库" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "登出" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "退出登录" })).toBeNull();
   });
 
   it("登录成功后进入资料库，顶栏出现登出", async () => {

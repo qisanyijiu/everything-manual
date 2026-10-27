@@ -33,7 +33,7 @@ export class Pc05aBackend {
   readonly workDir = fs.mkdtempSync(path.join(os.tmpdir(), "em-pc05a-independent-"));
   readonly dataDir = path.join(this.workDir, "data"); readonly fixture = new LocalFixture(); readonly master = randomBytes(32).toString("hex");
   base = ""; private child: ChildProcess | null = null; private log: fs.WriteStream | null = null;
-  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SECRETS_MASTER_KEY: this.master, EM_PC05A_QA_TRIPO: "pc05a-local-fake-tripo", EM_PC05A_QA_MANUAL: "pc05a-local-fake-manual" }; }
+  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", EM_SECRETS_MASTER_KEY: this.master, EM_PC05A_QA_TRIPO: "pc05a-local-fake-tripo", EM_PC05A_QA_MANUAL: "pc05a-local-fake-manual" }; }
   async start() {
     const executable = binary(); await this.fixture.start(); const port = await freePort(); this.base = `http://127.0.0.1:${port}`;
     const pw = path.join(this.workDir, "password.txt"); fs.writeFileSync(pw, PASSWORD + "\n", { mode: 0o600 });

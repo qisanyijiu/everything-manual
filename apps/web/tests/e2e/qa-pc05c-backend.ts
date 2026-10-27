@@ -33,7 +33,7 @@ export class Pc05cBackend {
   readonly workDir = fs.mkdtempSync(path.join(os.tmpdir(), "em-pc05c-independent-"));
   readonly dataDir = path.join(this.workDir, "data"); readonly fixture = new Pc05cProviderFixture(); readonly master = randomBytes(32).toString("hex");
   base = ""; private child: ChildProcess | null = null; private log: fs.WriteStream | null = null;
-  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SECRETS_MASTER_KEY: this.master, EM_PC05C_QA_TRIPO: "pc05c-local-fake-tripo", EM_PC05C_QA_MANUAL: "pc05c-local-fake-manual" }; }
+  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", EM_SECRETS_MASTER_KEY: this.master, EM_PC05C_QA_TRIPO: "pc05c-local-fake-tripo", EM_PC05C_QA_MANUAL: "pc05c-local-fake-manual" }; }
   private initialized = false;
   private options: { providers?: boolean; prices?: boolean; model?: string } = {};
   async start(options?: { providers?: boolean; prices?: boolean; model?: string }) {

@@ -32,7 +32,7 @@ export class Pc02bQaBackend {
   base = "";
   private child: ChildProcess | null = null;
   private log: fs.WriteStream | null = null;
-  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SECRETS_MASTER_KEY: this.master, EM_PC02B_QA_TRIPO: "pc02b-local-fake-tripo", EM_PC02B_QA_MANUAL: "pc02b-local-fake-manual" }; }
+  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", EM_SECRETS_MASTER_KEY: this.master, EM_PC02B_QA_TRIPO: "pc02b-local-fake-tripo", EM_PC02B_QA_MANUAL: "pc02b-local-fake-manual" }; }
   async start() {
     // No fallback to mutable target/debug and no build side effects.
     const executable = checkedBinary();

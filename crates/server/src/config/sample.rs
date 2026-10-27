@@ -77,10 +77,12 @@ pub async fn seed(
     let release_id = ids::new_id();
 
     // --- Write blob files ---
-    write_blob(data_dir, &model_blob_sha, MODEL_GLB)
-        .map_err(|e| StorageError::Database { detail: format!("写入示例 GLB 失败：{e}") })?;
-    write_blob(data_dir, &pdf_blob_sha, MANUAL_PDF)
-        .map_err(|e| StorageError::Database { detail: format!("写入示例 PDF 失败：{e}") })?;
+    write_blob(data_dir, &model_blob_sha, MODEL_GLB).map_err(|e| StorageError::Database {
+        detail: format!("写入示例 GLB 失败：{e}"),
+    })?;
+    write_blob(data_dir, &pdf_blob_sha, MANUAL_PDF).map_err(|e| StorageError::Database {
+        detail: format!("写入示例 PDF 失败：{e}"),
+    })?;
 
     // --- Template substitution ---
     let knowledge_json = KNOWLEDGE_TEMPLATE
@@ -95,10 +97,14 @@ pub async fn seed(
         .replace("{{MODEL_SHA}}", &model_blob_sha);
 
     // Verify JSON is valid before inserting
-    let _: serde_json::Value = serde_json::from_str(&knowledge_json)
-        .map_err(|e| StorageError::Database { detail: format!("示例 knowledge JSON 无效：{e}") })?;
-    let _: serde_json::Value = serde_json::from_str(&review_json)
-        .map_err(|e| StorageError::Database { detail: format!("示例 review JSON 无效：{e}") })?;
+    let _: serde_json::Value =
+        serde_json::from_str(&knowledge_json).map_err(|e| StorageError::Database {
+            detail: format!("示例 knowledge JSON 无效：{e}"),
+        })?;
+    let _: serde_json::Value =
+        serde_json::from_str(&review_json).map_err(|e| StorageError::Database {
+            detail: format!("示例 review JSON 无效：{e}"),
+        })?;
 
     // --- Build manifest ---
     let manifest = serde_json::json!({
@@ -136,11 +142,13 @@ pub async fn seed(
             "textOnlyParts": 0, "textOnlyPartIds": [],
         },
     });
-    let manifest_bytes = serde_json::to_vec(&manifest)
-        .map_err(|e| StorageError::Database { detail: format!("序列化 manifest 失败：{e}") })?;
+    let manifest_bytes = serde_json::to_vec(&manifest).map_err(|e| StorageError::Database {
+        detail: format!("序列化 manifest 失败：{e}"),
+    })?;
     let manifest_sha = sha256_hex(&manifest_bytes);
-    write_blob(data_dir, &manifest_sha, &manifest_bytes)
-        .map_err(|e| StorageError::Database { detail: format!("写入示例 manifest 失败：{e}") })?;
+    write_blob(data_dir, &manifest_sha, &manifest_bytes).map_err(|e| StorageError::Database {
+        detail: format!("写入示例 manifest 失败：{e}"),
+    })?;
 
     // --- SQL inserts (single transaction, caller wraps BEGIN IMMEDIATE) ---
 
@@ -149,16 +157,35 @@ pub async fn seed(
         .bind(&item_id).bind(ms).bind(ms).execute(&mut *conn).await?;
 
     // blobs
-    for (sha, size, mime) in [(&model_blob_sha, MODEL_GLB.len(), "model/gltf-binary"), (&pdf_blob_sha, MANUAL_PDF.len(), "application/pdf"), (&manifest_sha, manifest_bytes.len(), "application/json")] {
+    for (sha, size, mime) in [
+        (&model_blob_sha, MODEL_GLB.len(), "model/gltf-binary"),
+        (&pdf_blob_sha, MANUAL_PDF.len(), "application/pdf"),
+        (&manifest_sha, manifest_bytes.len(), "application/json"),
+    ] {
         sqlx::query("INSERT OR IGNORE INTO blobs (sha256, size, mime, storage_state, created_at) VALUES (?, ?, ?, 'stored', ?)")
             .bind(sha).bind(size as i64).bind(mime).bind(ms).execute(&mut *conn).await?;
     }
 
     // assets
     for (aid, sha, purpose, name) in [
-        (&model_asset_id, &model_blob_sha, "model", Some("cyberdog2-sample.glb")),
-        (&parts_asset_id, &model_blob_sha, "model_parts", Some("cyberdog2-sample-parts.glb")),
-        (&pdf_asset_id, &pdf_blob_sha, "document", Some("cyberdog2-sample-manual.pdf")),
+        (
+            &model_asset_id,
+            &model_blob_sha,
+            "model",
+            Some("cyberdog2-sample.glb"),
+        ),
+        (
+            &parts_asset_id,
+            &model_blob_sha,
+            "model_parts",
+            Some("cyberdog2-sample-parts.glb"),
+        ),
+        (
+            &pdf_asset_id,
+            &pdf_blob_sha,
+            "document",
+            Some("cyberdog2-sample-manual.pdf"),
+        ),
         (&manifest_asset_id, &manifest_sha, "release_manifest", None),
     ] {
         sqlx::query("INSERT INTO assets (id, blob_id, item_id, purpose, original_name, created_at) VALUES (?, ?, ?, ?, ?, ?)")

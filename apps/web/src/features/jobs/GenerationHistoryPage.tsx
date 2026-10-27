@@ -3,7 +3,7 @@
  *
  * 服务端从不删除生成产物：每个任务一份冻结快照、一份草稿与它自己的 GLB，发布版本不可变。
  * 本页把它们按时间倒序列出（`GET /jobs?itemId=` 游标分页 + `GET /items/{id}/releases`），
- * 每一次生成都能回看结果、进入复核，或打开由它发布出的版本。
+ * 每一次生成都能回看结果，或打开由它自动发布出的版本。
  */
 
 import { useMemo } from "react";
@@ -106,8 +106,8 @@ export function GenerationHistoryPage() {
                 )}
                 <div className="history-card__actions">
                   <Link className="button-primary" to={`/jobs/${job.id}/result`}>查看结果</Link>
-                  {job.draftId !== null && job.draftId !== undefined && (
-                    <Link className="button" to={`/items/${itemId}/drafts/${job.draftId}/review`}>复核 / 发布</Link>
+                  {releases[0] !== undefined && (
+                    <Link className="button" to={`/items/${itemId}/releases/${releases[0].id}`}>阅读说明书</Link>
                   )}
                   <Link className="button" to={`/jobs/${job.id}`}>任务详情</Link>
                 </div>

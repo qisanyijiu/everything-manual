@@ -16,9 +16,9 @@ bash scripts/start-project.sh --docker
 服务在后台运行，关闭终端不影响服务；首次构建需要网络下载基础镜像和构建依赖。
 macOS日常预览可直接用 `bash scripts/start-project.sh`，默认启动本机程序；Linux默认选择Docker。
 
-当前本机统一资料库位于 `var/preview/data`，可浏览8个有效样本，包含Nikon F3HP和Wii U，
-登录密码为 `12345678`。数据不进入Git；全新克隆会建立空资料库，脚本在终端要求设置首次登录密码且不回显。
-这份密码文件仅用于首次初始化，已有数据库的登录密码由数据库内的口令哈希决定。
+当前本机统一资料库位于 `var/preview/data`，可浏览8个有效样本，包含Nikon F3HP和Wii U。
+默认免登录，打开即用；数据不进入Git，全新克隆会建立空资料库。
+需要密码登录时设 `EM_SESSION__LOGIN_REQUIRED=true`，登录密码由初始化时的密码文件决定（数据库内只存口令哈希）。
 
 统一资料库已合并368条资产、361个内容blob、7份说明书/166页、3份草稿及2个发布版本。
 38个旧数据目录已可逆移动到 `var/preview/archive/originals`，旧位置只保留兼容软链接；

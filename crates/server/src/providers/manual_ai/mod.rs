@@ -18,6 +18,7 @@
 //! 真实调用边界：本卡的验证全部指向本机 fixture（`127.0.0.1`，零外网）；
 //! 真实模型效果与费用只在 T23 的授权入口执行。
 
+pub mod chat;
 pub mod client;
 pub mod dto;
 pub mod handlers;

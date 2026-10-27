@@ -312,7 +312,7 @@ export interface paths {
         put?: never;
         /**
          * 发布不可变说明书版本（If-Match + Idempotency-Key）
-         * @description 发布事务在**显式请求**中执行（不存在自动发布路径）。必须携带 If-Match （缺失 428、过期 412）与 `Idempotency-Key`（缺失 422；同 key 同 body 重放返回同一 release 并标记 `x-idempotent-replay: true`；同 key 不同 body 409）。发布不变量全部满足才返回 201：必需知识已确认或有明确人工修订记录、引用页存在、选中模型 validated 且 modelReview.loaded/userConfirmed 均 true 且 revision/hash 匹配、每个要发布的交互部件至少一个 confirmed 热点且 hash 匹配、步骤引用全部存在、无 stale/candidate 热点冒充 confirmed。不满足返回 422 且 `details.issues[]` 逐条列出；「仅文本条目」部件保留并明显标识，不为发布自动隐藏。release 与 manifest 不可变（数据库触发器拒绝修改），发布只写本地数据——不产生费用、不调用任何外部服务。
+         * @description 人工发布入口（生成任务结束后服务端也会以系统身份自动确认并发布，二者走同一发布事务与不变量）。必须携带 If-Match （缺失 428、过期 412）与 `Idempotency-Key`（缺失 422；同 key 同 body 重放返回同一 release 并标记 `x-idempotent-replay: true`；同 key 不同 body 409）。发布不变量全部满足才返回 201：必需知识已确认或有明确人工修订记录、引用页存在、选中模型 validated 且 modelReview.loaded/userConfirmed 均 true 且 revision/hash 匹配、每个要发布的交互部件至少一个 confirmed 热点且 hash 匹配、步骤引用全部存在、无 stale/candidate 热点冒充 confirmed。不满足返回 422 且 `details.issues[]` 逐条列出；「仅文本条目」部件保留并明显标识，不为发布自动隐藏。release 与 manifest 不可变（数据库触发器拒绝修改），发布只写本地数据——不产生费用、不调用任何外部服务。
          */
         post: operations["publish_draft"];
         delete?: never;
@@ -503,6 +503,26 @@ export interface paths {
         get: operations["get_release"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/items/{id}/releases/{releaseId}/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 说明书问答（依据该发布版本的知识与原文页文字）
+         * @description 把完整对话历史（最后一条为用户问题）发给已配置的说明书 AI，回答只依据该 release 冻结的部件/步骤/规格与说明书页文字，并给出原文页码。对话不在服务端保存；每次调用都会产生一次说明书 AI 请求费用。
+         */
+        post: operations["chat_release"];
         delete?: never;
         options?: never;
         head?: never;
@@ -968,6 +988,27 @@ export interface components {
              *     未满足前置条件时 estimate/jobs 返回明确错误（不返回 0 费用假成功）。
              */
             generation: boolean;
+        };
+        /** @description 问答结果。 */
+        ChatAnswerDto: {
+            answer: string;
+            /** @description 支撑回答的原文页码（1-based，已限定在说明书页数内）。 */
+            citedPages: number[];
+            /** @description 页码所属说明书（release 的第一份文档）；没有文档时为 null。 */
+            documentId?: string | null;
+        };
+        /** @description 对话消息。 */
+        ChatMessageDto: {
+            content: string;
+            /** @description `user` 或 `assistant`。 */
+            role: string;
+        };
+        /** @description 问答请求：完整对话历史，最后一条必须是 `user`。 */
+        ChatRequest: {
+            messages: components["schemas"]["ChatMessageDto"][];
+        };
+        ChatResponse: {
+            data: components["schemas"]["ChatAnswerDto"];
         };
         /**
          * @description 单项自检结果。
@@ -2075,6 +2116,8 @@ export interface components {
              * @example 2026-09-19T00:00:00Z
              */
             expiresAt: string;
+            /** @description 服务端是否要求登录；false 时会话由服务端自动建立，前端不显示登录/登出入口。 */
+            loginRequired: boolean;
         };
         /** @description `GET /api/v1/auth/session` 响应（`200`；`Cache-Control: no-store`）。 */
         SessionResponse: {
@@ -3962,6 +4005,80 @@ export interface operations {
             };
             /** @description 发布版本不存在或不属于该物品 */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+        };
+    };
+    chat_release: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 物品 ID（UUIDv7） */
+                id: string;
+                /** @description 发布版本 ID（UUIDv7） */
+                releaseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description 回答 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatResponse"];
+                };
+            };
+            /** @description 未登录 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 发布版本不存在 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 说明书 AI 未配置 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 消息不合法 */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponse"];
+                };
+            };
+            /** @description 说明书 AI 调用失败 */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

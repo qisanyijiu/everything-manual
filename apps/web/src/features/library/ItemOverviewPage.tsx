@@ -270,7 +270,7 @@ export function ItemOverviewPage() {
         <EmptyNote>
           生成完成后，可从
           <Link to={`/jobs?itemId=${encodeURIComponent(item.id)}`}>本物品的任务</Link>
-          进入草稿复核与热点校准。发布后的说明书可随时阅读。
+          查看生成结果；生成结束后自动发布，说明书可随时阅读。
         </EmptyNote>
       </section>
 

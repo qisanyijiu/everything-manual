@@ -105,11 +105,8 @@ export function JobDetailPage() {
         <p className="field__hint">
           <Link className="button-primary" to={`/jobs/${detail.id}/result`}>
             查看生成结果（3D 预览）
-          </Link>{" "}
-          <Link to={`/items/${detail.item.id}/drafts/${detail.draftId}/review`}>
-            打开草稿（待复核）
           </Link>
-          ：生成完成不等于已发布。
+          ：任务结束后自动发布，可在结果页直接阅读说明书。
         </p>
       )}
     </div>

@@ -993,6 +993,50 @@ async fn full_chain_assembles_needs_review_draft_and_never_publishes() {
     assert_eq!(cdn.call_count("GET", "/model.glb"), 1);
     tripo.assert_no_script_problems();
     manual.assert_no_script_problems();
+
+    // 自动发布（取消人工复核）：系统确认草稿并发布；重复触发返回同一版本。
+    let first = everything_manual::releases::auto::publish_job(&pool, app.dir(), &job_id)
+        .await
+        .expect("自动发布");
+    let everything_manual::releases::auto::AutoPublishOutcome::Published {
+        release_id,
+        replayed,
+    } = first
+    else {
+        panic!("应发布：{first:?}");
+    };
+    assert!(!replayed);
+    assert_eq!(releases_count(&pool).await, 1);
+    let again = everything_manual::releases::auto::publish_job(&pool, app.dir(), &job_id)
+        .await
+        .expect("重复自动发布");
+    assert_eq!(
+        again,
+        everything_manual::releases::auto::AutoPublishOutcome::Published {
+            release_id: release_id.clone(),
+            replayed: true
+        },
+        "同一草稿 revision 不重复发布"
+    );
+    assert_eq!(releases_count(&pool).await, 1);
+    let release = app
+        .call(
+            Method::GET,
+            &format!("/api/v1/items/{}/releases/{release_id}", inputs.item),
+        )
+        .cookie(&cookie)
+        .send()
+        .await;
+    assert_eq!(release.status, StatusCode::OK, "{}", release.text());
+    let manifest = &release.json()["data"]["manifest"];
+    assert_eq!(manifest["review"]["modelReview"]["userConfirmed"], true);
+    assert!(
+        manifest["knowledge"]["knowledge"]["parts"]
+            .as_array()
+            .unwrap()
+            .len()
+            >= 2
+    );
 }
 
 // ===========================================================================

@@ -24,7 +24,7 @@ export class Pc03aQaBackend {
   base = "";
   private child: ChildProcess | null = null;
   private log: fs.WriteStream | null = null;
-  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SECRETS_MASTER_KEY: this.master, EM_PC03A_QA_TRIPO: "pc03a-local-fake-tripo", EM_PC03A_QA_MANUAL: "pc03a-local-fake-manual" }; }
+  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", EM_SECRETS_MASTER_KEY: this.master, EM_PC03A_QA_TRIPO: "pc03a-local-fake-tripo", EM_PC03A_QA_MANUAL: "pc03a-local-fake-manual" }; }
   async start() {
     // No fallback to mutable target/debug and no build side effects.
     expect(fs.existsSync(BINARY), "PC03A frozen RD_READY binary must be supplied by root").toBe(true);

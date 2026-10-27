@@ -15,7 +15,7 @@ use sqlx::SqlitePool;
 use tokio::sync::Notify;
 use tokio::task::{JoinHandle, JoinSet};
 
-use manual_core::domain::{JobStage, JobStatus, ProviderAttempt, StageKind, SubmitState};
+use manual_core::domain::{Job, JobStage, JobStatus, ProviderAttempt, StageKind, SubmitState};
 use manual_core::jobs::{
     MAX_SAFE_RETRIES, REMOTE_WAIT_BUDGET_SECONDS, poll_interval_seconds, remote_wait_anchor,
     remote_wait_anchor_kind, retry_after_seconds, retry_delay_seconds, safe_retries_remain,
@@ -147,6 +147,8 @@ pub struct JobExecutor {
     /// 退出信号（与 `wake` 分开，避免"唤醒"和"停机"互相吞掉通知）。
     shutdown_signal: Notify,
     shutdown: AtomicBool,
+    /// 自动发布（`serve` 装配时开启）：父任务进入终态后把草稿整理为已发布版本。
+    auto_publish_data_dir: Option<std::path::PathBuf>,
 }
 
 impl JobExecutor {
@@ -214,7 +216,44 @@ impl JobExecutor {
             wake: Notify::new(),
             shutdown_signal: Notify::new(),
             shutdown: AtomicBool::new(false),
+            auto_publish_data_dir: None,
         })
+    }
+
+    /// 开启自动发布（必须在共享前调用）。
+    pub fn with_auto_publish(mut executor: Arc<Self>, data_dir: std::path::PathBuf) -> Arc<Self> {
+        Arc::get_mut(&mut executor)
+            .expect("auto publish must be installed before sharing executor")
+            .auto_publish_data_dir = Some(data_dir);
+        executor
+    }
+
+    /// 父任务刚进入 succeeded/failed：在后台发布草稿（失败只记日志，不改任务状态）。
+    fn spawn_auto_publish(&self, job: Option<&Job>) {
+        let (Some(data_dir), Some(job)) = (self.auto_publish_data_dir.clone(), job) else {
+            return;
+        };
+        if !matches!(job.status, JobStatus::Succeeded | JobStatus::Failed) {
+            return;
+        }
+        let pool = self.pool.clone();
+        let job_id = job.id.clone();
+        tokio::spawn(async move {
+            match crate::releases::auto::publish_job(&pool, &data_dir, &job_id).await {
+                Ok(outcome) => tracing::info!(
+                    event = "auto_publish",
+                    jobId = %job_id,
+                    outcome = ?outcome,
+                    "生成结束：已自动发布说明书"
+                ),
+                Err(reason) => tracing::warn!(
+                    event = "auto_publish_failed",
+                    jobId = %job_id,
+                    reason = %reason,
+                    "生成结束但自动发布失败（草稿保留）"
+                ),
+            }
+        });
     }
 
     pub fn owner(&self) -> &str {
@@ -750,10 +789,18 @@ impl JobExecutor {
             mark_segment_ledger_unknown(&mut tx, stage, now).await?;
         }
         let advanced = job_stages::advance(&mut tx, guard, now, &advance).await?;
-        if advanced {
-            repo::jobs::recompute_status(&mut tx, &stage.job_id, now).await?;
-        }
+        let before = repo::jobs::get(&mut tx, &stage.job_id)
+            .await?
+            .map(|job| job.status);
+        let job = if advanced {
+            repo::jobs::recompute_status(&mut tx, &stage.job_id, now).await?
+        } else {
+            None
+        };
         tx.commit().await?;
+        if before.is_some_and(|status| !status.is_terminal()) {
+            self.spawn_auto_publish(job.as_ref());
+        }
 
         let status = if advanced {
             Some(target_status(&advance))

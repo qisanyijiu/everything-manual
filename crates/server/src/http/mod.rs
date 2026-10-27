@@ -25,6 +25,7 @@
 pub mod assets;
 pub mod auth;
 pub mod body;
+pub mod chat;
 pub mod documents;
 pub mod drafts;
 pub mod dto;

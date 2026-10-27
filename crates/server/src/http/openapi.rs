@@ -104,8 +104,13 @@ use super::{
         releases::list_releases,
         releases::get_release,
         releases::export_release,
+        super::chat::chat_release,
     ),
     components(schemas(
+        super::chat::ChatMessageDto,
+        super::chat::ChatRequest,
+        super::chat::ChatAnswerDto,
+        super::chat::ChatResponse,
         super::view_candidates::ViewCandidateDto,
         super::view_candidates::ViewCandidateListResponse,
         super::view_candidates::ViewCandidateResponse,

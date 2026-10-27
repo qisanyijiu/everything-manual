@@ -24,7 +24,7 @@ export class Pc03bQaBackend {
   base = "";
   private child: ChildProcess | null = null;
   private log: fs.WriteStream | null = null;
-  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SECRETS_MASTER_KEY: this.master, EM_PC03B_QA_TRIPO: "pc03b-local-fake-tripo", EM_PC03B_QA_MANUAL: "pc03b-local-fake-manual" }; }
+  private env(): NodeJS.ProcessEnv { return { PATH: process.env.PATH, TMPDIR: process.env.TMPDIR, EM_SESSION__LOGIN_REQUIRED: "true", EM_SECRETS_MASTER_KEY: this.master, EM_PC03B_QA_TRIPO: "pc03b-local-fake-tripo", EM_PC03B_QA_MANUAL: "pc03b-local-fake-manual" }; }
   async start() {
     // No fallback to mutable target/debug and no build side effects.
     expect(path.resolve(BINARY).startsWith(path.join(REPO_ROOT, "var") + path.sep), "QA may execute only a copied binary under repository var").toBe(true);

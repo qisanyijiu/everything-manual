@@ -18,6 +18,13 @@ export const SESSION_QUERY_KEY = ["session"] as const;
 const verifiedSessions = new WeakSet<QueryClient>();
 export function hasVerifiedSession(client: QueryClient): boolean { return verifiedSessions.has(client); }
 
+/** 采用一个已取得的会话（登录成功或免登录模式下的自动会话）。 */
+export function adoptSession(client: QueryClient, session: ApiResource<SessionData>): void {
+  verifiedSessions.add(client);
+  setCsrfToken(session.data.csrfToken);
+  client.setQueryData(SESSION_QUERY_KEY, session);
+}
+
 /** 会话恢复查询：401 交给会话恢复流程处理（不广播全局跳转），且不自动重试。 */
 export function useSession() {
   const client = useQueryClient();
@@ -40,9 +47,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (password: string) => login({ password }),
     onSuccess: (session) => {
-      verifiedSessions.add(queryClient);
-      setCsrfToken(session.data.csrfToken);
-      queryClient.setQueryData(SESSION_QUERY_KEY, session);
+      adoptSession(queryClient, session);
       void queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] !== SESSION_QUERY_KEY[0],
       });

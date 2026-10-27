@@ -45,6 +45,7 @@ pub const ENV_SESSION_LOGIN_RATE_LIMIT_PER_MINUTE: &str = "EM_SESSION__LOGIN_RAT
 pub const ENV_SESSION_LOGIN_RATE_LIMIT_WINDOW_SECONDS: &str =
     "EM_SESSION__LOGIN_RATE_LIMIT_WINDOW_SECONDS";
 pub const ENV_SESSION_COOKIE_SECURE: &str = "EM_SESSION__COOKIE_SECURE";
+pub const ENV_SESSION_LOGIN_REQUIRED: &str = "EM_SESSION__LOGIN_REQUIRED";
 pub const ENV_JOBS_LEASE_SECONDS: &str = "EM_JOBS__LEASE_SECONDS";
 pub const ENV_JOBS_RENEW_SECONDS: &str = "EM_JOBS__RENEW_SECONDS";
 pub const ENV_DOWNLOAD_ALLOWED_HOSTS: &str = "EM_DOWNLOAD__ALLOWED_HOSTS";
@@ -160,6 +161,8 @@ pub struct SessionSection {
     pub login_rate_limit_per_minute: Option<u32>,
     pub login_rate_limit_window_seconds: Option<u64>,
     pub cookie_secure: Option<String>,
+    /// `true` 时恢复密码登录（默认不需要登录）。
+    pub login_required: Option<bool>,
 }
 
 /// 从 TOML 文本解析配置；未知键（任意层级）与非 TOML 语法都返回可读错误。
@@ -265,6 +268,21 @@ pub fn apply_env(config: &mut FileConfig) -> Result<(), CliError> {
             .session
             .get_or_insert_with(Default::default)
             .login_rate_limit_window_seconds = Some(value);
+    }
+    if let Some(value) = env_nonempty(ENV_SESSION_LOGIN_REQUIRED) {
+        let parsed = match value.as_str() {
+            "true" | "1" => true,
+            "false" | "0" => false,
+            other => {
+                return Err(CliError::config(format!(
+                    "{ENV_SESSION_LOGIN_REQUIRED} 只能是 true/false，实际：{other}"
+                )));
+            }
+        };
+        config
+            .session
+            .get_or_insert_with(Default::default)
+            .login_required = Some(parsed);
     }
     if let Some(value) = env_nonempty(ENV_SESSION_COOKIE_SECURE) {
         config

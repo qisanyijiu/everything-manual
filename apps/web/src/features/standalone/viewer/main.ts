@@ -384,7 +384,6 @@ function renderInteractions(payload: StandalonePayload, viewer: Viewer): void {
     host.append(row);
     return row;
   };
-  if (viewer.nodeNames.length > 0) renderPartsExplorer(host, viewer);
   if (interactive.poses.length > 0) {
     const row = group("姿势");
     const buttons: HTMLButtonElement[] = [];
@@ -431,6 +430,7 @@ function renderInteractions(payload: StandalonePayload, viewer: Viewer): void {
     row.append(reset);
   }
   host.append(el("p", { className: "source", text: "动作与姿势为外观示意（分件模型刚体变换），不代表真实机械结构。" }));
+  if (viewer.nodeNames.length > 0) renderPartsExplorer(host, viewer);
 }
 
 /** 独立网格观察与说明书动作分别展示，编号不冒充已确认的部件名称。 */

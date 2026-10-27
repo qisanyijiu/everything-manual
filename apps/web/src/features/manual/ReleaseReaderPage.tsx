@@ -33,6 +33,7 @@ import { InteractionPanel } from "../viewer/InteractionPanel";
 import { readInteractive } from "../viewer/interactive-view";
 import { useInteractive } from "../viewer/useInteractive";
 import { ViewerPanel } from "../viewer/ViewerPanel";
+import { ManualChat } from "./ManualChat";
 import { ReleaseDownload, RELEASE_DOWNLOAD_DESCRIPTION } from "./ReleaseDownload";
 import { readReleaseKnowledge } from "./release-view";
 
@@ -410,6 +411,16 @@ function ReleaseReader({ itemId, releaseId }: { readonly itemId: string; readonl
           <a href={model !== null ? assetContentUrl(model.assetId) : "#"}>本地 GLB</a>
         </p>
       </PageLayout>
+      {release !== undefined && (
+        <ManualChat
+          itemId={itemId}
+          releaseId={releaseId}
+          title={documents[0]?.title ?? "说明书"}
+          onOpenPage={(documentId, page) => {
+            original.openEvidence({ documentId: documentId ?? documents[0]?.id ?? null, pageNumber: page, quote: null }, { panelId: "steps", focusId: "manual-chat-input" });
+          }}
+        />
+      )}
     </div>
   );
 }

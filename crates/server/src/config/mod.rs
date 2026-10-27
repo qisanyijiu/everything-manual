@@ -140,6 +140,9 @@ pub struct Session {
     pub login_rate_limit_window_seconds: u64,
     /// cookie `Secure` 策略（默认 [`CookieSecurePolicy::Auto`]）。
     pub cookie_secure: CookieSecurePolicy,
+    /// 是否要求登录（默认 false：打开即用，服务端自动为唯一管理员建会话；
+    /// CSRF 与 Origin 校验照常生效）。设为 true 恢复密码登录。
+    pub login_required: bool,
 }
 
 /// cookie `Secure` 属性策略。
@@ -172,6 +175,7 @@ impl Default for Session {
             login_rate_limit_per_minute: Self::DEFAULT_LOGIN_RATE_LIMIT,
             login_rate_limit_window_seconds: Self::DEFAULT_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
             cookie_secure: CookieSecurePolicy::Auto,
+            login_required: false,
         }
     }
 }
@@ -912,6 +916,9 @@ fn resolve_session(config: &FileConfig) -> Result<Session, CliError> {
             ));
         }
         session.login_rate_limit_window_seconds = value;
+    }
+    if let Some(value) = section.login_required {
+        session.login_required = value;
     }
     if let Some(value) = &section.cookie_secure {
         session.cookie_secure = match value.as_str() {

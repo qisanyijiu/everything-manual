@@ -36,7 +36,8 @@ export function workflowAction(summary: ItemSummaryDto): { label: string; status
   switch (summary.action) {
     case "handleJob": return { label: "处理任务", status: "任务需要处理", href: `/jobs/${target}` };
     case "viewJob": return { label: "查看进度", status: "任务进行中", href: `/jobs/${target}` };
-    case "reviewDraft": return { label: "继续复核", status: "草稿待复核", href: `${item}/drafts/${target}/review` };
+    // 草稿在任务结束后自动发布；仍未发布时去生成历史查看结果。
+    case "reviewDraft": return { label: "查看结果", status: "正在发布", href: `${item}/generations` };
     case "readRelease": return { label: "阅读说明书", status: "已有发布版", href: `${item}/releases/${target}` };
     case "addDocument": return { label: "补齐资料", status: "待绑定说明书", href: `${item}/import/document${suffix}` };
     case "addViews": return { label: "补齐资料", status: "待补齐正面和侧面视图", href: `${item}/import/views${suffix}` };

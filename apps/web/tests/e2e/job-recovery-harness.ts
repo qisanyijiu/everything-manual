@@ -338,7 +338,7 @@ export class TestBackend {
       {
         cwd: this.workDir,
         env: {
-          ...process.env,
+          ...process.env, EM_SESSION__LOGIN_REQUIRED: "true",
           EM_T17_TRIPO_KEY: "t17-fake-tripo-key",
           EM_T17_MANUAL_AI_KEY: "t17-fake-manual-ai-key",
         },

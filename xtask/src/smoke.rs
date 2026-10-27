@@ -1221,6 +1221,8 @@ impl Service {
             // 工作目录不在仓库内，服务拿不到 config.toml（启动日志会记录未配置 Provider）。
             .env_clear()
             .env("PATH", "/usr/bin:/bin")
+            // 发布检查覆盖密码登录路径（默认免登录；这里显式要求登录以验证认证生效）。
+            .env("EM_SESSION__LOGIN_REQUIRED", "true")
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
